@@ -1,3 +1,4 @@
+```k
 // Copyright (c) 2015 K Team. All Rights Reserved.
 require "domains.k"
 
@@ -100,3 +101,4 @@ module WASM-SYNTAX
   rule (break) => (break 0)                                     [macro]
 
 endmodule
+```

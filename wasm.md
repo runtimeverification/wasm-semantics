@@ -1,3 +1,4 @@
+```k
 // Copyright (c) 2015 K Team. All Rights Reserved.
 require "domains.k"
 require "wasm-syntax.k"
@@ -202,3 +203,4 @@ module WASM
        <stdout> ... .List => ListItem(I) ListItem("\n") </stdout>
 
 endmodule
+```
