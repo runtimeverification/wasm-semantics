@@ -1,0 +1,4 @@
+[submodule ".build/k"]
+	path = .build/k
+	url = https://github.com/runtimeverification/k
+	ignore = untracked
