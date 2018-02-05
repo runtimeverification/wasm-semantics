@@ -2,3 +2,7 @@
 	path = .build/k
 	url = https://github.com/runtimeverification/k
 	ignore = untracked
+[submodule "tests/wasm-tests"]
+	path = tests/wasm-tests
+	url = https://github.com/webassembly/spec
+	ignore = untracked
