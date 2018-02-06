@@ -1,57 +1,65 @@
+# Settings
+# --------
+
+build_dir:=$(CURDIR)/.build
+defn_dir:=$(build_dir)/defn
+k_submodule:=$(build_dir)/k
+
 .PHONY: build deps ocaml-deps defn
 
-# patch-build:
-#	 patch -p1 <wasm.k.patch
-#	 ktest --skip pdf test/config.xml
-#	 patch -R -p1 <wasm.k.patch
+all: build
 
-build: .build/defn/wasm-kompiled/interpreter
+clean:
+	rm -rf $(build_dir)
 
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-K_SUBMODULE=$(CURDIR)/.build/k
-BUILD_LOCAL=$(CURDIR)/.build/local
-PKG_CONFIG_LOCAL=$(BUILD_LOCAL)/lib/pkgconfig
+k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
+pkg_config_local:=$(build_dir)/local/lib/pkgconfig
 
-deps: $(K_SUBMODULE)/make.timestamp ocaml-deps
+deps: $(k_submodule)/make.timestamp ocaml-deps
 
-$(K_SUBMODULE)/make.timestamp:
-	git submodule update --init -- $(K_SUBMODULE)
-	cd $(K_SUBMODULE) \
+$(k_submodule)/make.timestamp:
+	git submodule update --init -- $(k_submodule)
+	cd $(k_submodule) \
 		&& mvn package -q -DskipTests
-	touch $(K_SUBMODULE)/make.timestamp
+	touch $(k_submodule)/make.timestamp
 
 ocaml-deps:
 	opam init --quiet --no-setup
-	opam repository add k "$(K_SUBMODULE)/k-distribution/target/release/k/lib/opam" \
-		|| opam repository set-url k "$(K_SUBMODULE)/k-distribution/target/release/k/lib/opam"
+	opam repository add k "$(k_submodule)/k-distribution/target/release/k/lib/opam" \
+		|| opam repository set-url k "$(k_submodule)/k-distribution/target/release/k/lib/opam"
 	opam update
 	opam switch 4.03.0+k
-	export PKG_CONFIG_PATH=$(PKG_CONFIG_LOCAL) ; \
+	export PKG_CONFIG_PATH=$(pkg_config_local) ; \
+	eval $(shell opam config env) \
 	opam install --yes mlgmp zarith uuidm
 
-K_BIN=$(K_SUBMODULE)/k-distribution/target/release/k/bin
+# Building Definition
+# -------------------
+
+build: $(defn_dir)/wasm-kompiled/interpreter
 
 # Tangle definition from *.md files
 
 k_files:=wasm.k wasm-syntax.k
-defn_files:=$(patsubst %, .build/defn/%, $(k_files))
+defn_files:=$(patsubst %, $(defn_dir)/%, $(k_files))
 
 defn: $(defn_files)
 
-.build/defn/%.k: %.md
+$(defn_dir)/%.k: %.md
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to tangle.lua --metadata=code:k $< > $@
 
 # OCAML Backend
 
-.build/defn/wasm-kompiled/interpreter: $(defn_files) deps
+$(defn_dir)/wasm-kompiled/interpreter: $(defn_files) deps
 	@echo "== kompile: $@"
 	eval $(shell opam config env) \
-	$(K_BIN)/kompile --debug --main-module WASM \
-					--syntax-module WASM $< --directory .build/defn \
+	$(k_bin)/kompile --debug --main-module WASM \
+					--syntax-module WASM $< --directory $(defn_dir) \
 					--gen-ml-only -O3 --non-strict
 #; \
 #	ocamlfind opt -c .build/ocaml/wasm-kompiled/constants.ml -package gmp -package zarith; \
