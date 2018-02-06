@@ -32,7 +32,6 @@ ocaml-deps:
 		|| opam repository set-url k "$(k_submodule)/k-distribution/target/release/k/lib/opam"
 	opam update
 	opam switch 4.03.0+k
-	export PKG_CONFIG_PATH=$(pkg_config_local) ; \
 	eval $(shell opam config env) \
 	opam install --yes mlgmp zarith uuidm
 
