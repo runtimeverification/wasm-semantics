@@ -12,7 +12,7 @@ module WASM
   imports MAP
   imports SET
 //imports STDOUT-STREAM
-  imports MINT
+//imports MINT
   imports WASM-SYNTAX
 
   configuration <T>
@@ -77,9 +77,9 @@ module WASM
 
   // TODO: rule (table ...) => ...
 
-  rule <k> (memory (N => N -Int 1)) ... </k>
-       <mem> .Map => N -Int 1 |-> mi(8,0) ... </mem>
-       requires N >Int 0
+//  rule <k> (memory (N => N -Int 1)) ... </k>
+//       <mem> .Map => N -Int 1 |-> mi(8,0) ... </mem>
+//       requires N >Int 0
   rule (memory 0) => .K
 
   // Exps => Vals
