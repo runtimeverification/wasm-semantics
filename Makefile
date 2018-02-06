@@ -32,7 +32,7 @@ ocaml-deps:
 		|| opam repository set-url k "$(k_submodule)/k-distribution/target/release/k/lib/opam"
 	opam update
 	opam switch 4.03.0+k
-	eval $(shell opam config env) \
+	eval $$(opam config env) \
 	opam install --yes mlgmp zarith uuidm
 
 # Building Definition
@@ -56,7 +56,7 @@ $(defn_dir)/%.k: %.md
 
 $(defn_dir)/wasm-kompiled/interpreter: $(defn_files) deps
 	@echo "== kompile: $@"
-	eval $(shell opam config env) \
+	eval $$(opam config env) \
 	$(k_bin)/kompile --debug --main-module WASM \
 					--syntax-module WASM $< --directory $(defn_dir) \
 					--gen-ml-only -O3 --non-strict ; \
