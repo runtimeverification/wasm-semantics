@@ -60,14 +60,17 @@ $(defn_dir)/wasm-kompiled/interpreter: $(defn_files) deps
 	eval $(shell opam config env) \
 	$(k_bin)/kompile --debug --main-module WASM \
 					--syntax-module WASM $< --directory $(defn_dir) \
-					--gen-ml-only -O3 --non-strict
-#; \
-#	ocamlfind opt -c .build/ocaml/wasm-kompiled/constants.ml -package gmp -package zarith; \
-#	ocamlfind opt -c -I .build/ocaml/wasm-kompiled ; \
-#	ocamlfind opt -a -o semantics.cmxa; \
-#	ocamlfind remove wasm-semantics-plugin; \
-#	ocamlfind install wasm-semantics-plugin META semantics.cmxa semantics.a KRYPTO.cmi KRYPTO.cmx; \
-#	$(K_BIN)/kompile --debug --main-module WASM \
-#					--syntax-module WASM $< --directory .build/defn \
-#					--packages wasm-semantics-plugin -O3 --non-strict; \
-#	cd .build/ocaml/driver-kompiled && ocamlfind opt -o interpreter constants.cmx prelude.cmx plugin.cmx parser.cmx lexer.cmx run.cmx interpreter.ml -package gmp -package dynlink -package zarith -package str -package uuidm -package unix -package wasm-semantics-plugin -linkpkg -inline 20 -nodynlink -O3 -linkall
+					--gen-ml-only -O3 --non-strict ; \
+	ocamlfind opt -c $(defn_dir)/wasm-kompiled/constants.ml -package gmp -package zarith ; \
+	ocamlfind opt -c -I $(defn_dir)/wasm-kompiled ; \
+	ocamlfind opt -a -o $(defn_dir)/semantics.cmxa ; \
+	ocamlfind remove wasm-semantics-plugin ; \
+	ocamlfind install wasm-semantics-plugin META $(defn_dir)/semantics.cmxa $(defn_dir)/semantics.a ; \
+	$(k_bin)/kompile --debug --main-module WASM \
+					--syntax-module WASM $< --directory $(defn_dir) \
+					--packages wasm-semantics-plugin -O3 --non-strict ; \
+	cd $(defn_dir)/wasm-kompiled \
+		&& ocamlfind opt -o interpreter \
+			-package gmp -package dynlink -package zarith -package str -package uuidm -package unix -package wasm-semantics-plugin \
+			-linkpkg -inline 20 -nodynlink -O3 -linkall \
+			constants.cmx prelude.cmx plugin.cmx parser.cmx lexer.cmx run.cmx interpreter.ml
