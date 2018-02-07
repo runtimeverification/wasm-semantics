@@ -1,22 +1,22 @@
 # Settings
 # --------
 
-buildr_dir:=$(CURDIR)/.buildr
-defn_dir:=$(buildr_dir)/defn
-k_submodule:=$(buildr_dir)/k
+build_dir:=$(CURDIR)/.build
+defn_dir:=$(build_dir)/defn
+k_submodule:=$(build_dir)/k
 
-.PHONY: buildr deps ocaml-deps defn
+.PHONY: build deps ocaml-deps defn
 
-all: buildr
+all: build
 
 clean:
-	rm -rf $(buildr_dir)
+	rm -rf $(build_dir)
 
 # Build Dependencies (K Submodule)
 # --------------------------------
 
 k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
-pkg_config_local:=$(buildr_dir)/local/lib/pkgconfig
+pkg_config_local:=$(build_dir)/local/lib/pkgconfig
 
 deps: $(k_submodule)/make.timestamp ocaml-deps
 
@@ -38,7 +38,7 @@ ocaml-deps:
 # Building Definition
 # -------------------
 
-buildr: $(defn_dir)/wasm-kompiled/interpreter
+build: $(defn_dir)/wasm-kompiled/interpreter
 
 # Tangle definition from *.md files
 
