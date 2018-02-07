@@ -3,8 +3,7 @@
 require "domains.k"
 
 module WASM-SYNTAX
-  imports INT-SYNTAX
-  imports FLOAT-SYNTAX
+  imports DOMAINS
 
   syntax Script ::= Commands
 

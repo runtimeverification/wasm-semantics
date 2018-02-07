@@ -4,7 +4,6 @@ require "domains.k"
 require "wasm-syntax.k"
 
 module WASM
-
   imports INT
   imports FLOAT
   imports BASIC-K
