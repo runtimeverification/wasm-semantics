@@ -5,16 +5,27 @@ require "domains.k"
 module WASM-SYNTAX
     imports DOMAINS
 
-    syntax ValType ::= "i32" | "i64" | "f32" | "f64"
+    syntax IValType ::= "i32" | "i64"
+    syntax FValType ::= "f32" | "f64"
+    syntax  ValType ::= IValType | FValType
+
     syntax Type ::= ValType
+ // -----------------------
+
+    syntax Instr ::= "(" Instr ")" [bracket]
+ // ----------------------------------------
 
     syntax Instrs ::= List{Instr, ""}
+ // ---------------------------------
+    rule I:Instr IS:Instrs => I ~> IS
 
-    syntax Instr  ::= "(" Instr ")"                    [bracket]
-                  | UnOp  "." Type Instr
-                  | BinOp "." Type Instr Instr
-                  | RelOp "." Type Instr Instr
+    syntax Instr ::= IValType "." "const" Int
+                   | FValType "." "const" Float
+ // -------------------------------------------
+endmodule
+```
 
+```
     syntax UnOp  ::= "neg" | "abs"
                    | "not" | "clz" | "ctz"                        // int
                    | "ceil" | "floor" | "trunc" | "round"         // float
