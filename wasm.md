@@ -13,29 +13,11 @@ module WASM
     imports LIST
     imports MAP
     imports SET
-  //imports STDOUT-STREAM
-  //imports MINT
     imports WASM-BASIC-INSTRUCTIONS
 
     configuration
- // <T>
       <k> $PGM:Instrs </k>
       <stack> .Stack </stack>
- //   <mem> .Map </mem>
- //   <functions>
- //     <funcTbl> .Map </funcTbl>
- //     <funcIdx> 0 </funcIdx>
- //   </functions>
- //   <ctx>
- //     <storage>
- //       <localStore> .Map </localStore>
- //       <globalStore>.Map </globalStore>
- //     </storage>
- //     <callStack> .List </callStack>
- //     <labelStack> .List </labelStack>
- //   </ctx>
- // <stdout />
- // </T>
 
     rule <k> #push SI => . ... </k>
          <stack> STACK => SI : STACK </stack>
@@ -46,6 +28,21 @@ Unused
 ======
 
 ```
+    configuration
+      <mem> .Map </mem>
+      <functions>
+        <funcTbl> .Map </funcTbl>
+        <funcIdx> 0 </funcIdx>
+      </functions>
+      <ctx>
+        <storage>
+          <localStore> .Map </localStore>
+          <globalStore>.Map </globalStore>
+        </storage>
+        <callStack> .List </callStack>
+        <labelStack> .List </labelStack>
+      </ctx>
+
     syntax Val  ::= Literal
                   | tuple(Vals)
                   | "unit"
