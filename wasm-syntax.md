@@ -5,6 +5,31 @@ require "domains.k"
 module WASM-SYNTAX
     imports DOMAINS
 
+    syntax ValType ::= "i32" | "i64" | "f32" | "f64"
+    syntax Type ::= ValType
+
+    syntax Exps ::= List{Exp, ""}
+
+    syntax Exp  ::= "(" Exp ")"                    [bracket]
+                  | UnOp  "." Type Exp
+                  | BinOp "." Type Exp Exp
+                  | RelOp "." Type Exp Exp
+
+    syntax UnOp  ::= "neg" | "abs"
+                   | "not" | "clz" | "ctz"                        // int
+                   | "ceil" | "floor" | "trunc" | "round"         // float
+    syntax BinOp ::= "add" | "sub" | "mul"
+                   | "divs" | "divu" | "mods" | "modu"            // int
+                   | "and" | "or" | "xor" | "shl" | "shr" | "sar" // int
+                   | "div" | "mod" | "copysign"                   // float
+    syntax RelOp ::= "eq" | "neq"
+                   | "lts" | "ltu" | "les" | "leu"                // int
+                   | "gts" | "gtu" | "ges" | "geu"                // int
+                   | "lt" | "le" | "gt" | "ge"                    // float
+endmodule
+```
+
+```
     syntax Script ::= Commands
 
     syntax Commands ::= List{Command, ""}
@@ -31,7 +56,6 @@ module WASM-SYNTAX
     syntax Table  ::= "(" "table" Vars ")"
     syntax Memory ::= "(" "memory" Int ")"
 
-    syntax Exps ::= List{Exp, ""}                                 [seqstrict]
     syntax Exp  ::= "(" "nop" ")"
                   | "(" "block" Exps ")"                          [strict]
                   | "(" "if" Exp Exp Exp ")"                      [strict(1)]
@@ -52,9 +76,6 @@ module WASM-SYNTAX
                   | "(" "get" MemOp "." MemType Exp ")"           [strict(3)]
                   | "(" "set" MemOp "." MemType Exp Exp ")"       [strict(3,4)]
                   | "(" "const" "." Type Literal ")"
-                  | "(" UnOp  "." Type Exp ")"                    [strict(3)]
-                  | "(" BinOp "." Type Exp Exp ")"                [seqstrict(3,4)]
-                  | "(" RelOp "." Type Exp Exp ")"                [seqstrict(3,4)]
                   | "(" "convert" Sign "." Type "." Type Exp ")"
                   | "(" "convert"      "." Type "." Type Exp ")"
                   | "(" "cast"         "." Type "." Type Exp ")"
@@ -66,7 +87,6 @@ module WASM-SYNTAX
                    | "(" "case" Literal                 ")"
 
     syntax Types ::= List{Type, ""}
-    syntax Type  ::= "i32" | "i64" | "f32" | "f64"
     syntax MemType ::= Type | "i8" | "i16"
 
     syntax Vars ::= List{Var, ""}
@@ -74,17 +94,6 @@ module WASM-SYNTAX
 
     syntax Literal ::= Int | Float
 
-    syntax UnOp  ::= "neg" | "abs"
-                   | "not" | "clz" | "ctz"                        // int
-                   | "ceil" | "floor" | "trunc" | "round"         // float
-    syntax BinOp ::= "add" | "sub" | "mul"
-                   | "divs" | "divu" | "mods" | "modu"            // int
-                   | "and" | "or" | "xor" | "shl" | "shr" | "sar" // int
-                   | "div" | "mod" | "copysign"                   // float
-    syntax RelOp ::= "eq" | "neq"
-                   | "lts" | "ltu" | "les" | "leu"                // int
-                   | "gts" | "gtu" | "ges" | "geu"                // int
-                   | "lt" | "le" | "gt" | "ge"                    // float
     syntax MemOp ::= Dist Align Sign
                    | Dist Align
                    | Dist       Sign
@@ -98,5 +107,4 @@ module WASM-SYNTAX
     rule (if E S) => (if E S (nop))                               [macro]
     rule (break) => (break 0)                                     [macro]
 
-endmodule
 ```
