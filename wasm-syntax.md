@@ -8,12 +8,12 @@ module WASM-SYNTAX
     syntax ValType ::= "i32" | "i64" | "f32" | "f64"
     syntax Type ::= ValType
 
-    syntax Exps ::= List{Exp, ""}
+    syntax Instrs ::= List{Instr, ""}
 
-    syntax Exp  ::= "(" Exp ")"                    [bracket]
-                  | UnOp  "." Type Exp
-                  | BinOp "." Type Exp Exp
-                  | RelOp "." Type Exp Exp
+    syntax Instr  ::= "(" Instr ")"                    [bracket]
+                  | UnOp  "." Type Instr
+                  | BinOp "." Type Instr Instr
+                  | RelOp "." Type Instr Instr
 
     syntax UnOp  ::= "neg" | "abs"
                    | "not" | "clz" | "ctz"                        // int
@@ -37,7 +37,7 @@ endmodule
                       | Invoke
 
     syntax Module ::= "(" "module" ModuleItems ")"
-    syntax Invoke ::= "(" "invoke" Var Exps ")"
+    syntax Invoke ::= "(" "invoke" Var Instr ")"
 
     syntax ModuleItems ::= List{ModuleItem, ""}
     syntax ModuleItem  ::= Function
