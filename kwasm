@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+set -e      # Exit immediately if any command fails
+set -u      # Using undefined variables is an error. Exit immediately
+
+# Utilities
+# ---------
+
+progress() { echo "== $@" ; }
+die()      { echo -e "FATAL:" "$@" >&2 ; exit 1 ; }
+
+pretty_diff() {
+    if type colordiff >/dev/null 2>&1; then
+        colordiff -u -b "$@"
+    else
+        diff -u -b "$@"
+    fi
+}
+
+lint_krun() {
+    # Format, &gt; entity > and make each K task start on a new line
+    xmllint -format - | sed -e 's/&gt;/>/g'  -e 's/~>/\n   ~>/g'
+}
+
+# Environment Setup
+# -----------------
+
+run_env() {
+    local build_dir="$(pwd)/.build"
+    local release_dir="$build_dir/k/k-distribution/target/release/k"
+    local lib_dir="$build_dir/local/lib"
+    export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
+    export LD_LIBRARY_PATH="$release_dir/lib/native/linux64:$lib_dir:${LD_LIBRARY_PATH:-}"
+    eval $(opam config env)
+}
+
+# Runners
+# -------
+
+run_krun() {
+    local run_file=$1 ; shift
+    run_env "$run_file"
+    export K_OPTS=-Xss500m
+    krun --directory .build/defn/ "$run_file" "$@"
+}
+
+run_kdebug() {
+    progress "debugging: $1"
+    ( run_krun "$1" --debugger )
+}
+
+run_test() {
+    test_file="$1"; shift
+    case "$test_file" in
+        *interactive/*) [[ -f "$test_file.out" ]] && output_expected_file="$test_file.out"
+                        ( pretty_diff --label expected <(cat "$output_expected_file") \
+                                      --label actual   <(run_krun "$test_file" | lint_krun )
+                        )
+                        ;;
+        *             ) die "Do not know how to run '$test_file' as a test."
+                        ;;
+    esac
+}
+
+# Main
+# ----
+
+cd "$(dirname $0)"
+
+# main functionality
+run_command="$1" ; shift
+case "$run_command" in
+
+    # Running
+    run)   run_krun   "$1" | lint_krun ;;
+    debug) run_kdebug "$1"             ;;
+
+    # Testing
+    test)  run_test   "$1" ;;
+
+    *) echo "
+    usage: $0 <cmd> <file> <K args>*
+
+       # Running
+       # -------
+       $0 run   <pgm>   Run a single EVM program
+       $0 debug <pgm>   Run a single EVM program in the debugger
+
+       Note: <pgm> is a path to a file containing a WASM program.
+
+       # Testing
+       # -------
+       $0 test <pgm>    Run a single WASM program like it's a test
+
+       Note: This command is more for devs and CI servers.
+" ; exit ;;
+esac
