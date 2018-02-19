@@ -5,7 +5,7 @@ build_dir:=$(CURDIR)/.build
 defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
 
-.PHONY: build deps ocaml-deps defn
+.PHONY: build deps ocaml-deps defn test interactive-test
 
 all: build
 
@@ -71,3 +71,19 @@ $(defn_dir)/wasm-kompiled/interpreter: $(defn_files) deps
 			-package gmp -package dynlink -package zarith -package str -package uuidm -package unix -package wasm-semantics-plugin \
 			-linkpkg -inline 20 -nodynlink -O3 -linkall \
 			constants.cmx prelude.cmx plugin.cmx parser.cmx lexer.cmx run.cmx interpreter.ml
+
+# Testing
+# -------
+
+TEST=./kwasm test
+
+test: interactive-test
+
+### Interactive Tests
+
+interactive_tests:=$(wildcard tests/interactive/*.wast)
+
+interactive-test: $(interactive_tests:=.test)
+
+tests/interactive/%.test: tests/interactive/%
+	$(TEST) $<
