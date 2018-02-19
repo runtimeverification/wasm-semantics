@@ -17,11 +17,6 @@ pretty_diff() {
     fi
 }
 
-lint_krun() {
-    # Format, &gt; entity > and make each K task start on a new line
-    xmllint -format - | sed -e 's/&gt;/>/g'  -e 's/~>/\n   ~>/g'
-}
-
 # Environment Setup
 # -----------------
 
@@ -54,7 +49,7 @@ run_test() {
     case "$test_file" in
         *interactive/*) [[ -f "$test_file.out" ]] && output_expected_file="$test_file.out"
                         ( pretty_diff --label expected <(cat "$output_expected_file") \
-                                      --label actual   <(run_krun "$test_file" | lint_krun )
+                                      --label actual   <(run_krun "$test_file")
                         )
                         ;;
         *             ) die "Do not know how to run '$test_file' as a test."
@@ -72,7 +67,7 @@ run_command="$1" ; shift
 case "$run_command" in
 
     # Running
-    run)   run_krun   "$1" | lint_krun ;;
+    run)   run_krun   "$1" ;;
     debug) run_kdebug "$1"             ;;
 
     # Testing
