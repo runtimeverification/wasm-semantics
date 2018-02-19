@@ -14,24 +14,37 @@ module WASM
   //imports MINT
     imports WASM-SYNTAX
 
-    configuration <T>
-      <k> $PGM:Script:K </k>
-      <mem> .Map </mem>
-      <functions>
-        <funcTbl> .Map </funcTbl>
-        <funcIdx> 0 </funcIdx>
-      </functions>
-      <ctx>
-        <storage>
-          <localStore> .Map </localStore>
-          <globalStore>.Map </globalStore>
-        </storage>
-        <callStack> .List </callStack>
-        <labelStack> .List </labelStack>
-      </ctx>
+    configuration
+ // <T>
+      <k> $PGM:Instrs </k>
+ //   <mem> .Map </mem>
+ //   <functions>
+ //     <funcTbl> .Map </funcTbl>
+ //     <funcIdx> 0 </funcIdx>
+ //   </functions>
+ //   <ctx>
+ //     <storage>
+ //       <localStore> .Map </localStore>
+ //       <globalStore>.Map </globalStore>
+ //     </storage>
+ //     <callStack> .List </callStack>
+ //     <labelStack> .List </labelStack>
+ //   </ctx>
  // <stdout />
-    </T>
+ // </T>
 
+    rule (const.i32 I:Int) => I
+
+    rule (add.i32 I1:Int I2:Int) => I1 +Int I2
+    rule (sub.i32 I1:Int I2:Int) => I1 -Int I2
+    rule (mul.i32 I1:Int I2:Int) => I1 *Int I2
+
+    rule ( eq.i32 I1:Int I2:Int) => bool2int(I1 ==K I2) // ==Int ?
+    rule (neq.i32 I1:Int I2:Int) => bool2int(I1 =/=K I2) // =/=Int ?
+endmodule
+```
+
+```
     syntax Val  ::= Literal
                   | tuple(Vals)
                   | "unit"
@@ -180,15 +193,6 @@ module WASM
   //       L +Int 3 |-> (_ => extractMInt(mi(32,I), 24, 32))
   //       ...
   //     </mem>
-
-    rule (const.i32 I:Int) => I
-
-    rule (add.i32 I1:Int I2:Int) => I1 +Int I2
-    rule (sub.i32 I1:Int I2:Int) => I1 -Int I2
-    rule (mul.i32 I1:Int I2:Int) => I1 *Int I2
-
-    rule ( eq.i32 I1:Int I2:Int) => bool2int(I1 ==K I2) // ==Int ?
-    rule (neq.i32 I1:Int I2:Int) => bool2int(I1 =/=K I2) // =/=Int ?
     //
     syntax Int ::= bool2int(Bool) [function]
     rule bool2int(true) => 1
