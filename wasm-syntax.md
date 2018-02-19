@@ -22,6 +22,8 @@ module WASM-SYNTAX
     syntax Instr ::= IValType "." "const" Int
                    | FValType "." "const" Float
  // -------------------------------------------
+    rule IVT:IValType . const I:Int   => #push (IVT . const I)
+    rule FVT:FValType . const F:Float => #push (FVT . const F)
 
     syntax Stack ::= ".Stack"
                    | StackItem ":" Stack
