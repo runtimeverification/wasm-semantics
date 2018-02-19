@@ -5,7 +5,7 @@ build_dir:=$(CURDIR)/.build
 defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
 
-.PHONY: build deps ocaml-deps defn test interactive-test
+.PHONY: build deps ocaml-deps defn test passing-test interactive-test
 
 all: build
 
@@ -79,11 +79,15 @@ TEST=./kwasm test
 
 test: interactive-test
 
+### Passing Tests
+
+passing-test: tests/interactive/constants.wast.test
+
 ### Interactive Tests
 
 interactive_tests:=$(wildcard tests/interactive/*.wast)
 
 interactive-test: $(interactive_tests:=.test)
 
-tests/interactive/%.test: tests/interactive/%
+tests/interactive/%.test: tests/interactive/% build
 	$(TEST) $<
