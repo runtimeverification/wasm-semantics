@@ -32,15 +32,6 @@ module WASM
  //   </ctx>
  // <stdout />
  // </T>
-
-    rule (const.i32 I:Int) => I
-
-    rule (add.i32 I1:Int I2:Int) => I1 +Int I2
-    rule (sub.i32 I1:Int I2:Int) => I1 -Int I2
-    rule (mul.i32 I1:Int I2:Int) => I1 *Int I2
-
-    rule ( eq.i32 I1:Int I2:Int) => bool2int(I1 ==K I2) // ==Int ?
-    rule (neq.i32 I1:Int I2:Int) => bool2int(I1 =/=K I2) // =/=Int ?
 endmodule
 ```
 
