@@ -17,6 +17,7 @@ module WASM
     configuration
  // <T>
       <k> $PGM:Instrs </k>
+      <stack> .Stack </stack>
  //   <mem> .Map </mem>
  //   <functions>
  //     <funcTbl> .Map </funcTbl>
@@ -32,6 +33,9 @@ module WASM
  //   </ctx>
  // <stdout />
  // </T>
+
+    rule <k> #push SI => . ... </k>
+         <stack> STACK => SI : STACK </stack>
 endmodule
 ```
 

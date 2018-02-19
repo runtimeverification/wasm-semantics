@@ -22,6 +22,17 @@ module WASM-SYNTAX
     syntax Instr ::= IValType "." "const" Int
                    | FValType "." "const" Float
  // -------------------------------------------
+
+    syntax Stack ::= ".Stack"
+                   | StackItem ":" Stack
+ // ------------------------------------
+
+    syntax StackItem ::= Instr
+ // --------------------------
+
+    syntax InternalInstr ::= "#push" StackItem
+    syntax         Instr ::= InternalInstr
+ // --------------------------------------
 endmodule
 ```
 
