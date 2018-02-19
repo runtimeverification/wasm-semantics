@@ -1,3 +1,6 @@
+WASM State and Semantics
+========================
+
 ```k
 // Copyright (c) 2015 K Team. All Rights Reserved.
 require "domains.k"
@@ -12,7 +15,7 @@ module WASM
     imports SET
   //imports STDOUT-STREAM
   //imports MINT
-    imports WASM-SYNTAX
+    imports WASM-BASIC-INSTRUCTIONS
 
     configuration
  // <T>
@@ -38,6 +41,9 @@ module WASM
          <stack> STACK => SI : STACK </stack>
 endmodule
 ```
+
+Unused
+======
 
 ```
     syntax Val  ::= Literal

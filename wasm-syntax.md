@@ -1,8 +1,11 @@
+WASM Data
+=========
+
 ```k
 // Copyright (c) 2015 K Team. All Rights Reserved.
 require "domains.k"
 
-module WASM-SYNTAX
+module WASM-DATA
     imports DOMAINS
 
     syntax IValType ::= "i32" | "i64"
@@ -19,12 +22,6 @@ module WASM-SYNTAX
  // ---------------------------------
     rule I:Instr IS:Instrs => I ~> IS
 
-    syntax Instr ::= IValType "." "const" Int
-                   | FValType "." "const" Float
- // -------------------------------------------
-    rule IVT:IValType . const I:Int   => #push (IVT . const I)
-    rule FVT:FValType . const F:Float => #push (FVT . const F)
-
     syntax Stack ::= ".Stack"
                    | StackItem ":" Stack
  // ------------------------------------
@@ -37,6 +34,24 @@ module WASM-SYNTAX
  // --------------------------------------
 endmodule
 ```
+
+WASM Instructions
+=================
+
+```k
+module WASM-BASIC-INSTRUCTIONS
+    imports WASM-DATA
+
+    syntax Instr ::= IValType "." "const" Int
+                   | FValType "." "const" Float
+ // -------------------------------------------
+    rule IVT:IValType . const I:Int   => #push (IVT . const I)
+    rule FVT:FValType . const F:Float => #push (FVT . const F)
+endmodule
+```
+
+Unused
+======
 
 ```
     syntax UnOp  ::= "neg" | "abs"
