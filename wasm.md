@@ -19,8 +19,13 @@ module WASM
       <k> $PGM:Instrs </k>
       <stack> .Stack </stack>
 
-    rule <k> #push SI => . ... </k>
-         <stack> STACK => SI : STACK </stack>
+    rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > VAL : STACK </stack>
+    rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL : STACK </stack>
+
+    rule <k> (ITYPE . BOP:IBinOp => .) ... </k>
+         <stack> < ITYPE > SI1 : < ITYPE > SI2        : STACK
+              => #evalIBinOp(ITYPE . BOP , SI1 , SI2) : STACK
+         </stack>
 endmodule
 ```
 
