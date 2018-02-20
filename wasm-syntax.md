@@ -125,6 +125,25 @@ When a binary operator is the next instruction, `#eval<T>BinOp` will be called o
     syntax Val ::= #evalIBinOp ( Instr , Int   , Int   ) [function]
  //              | #evalFBinOp ( Instr , Float , Float ) [function]
  // ---------------------------------------------------------------
+```
+
+Arithmetic
+----------
+
+A large portion of the available opcodes are pure arithmetic.
+
+### Integer Arithmetic
+
+```k
+    syntax IBinOp ::= "add" | "sub" | "mul"
+ // ---------------------------------------
+    rule #evalIBinOp(TYPE . add, I1, I2) => #chop(< TYPE > (I1 +Int I2))
+    rule #evalIBinOp(TYPE . sub, I1, I2) => #chop(< TYPE > (I1 -Int I2))
+    rule #evalIBinOp(TYPE . mul, I1, I2) => #chop(< TYPE > (I1 *Int I2))
+
+    syntax IBinOp ::= "div_u" | "div_s"
+                    | "rem_u" | "rem_s"
+ // -----------------------------------
 endmodule
 ```
 
