@@ -66,11 +66,65 @@ WASM Instructions
 module WASM-BASIC-INSTRUCTIONS
     imports WASM-DATA
 
+    syntax Instr ::= "(" Instr ")" [bracket]
+ // ----------------------------------------
+
+    syntax Instrs ::= List{Instr, ""}
+ // ---------------------------------
+    rule .Instrs           => .K
+    rule I:Instr IS:Instrs => I ~> IS
+```
+
+Operator Evaluation
+-------------------
+
+In the semantics, the correct `#eval<T><AR>Op` function is called based on the arity of the called operator.
+This allows us to give purely functional semantics to a large portion of the WASM opcodes.
+
+### Constants
+
+Constants do not need an evaluation function.
+
+```k
     syntax Instr ::= IValType "." "const" Int
                    | FValType "." "const" Float
  // -------------------------------------------
-    rule IVT:IValType . const I:Int   => #push (IVT . const I)
-    rule FVT:FValType . const F:Float => #push (FVT . const F)
+```
+
+### Unary Operators
+
+When a unary operator is the next instruction, `#eval<T>UnOp` will be called on the operator and its arguments.
+
+```
+    syntax UnOp ::= IUnOp
+                  | FUnOp
+ // ---------------------
+
+    syntax Instr ::= IValType "." IUnOp
+                   | FValType "." FUnOp
+ // -----------------------------------
+
+    syntax Val ::= #evalIUnOp ( Instr , Int   ) [function]
+                 | #evalFUnOp ( Instr , Float ) [function]
+ // ------------------------------------------------------
+```
+
+### Binary Operators
+
+When a binary operator is the next instruction, `#eval<T>BinOp` will be called on the operator and its two arguments.
+
+```k
+    syntax BinOp ::= IBinOp
+ //                | FBinOp
+ // -----------------------
+
+    syntax Instr ::= IValType "." IBinOp
+ //                | FValType "." FBinOp
+ // ------------------------------------
+
+    syntax Val ::= #evalIBinOp ( Instr , Int   , Int   ) [function]
+ //              | #evalFBinOp ( Instr , Float , Float ) [function]
+ // ---------------------------------------------------------------
 endmodule
 ```
 
