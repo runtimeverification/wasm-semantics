@@ -7,6 +7,18 @@ require "domains.k"
 
 module WASM-DATA
     imports DOMAINS
+```
+
+### Special Powers
+
+$2^32$ and $2^64$ are used often enough to warrant providing macros for them.
+
+```k
+    syntax Int ::= "#pow32" [function] /* 2 ^Int 32 */
+                 | "#pow64" [function] /* 2 ^Int 64 */
+ // --------------------------------------------------
+    rule #pow32 => 4294967296           [macro]
+    rule #pow64 => 18446744073709551616 [macro]
 
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
