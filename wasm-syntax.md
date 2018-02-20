@@ -19,31 +19,43 @@ $2^32$ and $2^64$ are used often enough to warrant providing macros for them.
  // --------------------------------------------------
     rule #pow32 => 4294967296           [macro]
     rule #pow64 => 18446744073709551616 [macro]
+```
 
+### Values
+
+WASM values are either integers or floating-point numbers, of 32- or 64-bit widths.
+First, the type of values is built, then values annotated with their types are provided.
+
+```k
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
     syntax  ValType ::= IValType | FValType
+ // ---------------------------------------
 
-    syntax Type ::= ValType
- // -----------------------
+    syntax IVal ::= "<" IValType ">" Int
+    syntax FVal ::= "<" FValType ">" Float
+    syntax  Val ::= IVal | FVal
+ // ---------------------------
+```
 
-    syntax Instr ::= "(" Instr ")" [bracket]
+The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
+
+```k
+    syntax IVal ::= #chop ( IVal ) [function]
+ // -----------------------------------------
+    rule #chop(< i32 > N) => < i32 > (N modInt #pow32)
+    rule #chop(< i64 > N) => < i64 > (N modInt #pow64)
+```
+
+### Stack Machine Data
+
+WASM is a stack-machine, so here we provide the stack to operate over.
+
+```k
+    syntax StackItem ::= Val
+    syntax Stack     ::= ".Stack"
+                       | StackItem ":" Stack
  // ----------------------------------------
-
-    syntax Instrs ::= List{Instr, ""}
- // ---------------------------------
-    rule I:Instr IS:Instrs => I ~> IS
-
-    syntax Stack ::= ".Stack"
-                   | StackItem ":" Stack
- // ------------------------------------
-
-    syntax StackItem ::= Instr
- // --------------------------
-
-    syntax InternalInstr ::= "#push" StackItem
-    syntax         Instr ::= InternalInstr
- // --------------------------------------
 endmodule
 ```
 
