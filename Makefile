@@ -81,7 +81,8 @@ test: interactive-test
 
 ### Passing Tests
 
-passing-test: tests/interactive/constants.wast.test
+passing-test: tests/interactive/constants.wast.test \
+			  tests/interactive/arithmetic.wast.test
 
 ### Interactive Tests
 
@@ -89,5 +90,5 @@ interactive_tests:=$(wildcard tests/interactive/*.wast)
 
 interactive-test: $(interactive_tests:=.test)
 
-tests/interactive/%.test: tests/interactive/% build
+tests/interactive/%.test: tests/interactive/%
 	$(TEST) $<
