@@ -4,6 +4,7 @@
 build_dir:=$(CURDIR)/.build
 defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
+pandoc_tangle_submodule:=$(build_dir)/pandoc-tangle
 
 .PHONY: build deps ocaml-deps defn test passing-test interactive-test
 
@@ -18,13 +19,17 @@ clean:
 k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
 pkg_config_local:=$(build_dir)/local/lib/pkgconfig
 
-deps: $(k_submodule)/make.timestamp ocaml-deps
+deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
 
 $(k_submodule)/make.timestamp:
 	git submodule update --init -- $(k_submodule)
 	cd $(k_submodule) \
 		&& mvn package -q -DskipTests
 	touch $(k_submodule)/make.timestamp
+
+$(pandoc_tangle_submodule)/make.timestamp:
+	git submodule update --init -- $(pandoc_tangle_submodule)
+	touch $(pandoc_tangle_submodule)/make.timestamp
 
 ocaml-deps:
 	opam init --quiet --no-setup
@@ -44,13 +49,15 @@ build: $(defn_dir)/wasm-kompiled/interpreter
 
 k_files:=wasm.k wasm-syntax.k
 defn_files:=$(patsubst %, $(defn_dir)/%, $(k_files))
+tangler:=$(pandoc_tangle_submodule)/tangle.lua
 
 defn: $(defn_files)
 
 $(defn_dir)/%.k: %.md
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
-	pandoc --from markdown --to tangle.lua --metadata=code:k $< > $@
+	export LUA_PATH="$(pandoc_tangle_submodule)/?.lua;;" \
+		&& pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
 # OCAML Backend
 
