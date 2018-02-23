@@ -141,9 +141,15 @@ A large portion of the available opcodes are pure arithmetic.
     rule #evalIBinOp(TYPE . sub, I1, I2) => #chop(< TYPE > (I1 -Int I2))
     rule #evalIBinOp(TYPE . mul, I1, I2) => #chop(< TYPE > (I1 *Int I2))
 
-    syntax IBinOp ::= "div_u" | "div_s"
-                    | "rem_u" | "rem_s"
+    syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
+    rule #evalIBinOp(TYPE . div_u, I1, I2) => #chop(< TYPE > (I1 /Int I2)) requires I2 =/=Int 0
+    rule #evalIBinOp(TYPE . rem_u, I1, I2) => #chop(< TYPE > (I1 %Int I2)) requires I2 =/=Int 0
+```
+
+**TODO**: Signed variants.
+
+```k
 endmodule
 ```
 
