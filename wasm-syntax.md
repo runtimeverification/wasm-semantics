@@ -162,6 +162,16 @@ Bitwise Operations
 
 **TODO**: `shl`, `shr_u`, `shr_s`, `rotl`, `rotr`, `clz`, `ctz`, `popcnt`.
 
+Comparison Operations
+---------------------
+
+```k
+    syntax IUnOp ::= "eqz"
+ // ----------------------
+    rule #evalIUnOp(TYPE . eqz, I1) => < TYPE > 1 requires I1 ==Int 0
+    rule #evalIUnOp(TYPE . eqz, I1) => < TYPE > 0 requires I1 =/=Int 0
+```
+
 ```k
 endmodule
 ```
