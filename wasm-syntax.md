@@ -95,17 +95,17 @@ Constants do not need an evaluation function.
 
 When a unary operator is the next instruction, `#eval<T>UnOp` will be called on the operator and its arguments.
 
-```
+```k
     syntax UnOp ::= IUnOp
-                  | FUnOp
+ //               | FUnOp
  // ---------------------
 
     syntax Instr ::= IValType "." IUnOp
-                   | FValType "." FUnOp
+ //                | FValType "." FUnOp
  // -----------------------------------
 
     syntax Val ::= #evalIUnOp ( Instr , Int   ) [function]
-                 | #evalFUnOp ( Instr , Float ) [function]
+ //              | #evalFUnOp ( Instr , Float ) [function]
  // ------------------------------------------------------
 ```
 

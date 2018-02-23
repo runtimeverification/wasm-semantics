@@ -22,6 +22,11 @@ module WASM
     rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > VAL : STACK </stack>
     rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL : STACK </stack>
 
+    rule <k> (ITYPE . UOP:IUnOp => .) ... </k>
+         <stack> < ITYPE > SI1                : STACK
+              => #evalIUnOp(ITYPE . UOP, SI1) : STACK
+         </stack>
+
     rule <k> (ITYPE . BOP:IBinOp => .) ... </k>
          <stack> < ITYPE > SI1 : < ITYPE > SI2        : STACK
               => #evalIBinOp(ITYPE . BOP , SI1 , SI2) : STACK
