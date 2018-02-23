@@ -148,6 +148,18 @@ A large portion of the available opcodes are pure arithmetic.
 ```
 
 **TODO**: Signed variants.
+**TODO**: Represent NaN.
+
+Bitwise Operations
+------------------
+
+```k
+    syntax IBinOp ::= "and" | "or" | "xor"
+ // --------------------------------------
+    rule #evalIBinOp(TYPE . and, I1, I2) => #chop(< TYPE > (I1 &Int   I2))
+    rule #evalIBinOp(TYPE . or,  I1, I2) => #chop(< TYPE > (I1 |Int   I2))
+    rule #evalIBinOp(TYPE . xor, I1, I2) => #chop(< TYPE > (I1 xorInt I2))
+```
 
 ```k
 endmodule
