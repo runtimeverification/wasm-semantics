@@ -147,8 +147,7 @@ A large portion of the available opcodes are pure arithmetic.
     rule #evalIBinOp(TYPE . rem_u, I1, I2) => #chop(< TYPE > (I1 %Int I2)) requires I2 =/=Int 0
 ```
 
-**TODO**: Signed variants.
-**TODO**: Represent NaN.
+**TODO**: `NaN`, `div_s`, `rem_s`.
 
 Bitwise Operations
 ------------------
@@ -160,6 +159,8 @@ Bitwise Operations
     rule #evalIBinOp(TYPE . or,  I1, I2) => #chop(< TYPE > (I1 |Int   I2))
     rule #evalIBinOp(TYPE . xor, I1, I2) => #chop(< TYPE > (I1 xorInt I2))
 ```
+
+**TODO**: `shl`, `shr_u`, `shr_s`, `rotl`, `rotr`, `clz`, `ctz`, `popcnt`.
 
 ```k
 endmodule
