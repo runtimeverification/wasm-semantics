@@ -170,6 +170,13 @@ Comparison Operations
  // ----------------------
     rule #evalIUnOp(TYPE . eqz, I1) => < TYPE > 1 requires I1 ==Int 0
     rule #evalIUnOp(TYPE . eqz, I1) => < TYPE > 0 requires I1 =/=Int 0
+
+    syntax IBinOp ::= "eq" | "ne"
+ // -----------------------------
+    rule #evalIBinOp(TYPE . eq, I1, I2) => < TYPE > 1 requires I1 ==Int  I2
+    rule #evalIBinOp(TYPE . eq, I1, I2) => < TYPE > 0 requires I1 =/=Int I2
+    rule #evalIBinOp(TYPE . ne, I1, I2) => < TYPE > 1 requires I1 =/=Int I2
+    rule #evalIBinOp(TYPE . ne, I1, I2) => < TYPE > 0 requires I1 ==Int  I2
 ```
 
 ```k
