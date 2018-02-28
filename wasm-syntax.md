@@ -45,6 +45,15 @@ First, the type of values is built, then values annotated with their types are p
  // ---------------------------
 ```
 
+The `#width` function returns the bit-width of a given `IValType`.
+
+```k
+    syntax Int ::= #width ( IValType ) [function]
+ // ---------------------------------------------
+    rule #width(i32) => 32
+    rule #width(i64) => 64
+```
+
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
 
 ```k
