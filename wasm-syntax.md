@@ -13,6 +13,9 @@ module WASM-DATA
 
 $2^32$ and $2^64$ are used often enough to warrant providing macros for them.
 
+**TODO**: Offer `#pow : IValType -> Int` and `#pow1 : IValType -> Int` function/macros.
+          Would simplify `#chop`, `#signed`, `div_s`, and `rem_s`.
+
 ```k
     syntax Int ::= "#pow31" [function] /* 2 ^Int 31 */
                  | "#pow32" [function] /* 2 ^Int 32 */
