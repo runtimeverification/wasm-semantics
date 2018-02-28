@@ -1,48 +1,56 @@
-# A Prototype Formal Semantics of WebAssembly in K
+Semantics of WebAssembly (WASM) in K
+====================================
 
-This repository presents a prototype formal semantics of [WebAssembly](https://github.com/WebAssembly/design/blob/master/README.md) based on the [prototype ML interpreter](https://github.com/WebAssembly/spec/tree/master/ml-proto). Note that the language specification is still under development and expected to change, and this prototype semantics is to demonstrate the feasibility of having a formal semantics as (a supplement of) the language specification.
+This repository presents a prototype formal semantics of [WebAssembly].
+Currently only rudimentary opcodes are supported, including simple arithmetic and stack operations.
 
-Currently, as a quick draft, the semantics specifies most of language constructs, as well as basic memory and arithmetic operations. Being executable, the semantics can run test programs, [fac.wasm](test/fac.wasm) and [memory.wasm](test/memory.wasm), provided by the prototype ML interpreter (albeit with minor modification), with which we will try to keep in sync.
+Building
+========
 
-Details of current limitations and minor syntactic modifications (for quick prototyping) are following:
- * Semantics
-  * `switch`, `dispatch` and `table` are not specified yet
-  * currently only `int32` is specified, thus no type conversion is specified yet
- * Syntax
-  * comment syntax `//` is used instead of `;;`
-  * explicit function declaration components: `params`, `result`, and `local`
+System Dependencies
+-------------------
 
+The following are needed for building/running KWASM:
 
+-   [Pandoc >= 1.17](https://pandoc.org) is used to generate the `*.k` files from the `*.md` files.
+-   GNU [Bison](https://www.gnu.org/software/bison/), [Flex](https://github.com/westes/flex), and [Autoconf](http://www.gnu.org/software/autoconf/).
+-   GNU [libmpfr](http://www.mpfr.org/) and [libtool](https://www.gnu.org/software/libtool/).
+-   Java 8 JDK (eg. [OpenJDK](http://openjdk.java.net/))
+-   [Opam](https://opam.ocaml.org/doc/Install.html), **important**: Ubuntu users prior to 15.04 **must** build from source, as the Ubuntu install for 14.10 and prior is broken.
+    `opam repository` also requires `rsync`.
 
-## How to Run Semantics
+On Ubuntu >= 15.04 (for example):
 
-### 1. Install K
-
-This semantics is compatible with the latest K framework. 
-See http://kframework.org for download and installation details.
-
-
-
-### 2. Compile semantics
-
-Currently, the semantics needs to be adjusted to work around a parsing issue in K framework that will be fixed in the upcoming K 4.0 release. To adjust and compile the semantics:
-```
-$ patch -p1 <wasm.k.patch
-$ kompile --kore wasm.k
+```sh
+sudo apt-get install make gcc maven openjdk-8-jdk flex opam pkg-config libmpfr-dev autoconf libtool pandoc zlib1g-dev
 ```
 
-### 3. Run semantics
+To run proofs, you will also need [Z3](https://github.com/Z3Prover/z3) prover; on Ubuntu:
 
-You can run a program:
+```sh
+sudo apt-get install z3
 ```
-$ krun --kore <pgm>.wasm
+
+Installing/Building
+-------------------
+
+After installing the above dependencies, the following command will build submodule dependencies and then KWASM:
+
+```sh
+make deps
+make build
 ```
-For example,
+
+Testing
+-------
+
+The target `passing-test` contains all the currently passing tests.
+
+```sh
+make passing-test
 ```
-$ krun --kore test/fac.wasm
-$ krun --kore test/memory.wasm
-```
-By default, `krun` prints out the final configuration (i.e., program state). To suppress the output, use `--output none` option:
-```
-$ krun --kore --output none <pgm>.wasm
-```
+
+Resources
+=========
+
+[WebAssembly]: <https://github.com/WebAssembly/design>
