@@ -90,6 +90,7 @@ test: interactive-test
 
 passing-test: tests/interactive/constants.wast.test \
 			  tests/interactive/arithmetic.wast.test \
+			  tests/interactive/bitwise.wast.test \
 			  tests/interactive/comparison.wast.test
 
 ### Interactive Tests
