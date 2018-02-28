@@ -221,9 +221,14 @@ Bitwise Operations
     rule #evalIBinOp(TYPE . shr_u, I1, I2) =>       < TYPE > I1 >>Int (I2 %Int #width(TYPE))
 
     rule #evalIBinOp(TYPE . shr_s, I1, I2) => < TYPE > #unsigned(TYPE, #signed(TYPE, I1) >>Int (I2 %Int #width(TYPE)))
+
+    syntax IBinOp ::= "rotl" | "rotr"
+ // ---------------------------------
+    rule #evalIBinOp(TYPE . rotl, I1, I2) => #chop(< TYPE > (I1 <<Int (I2 %Int #width(TYPE))) +Int (I1 >>Int (#width(TYPE) -Int (I2 %Int #width(TYPE)))))
+    rule #evalIBinOp(TYPE . rotr, I1, I2) => #chop(< TYPE > (I1 >>Int (I2 %Int #width(TYPE))) +Int (I1 <<Int (#width(TYPE) -Int (I2 %Int #width(TYPE)))))
 ```
 
-**TODO**: `rotl`, `rotr`, `clz`, `ctz`, `popcnt`.
+**TODO**: `clz`, `ctz`, `popcnt`.
 
 Comparison Operations
 ---------------------
