@@ -166,8 +166,8 @@ A large portion of the available opcodes are pure arithmetic.
 
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule #evalIBinOp(TYPE . div_u, I1, I2) => #chop(< TYPE > (I1 /Int I2)) requires I2 =/=Int 0
-    rule #evalIBinOp(TYPE . rem_u, I1, I2) => #chop(< TYPE > (I1 %Int I2)) requires I2 =/=Int 0
+    rule #evalIBinOp(TYPE . div_u, I1, I2) => < TYPE > (I1 /Int I2) requires I2 =/=Int 0
+    rule #evalIBinOp(TYPE . rem_u, I1, I2) => < TYPE > (I1 %Int I2) requires I2 =/=Int 0
 ```
 
 **TODO**: `NaN`, `div_s`, `rem_s`.
