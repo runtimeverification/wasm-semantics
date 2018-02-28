@@ -14,10 +14,14 @@ module WASM-DATA
 $2^32$ and $2^64$ are used often enough to warrant providing macros for them.
 
 ```k
-    syntax Int ::= "#pow32" [function] /* 2 ^Int 32 */
+    syntax Int ::= "#pow31" [function] /* 2 ^Int 31 */
+                 | "#pow32" [function] /* 2 ^Int 32 */
+                 | "#pow63" [function] /* 2 ^Int 63 */
                  | "#pow64" [function] /* 2 ^Int 64 */
  // --------------------------------------------------
+    rule #pow31 => 2147483648           [macro]
     rule #pow32 => 4294967296           [macro]
+    rule #pow63 => 9223372036854775808  [macro]
     rule #pow64 => 18446744073709551616 [macro]
 ```
 
