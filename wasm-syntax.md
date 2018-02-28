@@ -82,6 +82,17 @@ Functions `#signed` and `#unsigned` allow for easier operation on twos-complemen
     rule #unsigned(i64, N) => N             requires 0 <=Int N
 ```
 
+### Boolean Interpretation
+
+Function `#bool` converts a `Bool` into an `Int`.
+
+```k
+    syntax Int ::= #bool ( Bool ) [function]
+ // ----------------------------------------
+    rule #bool( B:Bool ) => 1 requires B
+    rule #bool( B:Bool ) => 0 requires notBool B
+```
+
 ### Stack Machine Data
 
 WASM is a stack-machine, so here we provide the stack to operate over.
