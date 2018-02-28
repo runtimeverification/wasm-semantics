@@ -89,7 +89,8 @@ test: interactive-test
 ### Passing Tests
 
 passing-test: tests/interactive/constants.wast.test \
-			  tests/interactive/arithmetic.wast.test
+			  tests/interactive/arithmetic.wast.test \
+			  tests/interactive/comparison.wast.test
 
 ### Interactive Tests
 
