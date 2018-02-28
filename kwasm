@@ -10,11 +10,7 @@ progress() { echo "== $@" ; }
 die()      { echo -e "FATAL:" "$@" >&2 ; exit 1 ; }
 
 pretty_diff() {
-    if type colordiff >/dev/null 2>&1; then
-        colordiff -u -b "$@"
-    else
-        diff -u -b "$@"
-    fi
+    git --no-pager diff --no-index --word-diff "$@"
 }
 
 # Environment Setup
@@ -48,8 +44,10 @@ run_test() {
     test_file="$1"; shift
     case "$test_file" in
         *interactive/*) [[ -f "$test_file.out" ]] && output_expected_file="$test_file.out"
-                        ( pretty_diff --label expected <(cat "$output_expected_file") \
-                                      --label actual   <(run_krun "$test_file")
+                        ( output_file="$(mktemp output.XXXXXX)"
+                          trap "rm -rf $output_file" INT TERM EXIT
+                          run_krun "$test_file" > "$output_file"
+                          pretty_diff "$output_expected_file" "$output_file"
                         )
                         ;;
         *             ) die "Do not know how to run '$test_file' as a test."
