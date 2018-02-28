@@ -51,6 +51,25 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
     rule #chop(< i64 > N) => < i64 > (N modInt #pow64)
 ```
 
+### Signed Interpretation
+
+Functions `#signed` and `#unsigned` allow for easier operation on twos-complement numbers.
+
+```k
+    syntax Int ::= #signed   ( IValType , Int ) [function]
+                 | #unsigned ( IValType , Int ) [function]
+ // ------------------------------------------------------
+    rule #signed(i32, N) => N             requires 0      <=Int N andBool N <Int #pow31
+    rule #signed(i32, N) => N -Int #pow32 requires #pow31 <=Int N andBool N <Int #pow32
+    rule #signed(i64, N) => N             requires 0      <=Int N andBool N <Int #pow63
+    rule #signed(i64, N) => N -Int #pow64 requires #pow63 <=Int N andBool N <Int #pow64
+
+    rule #unsigned(i32, N) => N +Int #pow32 requires N <Int  0
+    rule #unsigned(i32, N) => N             requires 0 <=Int N
+    rule #unsigned(i64, N) => N +Int #pow64 requires N <Int  0
+    rule #unsigned(i64, N) => N             requires 0 <=Int N
+```
+
 ### Stack Machine Data
 
 WASM is a stack-machine, so here we provide the stack to operate over.
