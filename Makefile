@@ -5,6 +5,7 @@ build_dir:=$(CURDIR)/.build
 defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
 pandoc_tangle_submodule:=$(build_dir)/pandoc-tangle
+k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
 
 LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
@@ -18,9 +19,6 @@ clean:
 
 # Build Dependencies (K Submodule)
 # --------------------------------
-
-k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
-pkg_config_local:=$(build_dir)/local/lib/pkgconfig
 
 deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
 
