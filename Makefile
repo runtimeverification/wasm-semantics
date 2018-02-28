@@ -6,6 +6,9 @@ defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
 pandoc_tangle_submodule:=$(build_dir)/pandoc-tangle
 
+LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
+export LUA_PATH
+
 .PHONY: build deps ocaml-deps defn test passing-test interactive-test
 
 all: build
@@ -56,8 +59,7 @@ defn: $(defn_files)
 $(defn_dir)/%.k: %.md
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
-	export LUA_PATH="$(pandoc_tangle_submodule)/?.lua;;" \
-		&& pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
+	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
 # OCAML Backend
 
