@@ -76,8 +76,8 @@ case "$run_command" in
 
        # Running
        # -------
-       $0 run   <pgm>   Run a single EVM program
-       $0 debug <pgm>   Run a single EVM program in the debugger
+       $0 run   <pgm>   Run a single WASM program
+       $0 debug <pgm>   Run a single WASM program in the debugger
 
        Note: <pgm> is a path to a file containing a WASM program.
 
