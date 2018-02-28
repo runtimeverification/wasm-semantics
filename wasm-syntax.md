@@ -248,6 +248,14 @@ Comparison Operations
 
     rule #evalIBinOp(TYPE . lt_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) <Int #signed(TYPE, I2))
     rule #evalIBinOp(TYPE . gt_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) >Int #signed(TYPE, I2))
+
+    syntax IBinOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
+ // ---------------------------------------------------
+    rule #evalIBinOp(TYPE . le_u, I1, I2) => < TYPE > #bool(I1 <=Int I2)
+    rule #evalIBinOp(TYPE . ge_u, I1, I2) => < TYPE > #bool(I1 >=Int I2)
+
+    rule #evalIBinOp(TYPE . le_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) <=Int #signed(TYPE, I2))
+    rule #evalIBinOp(TYPE . ge_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) >=Int #signed(TYPE, I2))
 ```
 
 ```k
