@@ -42,19 +42,14 @@ run_kdebug() {
 
 run_test() {
     test_file="$1"; shift
-    case "$test_file" in
-        *interactive/*) output_expected_file=$(dirname "$test_file")/success.out
-                        [[ -f "$output_expected_file" ]] \
-                            || die "Expected output file '$output_expected_file' does not exist..."
-                        ( output_file="$(mktemp output.XXXXXX)"
-                          trap "rm -rf $output_file" INT TERM EXIT
-                          run_krun "$test_file" > "$output_file"
-                          pretty_diff "$output_expected_file" "$output_file"
-                        )
-                        ;;
-        *             ) die "Do not know how to run '$test_file' as a test."
-                        ;;
-    esac
+    output_expected_file=$(dirname "$test_file")/success.out
+    [[ -f "$output_expected_file" ]] \
+        || die "Expected output file '$output_expected_file' does not exist..."
+    ( output_file="$(mktemp output.XXXXXX)"
+      trap "rm -rf $output_file" INT TERM EXIT
+      run_krun "$test_file" > "$output_file"
+      pretty_diff "$output_expected_file" "$output_file"
+    )
 }
 
 # Main

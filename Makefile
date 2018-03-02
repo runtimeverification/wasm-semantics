@@ -10,7 +10,8 @@ k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
 LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
-.PHONY: build deps ocaml-deps defn test passing-test interactive-test
+.PHONY: build deps ocaml-deps defn \
+		test test-stack
 
 all: build
 
@@ -84,20 +85,13 @@ $(defn_dir)/wasm-kompiled/interpreter: $(defn_files) deps
 
 TEST=./kwasm test
 
-test: interactive-test
-
-### Passing Tests
-
-passing-test: tests/interactive/constants.wast.test \
-			  tests/interactive/arithmetic.wast.test \
-			  tests/interactive/bitwise.wast.test \
-			  tests/interactive/comparison.wast.test
-
-### Interactive Tests
-
-interactive_tests:=$(wildcard tests/interactive/*.wast)
-
-interactive-test: $(interactive_tests:=.test)
-
-tests/interactive/%.test: tests/interactive/%
+tests/%.test: tests/%
 	$(TEST) $<
+
+test: test-stack
+
+### Stack Tests
+
+stack_tests:=$(wildcard tests/stack/*.wast)
+
+test-stack: $(stack_tests:=.test)
