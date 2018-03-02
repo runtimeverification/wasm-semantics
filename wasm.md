@@ -31,6 +31,19 @@ module WASM
          <stack> < ITYPE > SI1 : < ITYPE > SI2        : STACK
               => #evalIBinOp(ITYPE . BOP , SI1 , SI2) : STACK
          </stack>
+```
+
+For testing, we augment the semantics with some helpers.
+These functions make assertions about the state of the `<stack>` cell.
+
+```k
+    syntax Instr ::= "#assertTopStack" StackItem String
+                   | "#assertStack"    Stack     String
+ // ---------------------------------------------------
+    rule <k> #assertTopStack S _ => . ... </k> <stack> S : STACK => STACK </stack>
+
+    rule <k> #assertStack .Stack      _   => .                                               ... </k>
+    rule <k> #assertStack (S : STACK) STR => #assertTopStack S STR ~> #assertStack STACK STR ... </k>
 endmodule
 ```
 
