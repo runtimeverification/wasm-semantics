@@ -1,3 +1,18 @@
+i32.const 20
+i32.const 18
+i32.and
+#assertTopStack < i32 > 16 "and"
+
+i32.const 20
+i32.const 18
+i32.or
+#assertTopStack < i32 > 22 "or"
+
+i32.const 20
+i32.const 18
+i32.xor
+#assertTopStack < i32 > 6 "xor"
+
 i32.const 2
 i32.const 1
 i32.shl

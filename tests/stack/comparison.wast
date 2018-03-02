@@ -1,3 +1,31 @@
+i32.const 0
+i32.eqz
+#assertTopStack < i32 > 1 "eqz1"
+
+i32.const 3
+i32.eqz
+#assertTopStack < i32 > 0 "eqz2"
+
+i32.const 3
+i32.const 3
+i32.eq
+#assertTopStack < i32 > 1 "eq1"
+
+i32.const 3
+i32.const 4
+i32.eq
+#assertTopStack < i32 > 0 "eq2"
+
+i32.const 3
+i32.const 3
+i32.ne
+#assertTopStack < i32 > 0 "ne1"
+
+i32.const 3
+i32.const 4
+i32.ne
+#assertTopStack < i32 > 1 "ne2"
+
 i32.const 32
 i32.const 2
 i32.lt_u

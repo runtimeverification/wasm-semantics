@@ -1,3 +1,6 @@
+// Integers
+// --------
+
 i32.const 3
 #assertTopStack < i32 > 3 "i32 1"
 
@@ -6,6 +9,9 @@ i32.const 3
 
 i64.const 71
 #assertTopStack < i64 > 71 "i64"
+
+// Floating point
+// --------------
 
 f32.const 3.245
 #assertTopStack < f32 > 3.245 "f32"
@@ -26,3 +32,24 @@ f32.const 3.245
 // (f64.const 0x1.da21c460a6f44p+52)
 // (f64.const 0x1.60859d2e7714ap-321)
 // (f64.const 0x1.e63f1b7b660e1p-302)
+
+// Helper conversions
+// ------------------
+
+i32.const #unsigned(i32, #signed(i32, 0))
+#assertTopStack < i32 > 0 "#unsigned . #signed 1"
+
+i32.const #unsigned(i32, #signed(i32, #pow31))
+#assertTopStack < i32 > #pow31 "#unsigned . #signed 2"
+
+i32.const #unsigned(i32, #signed(i32, #pow32 -Int 1))
+#assertTopStack < i32 > #pow32 -Int 1 "#unsigned . #signed 3"
+
+i64.const #unsigned(i64, #signed(i64, 0))
+#assertTopStack < i64 > 0 "#unsigned . #signed 4"
+
+i64.const #unsigned(i64, #signed(i64, #pow63))
+#assertTopStack < i64 > #pow63 "#unsigned . #signed 5"
+
+i64.const #unsigned(i64, #signed(i64, #pow64 -Int 1))
+#assertTopStack < i64 > #pow64 -Int 1 "#unsigned . #signed 6"
