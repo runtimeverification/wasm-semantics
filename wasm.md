@@ -19,8 +19,8 @@ module WASM
       <k> $PGM:Instrs </k>
       <stack> .Stack </stack>
 
-    rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > VAL : STACK </stack>
-    rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL : STACK </stack>
+    rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > #unsigned(ITYPE, VAL) : STACK </stack>
+    rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL                   : STACK </stack>
 
     rule <k> (ITYPE . UOP:IUnOp => .) ... </k>
          <stack> < ITYPE > SI1                : STACK
@@ -40,7 +40,9 @@ These functions make assertions about the state of the `<stack>` cell.
     syntax Instr ::= "#assertTopStack" StackItem String
                    | "#assertStack"    Stack     String
  // ---------------------------------------------------
-    rule <k> #assertTopStack S _ => . ... </k> <stack> S : STACK => STACK </stack>
+    rule <k> #assertTopStack S                      _ => . ... </k> <stack> S              : STACK => STACK </stack>
+    rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <stack> < ITYPE > VAL' : STACK => STACK </stack>
+      requires #unsigned(ITYPE, VAL) ==Int VAL'
 
     rule <k> #assertStack .Stack      _   => .                                               ... </k>
     rule <k> #assertStack (S : STACK) STR => #assertTopStack S STR ~> #assertStack STACK STR ... </k>

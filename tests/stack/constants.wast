@@ -10,6 +10,18 @@ i32.const 3
 i64.const 71
 #assertTopStack < i64 > 71 "i64"
 
+i32.const #unsigned(i32, -5)
+#assertTopStack < i32 > #pow32 -Int 5 "i32 manual unsigned"
+
+i32.const #pow32 -Int 5
+#assertTopStack < i32 > -5 "i32 manual unsigned"
+
+i32.const -5
+#assertTopStack < i32 > #unsigned(i32, -5) "i32 signed constant"
+
+i32.const #unsigned(i32, -5)
+#assertTopStack < i32 > -5 "i32 signed assert"
+
 // Floating point
 // --------------
 
