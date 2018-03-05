@@ -45,7 +45,7 @@ run_test() {
     output_expected_file=$(dirname "$test_file")/success.out
     [[ -f "$output_expected_file" ]] \
         || die "Expected output file '$output_expected_file' does not exist..."
-    ( output_file="$(mktemp output.XXXXXX)"
+    ( output_file="$(mktemp $test_file.out.XXXXXX)"
       trap "rm -rf $output_file" INT TERM EXIT
       run_krun "$test_file" > "$output_file"
       pretty_diff "$output_expected_file" "$output_file"
