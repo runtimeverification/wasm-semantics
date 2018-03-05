@@ -194,12 +194,12 @@ A large portion of the available opcodes are pure arithmetic.
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
-    rule #evalIBinOp(i32 . div_s, I1, I2) => < i32 > #unsigned(i32, #signed(i32, I1) divInt #signed(i32, I2))
+    rule #evalIBinOp(i32 . div_s, I1, I2) => < i32 > #unsigned(i32, #signed(i32, I1) /Int #signed(i32, I2))
       requires I2 =/=Int 0 andBool (I1 =/=Int #pow31 orBool (I2 =/=Int #pow32 -Int 1))
-    rule #evalIBinOp(i64 . div_s, I1, I2) => < i64 > #unsigned(i64, #signed(i64, I1) divInt #signed(i64, I2))
+    rule #evalIBinOp(i64 . div_s, I1, I2) => < i64 > #unsigned(i64, #signed(i64, I1) /Int #signed(i64, I2))
       requires I2 =/=Int 0 andBool (I1 =/=Int #pow63 orBool (I2 =/=Int #pow64 -Int 1))
 
-    rule #evalIBinOp(TYPE . rem_s, I1, I2) => < TYPE > #unsigned(TYPE, #signed(TYPE, I1) modInt #signed(TYPE, I2))
+    rule #evalIBinOp(TYPE . rem_s, I1, I2) => < TYPE > #unsigned(TYPE, #signed(TYPE, I1) %Int #signed(TYPE, I2))
       requires I2 =/=Int 0
 ```
 

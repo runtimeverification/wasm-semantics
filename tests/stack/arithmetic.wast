@@ -33,14 +33,94 @@ i32.const 15
 i32.rem_u
 #assertTopStack < i32 > 1 "rem_u2"
 
-i32.const 5
-i32.const #pow31 +Int 15
+i32.const 3
+i32.const 10
 i32.div_s
-#assertTopStack < i32 > 0 "div_s"
+#assertTopStack < i32 > 3 "i32.div_s 1"
 
-i32.const 7
-i32.const #pow31 +Int 15
+i32.const 4
+i32.const 10
+i32.div_s
+#assertTopStack < i32 > 2 "i32.div_s 2"
+
+i32.const 5
+i32.const 10
+i32.div_s
+#assertTopStack < i32 > 2 "div_s"
+
+// The following tests were generated using the reference OCaml WASM interpreter.
+
+i32.const 3
+i32.const 10
 i32.rem_s
-#assertTopStack < i32 > 0 "rem_s"
+#assertTopStack < i32 > 1 "i32.rem_s 1"
 
-// TODO: Add more tests of div_s/rem_s
+i32.const 4
+i32.const 10
+i32.rem_s
+#assertTopStack < i32 > 2 "i32.rem_s 2"
+
+i32.const 5
+i32.const 10
+i32.rem_s
+#assertTopStack < i32 > 0 "i32.rem_s 3"
+
+i32.const 3
+i32.const -10
+i32.div_s
+#assertTopStack < i32 > -3 "i32.div_s 3"
+
+i32.const 4
+i32.const -10
+i32.div_s
+#assertTopStack < i32 > -2 "i32.div_s 4"
+
+i32.const 5
+i32.const -10
+i32.div_s
+#assertTopStack < i32 > -2 "i32.div_s 5"
+
+i32.const 3
+i32.const -10
+i32.rem_s
+#assertTopStack < i32 > -1 "i32.rem_s 4"
+
+i32.const 4
+i32.const -10
+i32.rem_s
+#assertTopStack < i32 > -2 "i32.rem_s 5"
+
+i32.const 5
+i32.const -10
+i32.rem_s
+#assertTopStack < i32 > 0 "i32.rem_s 6"
+
+i32.const -3
+i32.const -10
+i32.div_s
+#assertTopStack < i32 > 3 "i32.div_s 6"
+
+i32.const -4
+i32.const -10
+i32.div_s
+#assertTopStack < i32 > 2 "i32.div_s 7"
+
+i32.const -5
+i32.const -10
+i32.div_s
+#assertTopStack < i32 > 2 "i32.div_s 8"
+
+i32.const -3
+i32.const -10
+i32.rem_s
+#assertTopStack < i32 > -1 "i32.rem_s 7"
+
+i32.const -4
+i32.const -10
+i32.rem_s
+#assertTopStack < i32 > -2 "i32.rem_s 8"
+
+i32.const -5
+i32.const -10
+i32.rem_s
+#assertTopStack < i32 > 0 "i32.rem_s 9"
