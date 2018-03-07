@@ -52,6 +52,26 @@ The `select` operator picks one of the second or third stack values based on the
          </stack>
 ```
 
+Structured Control Flow
+-----------------------
+
+```k
+    syntax Label ::= "label" VecType "{" Instrs "}" Stack
+ // -----------------------------------------------------
+    rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
+         <stack> STACK => #take(TYPES, STACK) ++ STACK' </stack>
+
+    syntax Instr ::= "block" VecType Instrs "end"
+ // ---------------------------------------------
+    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } STACK ... </k>
+         <stack> STACK => .Stack </stack>
+
+    syntax Instr ::= "br" Int
+ // -------------------------
+    rule <k> br N ~> (I:Instr => .) ... </k>
+    rule <k> br N ~> L:Label => #if N ==Int 0 #then L #else br (N -Int 1) #fi ... </k>
+```
+
 Testing
 -------
 
