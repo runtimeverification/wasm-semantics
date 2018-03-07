@@ -11,7 +11,8 @@ LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
 .PHONY: build deps ocaml-deps defn \
-		test test-stack
+		test test-stack \
+		presentation
 
 all: build
 
@@ -95,3 +96,12 @@ test: test-stack
 stack_tests:=$(wildcard tests/stack/*.wast)
 
 test-stack: $(stack_tests:=.test)
+
+# Presentation
+# ------------
+
+presentation: presentation/presentation.pdf
+
+presentation/%.pdf: presentation/%.md
+	cd presentation \
+		&& pandoc --from markdown --to beamer --output $*.pdf $*.md
