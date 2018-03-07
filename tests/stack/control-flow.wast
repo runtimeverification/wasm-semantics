@@ -74,7 +74,29 @@ block [ i32 i32 ]
     i32.const 6
     br 0
 end
-#assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 3"
+#assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 4"
+
+i32.const 1
+i32.const 2
+block [ i32 ]
+    i32.const 3
+    i32.const 0
+    br_if 0
+    i32.const 4
+    br 0
+end
+#assertStack < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br_if 1 false"
+
+i32.const 1
+i32.const 2
+block [ ]
+    i32.const 3
+    i32.const 1
+    br_if 0
+    i32.const 4
+    br 0
+end
+#assertStack < i32 > 2 : < i32 > 1 : .Stack "br_if 1 true"
 
 // Conditional
 

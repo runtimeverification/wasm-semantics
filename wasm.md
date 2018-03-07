@@ -71,6 +71,11 @@ Structured Control Flow
     rule <k> br N ~> (I:Instr => .) ... </k>
     rule <k> br N ~> L:Label => #if N ==Int 0 #then L #else br (N -Int 1) #fi ... </k>
 
+    syntax Instr ::= "br_if" Int
+ // ----------------------------
+    rule <k> br_if N => #if VAL =/=Int 0 #then br N #else .K #fi ... </k>
+         <stack> < TYPE > VAL : STACK => STACK </stack>
+
     syntax Instr ::= "if" VecType Instrs "else" Instrs "end"
  // --------------------------------------------------------
     rule <k> if VTYPE IS else IS' end
