@@ -28,25 +28,26 @@ $2^32$ and $2^64$ are used often enough to warrant providing macros for them.
     rule #pow64 => 18446744073709551616 [macro]
 ```
 
-### Values
+### Types
 
-WASM values are either integers or floating-point numbers, of 32- or 64-bit widths.
-First, the type of values is built, then values annotated with their types are provided.
+WASM has four basic types, for 32 and 64 bit integers and floats.
+There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax Number ::= Int | Float
- // -----------------------------
-
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
     syntax  ValType ::= IValType | FValType
  // ---------------------------------------
 
-    syntax IVal ::= "<" IValType ">" Int
-    syntax FVal ::= "<" FValType ">" Float
-    syntax  Val ::= "<"  ValType ">" Number
-                  | IVal | FVal
- // ---------------------------
+    syntax ValTypes ::= List{ValType, ""}
+    syntax VecType  ::= "[" ValTypes "]"
+ // ------------------------------------
+
+    syntax FuncType ::= VecType "->" VecType
+ // ----------------------------------------
+
+    syntax Type ::= ".Type" | ValType | VecType | FuncType
+ // ------------------------------------------------------
 ```
 
 The `#width` function returns the bit-width of a given `IValType`.
@@ -56,6 +57,22 @@ The `#width` function returns the bit-width of a given `IValType`.
  // ---------------------------------------------
     rule #width(i32) => 32
     rule #width(i64) => 64
+```
+
+### Values
+
+WASM values are either integers or floating-point numbers, of 32- or 64-bit widths.
+First, the type of values is built, then values annotated with their types are provided.
+
+```k
+    syntax Number ::= Int | Float
+ // -----------------------------
+
+    syntax IVal ::= "<" IValType ">" Int
+    syntax FVal ::= "<" FValType ">" Float
+    syntax  Val ::= "<"  ValType ">" Number
+                  | IVal | FVal
+ // ---------------------------
 ```
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
