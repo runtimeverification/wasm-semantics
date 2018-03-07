@@ -156,6 +156,13 @@ module WASM-BASIC-INSTRUCTIONS
     rule I:Instr IS:Instrs => I ~> IS
 ```
 
+**TODO**: avoid having to duplicate above rules for second position here.
+
+```k
+    rule I:Instr ~> .Instrs            => I
+    rule I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS
+```
+
 Operator Evaluation
 -------------------
 
