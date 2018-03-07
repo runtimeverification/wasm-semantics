@@ -33,6 +33,28 @@ module WASM
          </stack>
 ```
 
+Stack Operations
+----------------
+
+Operator `drop` removes a single item from the `<stack>`.
+The `select` operator picks one of the second or third stack values based on the first.
+
+```k
+    syntax Instr ::= "drop"
+ // -----------------------
+    rule <k> drop => . ... </k> <stack> S1 : STACK => STACK </stack>
+
+    syntax Instr ::= "select"
+ // -------------------------
+    rule <k> select => . ... </k>
+         <stack> < i32 > C : < TYPE > V1:Number : < TYPE > V2:Number : STACK
+              => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : STACK
+         </stack>
+```
+
+Testing
+-------
+
 For testing, we augment the semantics with some helpers.
 These functions make assertions about the state of the `<stack>` cell.
 
