@@ -88,6 +88,11 @@ Structured Control Flow
          ...
          </k>
          <stack> < i32 > VAL : STACK => .Stack </stack>
+
+    syntax Instr ::= "loop" VecType Instrs "end"
+ // --------------------------------------------
+    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } STACK ... </k>
+         <stack> STACK => .Stack </stack>
 ```
 
 Testing
