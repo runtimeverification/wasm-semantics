@@ -107,3 +107,17 @@ if [ i32 ] i32.const 1 else i32.const -1 end
 i32.const 0
 if [ i32 ] i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
+
+// Looping
+// TODO: We need locals before loops become effective.
+// i32.const 0
+// loop [ ]
+//     block [ ]
+//         i32.const 10
+//         i32.eq
+//         br_if 1
+//     end
+//     i32.const 1
+//     i32.add
+// end
+// #assertTopStack < i32 > 10 "loop"
