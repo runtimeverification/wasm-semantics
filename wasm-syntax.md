@@ -34,6 +34,9 @@ WASM values are either integers or floating-point numbers, of 32- or 64-bit widt
 First, the type of values is built, then values annotated with their types are provided.
 
 ```k
+    syntax Number ::= Int | Float
+ // -----------------------------
+
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
     syntax  ValType ::= IValType | FValType
@@ -41,7 +44,8 @@ First, the type of values is built, then values annotated with their types are p
 
     syntax IVal ::= "<" IValType ">" Int
     syntax FVal ::= "<" FValType ">" Float
-    syntax  Val ::= IVal | FVal
+    syntax  Val ::= "<"  ValType ">" Number
+                  | IVal | FVal
  // ---------------------------
 ```
 
