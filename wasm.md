@@ -56,6 +56,10 @@ Structured Control Flow
 -----------------------
 
 ```k
+    syntax Instr ::= "nop"
+ // ----------------------
+    rule <k> nop => . ... </k>
+
     syntax Label ::= "label" VecType "{" Instrs "}" Stack
  // -----------------------------------------------------
     rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
