@@ -123,6 +123,20 @@ WASM is a stack-machine, so here we provide the stack to operate over.
     syntax Stack     ::= ".Stack"
                        | StackItem ":" Stack
  // ----------------------------------------
+```
+
+Operator `_++_` implements an append operator for sort `Stack`.
+Operator `#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
+
+```k
+    syntax Stack ::= Stack "++" Stack           [function]
+                   | #take ( ValTypes , Stack ) [function]
+ // ------------------------------------------------------
+    rule .Stack       ++ STACK' => STACK'
+    rule (SI : STACK) ++ STACK' => SI : (STACK ++ STACK')
+
+    rule #take(.ValTypes,   _)                           => .Stack
+    rule #take(TYPE VTYPES, < TYPE > VAL:Number : STACK) => < TYPE > VAL : #take(VTYPES, STACK)
 endmodule
 ```
 
