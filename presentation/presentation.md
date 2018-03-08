@@ -304,6 +304,8 @@ Example rule:
 1. Let $L$ be the label whose arity is 0 and whose continuation is the start of the loop.
 2. `Enter` the block $\instr^\ast$ with label $L$.
 
+. . .
+
 \vspace{-2em}
 $$
     \LOOP~[t^?]~\instr^\ast~\END
@@ -349,25 +351,32 @@ Design Difference: 1 or 2 Stacks?
 
 ### WASM Specification
 
-Only one stack which mixes values and instructions.
-This makes for somewhat confusing semantics for control flow.
+One stack mixing values and instructions.
 
-For example, when breaking to a label using `br`, the semantics use a meta-level label-context operator.
-The correct label must be found in the context (buried in the stack) so we know how many values to take from the top of the stack.
-See section 4.4.5 of the WASM spec.
+-   Confusing control-flow semantics (with `label`s).
+-   Use meta-level context operator to describe semantics of `br`.
+-   Correct label is buried in the value stack (which we must also access the top of).
+-   Section 4.4.5 of the WASM spec.
 
 . . .
 
 ### KWASM
 
-Uses two stacks, one for values (`<stack>` cell) and one for instructions (`<k>` cell).
-Labels are on instruction stack, so no need for context operator as both stacks can be accessed simultaneously.
+Uses two stacks, values in `<stack>` cell and instructions in `<k>` cell.
+
+-   Can access both cells simultaneously, without backtracking/remembering one stack.
+-   Cleaner semantics, no meta-level context operator needed.
 
 Design Choice: Incremental Semantics
 ------------------------------------
 
-KWASM semantics are given incrementally, so that it is possible to execute program fragments.
-For example, KWASM will happily execute the following (without an enclosing `module`):
+-   KWASM semantics are given incrementally.
+-   Makes it possible to execute program fragments.
+-   Allows users to quickly experiment with WASM using KWASM.
+
+. . .
+
+For example, KWASM will happily execute the following fragment (without an enclosing `module`):
 
 ```wast
     (i32.const 4)
@@ -375,7 +384,12 @@ For example, KWASM will happily execute the following (without an enclosing `mod
     (i32.add)
 ```
 
-Allows users to quickly experiment with WASM using KWASM.
+Early Stage Benefits of KWASM
+-----------------------------
+
+> -   Discovered bugs in spec (one filed on Github, some to come).
+> -   Suggests clearer presentation of control-flow semantics.
+> -   Interpreter allowing direct experimentation with program fragments.
 
 Using KWASM (Psuedo-Demo)
 =========================
