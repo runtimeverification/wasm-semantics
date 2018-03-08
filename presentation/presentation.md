@@ -10,10 +10,10 @@ header-includes:
 Overview
 --------
 
--   Introduction to \K{}
--   KWASM desgin and examples
--   Using KWASM
--   Future directions
+1.  Introduction to \K{}
+2.  KWASM Design
+3.  Using KWASM
+4.  Future Directions
 
 Introduction to \K{}
 ====================
@@ -143,3 +143,101 @@ Using the above grammar and configuration:
          <env>   ...  X |-> SX       ... </env>
          <store> ... SX |-> (V => I) ... </store>
 ```
+
+KWASM Design
+============
+
+WASM Specification
+------------------
+
+Available at <https://github.com/WebAssembly/spec>.
+
+-   Fairly unambiguous[^betterThanEVM].
+-   Well written with procedural description of execution accompanied by small-step semantic rules.
+
+. . .
+
+\newcommand{\instr}{instr}
+\newcommand{\LOOP}{\texttt{loop}}
+\newcommand{\LABEL}{\texttt{label}}
+\newcommand{\END}{\texttt{end}}
+\newcommand{\stepto}{\hookrightarrow}
+
+Example rule:
+
+1. Let $L$ be the label whose arity is 0 and whose continuation is the start of the loop.
+2. `Enter` the block $\instr^\ast$ with label $L$.
+
+\vspace{-2em}
+$$
+    \LOOP~[t^?]~\instr^\ast~\END
+    \quad \stepto \quad
+    \LABEL_0\{\LOOP~[t^?]~\instr^\ast~\END\}~\instr^\ast~\END
+$$
+
+[^betterThanEVM]: At least, better than the [YellowPaper](https://github.com/ethereum/yellowpaper).
+
+Translation to \K{}
+-------------------
+
+### WASM Spec
+
+\vspace{-1em}
+$$
+    \LOOP~[t^?]~\instr^\ast~\END
+    \quad \stepto \quad
+    \LABEL_0\{\LOOP~[t^?]~\instr^\ast~\END\}~\instr^\ast~\END
+$$
+
+. . .
+
+### In \K{}
+
+```k
+    syntax Instr ::= "loop" Type Instrs "end"
+ // -----------------------------------------
+    rule <k> loop TYPE IS end
+          => IS
+          ~> label [ .ValTypes ] {
+                loop TYPE IS end
+             } STACK
+          ...
+         </k>
+         <stack> STACK </stack>
+```
+
+Design Difference: 1 or 2 Stacks?
+---------------------------------
+
+. . .
+
+### WASM Specification
+
+Only one stack which mixes values and instructions.
+This makes for somewhat confusing semantics for control flow.
+
+For example, when breaking to a label using `br`, the semantics use a meta-level label-context operator.
+The correct label must be found in the context (buried in the stack) so we know how many values to take from the top of the stack.
+See section 4.4.5 of the WASM spec.
+
+. . .
+
+### KWASM
+
+Uses two stacks, one for values (`<stack>` cell) and one for instructions (`<k>` cell).
+Labels are on instruction stack, so no need for context operator as both stacks can be accessed simultaneously.
+
+Design Choice: Incremental Semantics
+------------------------------------
+
+KWASM semantics are given incrementally, so that it is possible to execute program fragments.
+For example, KWASM will happily execute the following:
+
+```wast
+    (i32.const 4)
+    (i32.const 5)
+    (i32.add)
+```
+
+This is despite the fact that no enclosing `module` is present.
+This allows users to quickly get to experimenting with WASM using KWASM.
