@@ -380,3 +380,44 @@ KDebug> p
   </stack>
 </generatedTop>
 ```
+
+Future Directions
+=================
+
+Finish KWASM
+------------
+
+The semantics are fairly early-stage.
+
+### In progress
+
+-   Frame/locals semantics, `call*` and `return` opcodes.
+
+### To be done
+
+-   Some bitwise operators.
+-   Everything floating point.
+-   Tables.
+-   Memories.
+-   Modules.
+
+Fork KeWASM
+-----------
+
+-   eWASM adds the gas metering contract to WASM, but otherwise largely leaves the semantics alone.
+-   Could we give a direct semantics to gas metering?
+-   Possibly, perhaps then we could verify that the gas metering contract and the direct gas metering agree.
+
+Verify eWASM Programs
+---------------------
+
+-   KEVM currently has many verified smart contracts at <https://github.com/runtimeverification/verified-smart-contracts>.
+-   We similarly would like to build a repository of verified code using KeWASM.
+
+Conclusion
+==========
+
+Questions?
+----------
+
+Thanks for listening!
