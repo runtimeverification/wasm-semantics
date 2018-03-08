@@ -12,7 +12,7 @@ Overview
 
 1.  Introduction to \K{}
 2.  KWASM Design
-3.  Using KWASM
+3.  Using KWASM (Psuedo-Demo)
 4.  Future Directions
 
 Introduction to \K{}
@@ -241,3 +241,142 @@ For example, KWASM will happily execute the following:
 
 This is despite the fact that no enclosing `module` is present.
 This allows users to quickly get to experimenting with WASM using KWASM.
+
+Using KWASM (Psuedo-Demo)
+=========================
+
+Getting/Building
+----------------
+
+Clone the repository:
+
+```sh
+$ git clone 'https://github.com/kframework/wasm-semantics'
+$ cd wasm-semantics
+```
+
+Build the dependencies, then the KWASM semantics:
+
+```sh
+$ make deps
+$ make build
+```
+
+`kwasm` Script
+--------------
+
+The file `./kwasm` is the main runner for KWASM.
+
+```sh
+$ ./kwasm help
+
+usage: ./kwasm <cmd> <file> <K args>*
+
+    # Running
+    # -------
+    ./kwasm run   <pgm>   Run a single WASM program
+    ./kwasm debug <pgm>   Run a single WASM program in the debugger
+    ...
+```
+
+Running a Program
+-----------------
+
+### WASM Program `pgm1.wast`
+
+```wasm
+(i32.const 4)
+(i32.const 5)
+(i32.add)
+```
+
+### Result of `./kwasm run pgm1.wast`
+
+```k
+<generatedTop>
+  <k>
+    .
+  </k>
+  <stack>
+    < i32 > 9 : .Stack
+  </stack>
+</generatedTop>
+```
+
+Debugging a Program
+-------------------
+
+### Run `./kwasm debug pgm1.wast`
+
+```k
+== debugging: pgm1.wast
+KDebug> s
+1 Step(s) Taken.
+KDebug> p
+<generatedTop>
+  <k>
+    i32 . const 4 ~> i32 . const 5  i32 . add  .Instrs
+  </k>
+  <stack>
+    .Stack
+  </stack>
+</generatedTop>
+```
+
+Debugging a Program (cont.)
+---------------------------
+
+### Take a `s`tep then `p`eek at state
+
+```k
+KDebug> s
+1 Step(s) Taken.
+KDebug> p
+<generatedTop>
+  <k>
+    i32 . const 5  i32 . add  .Instrs
+  </k>
+  <stack>
+    < i32 > 4 : .Stack
+  </stack>
+</generatedTop>
+```
+
+Debugging a Program (cont.)
+---------------------------
+
+### Take a `s`tep then `p`eek at state
+
+```k
+KDebug> s
+1 Step(s) Taken.
+KDebug> p
+<generatedTop>
+  <k>
+    i32 . const 5 ~> i32 . add  .Instrs
+  </k>
+  <stack>
+    < i32 > 4 : .Stack
+  </stack>
+</generatedTop>
+```
+
+Debugging a Program (cont.)
+---------------------------
+
+### Take 10 `s`teps then `p`eek at state
+
+```k
+KDebug> s 10
+Attempted 10 step(s). Took 4 steps(s).
+Final State Reached
+KDebug> p
+<generatedTop>
+  <k>
+    .
+  </k>
+  <stack>
+    < i32 > 9 : .Stack
+  </stack>
+</generatedTop>
+```
