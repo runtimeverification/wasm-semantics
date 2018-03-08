@@ -85,23 +85,6 @@ This would allow correctly parsing programs like:
     return b
 ```
 
-\K{} Specifications: Functional Rules
--------------------------------------
-
-First add the `function` attribute to a given production:
-
-```k
-    syntax Int ::= add2 ( Int ) [function]
-```
-
-. . .
-
-Then define the function using a `rule`:
-
-```k
-    rule add2(I1:Int) => I1 +Int 2
-```
-
 \K{} Specifications: Configuration
 ----------------------------------
 
