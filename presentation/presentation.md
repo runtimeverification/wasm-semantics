@@ -367,7 +367,7 @@ Design Choice: Incremental Semantics
 ------------------------------------
 
 KWASM semantics are given incrementally, so that it is possible to execute program fragments.
-For example, KWASM will happily execute the following:
+For example, KWASM will happily execute the following (without an enclosing `module`):
 
 ```wast
     (i32.const 4)
@@ -375,8 +375,7 @@ For example, KWASM will happily execute the following:
     (i32.add)
 ```
 
-This is despite the fact that no enclosing `module` is present.
-This allows users to quickly get to experimenting with WASM using KWASM.
+Allows users to quickly experiment with WASM using KWASM.
 
 Using KWASM (Psuedo-Demo)
 =========================
@@ -387,15 +386,15 @@ Getting/Building
 Clone the repository:
 
 ```sh
-$ git clone 'https://github.com/kframework/wasm-semantics'
-$ cd wasm-semantics
+git clone 'https://github.com/kframework/wasm-semantics'
+cd wasm-semantics
 ```
 
 Build the dependencies, then the KWASM semantics:
 
 ```sh
-$ make deps
-$ make build
+make deps
+make build
 ```
 
 `kwasm` Script
@@ -403,9 +402,9 @@ $ make build
 
 The file `./kwasm` is the main runner for KWASM.
 
-```sh
-$ ./kwasm help
+### Running `./kwasm help`
 
+```sh
 usage: ./kwasm <cmd> <file> <K args>*
 
     # Running
@@ -525,11 +524,11 @@ Finish KWASM
 
 The semantics are fairly early-stage.
 
-### In progress
+### In progress (1 week out)
 
 -   Frame/locals semantics, `call*` and `return` opcodes.
 
-### To be done
+### To be done (1-2 months out)
 
 -   Some bitwise operators.
 -   Everything floating point.
@@ -552,6 +551,15 @@ Verify eWASM Programs
 
 Conclusion
 ==========
+
+Benefits of \K{} Approach
+-------------------------
+
+-   Many tools that a PL designer/user would want already exist.
+-   Powerful (and generic) verification engine "for free".
+-   Executable specification clears up issues in the existing WASM specification[^similarKEVM].
+
+[^similarKEVM]: Similarly for KEVM, we found several issues/ambiguities in the [YellowPaper](https://github.com/ethereum/yellowpaper).
 
 Questions?
 ----------
