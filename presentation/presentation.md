@@ -57,6 +57,7 @@ Many languages have full or partial \K{} semantics, this lists some notable ones
 -   [EVM](https://github.com/kframework/evm-semantics): verifying smart contracts
 -   [LLVM](https://github.com/kframework/llvm-semantics): compiler validation (to x86)
 -   [JavaScript](https://github.com/kframework/javascript-semantics): finding disagreements between JS engines
+-   [P4](https://github.com/kframework/p4-semantics): SDN data-layer verification
 -   many others ...
 
 \K{} Specifications: Syntax
@@ -78,10 +79,10 @@ Concrete syntax built using EBNF style:
 
 This would allow correctly parsing programs like:
 
-```exp
-    x := 3 * 2;
-    y := 2 * x + 5;
-    return y
+```imp
+    a := 3 * 2;
+    b := 2 * a + 5;
+    return b
 ```
 
 \K{} Specifications: Functional Rules
@@ -142,6 +143,158 @@ Using the above grammar and configuration:
     rule <k> X := I:Int => . ... </k>
          <env>   ...  X |-> SX       ... </env>
          <store> ... SX |-> (V => I) ... </store>
+```
+
+Example Execution
+-----------------
+
+### Program
+
+```imp
+    a := 3 * 2;
+    b := 2 * a + 5;
+    return b
+```
+
+### Initial Configuration
+
+```k
+    <k>     a := 3 * 2 ; b := 2 * a + 5 ; return b </k>
+    <env>   a |-> 0    b |-> 1 </env>
+    <store> 0 |-> 0    1 |-> 0 </store>
+```
+
+Example Execution (cont.)
+-------------------------
+
+### Variable assignment
+
+```k
+    rule <k> X := I:Int => . ... </k>
+         <env>   ...  X |-> SX       ... </env>
+         <store> ... SX |-> (V => I) ... </store>
+```
+
+### Next Configuration
+
+```k
+    <k>     a := 6 ~> b := 2 * a + 5 ; return b </k>
+    <env>   a |-> 0    b |-> 1 </env>
+    <store> 0 |-> 0    1 |-> 0 </store>
+```
+
+Example Execution (cont.)
+-------------------------
+
+### Variable assignment
+
+```k
+    rule <k> X := I:Int => . ... </k>
+         <env>   ...  X |-> SX       ... </env>
+         <store> ... SX |-> (V => I) ... </store>
+```
+
+### Next Configuration
+
+```k
+    <k>               b := 2 * a + 5 ; return b </k>
+    <env>   a |-> 0    b |-> 1 </env>
+    <store> 0 |-> 6    1 |-> 0 </store>
+```
+
+Example Execution (cont.)
+-------------------------
+
+### Variable lookup
+
+```k
+    rule <k> X:Id => V ... </k>
+         <env>   ...  X |-> SX ... </env>
+         <store> ... SX |-> V  ... </store>
+```
+
+### Next Configuration
+
+```k
+    <k>     a ~> b := 2 * [] + 5 ; return b </k>
+    <env>   a |-> 0    b |-> 1 </env>
+    <store> 0 |-> 6    1 |-> 0 </store>
+```
+
+Example Execution (cont.)
+-------------------------
+
+### Variable lookup
+
+```k
+    rule <k> X:Id => V ... </k>
+         <env>   ...  X |-> SX ... </env>
+         <store> ... SX |-> V  ... </store>
+```
+
+### Next Configuration
+
+```k
+    <k>     6 ~> b := 2 * [] + 5 ; return b </k>
+    <env>   a |-> 0    b |-> 1 </env>
+    <store> 0 |-> 6    1 |-> 0 </store>
+```
+
+Example Execution (cont.)
+-------------------------
+
+### Variable lookup
+
+```k
+    rule <k> X:Id => V ... </k>
+         <env>   ...  X |-> SX ... </env>
+         <store> ... SX |-> V  ... </store>
+```
+
+### Next Configuration
+
+```k
+    <k>          b := 2 * 6 + 5 ; return b </k>
+    <env>   a |-> 0    b |-> 1 </env>
+    <store> 0 |-> 6    1 |-> 0 </store>
+```
+
+Example Execution (cont.)
+-------------------------
+
+### Variable assignment
+
+```k
+    rule <k> X := I:Int => . ... </k>
+         <env>   ...  X |-> SX       ... </env>
+         <store> ... SX |-> (V => I) ... </store>
+```
+
+### Next Configuration
+
+```k
+    <k>     b := 17 ~> return b </k>
+    <env>   a |-> 0    b |-> 1 </env>
+    <store> 0 |-> 6    1 |-> 0 </store>
+```
+
+Example Execution (cont.)
+-------------------------
+
+### Variable assignment
+
+```k
+    rule <k> X := I:Int => . ... </k>
+         <env>   ...  X |-> SX       ... </env>
+         <store> ... SX |-> (V => I) ... </store>
+```
+
+### Next Configuration
+
+```k
+    <k>                return b </k>
+    <env>   a |-> 0    b |-> 1  </env>
+    <store> 0 |-> 6    1 |-> 17 </store>
 ```
 
 KWASM Design
