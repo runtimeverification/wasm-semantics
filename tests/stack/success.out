@@ -5,10 +5,7 @@
   <stack>
     .Stack
   </stack>
-  <frames>
-    .List
-  </frames>
-  <frame>
+  <curFrame>
     <addrs>
       .Map
     </addrs>
@@ -18,5 +15,5 @@
     <globals>
       .Map
     </globals>
-  </frame>
+  </curFrame>
 </generatedTop>
