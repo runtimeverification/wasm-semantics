@@ -117,26 +117,35 @@ Function `#bool` converts a `Bool` into an `Int`.
 ### Stack Machine Data
 
 WASM is a stack-machine, so here we provide the stack to operate over.
+Operator `_++_` implements an append operator for sort `Stack`.
 
 ```k
     syntax StackItem ::= Val
     syntax Stack     ::= ".Stack"
                        | StackItem ":" Stack
- // ----------------------------------------
-```
-
-Operator `_++_` implements an append operator for sort `Stack`.
-Operator `#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
-
-```k
-    syntax Stack ::= Stack "++" Stack           [function]
-                   | #take ( ValTypes , Stack ) [function]
- // ------------------------------------------------------
+                       | Stack "++" Stack    [function]
+ // ---------------------------------------------------
     rule .Stack       ++ STACK' => STACK'
     rule (SI : STACK) ++ STACK' => SI : (STACK ++ STACK')
+```
+
+Operator `#zero` will create a specified stack of zero values in a given type.
+Operator `#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
+Operator `#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
+
+```k
+    syntax Stack ::= #zero ( ValTypes )         [function]
+                   | #take ( ValTypes , Stack ) [function]
+                   | #drop ( ValTypes , Stack ) [function]
+ // ------------------------------------------------------
+    rule #zero(.ValTypes)             => .Stack
+    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
     rule #take(.ValTypes,   _)                           => .Stack
     rule #take(TYPE VTYPES, < TYPE > VAL:Number : STACK) => < TYPE > VAL : #take(VTYPES, STACK)
+
+    rule #drop(.ValTypes,   STACK)                       => STACK
+    rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 endmodule
 ```
 
