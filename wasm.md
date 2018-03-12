@@ -18,8 +18,12 @@ module WASM
     configuration
       <k> $PGM:Instrs </k>
       <stack> .Stack </stack>
-      <locals>  .Map </locals>
-      <globals> .Map </globals>
+      <frames> .List </frames>
+      <frame>
+        <addrs>   .Map </addrs>
+        <locals>  .Map </locals>
+        <globals> .Map </globals>
+      </frame>
 
     rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > #unsigned(ITYPE, VAL) : STACK </stack>
     rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL                   : STACK </stack>

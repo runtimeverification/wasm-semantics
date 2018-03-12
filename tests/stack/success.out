@@ -5,10 +5,18 @@
   <stack>
     .Stack
   </stack>
-  <locals>
-    .Map
-  </locals>
-  <globals>
-    .Map
-  </globals>
+  <frames>
+    .List
+  </frames>
+  <frame>
+    <addrs>
+      .Map
+    </addrs>
+    <locals>
+      .Map
+    </locals>
+    <globals>
+      .Map
+    </globals>
+  </frame>
 </generatedTop>
