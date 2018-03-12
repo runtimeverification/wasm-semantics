@@ -55,11 +55,22 @@ The `select` operator picks one of the second or third stack values based on the
 Structured Control Flow
 -----------------------
 
+`nop` does nothing.
+
 ```k
     syntax Instr ::= "nop"
  // ----------------------
     rule <k> nop => . ... </k>
+```
 
+Labels are administrative instructions used to mark the targets of break instructions.
+They contain the continuation to use following the label, as well as the original stack to restore.
+The supplied type represents the values that should taken from the current stack.
+
+A block is the simplest way to create targets for break instructions (ie. jump destinations).
+It simply executes the block then records a label with an empty continuation.
+
+```k
     syntax Label ::= "label" VecType "{" Instrs "}" Stack
  // -----------------------------------------------------
     rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
@@ -69,7 +80,14 @@ Structured Control Flow
  // ---------------------------------------------
     rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } STACK ... </k>
          <stack> STACK => .Stack </stack>
+```
 
+The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
+Upon reaching it, the label itself is executed.
+
+Note that, unlike in the WASM specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
+
+```k
     syntax Instr ::= "br" Int
  // -------------------------
     rule <k> br N ~> (I:Instr => .) ... </k>
@@ -79,7 +97,11 @@ Structured Control Flow
  // ----------------------------
     rule <k> br_if N => #if VAL =/=Int 0 #then br N #else .K #fi ... </k>
          <stack> < TYPE > VAL : STACK => STACK </stack>
+```
 
+Finally, we have the conditional and loop instructions.
+
+```k
     syntax Instr ::= "if" VecType Instrs "else" Instrs "end"
  // --------------------------------------------------------
     rule <k> if VTYPE IS else IS' end
