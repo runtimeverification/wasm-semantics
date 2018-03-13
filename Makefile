@@ -11,7 +11,7 @@ LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
 .PHONY: build deps ocaml-deps defn \
-		test test-stack \
+		test test-simple \
 		media
 
 all: build
@@ -89,13 +89,13 @@ TEST=./kwasm test
 tests/%.test: tests/%
 	$(TEST) $<
 
-test: test-stack
+test: test-simple
 
-### Stack Tests
+### Simple Tests
 
-stack_tests:=$(wildcard tests/stack/*.wast)
+simple_tests:=$(wildcard tests/simple/*.wast)
 
-test-stack: $(stack_tests:=.test)
+test-simple: $(simple_tests:=.test)
 
 # Presentation
 # ------------
