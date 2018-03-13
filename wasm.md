@@ -133,6 +133,87 @@ Finally, we have the conditional and loop instructions.
          <stack> STACK => .Stack </stack>
 ```
 
+Function Declaration and Invocation
+-----------------------------------
+
+### Function Declaration
+
+Function declarations can look quite different depending on which fields are ommitted and what the context is.
+Here, we only provide only two formats, one where all three of `param`, `local`, and `result` are provided, and one which omits `local`.
+
+```k
+    syntax FunctionName ::= Int
+ // ---------------------------
+
+    syntax  ParamDecl  ::= "param"  ValTypes
+    syntax  LocalDecl  ::= "local"  ValTypes
+    syntax ResultDecl  ::= "result" ValType
+    syntax    SigDecl  ::= "(" SigDecl ")" [bracket]
+                         | ParamDecl | LocalDecl | ResultDecl
+    syntax    SigDecls ::= List{SigDecl, ""}
+ // ----------------------------------------
+
+    syntax Instr ::= "func" FunctionName SigDecls Instrs
+ // ----------------------------------------------------
+    rule <k> func FNAME param TDOMAIN                 result TRANGE INSTRS
+          => func FNAME param TDOMAIN local .ValTypes result TRANGE INSTRS
+         ...
+         </k>
+
+    rule <k> func FNAME param TDOMAIN local TLOCAL result TRANGE INSTRS => . ... </k>
+         <funcs>
+           ( .Bag
+          => <funcDef>
+               <fname>  FNAME                     </fname>
+               <fcode>  INSTRS                    </fcode>
+               <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
+               <flocal> [ TLOCAL ]                </flocal>
+               ...
+             </funcDef>
+           )
+           ...
+         </funcs>
+```
+
+### Function Invocation/Return
+
+```k
+    syntax Frame ::= "frame" ValTypes Stack Map
+ // -------------------------------------------
+    rule <k> frame TRANGE STACK' LOCAL' => . ... </k>
+         <stack> STACK => #take(TRANGE, STACK) ++ STACK' </stack>
+         <locals> _ => LOCAL' </locals>
+
+    syntax Instr ::= "invoke" Int
+ // -----------------------------
+    rule <k> invoke FNAME
+          => init_locals #take(TDOMAIN, STACK) ++ #zero(TLOCALS)
+          ~> INSTRS
+          ~> frame TRANGE #drop(TDOMAIN, STACK) LOCAL
+          ...
+          </k>
+         <stack>  STACK => .Stack </stack>
+         <curFrame>
+           <addrs> _ => ADDRS </addrs>
+           <locals> LOCAL => .Map </locals>
+           ...
+         </curFrame>
+         <funcDef>
+           <fname>  FNAME                     </fname>
+           <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
+           <flocal> [ TLOCALS ]               </flocal>
+           <fcode>  INSTRS                    </fcode>
+           <faddrs> ADDRS                     </faddrs>
+           ...
+         </funcDef>
+
+    syntax Instr ::= "return"
+ // -------------------------
+    rule <k> return ~> (I:Instr => .)  ... </k>
+    rule <k> return ~> (L:Label => .)  ... </k>
+    rule <k> (return => .) ~> FR:Frame ... </k>
+```
+
 Memory Operators
 ----------------
 
