@@ -16,4 +16,9 @@
       .Map
     </globals>
   </curFrame>
+  <store>
+    <funcs>
+      .FuncDefCellMap
+    </funcs>
+  </store>
 </generatedTop>

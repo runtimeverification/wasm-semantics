@@ -23,6 +23,17 @@ module WASM
         <locals>  .Map </locals>
         <globals> .Map </globals>
       </curFrame>
+      <store>
+        <funcs>
+          <funcDef multiplicity="*" type="Map">
+            <fname>  0       </fname>
+            <fcode>  .Instrs </fcode>
+            <ftype>  .Type   </ftype>
+            <flocal> .Type   </flocal>
+            <faddrs> .Map    </faddrs>
+          </funcDef>
+        </funcs>
+      </store>
 
     rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > #unsigned(ITYPE, VAL) : STACK </stack>
     rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL                   : STACK </stack>
@@ -215,6 +226,23 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
          <globals> ... (INDEX |-> VALUE => .Map) ... </globals>
+```
+
+After running a test, the function cell should be cleared on success to match the template configuration.
+
+```k
+    syntax Instr ::= "#assertFunction" FunctionName String
+ // ------------------------------------------------------
+    rule <k> #assertFunction FNAME _ => . ... </k>
+         <funcs>
+           ( <funcDef>
+               <fname> FNAME </fname>
+               ...
+             </funcDef>
+          => .Bag
+           )
+           ...
+         </funcs>
 ```
 
 ```k
