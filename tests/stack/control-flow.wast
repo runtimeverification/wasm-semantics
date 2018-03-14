@@ -121,3 +121,11 @@ if [ i32 ] i32.const 1 else i32.const -1 end
 //     i32.add
 // end
 // #assertTopStack < i32 > 10 "loop"
+
+// Stack Underflow
+// TODO: We need to give semantics to stack underflow (though it could not happen with a validated program).
+// We need `trap` semantics first.
+// i32.const 0
+// block [ i32 i32 ]
+//     i32.const 7
+// end
