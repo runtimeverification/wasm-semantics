@@ -12,7 +12,7 @@ export LUA_PATH
 
 .PHONY: build deps ocaml-deps defn \
 		test test-stack \
-		presentation
+		media
 
 all: build
 
@@ -100,8 +100,8 @@ test-stack: $(stack_tests:=.test)
 # Presentation
 # ------------
 
-presentation: presentation/presentation.pdf
+media: media/201803-ethcc/presentation.pdf
 
-presentation/%.pdf: presentation/%.md
-	cd presentation \
-		&& pandoc --from markdown --to beamer --output $*.pdf $*.md
+media/%/presentation.pdf: media/%/presentation.md
+	cd media/$* \
+		&& pandoc --from markdown --to beamer --output presentation.pdf presentation.md
