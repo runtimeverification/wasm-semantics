@@ -197,6 +197,8 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
 
 ### Comparison Operations
 
+All of the following opcodes are liftings of the K builtin operators using the helper `#bool`.
+
 ```k
     syntax IUnOp ::= "eqz"
  // ----------------------
