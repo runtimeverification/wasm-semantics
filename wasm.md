@@ -2,7 +2,6 @@ WASM Instructions
 =================
 
 ```k
-// Copyright (c) 2015 K Team. All Rights Reserved.
 require "wasm-syntax.k"
 
 module WASM-BASIC-INSTRUCTIONS
