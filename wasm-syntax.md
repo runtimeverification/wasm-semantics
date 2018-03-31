@@ -11,7 +11,7 @@ module WASM-DATA
 
 ### Special Powers
 
-$2^32$ and $2^64$ are used often enough to warrant providing macros for them.
+`2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing macros for them.
 
 **TODO**: Offer `#pow : IValType -> Int` and `#pow1 : IValType -> Int` function/macros.
           Would simplify `#chop`, `#signed`, `div_s`, and `rem_s`.
