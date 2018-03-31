@@ -50,7 +50,7 @@ build: $(defn_dir)/wasm-kompiled/interpreter
 
 # Tangle definition from *.md files
 
-k_files:=wasm.k wasm-syntax.k
+k_files:=wasm.k data.k
 defn_files:=$(patsubst %, $(defn_dir)/%, $(k_files))
 tangler:=$(pandoc_tangle_submodule)/tangle.lua
 

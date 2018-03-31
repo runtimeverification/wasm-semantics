@@ -2,7 +2,7 @@ WASM Instructions
 =================
 
 ```k
-require "wasm-syntax.k"
+require "data.k"
 
 module WASM-BASIC-INSTRUCTIONS
     imports WASM-DATA
