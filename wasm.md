@@ -170,12 +170,6 @@ WASM State and Semantics
 
 ```k
 module WASM
-    imports INT
-    imports FLOAT
-    imports BASIC-K
-    imports LIST
-    imports MAP
-    imports SET
     imports WASM-BASIC-INSTRUCTIONS
 
     configuration
