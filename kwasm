@@ -6,7 +6,7 @@ set -u      # Using undefined variables is an error. Exit immediately
 # Utilities
 # ---------
 
-progress() { echo "== $@" ; }
+progress() { echo "== $@" >&2 ; }
 die()      { echo -e "FATAL:" "$@" >&2 ; exit 1 ; }
 
 pretty_diff() {
@@ -19,9 +19,8 @@ pretty_diff() {
 run_env() {
     local build_dir="$(pwd)/.build"
     local release_dir="$build_dir/k/k-distribution/target/release/k"
-    local lib_dir="$build_dir/local/lib"
+    export DEFN_DIR="${DEFN_DIRECTORY:-$build_dir/defn/wasm}"
     export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
-    export LD_LIBRARY_PATH="$release_dir/lib/native/linux64:$lib_dir:${LD_LIBRARY_PATH:-}"
     eval $(opam config env)
 }
 
@@ -32,7 +31,7 @@ run_krun() {
     local run_file=$1 ; shift
     run_env "$run_file"
     export K_OPTS=-Xss500m
-    krun --directory .build/defn/ "$run_file" "$@"
+    krun --directory "$DEFN_DIR" "$run_file" "$@"
 }
 
 run_kdebug() {
@@ -41,15 +40,15 @@ run_kdebug() {
 }
 
 run_test() {
-    test_file="$1"; shift
-    output_expected_file=$(dirname "$test_file")/success.out
-    [[ -f "$output_expected_file" ]] \
-        || die "Expected output file '$output_expected_file' does not exist..."
-    ( output_file="$(mktemp $test_file.out.XXXXXX)"
-      trap "rm -rf $output_file" INT TERM EXIT
-      run_krun "$test_file" > "$output_file"
-      pretty_diff "$output_expected_file" "$output_file"
-    )
+    local test_file="$1" ; shift
+    local expected_file=$(dirname "$test_file")/success.out
+    [[ -f "$expected_file" ]] \
+        || die "Expected output file '$expected_file' does not exist..."
+    local output_file="$(mktemp $test_file.out.XXXXXX)"
+    trap "rm -rf $output_file" INT TERM EXIT
+    export DEFN_DIRECTORY="$(pwd)/.build/defn/test"
+    run_krun "$test_file" > "$output_file"
+    pretty_diff "$expected_file" "$output_file"
 }
 
 # Main
