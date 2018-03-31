@@ -54,21 +54,16 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #width(i64) => 64
 ```
 
-`2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing macros for them.
-
-**TODO**: Offer `#pow : IValType -> Int` and `#pow1 : IValType -> Int` function/macros.
-          Would simplify `#chop`, `#signed`, `div_s`, and `rem_s`.
+`2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
 
 ```k
-    syntax Int ::= "#pow31" [function] /* 2 ^Int 31 */
-                 | "#pow32" [function] /* 2 ^Int 32 */
-                 | "#pow63" [function] /* 2 ^Int 63 */
-                 | "#pow64" [function] /* 2 ^Int 64 */
- // --------------------------------------------------
-    rule #pow31 => 2147483648           [macro]
-    rule #pow32 => 4294967296           [macro]
-    rule #pow63 => 9223372036854775808  [macro]
-    rule #pow64 => 18446744073709551616 [macro]
+    syntax Int ::= #pow  ( IValType ) [function] /* 2 ^Int #width(T)          */
+                 | #pow1 ( IValType ) [function] /* 2 ^Int (#width(T) -Int 1) */
+ // ----------------------------------------------------------------------------
+    rule #pow1(i32) => 2147483648
+    rule #pow (i32) => 4294967296
+    rule #pow1(i64) => 9223372036854775808
+    rule #pow (i64) => 18446744073709551616
 ```
 
 Values
@@ -97,8 +92,7 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 ```k
     syntax IVal ::= #chop ( IVal ) [function]
  // -----------------------------------------
-    rule #chop(< i32 > N) => < i32 > (N modInt #pow32)
-    rule #chop(< i64 > N) => < i64 > (N modInt #pow64)
+    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 ```
 
 ### Signed Interpretation
@@ -109,15 +103,11 @@ Functions `#signed` and `#unsigned` allow for easier operation on twos-complemen
     syntax Int ::= #signed   ( IValType , Int ) [function]
                  | #unsigned ( IValType , Int ) [function]
  // ------------------------------------------------------
-    rule #signed(i32, N) => N             requires 0      <=Int N andBool N <Int #pow31
-    rule #signed(i32, N) => N -Int #pow32 requires #pow31 <=Int N andBool N <Int #pow32
-    rule #signed(i64, N) => N             requires 0      <=Int N andBool N <Int #pow63
-    rule #signed(i64, N) => N -Int #pow64 requires #pow63 <=Int N andBool N <Int #pow64
+    rule #signed(ITYPE, N) => N                  requires 0            <=Int N andBool N <Int #pow1(ITYPE)
+    rule #signed(ITYPE, N) => N -Int #pow(ITYPE) requires #pow1(ITYPE) <=Int N andBool N <Int #pow (ITYPE)
 
-    rule #unsigned(i32, N) => N +Int #pow32 requires N <Int  0
-    rule #unsigned(i32, N) => N             requires 0 <=Int N
-    rule #unsigned(i64, N) => N +Int #pow64 requires N <Int  0
-    rule #unsigned(i64, N) => N             requires 0 <=Int N
+    rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
+    rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
 ```
 
 ### Boolean Interpretation
@@ -263,10 +253,8 @@ A large portion of the available opcodes are pure arithmetic.
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
-    rule #evalIBinOp(i32 . div_s, I1, I2) => < i32 > #unsigned(i32, #signed(i32, I1) /Int #signed(i32, I2))
-      requires I2 =/=Int 0 andBool (I1 =/=Int #pow31 orBool (I2 =/=Int #pow32 -Int 1))
-    rule #evalIBinOp(i64 . div_s, I1, I2) => < i64 > #unsigned(i64, #signed(i64, I1) /Int #signed(i64, I2))
-      requires I2 =/=Int 0 andBool (I1 =/=Int #pow63 orBool (I2 =/=Int #pow64 -Int 1))
+    rule #evalIBinOp(ITYPE . div_s, I1, I2) => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
+      requires I2 =/=Int 0 andBool (I1 =/=Int #pow1(ITYPE) orBool (I2 =/=Int #pow(ITYPE) -Int 1))
 
     rule #evalIBinOp(TYPE . rem_s, I1, I2) => < TYPE > #unsigned(TYPE, #signed(TYPE, I1) %Int #signed(TYPE, I2))
       requires I2 =/=Int 0

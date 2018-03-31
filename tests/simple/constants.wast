@@ -11,9 +11,9 @@ i64.const 71
 #assertTopStack < i64 > 71 "i64"
 
 i32.const #unsigned(i32, -5)
-#assertTopStack < i32 > #pow32 -Int 5 "i32 manual unsigned"
+#assertTopStack < i32 > #pow(i32) -Int 5 "i32 manual unsigned"
 
-i32.const #pow32 -Int 5
+i32.const #pow(i32) -Int 5
 #assertTopStack < i32 > -5 "i32 manual unsigned"
 
 i32.const -5
@@ -51,17 +51,17 @@ f32.const 3.245
 i32.const #unsigned(i32, #signed(i32, 0))
 #assertTopStack < i32 > 0 "#unsigned . #signed 1"
 
-i32.const #unsigned(i32, #signed(i32, #pow31))
-#assertTopStack < i32 > #pow31 "#unsigned . #signed 2"
+i32.const #unsigned(i32, #signed(i32, #pow1(i32)))
+#assertTopStack < i32 > #pow1(i32) "#unsigned . #signed 2"
 
-i32.const #unsigned(i32, #signed(i32, #pow32 -Int 1))
-#assertTopStack < i32 > #pow32 -Int 1 "#unsigned . #signed 3"
+i32.const #unsigned(i32, #signed(i32, #pow(i32) -Int 1))
+#assertTopStack < i32 > #pow(i32) -Int 1 "#unsigned . #signed 3"
 
 i64.const #unsigned(i64, #signed(i64, 0))
 #assertTopStack < i64 > 0 "#unsigned . #signed 4"
 
-i64.const #unsigned(i64, #signed(i64, #pow63))
-#assertTopStack < i64 > #pow63 "#unsigned . #signed 5"
+i64.const #unsigned(i64, #signed(i64, #pow1(i64)))
+#assertTopStack < i64 > #pow1(i64) "#unsigned . #signed 5"
 
-i64.const #unsigned(i64, #signed(i64, #pow64 -Int 1))
-#assertTopStack < i64 > #pow64 -Int 1 "#unsigned . #signed 6"
+i64.const #unsigned(i64, #signed(i64, #pow(i64) -Int 1))
+#assertTopStack < i64 > #pow(i64) -Int 1 "#unsigned . #signed 6"
