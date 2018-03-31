@@ -116,13 +116,20 @@ When a binary operator is the next instruction, `#eval<T>BinOp` will be called o
 
 ### Integer Arithmetic
 
+`add`, `sub`, and `mul` are given semantics by lifting the correct K operators through the `#chop` function.
+
 ```k
     syntax IBinOp ::= "add" | "sub" | "mul"
  // ---------------------------------------
     rule #evalIBinOp(TYPE . add, I1, I2) => #chop(< TYPE > (I1 +Int I2))
     rule #evalIBinOp(TYPE . sub, I1, I2) => #chop(< TYPE > (I1 -Int I2))
     rule #evalIBinOp(TYPE . mul, I1, I2) => #chop(< TYPE > (I1 *Int I2))
+```
 
+`div_*` and `rem_*` have extra side-conditions about when they are defined or not.
+Note that we do not need to call `#chop` on the results here.
+
+```k
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
     rule #evalIBinOp(TYPE . div_u, I1, I2)
@@ -154,20 +161,32 @@ When a binary operator is the next instruction, `#eval<T>BinOp` will be called o
 
 ### Bitwise Operations
 
+Of the bitwise operators, `and` will not overflow, but `or` and `xor` could.
+These simply are the lifted K operators.
+
 ```k
     syntax IBinOp ::= "and" | "or" | "xor"
  // --------------------------------------
     rule #evalIBinOp(TYPE . and, I1, I2) =>       < TYPE > (I1 &Int   I2)
     rule #evalIBinOp(TYPE . or,  I1, I2) => #chop(< TYPE > (I1 |Int   I2))
     rule #evalIBinOp(TYPE . xor, I1, I2) => #chop(< TYPE > (I1 xorInt I2))
+```
 
+Similarly, K bitwise shift operators are lifted for `shl` and `shr_u`.
+Careful attention is made for the signed version `shr_s`.
+
+```k
     syntax IBinOp ::= "shl" | "shr_u" | "shr_s"
  // -------------------------------------------
     rule #evalIBinOp(TYPE . shl,   I1, I2) => #chop(< TYPE > I1 <<Int (I2 %Int #width(TYPE)))
     rule #evalIBinOp(TYPE . shr_u, I1, I2) =>       < TYPE > I1 >>Int (I2 %Int #width(TYPE))
 
     rule #evalIBinOp(TYPE . shr_s, I1, I2) => < TYPE > #unsigned(TYPE, #signed(TYPE, I1) >>Int (I2 %Int #width(TYPE)))
+```
 
+The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and so are built with a series of shifts.
+
+```k
     syntax IBinOp ::= "rotl" | "rotr"
  // ---------------------------------
     rule #evalIBinOp(TYPE . rotl, I1, I2) => #chop(< TYPE > (I1 <<Int (I2 %Int #width(TYPE))) +Int (I1 >>Int (#width(TYPE) -Int (I2 %Int #width(TYPE)))))
