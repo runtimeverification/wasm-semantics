@@ -71,17 +71,27 @@ Values
 ### Basic Values
 
 WASM values are either integers or floating-point numbers, of 32- or 64-bit widths.
-First, the type of values is built, then values annotated with their types are provided.
 
 ```k
     syntax Number ::= Int | Float
  // -----------------------------
+```
 
+Proper values are numbers annotated with their types.
+
+```k
     syntax IVal ::= "<" IValType ">" Int
     syntax FVal ::= "<" FValType ">" Float
     syntax  Val ::= "<"  ValType ">" Number
                   | IVal | FVal
  // ---------------------------
+```
+
+We also add `undefined` as a value, which makes many partial functions in the semantics total.
+
+```k
+    syntax Val ::= "undefined"
+ // --------------------------
 ```
 
 ### Value Operations
