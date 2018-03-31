@@ -131,19 +131,32 @@ A large portion of the available opcodes are pure arithmetic.
 
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule #evalIBinOp(TYPE . div_u, I1, I2) => < TYPE > (I1 /Int I2) requires I2 =/=Int 0
-    rule #evalIBinOp(TYPE . rem_u, I1, I2) => < TYPE > (I1 %Int I2) requires I2 =/=Int 0
+    rule #evalIBinOp(TYPE . div_u, I1, I2)
+      => #if I2 =/=Int 0
+            #then < TYPE > (I1 /Int I2)
+            #else undefined
+         #fi
+
+    rule #evalIBinOp(TYPE . rem_u, I1, I2)
+      => #if I2 =/=Int 0
+            #then < TYPE > (I1 %Int I2)
+            #else undefined
+         #fi
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
-    rule #evalIBinOp(ITYPE . div_s, I1, I2) => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
-      requires I2 =/=Int 0 andBool (I1 =/=Int #pow1(ITYPE) orBool (I2 =/=Int #pow(ITYPE) -Int 1))
+    rule #evalIBinOp(ITYPE . div_s, I1, I2)
+      => #if I2 =/=Int 0 andBool (I1 =/=Int #pow1(ITYPE) orBool (I2 =/=Int #pow(ITYPE) -Int 1))
+            #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
+            #else undefined
+         #fi
 
-    rule #evalIBinOp(TYPE . rem_s, I1, I2) => < TYPE > #unsigned(TYPE, #signed(TYPE, I1) %Int #signed(TYPE, I2))
-      requires I2 =/=Int 0
+    rule #evalIBinOp(ITYPE . rem_s, I1, I2)
+      => #if I2 =/=Int 0
+            #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
+            #else undefined
+         #fi
 ```
-
-**TODO**: Handle undefined cases.
 
 ### Bitwise Operations
 
