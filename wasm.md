@@ -18,6 +18,51 @@ module WASM-BASIC-INSTRUCTIONS
     rule I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS
 ```
 
+```k
+endmodule
+```
+
+WASM State and Semantics
+========================
+
+```k
+module WASM
+    imports WASM-BASIC-INSTRUCTIONS
+
+    configuration
+      <k> $PGM:Instrs </k>
+      <stack> .Stack </stack>
+      <curFrame>
+        <addrs>   .Map </addrs>
+        <locals>  .Map </locals>
+        <globals> .Map </globals>
+      </curFrame>
+      <store>
+        <funcs>
+          <funcDef multiplicity="*" type="Map">
+            <fname>  0       </fname>
+            <fcode>  .Instrs </fcode>
+            <ftype>  .Type   </ftype>
+            <flocal> .Type   </flocal>
+            <faddrs> .Map    </faddrs>
+          </funcDef>
+        </funcs>
+      </store>
+
+    rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > #unsigned(ITYPE, VAL) : STACK </stack>
+    rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL                   : STACK </stack>
+
+    rule <k> (ITYPE . UOP:IUnOp => .) ... </k>
+         <stack> < ITYPE > SI1                : STACK
+              => #evalIUnOp(ITYPE . UOP, SI1) : STACK
+         </stack>
+
+    rule <k> (ITYPE . BOP:IBinOp => .) ... </k>
+         <stack> < ITYPE > SI1 : < ITYPE > SI2        : STACK
+              => #evalIBinOp(ITYPE . BOP , SI1 , SI2) : STACK
+         </stack>
+```
+
 Operator Evaluation
 -------------------
 
@@ -154,51 +199,6 @@ A large portion of the available opcodes are pure arithmetic.
 
     rule #evalIBinOp(TYPE . le_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) <=Int #signed(TYPE, I2))
     rule #evalIBinOp(TYPE . ge_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) >=Int #signed(TYPE, I2))
-```
-
-```k
-endmodule
-```
-
-WASM State and Semantics
-========================
-
-```k
-module WASM
-    imports WASM-BASIC-INSTRUCTIONS
-
-    configuration
-      <k> $PGM:Instrs </k>
-      <stack> .Stack </stack>
-      <curFrame>
-        <addrs>   .Map </addrs>
-        <locals>  .Map </locals>
-        <globals> .Map </globals>
-      </curFrame>
-      <store>
-        <funcs>
-          <funcDef multiplicity="*" type="Map">
-            <fname>  0       </fname>
-            <fcode>  .Instrs </fcode>
-            <ftype>  .Type   </ftype>
-            <flocal> .Type   </flocal>
-            <faddrs> .Map    </faddrs>
-          </funcDef>
-        </funcs>
-      </store>
-
-    rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > #unsigned(ITYPE, VAL) : STACK </stack>
-    rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL                   : STACK </stack>
-
-    rule <k> (ITYPE . UOP:IUnOp => .) ... </k>
-         <stack> < ITYPE > SI1                : STACK
-              => #evalIUnOp(ITYPE . UOP, SI1) : STACK
-         </stack>
-
-    rule <k> (ITYPE . BOP:IBinOp => .) ... </k>
-         <stack> < ITYPE > SI1 : < ITYPE > SI2        : STACK
-              => #evalIBinOp(ITYPE . BOP , SI1 , SI2) : STACK
-         </stack>
 ```
 
 Stack Operations
