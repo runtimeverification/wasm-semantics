@@ -12,13 +12,8 @@ module WASM-BASIC-INSTRUCTIONS
 
     syntax Instrs ::= List{Instr, ""}
  // ---------------------------------
-    rule .Instrs           => .K
-    rule I:Instr IS:Instrs => I ~> IS
-```
-
-**TODO**: avoid having to duplicate above rules for second position here.
-
-```k
+    rule .Instrs                       => .
+    rule I:Instr IS:Instrs             => I ~> IS
     rule I:Instr ~> .Instrs            => I
     rule I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS
 ```
