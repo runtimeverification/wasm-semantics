@@ -163,7 +163,7 @@ A large portion of the available opcodes are pure arithmetic.
 ```k
     syntax IBinOp ::= "and" | "or" | "xor"
  // --------------------------------------
-    rule #evalIBinOp(TYPE . and, I1, I2) => #chop(< TYPE > (I1 &Int   I2))
+    rule #evalIBinOp(TYPE . and, I1, I2) =>       < TYPE > (I1 &Int   I2)
     rule #evalIBinOp(TYPE . or,  I1, I2) => #chop(< TYPE > (I1 |Int   I2))
     rule #evalIBinOp(TYPE . xor, I1, I2) => #chop(< TYPE > (I1 xorInt I2))
 
