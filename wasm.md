@@ -50,11 +50,12 @@ module WASM
       </store>
 ```
 
-Operator Evaluation
--------------------
+Numeric Operators
+-----------------
 
+A large portion of the available opcodes are pure arithmetic.
 In the semantics, the correct `#eval<T><AR>Op` function is called based on the arity of the called operator.
-This allows us to give purely functional semantics to a large portion of the WASM opcodes.
+This allows us to give purely functional semantics to many numeric opcodes.
 
 ### Constants
 
@@ -112,11 +113,6 @@ When a binary operator is the next instruction, `#eval<T>BinOp` will be called o
               => #evalIBinOp(ITYPE . BOP , SI1 , SI2) : STACK
          </stack>
 ```
-
-Numeric Operators
------------------
-
-A large portion of the available opcodes are pure arithmetic.
 
 ### Integer Arithmetic
 
