@@ -90,6 +90,8 @@ First, the type of values is built, then values annotated with their types are p
  // ---------------------------
 ```
 
+### Value Operations
+
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
 
 ```k
@@ -129,7 +131,8 @@ Function `#bool` converts a `Bool` into an `Int`.
     rule #bool( B:Bool ) => 0 requires notBool B
 ```
 
-### Stack Machine Data
+Data Structures
+---------------
 
 WASM is a stack-machine, so here we provide the stack to operate over.
 Operator `_++_` implements an append operator for sort `Stack`.
@@ -144,9 +147,9 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule (SI : STACK) ++ STACK' => SI : (STACK ++ STACK')
 ```
 
-Operator `#zero` will create a specified stack of zero values in a given type.
-Operator `#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
-Operator `#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
+`#zero` will create a specified stack of zero values in a given type.
+`#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
+`#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
 
 ```k
     syntax Stack ::= #zero ( ValTypes )         [function]
