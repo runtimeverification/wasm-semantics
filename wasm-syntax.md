@@ -9,7 +9,50 @@ module WASM-DATA
     imports DOMAINS
 ```
 
-### Special Powers
+WASM Types
+----------
+
+### Base Types
+
+WASM has four basic types, for 32 and 64 bit integers and floats.
+
+```k
+    syntax IValType ::= "i32" | "i64"
+    syntax FValType ::= "f32" | "f64"
+    syntax  ValType ::= IValType | FValType
+ // ---------------------------------------
+```
+
+### Type Constructors
+
+There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
+
+```k
+    syntax ValTypes ::= List{ValType, ""}
+    syntax VecType  ::= "[" ValTypes "]"
+ // ------------------------------------
+
+    syntax FuncType ::= VecType "->" VecType
+ // ----------------------------------------
+```
+
+All told, a `Type` can be a value type, vector of types, or function type.
+
+```k
+    syntax Type ::= ".Type" | ValType | VecType | FuncType
+ // ------------------------------------------------------
+```
+
+### Type Information
+
+The `#width` function returns the bit-width of a given `IValType`.
+
+```k
+    syntax Int ::= #width ( IValType ) [function]
+ // ---------------------------------------------
+    rule #width(i32) => 32
+    rule #width(i64) => 64
+```
 
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing macros for them.
 
@@ -28,38 +71,10 @@ module WASM-DATA
     rule #pow64 => 18446744073709551616 [macro]
 ```
 
-### Types
+Values
+------
 
-WASM has four basic types, for 32 and 64 bit integers and floats.
-There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
-
-```k
-    syntax IValType ::= "i32" | "i64"
-    syntax FValType ::= "f32" | "f64"
-    syntax  ValType ::= IValType | FValType
- // ---------------------------------------
-
-    syntax ValTypes ::= List{ValType, ""}
-    syntax VecType  ::= "[" ValTypes "]"
- // ------------------------------------
-
-    syntax FuncType ::= VecType "->" VecType
- // ----------------------------------------
-
-    syntax Type ::= ".Type" | ValType | VecType | FuncType
- // ------------------------------------------------------
-```
-
-The `#width` function returns the bit-width of a given `IValType`.
-
-```k
-    syntax Int ::= #width ( IValType ) [function]
- // ---------------------------------------------
-    rule #width(i32) => 32
-    rule #width(i64) => 64
-```
-
-### Values
+### Basic Values
 
 WASM values are either integers or floating-point numbers, of 32- or 64-bit widths.
 First, the type of values is built, then values annotated with their types are provided.
