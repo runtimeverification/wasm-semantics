@@ -6,13 +6,16 @@ defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
 pandoc_tangle_submodule:=$(build_dir)/pandoc-tangle
 k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
+tangler:=$(pandoc_tangle_submodule)/tangle.lua
 
 LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
-.PHONY: build deps ocaml-deps defn \
-		test test-simple \
-		media
+.PHONY: deps ocaml-deps \
+        build build-wasm build-test \
+        defn defn-wasm defn-test \
+        test test-simple \
+        media
 
 all: build
 
@@ -46,38 +49,67 @@ ocaml-deps:
 # Building Definition
 # -------------------
 
-build: $(defn_dir)/wasm-kompiled/interpreter
-
 # Tangle definition from *.md files
 
-k_files:=wasm.k data.k
-defn_files:=$(patsubst %, $(defn_dir)/%, $(k_files))
-tangler:=$(pandoc_tangle_submodule)/tangle.lua
+defn: defn-wasm defn-test
 
-defn: $(defn_files)
+wasm_dir:=$(defn_dir)/wasm
+wasm_files:=wasm.k data.k
+defn_wasm_files:=$(patsubst %, $(wasm_dir)/%, $(wasm_files))
+defn-wasm: $(defn_wasm_files)
+$(wasm_dir)/%.k: %.md
+	@echo "==  tangle: $@"
+	mkdir -p $(dir $@)
+	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
-$(defn_dir)/%.k: %.md
+test_dir:=$(defn_dir)/test
+test_files:=test.k $(wasm_files)
+defn_test_files:=$(patsubst %, $(test_dir)/%, $(test_files))
+defn-test: $(defn_test_files)
+$(test_dir)/%.k: %.md
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
 # OCAML Backend
 
-$(defn_dir)/wasm-kompiled/interpreter: $(defn_files) deps
+build: build-wasm build-test
+
+build-wasm: $(wasm_dir)/wasm-kompiled/interpreter
+$(wasm_dir)/wasm-kompiled/interpreter: $(defn_wasm_files)
 	@echo "== kompile: $@"
 	eval $$(opam config env) \
 	$(k_bin)/kompile --debug --gen-ml-only -O3 --non-strict \
-					 --main-module WASM --syntax-module WASM $< --directory $(defn_dir) \
-		&& ocamlfind opt -c $(defn_dir)/wasm-kompiled/constants.ml -package gmp -package zarith \
-		&& ocamlfind opt -c -I $(defn_dir)/wasm-kompiled \
-		&& ocamlfind opt -a -o $(defn_dir)/semantics.cmxa \
+					 --main-module WASM --syntax-module WASM $< --directory $(wasm_dir) \
+		&& ocamlfind opt -c $(wasm_dir)/wasm-kompiled/constants.ml -package gmp -package zarith \
+		&& ocamlfind opt -c -I $(wasm_dir)/wasm-kompiled \
+		&& ocamlfind opt -a -o $(wasm_dir)/semantics.cmxa \
 		&& ocamlfind remove wasm-semantics-plugin \
-		&& ocamlfind install wasm-semantics-plugin META $(defn_dir)/semantics.cmxa $(defn_dir)/semantics.a \
+		&& ocamlfind install wasm-semantics-plugin META $(wasm_dir)/semantics.cmxa $(wasm_dir)/semantics.a \
 		&& $(k_bin)/kompile --debug --packages wasm-semantics-plugin -O3 --non-strict \
-					 --main-module WASM --syntax-module WASM $< --directory $(defn_dir) \
-		&& cd $(defn_dir)/wasm-kompiled \
+					 --main-module WASM --syntax-module WASM $< --directory $(wasm_dir) \
+		&& cd $(wasm_dir)/wasm-kompiled \
 		&& ocamlfind opt -o interpreter \
 				-package gmp -package dynlink -package zarith -package str -package uuidm -package unix -package wasm-semantics-plugin \
+				-linkpkg -inline 20 -nodynlink -O3 -linkall \
+				constants.cmx prelude.cmx plugin.cmx parser.cmx lexer.cmx run.cmx interpreter.ml
+
+build-test: $(test_dir)/test-kompiled/interpreter
+$(test_dir)/test-kompiled/interpreter: $(defn_test_files)
+	@echo "== kompile: $@"
+	eval $$(opam config env) \
+	$(k_bin)/kompile --debug --gen-ml-only -O3 --non-strict \
+					 --main-module WASM-TEST --syntax-module WASM-TEST $< --directory $(test_dir) \
+		&& ocamlfind opt -c $(test_dir)/test-kompiled/constants.ml -package gmp -package zarith \
+		&& ocamlfind opt -c -I $(test_dir)/test-kompiled \
+		&& ocamlfind opt -a -o $(test_dir)/semantics.cmxa \
+		&& ocamlfind remove test-semantics-plugin \
+		&& ocamlfind install test-semantics-plugin META $(test_dir)/semantics.cmxa $(test_dir)/semantics.a \
+		&& $(k_bin)/kompile --debug --packages test-semantics-plugin -O3 --non-strict \
+					 --main-module WASM-TEST --syntax-module WASM-TEST $< --directory $(test_dir) \
+		&& cd $(test_dir)/test-kompiled \
+		&& ocamlfind opt -o interpreter \
+				-package gmp -package dynlink -package zarith -package str -package uuidm -package unix -package test-semantics-plugin \
 				-linkpkg -inline 20 -nodynlink -O3 -linkall \
 				constants.cmx prelude.cmx plugin.cmx parser.cmx lexer.cmx run.cmx interpreter.ml
 
