@@ -1,34 +1,17 @@
-WASM Instructions
-=================
-
-```k
-require "data.k"
-
-module WASM-BASIC-INSTRUCTIONS
-    imports WASM-DATA
-
-    syntax Instr ::= "(" Instr ")" [bracket]
- // ----------------------------------------
-
-    syntax Instrs ::= List{Instr, ""}
- // ---------------------------------
-    rule .Instrs                       => .
-    rule I:Instr IS:Instrs             => I ~> IS
-    rule I:Instr ~> .Instrs            => I
-    rule I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS
-```
-
-```k
-endmodule
-```
-
 WASM State and Semantics
 ========================
 
 ```k
-module WASM
-    imports WASM-BASIC-INSTRUCTIONS
+require "data.k"
 
+module WASM
+    imports WASM-DATA
+```
+
+Configuration
+-------------
+
+```k
     configuration
       <k> $PGM:Instrs </k>
       <stack> .Stack </stack>
@@ -48,6 +31,23 @@ module WASM
           </funcDef>
         </funcs>
       </store>
+```
+
+Instructions
+------------
+
+WASM instructions are space-separated and (optionally) surrounded by paranthesis.
+
+```k
+    syntax Instr ::= "(" Instr ")" [bracket]
+ // ----------------------------------------
+
+    syntax Instrs ::= List{Instr, ""}
+ // ---------------------------------
+    rule <k> .Instrs                       => .             ... </k>
+    rule <k> I:Instr IS:Instrs             => I ~> IS       ... </k>
+    rule <k> I:Instr ~> .Instrs            => I             ... </k>
+    rule <k> I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS ... </k>
 ```
 
 Numeric Operators
@@ -322,16 +322,14 @@ Here, we only provide only two formats, one where all three of `param`, `local`,
     syntax FunctionName ::= Int
  // ---------------------------
 
-    syntax  ParamDecl  ::= "param"  ValTypes
-    syntax  LocalDecl  ::= "local"  ValTypes
-    syntax ResultDecl  ::= "result" ValType
-    syntax    SigDecl  ::= "(" SigDecl ")" [bracket]
-                         | ParamDecl | LocalDecl | ResultDecl
-    syntax    SigDecls ::= List{SigDecl, ""}
- // ----------------------------------------
+    syntax  ParamDecl  ::= "param"  ValTypes | "(" ParamDecl  ")" [bracket]
+    syntax  LocalDecl  ::= "local"  ValTypes | "(" LocalDecl  ")" [bracket]
+    syntax ResultDecl  ::= "result" ValType  | "(" ResultDecl ")" [bracket]
+ // -----------------------------------------------------------------------
 
-    syntax Instr ::= "func" FunctionName SigDecls Instrs
- // ----------------------------------------------------
+    syntax Instr ::= "func" FunctionName ParamDecl           ResultDecl Instrs
+    syntax Instr ::= "func" FunctionName ParamDecl LocalDecl ResultDecl Instrs
+ // --------------------------------------------------------------------------
     rule <k> func FNAME param TDOMAIN                 result TRANGE INSTRS
           => func FNAME param TDOMAIN local .ValTypes result TRANGE INSTRS
          ...
