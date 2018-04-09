@@ -70,7 +70,6 @@ Numeric Operators
 -----------------
 
 A large portion of the available opcodes are pure arithmetic.
-In the semantics, the correct `#eval<T><AR>Op` function is called based on the arity of the called operator.
 This allows us to give purely functional semantics to many numeric opcodes.
 
 ### Constants
@@ -88,7 +87,7 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 
 ### Unary Operators
 
-When a unary operator is the next instruction, `#eval<T>UnOp` will be called on the operator and its arguments.
+When a unary operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
 
 ```k
     syntax UnOp ::= IUnOp
@@ -104,7 +103,7 @@ When a unary operator is the next instruction, `#eval<T>UnOp` will be called on 
 
 ### Binary Operators
 
-When a binary operator is the next instruction, `#eval<T>BinOp` will be called on the operator and its two arguments.
+When a binary operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
 
 ```k
     syntax BinOp ::= IBinOp
