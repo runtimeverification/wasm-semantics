@@ -23,11 +23,11 @@ Configuration
       <store>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fname>  0       </fname>
-            <fcode>  .Instrs </fcode>
-            <ftype>  .Type   </ftype>
-            <flocal> .Type   </flocal>
-            <faddrs> .Map    </faddrs>
+            <fname>  0              </fname>
+            <fcode>  .Instrs:Instrs </fcode>
+            <ftype>  .Type          </ftype>
+            <flocal> .Type          </flocal>
+            <faddrs> .Map           </faddrs>
           </funcDef>
         </funcs>
       </store>
