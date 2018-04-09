@@ -378,32 +378,27 @@ Function Declaration and Invocation
 ### Function Declaration
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
-Here, we only provide only two formats, one where all three of `param`, `local`, and `result` are provided, and one which omits `local`.
+Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
     syntax FunctionName ::= Int
  // ---------------------------
 
-    syntax  ParamDecl ::= "param"  ValTypes | "(" ParamDecl  ")" [bracket]
-    syntax ResultDecl ::= "result" ValType  | "(" ResultDecl ")" [bracket]
-    syntax  LocalDecl ::= "local"  ValTypes | "(" LocalDecl  ")" [bracket]
- // ----------------------------------------------------------------------
+    syntax FTypeKeyWord ::= "param" | "result" | "local"
+    syntax FuncDecl     ::= "(" FuncDecl ")" [bracket]
+                          | FTypeKeyWord ValTypes
+    syntax FuncDecls    ::= List{FuncDecl, ""}
+ // ------------------------------------------
 
-    syntax Instr ::= "func" FunctionName ParamDecl ResultDecl           Instrs
-                   | "func" FunctionName ParamDecl ResultDecl LocalDecl Instrs
-                   | "func" FunctionName FuncType             VecType   Instrs
- // --------------------------------------------------------------------------
-    rule <k> func FNAME param TDOMAIN result TRANGE                 INSTRS
-          => func FNAME param TDOMAIN result TRANGE local .ValTypes INSTRS
+    syntax Instr ::= "func" FunctionName FuncDecls Instrs
+                   | "func" FunctionName "::" FuncType VecType Instrs
+ // -----------------------------------------------------------------
+    rule <k> func FNAME FDECLS INSTRS
+          => func FNAME :: gatherFuncType(FDECLS) gatherLocalType(FDECLS) INSTRS
          ...
          </k>
 
-    rule <k> func FNAME param TDOMAIN result TRANGE local TLOCAL INSTRS
-          => func FNAME [ TDOMAIN ] -> [ TRANGE ]   [ TLOCAL ]   INSTRS
-         ...
-         </k>
-
-    rule <k> func FNAME FTYPE:FuncType LTYPE:VecType INSTRS => . ... </k>
+    rule <k> func FNAME :: FTYPE LTYPE INSTRS => . ... </k>
          <funcs>
            ( .Bag
           => <funcDef>
@@ -416,6 +411,35 @@ Here, we only provide only two formats, one where all three of `param`, `local`,
            )
            ...
          </funcs>
+
+    syntax FuncType ::=  gatherFuncType ( FuncDecls )            [function]
+                      | #gatherFuncType ( FuncDecls , FuncType ) [function]
+ // -----------------------------------------------------------------------
+    rule gatherFuncType(FDECLS) => #gatherFuncType(FDECLS, [ .ValTypes ] -> [ .ValTypes ])
+
+    rule #gatherFuncType(.FuncDecls , FTYPE) => FTYPE
+
+    rule #gatherFuncType(FDECL:FuncDecl FDECLS:FuncDecls , FTYPE)
+      => #gatherFuncType(               FDECLS           , FTYPE) [owise]
+
+    rule #gatherFuncType(param TDOMAIN' FDECLS:FuncDecls , [ TDOMAIN            ] -> [ TRANGE ])
+      => #gatherFuncType(               FDECLS           , [ TDOMAIN + TDOMAIN' ] -> [ TRANGE ])
+
+    rule #gatherFuncType(result TRANGE' FDECLS:FuncDecls , [ TDOMAIN ] -> [ TRANGE           ])
+      => #gatherFuncType(               FDECLS           , [ TDOMAIN ] -> [ TRANGE + TRANGE' ])
+
+    syntax VecType ::=  gatherLocalType ( FuncDecls )           [function]
+                     | #gatherLocalType ( FuncDecls , VecType ) [function]
+ // ----------------------------------------------------------------------
+    rule gatherLocalType(FDECLS) => #gatherLocalType(FDECLS, [ .ValTypes ])
+
+    rule #gatherLocalType(.FuncDecls , LTYPE) => LTYPE
+
+    rule #gatherLocalType(FDECL:FuncDecl FDECLS:FuncDecls , FTYPE)
+      => #gatherLocalType(               FDECLS           , FTYPE) [owise]
+
+    rule #gatherLocalType(local TLOCAL' FDECLS:FuncDecls , [ TLOCAL           ])
+      => #gatherLocalType(              FDECLS:FuncDecls , [ TLOCAL + TLOCAL' ])
 ```
 
 ### Function Invocation/Return
