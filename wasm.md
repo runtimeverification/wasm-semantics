@@ -352,6 +352,10 @@ Here, we only provide only two formats, one where all three of `param`, `local`,
 
 ### Function Invocation/Return
 
+Frames are used to store function return points.
+Similar to labels, they sit on the instruction stack (the `<k>` cell), and `return` consumes things following it until hitting it.
+Unlike labels, only one frame can be "broken" through at a time.
+
 ```k
     syntax Frame ::= "frame" ValTypes Stack Map
  // -------------------------------------------
