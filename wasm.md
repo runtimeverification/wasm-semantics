@@ -36,6 +36,8 @@ Configuration
 Instructions
 ------------
 
+### Parentheses and Sequencing
+
 WASM instructions are space-separated and (optionally) surrounded by paranthesis.
 
 ```k
@@ -48,6 +50,20 @@ WASM instructions are space-separated and (optionally) surrounded by paranthesis
     rule <k> I:Instr IS:Instrs             => I ~> IS       ... </k>
     rule <k> I:Instr ~> .Instrs            => I             ... </k>
     rule <k> I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS ... </k>
+```
+
+### Traps
+
+When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<stack>` cell).
+If the value is the special `undefined`, then `trap` is generated instead.
+
+```k
+    syntax Instr ::= "trap"
+ // -----------------------
+    rule <k> undefined => trap ... </k>
+    rule <k> V:Val     => .    ... </k>
+         <stack> STACK => V : STACK </stack>
+      requires V =/=K undefined
 ```
 
 Numeric Operators
