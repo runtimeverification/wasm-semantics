@@ -55,6 +55,15 @@ All told, a `Type` can be a value type, vector of types, or function type.
  // ------------------------------------------------------
 ```
 
+We can append two `ValTypes`s with the `_+_` operator.
+
+```k
+    syntax ValTypes ::= ValTypes "+" ValTypes [function]
+ // ----------------------------------------------------
+    rule .ValTypes + VTYPES            => VTYPES
+    rule (VT:ValType VTYPES) + VTYPES' => VT (VTYPES + VTYPES')
+```
+
 ### Type Information
 
 The `#width` function returns the bit-width of a given `IValType`.
