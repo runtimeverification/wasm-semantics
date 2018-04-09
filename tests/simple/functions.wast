@@ -1,6 +1,6 @@
 ;; Simple add function
 
-(func 0 param i32 i32 result i32
+(func 0 [ i32 i32 ] -> [ i32 ] [ ]
     get_local 0
     get_local 1
     i32.add
@@ -29,7 +29,7 @@ invoke 0
 
 ;; More complicated function with locals
 
-(func 1 param i64 i64 i64 local i64 result i64
+(func 1 param i64 i64 i64 result i64 local i64
     get_local 0
     get_local 1
     i64.add

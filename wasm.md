@@ -389,22 +389,28 @@ Here, we only provide only two formats, one where all three of `param`, `local`,
     syntax ResultDecl  ::= "result" ValType  | "(" ResultDecl ")" [bracket]
  // -----------------------------------------------------------------------
 
-    syntax Instr ::= "func" FunctionName ParamDecl           ResultDecl Instrs
-    syntax Instr ::= "func" FunctionName ParamDecl LocalDecl ResultDecl Instrs
+    syntax Instr ::= "func" FunctionName ParamDecl ResultDecl           Instrs
+                   | "func" FunctionName ParamDecl ResultDecl LocalDecl Instrs
+                   | "func" FunctionName FuncType             VecType   Instrs
  // --------------------------------------------------------------------------
-    rule <k> func FNAME param TDOMAIN                 result TRANGE INSTRS
-          => func FNAME param TDOMAIN local .ValTypes result TRANGE INSTRS
+    rule <k> func FNAME param TDOMAIN result TRANGE                 INSTRS
+          => func FNAME param TDOMAIN result TRANGE local .ValTypes INSTRS
          ...
          </k>
 
-    rule <k> func FNAME param TDOMAIN local TLOCAL result TRANGE INSTRS => . ... </k>
+    rule <k> func FNAME param TDOMAIN result TRANGE local TLOCAL INSTRS
+          => func FNAME [ TDOMAIN ] -> [ TRANGE ]   [ TLOCAL ]   INSTRS
+         ...
+         </k>
+
+    rule <k> func FNAME FTYPE:FuncType LTYPE:VecType INSTRS => . ... </k>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fname>  FNAME                     </fname>
-               <fcode>  INSTRS                    </fcode>
-               <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
-               <flocal> [ TLOCAL ]                </flocal>
+               <fname>  FNAME  </fname>
+               <fcode>  INSTRS </fcode>
+               <ftype>  FTYPE  </ftype>
+               <flocal> LTYPE  </flocal>
                ...
              </funcDef>
            )
@@ -453,5 +459,8 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> return ~> (I:Instr => .)  ... </k>
     rule <k> return ~> (L:Label => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
+```
+
+```k
 endmodule
 ```
