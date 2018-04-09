@@ -384,10 +384,10 @@ Here, we only provide only two formats, one where all three of `param`, `local`,
     syntax FunctionName ::= Int
  // ---------------------------
 
-    syntax  ParamDecl  ::= "param"  ValTypes | "(" ParamDecl  ")" [bracket]
-    syntax  LocalDecl  ::= "local"  ValTypes | "(" LocalDecl  ")" [bracket]
-    syntax ResultDecl  ::= "result" ValType  | "(" ResultDecl ")" [bracket]
- // -----------------------------------------------------------------------
+    syntax  ParamDecl ::= "param"  ValTypes | "(" ParamDecl  ")" [bracket]
+    syntax ResultDecl ::= "result" ValType  | "(" ResultDecl ")" [bracket]
+    syntax  LocalDecl ::= "local"  ValTypes | "(" LocalDecl  ")" [bracket]
+ // ----------------------------------------------------------------------
 
     syntax Instr ::= "func" FunctionName ParamDecl ResultDecl           Instrs
                    | "func" FunctionName ParamDecl ResultDecl LocalDecl Instrs
@@ -447,9 +447,9 @@ Unlike labels, only one frame can be "broken" through at a time.
          </curFrame>
          <funcDef>
            <fname>  FNAME                     </fname>
+           <fcode>  INSTRS                    </fcode>
            <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
            <flocal> [ TLOCALS ]               </flocal>
-           <fcode>  INSTRS                    </fcode>
            <faddrs> ADDRS                     </faddrs>
            ...
          </funcDef>
