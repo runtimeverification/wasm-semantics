@@ -310,6 +310,70 @@ Finally, we have the conditional and loop instructions.
          <stack> STACK => .Stack </stack>
 ```
 
+Memory Operators
+----------------
+
+### Locals
+
+The various `init_local` variants assist in setting up the `locals` cell.
+
+```k
+    syntax Instr ::=  "init_local"  Int Val
+                   |  "init_locals"     Stack
+                   | "#init_locals" Int Stack
+ // -----------------------------------------
+    rule <k> init_local INDEX VALUE => . ... </k>
+         <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
+
+    rule <k> init_locals VALUES => #init_locals 0 VALUES ... </k>
+
+    rule <k> #init_locals _ .Stack => . ... </k>
+    rule <k> #init_locals N (VALUE : STACK)
+          => init_local N VALUE
+          ~> #init_locals (N +Int 1) STACK
+          ...
+          </k>
+```
+
+The `*_local` instructions are defined here.
+
+```k
+    syntax Instr ::= "get_local" Int
+                   | "set_local" Int
+                   | "tee_local" Int
+ // --------------------------------
+    rule <k> get_local INDEX => . ... </k>
+         <stack> STACK => VALUE : STACK </stack>
+         <locals> ... INDEX |-> VALUE ... </locals>
+
+    rule <k> set_local INDEX => . ... </k>
+         <stack> VALUE : STACK => STACK </stack>
+         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
+
+    rule <k> tee_local INDEX => . ... </k>
+         <stack> VALUE : STACK </stack>
+         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
+```
+
+### Globals
+
+```k
+    syntax Instr ::= "init_global" Int Val
+                   |  "get_global" Int
+                   |  "set_global" Int
+ // ----------------------------------
+    rule <k> init_global INDEX VALUE => . ... </k>
+         <globals> GLOBALS => GLOBALS [ INDEX <- VALUE ] </globals>
+
+    rule <k> get_global INDEX => . ... </k>
+         <stack> STACK => VALUE : STACK </stack>
+         <globals> ... INDEX |-> VALUE ... </globals>
+
+    rule <k> set_global INDEX => . ... </k>
+         <stack> VALUE : STACK => STACK </stack>
+         <globals> ... INDEX |-> (_ => VALUE) ... </globals>
+```
+
 Function Declaration and Invocation
 -----------------------------------
 
@@ -391,69 +455,5 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> return ~> (I:Instr => .)  ... </k>
     rule <k> return ~> (L:Label => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
-```
-
-Memory Operators
-----------------
-
-### Locals
-
-The various `init_local` variants assist in setting up the `locals` cell.
-
-```k
-    syntax Instr ::=  "init_local"  Int Val
-                   |  "init_locals"     Stack
-                   | "#init_locals" Int Stack
- // -----------------------------------------
-    rule <k> init_local INDEX VALUE => . ... </k>
-         <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
-
-    rule <k> init_locals VALUES => #init_locals 0 VALUES ... </k>
-
-    rule <k> #init_locals _ .Stack => . ... </k>
-    rule <k> #init_locals N (VALUE : STACK)
-          => init_local N VALUE
-          ~> #init_locals (N +Int 1) STACK
-          ...
-          </k>
-```
-
-The `*_local` instructions are defined here.
-
-```k
-    syntax Instr ::= "get_local" Int
-                   | "set_local" Int
-                   | "tee_local" Int
- // --------------------------------
-    rule <k> get_local INDEX => . ... </k>
-         <stack> STACK => VALUE : STACK </stack>
-         <locals> ... INDEX |-> VALUE ... </locals>
-
-    rule <k> set_local INDEX => . ... </k>
-         <stack> VALUE : STACK => STACK </stack>
-         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
-
-    rule <k> tee_local INDEX => . ... </k>
-         <stack> VALUE : STACK </stack>
-         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
-```
-
-### Globals
-
-```k
-    syntax Instr ::= "init_global" Int Val
-                   |  "get_global" Int
-                   |  "set_global" Int
- // ----------------------------------
-    rule <k> init_global INDEX VALUE => . ... </k>
-         <globals> GLOBALS => GLOBALS [ INDEX <- VALUE ] </globals>
-
-    rule <k> get_global INDEX => . ... </k>
-         <stack> STACK => VALUE : STACK </stack>
-         <globals> ... INDEX |-> VALUE ... </globals>
-
-    rule <k> set_global INDEX => . ... </k>
-         <stack> VALUE : STACK => STACK </stack>
-         <globals> ... INDEX |-> (_ => VALUE) ... </globals>
 endmodule
 ```
