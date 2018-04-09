@@ -82,8 +82,8 @@ Function `#unsigned` is called on integers to allow programs to use negative num
     syntax Instr ::= IValType "." "const" Int
                    | FValType "." "const" Float
  // -------------------------------------------
-    rule <k> ITYPE:IValType . const VAL => . ... </k> <stack> STACK => < ITYPE > #unsigned(ITYPE, VAL) : STACK </stack>
-    rule <k> FTYPE:FValType . const VAL => . ... </k> <stack> STACK => < FTYPE > VAL                   : STACK </stack>
+    rule <k> ITYPE:IValType . const VAL => < ITYPE > #unsigned(ITYPE, VAL) ... </k>
+    rule <k> FTYPE:FValType . const VAL => < FTYPE > VAL                   ... </k>
 ```
 
 ### Unary Operators
@@ -102,10 +102,8 @@ When a unary operator is the next instruction, `#eval<T>UnOp` will be called on 
     syntax Val ::= #evalIUnOp ( Instr , Int   ) [function]
  //              | #evalFUnOp ( Instr , Float ) [function]
  // ------------------------------------------------------
-    rule <k> (ITYPE . UOP:IUnOp => .) ... </k>
-         <stack> < ITYPE > SI1                : STACK
-              => #evalIUnOp(ITYPE . UOP, SI1) : STACK
-         </stack>
+    rule <k> (ITYPE . UOP:IUnOp => #evalIUnOp(ITYPE . UOP, SI1)) ... </k>
+         <stack> < ITYPE > SI1 : STACK => STACK </stack>
 ```
 
 ### Binary Operators
@@ -124,10 +122,8 @@ When a binary operator is the next instruction, `#eval<T>BinOp` will be called o
     syntax Val ::= #evalIBinOp ( Instr , Int   , Int   ) [function]
  //              | #evalFBinOp ( Instr , Float , Float ) [function]
  // ---------------------------------------------------------------
-    rule <k> (ITYPE . BOP:IBinOp => .) ... </k>
-         <stack> < ITYPE > SI1 : < ITYPE > SI2        : STACK
-              => #evalIBinOp(ITYPE . BOP , SI1 , SI2) : STACK
-         </stack>
+    rule <k> ITYPE . BOP:IBinOp => #evalIBinOp(ITYPE . BOP , SI1 , SI2) ... </k>
+         <stack> < ITYPE > SI1 : < ITYPE > SI2 : STACK => STACK </stack>
 ```
 
 ### Integer Arithmetic
