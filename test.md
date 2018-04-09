@@ -16,6 +16,16 @@ Assertions
 These assertions will check the supplied property, and then clear that state from the configuration.
 In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
 
+### Trap Assertion
+
+This asserts that a `trap` was just thrown.
+
+```k
+    syntax Instr ::= "#assertTrap" String
+ // -------------------------------------
+    rule <k> trap ~> #assertTrap _ => . ... </k>
+```
+
 ### Stack Assertions
 
 These functions make assertions about the state of the `<stack>` cell.

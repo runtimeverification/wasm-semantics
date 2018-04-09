@@ -26,7 +26,7 @@ i32.div_u
 i32.const 0
 i32.const 15
 i32.div_u
-#assertTopStack undefined "div_u3"
+#assertTrap "div_u3"
 
 i32.const 3
 i32.const 15
@@ -41,7 +41,7 @@ i32.rem_u
 i32.const 0
 i32.const 15
 i32.rem_u
-#assertTopStack undefined "rem_u3"
+#assertTrap "rem_u3"
 
 i32.const 3
 i32.const 10
@@ -56,12 +56,12 @@ i32.div_s
 i32.const 0
 i32.const 10
 i32.div_s
-#assertTopStack undefined "i32.div_s 3"
+#assertTrap "i32.div_s 3"
 
 i32.const #pow(i32) -Int 1
 i32.const #pow1(i32)
 i32.div_s
-#assertTopStack undefined "i32.div_s 4"
+#assertTrap "i32.div_s 4"
 
 i32.const 5
 i32.const 10
@@ -71,7 +71,7 @@ i32.div_s
 i32.const 0
 i32.const 10
 i32.rem_s
-#assertTopStack undefined "rem_s"
+#assertTrap "rem_s"
 
 // The following tests were generated using the reference OCaml WASM interpreter.
 
