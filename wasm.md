@@ -95,14 +95,10 @@ When a unary operator is the next instruction, `#eval<T>UnOp` will be called on 
  //               | FUnOp
  // ---------------------
 
-    syntax Instr ::= IValType "." IUnOp
- //                | FValType "." FUnOp
- // -----------------------------------
-
-    syntax Val ::= #evalIUnOp ( Instr , Int   ) [function]
- //              | #evalFUnOp ( Instr , Float ) [function]
- // ------------------------------------------------------
-    rule <k> (ITYPE . UOP:IUnOp => #evalIUnOp(ITYPE . UOP, SI1)) ... </k>
+    syntax Instr ::= IValType "." IUnOp | IValType "." IUnOp Int
+ //                | FValType "." FUnOp | FValType "." FUnOp Float
+ // --------------------------------------------------------------
+    rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP SI1 ... </k>
          <stack> < ITYPE > SI1 : STACK => STACK </stack>
 ```
 
@@ -205,7 +201,7 @@ All of the following opcodes are liftings of the K builtin operators using the h
 ```k
     syntax IUnOp ::= "eqz"
  // ----------------------
-    rule #evalIUnOp(TYPE . eqz, I1) => < TYPE > #bool(I1 ==Int 0)
+    rule <k> ITYPE . eqz I1 => < ITYPE > #bool(I1 ==Int 0) ... </k>
 
     syntax IBinOp ::= "eq" | "ne"
  // -----------------------------
