@@ -74,3 +74,16 @@ i64.const 8
 invoke 1
 #assertTopStack < i64 > 8 "empty type declaration"
 #assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
+
+;; Function with empty declarations of types, and bracketed in parentheses
+
+(func 1 (local) (param i64 i64) (result) (local) (result i64) (param)
+    get_local 0
+    return
+)
+
+i64.const 7
+i64.const 8
+invoke 1
+#assertTopStack < i64 > 8 "empty type declaration + parens"
+#assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations + parens"
