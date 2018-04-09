@@ -47,3 +47,30 @@ i64.const 22
 invoke 1
 #assertTopStack < i64 > 35 "invoke function 1"
 #assertFunction 1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "invoke function 1 exists"
+
+;; Function with complicated declaration of types
+
+(func 1 local i32 result i32 param i32 i64 param i64
+    get_local 0
+    return
+)
+
+i64.const 7
+i64.const 8
+i32.const 5
+invoke 1
+#assertTopStack < i32 > 5 "out of order type declaration"
+#assertFunction 1 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
+
+;; Function with empty declarations of types
+
+(func 1 local param i64 i64 result local result i64 param
+    get_local 0
+    return
+)
+
+i64.const 7
+i64.const 8
+invoke 1
+#assertTopStack < i64 > 8 "empty type declaration"
+#assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
