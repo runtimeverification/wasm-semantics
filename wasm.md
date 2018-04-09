@@ -115,14 +115,10 @@ When a binary operator is the next instruction, `#eval<T>BinOp` will be called o
  //                | FBinOp
  // -----------------------
 
-    syntax Instr ::= IValType "." IBinOp
- //                | FValType "." FBinOp
- // ------------------------------------
-
-    syntax Val ::= #evalIBinOp ( Instr , Int   , Int   ) [function]
- //              | #evalFBinOp ( Instr , Float , Float ) [function]
- // ---------------------------------------------------------------
-    rule <k> ITYPE . BOP:IBinOp => #evalIBinOp(ITYPE . BOP , SI1 , SI2) ... </k>
+    syntax Instr ::= IValType "." IBinOp | IValType "." IBinOp Int   Int
+ //                | FValType "." FBinOp | FValType "." FBinOp Float Float
+ // ----------------------------------------------------------------------
+    rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP SI1 SI2 ... </k>
          <stack> < ITYPE > SI1 : < ITYPE > SI2 : STACK => STACK </stack>
 ```
 
@@ -133,9 +129,9 @@ When a binary operator is the next instruction, `#eval<T>BinOp` will be called o
 ```k
     syntax IBinOp ::= "add" | "sub" | "mul"
  // ---------------------------------------
-    rule #evalIBinOp(TYPE . add, I1, I2) => #chop(< TYPE > (I1 +Int I2))
-    rule #evalIBinOp(TYPE . sub, I1, I2) => #chop(< TYPE > (I1 -Int I2))
-    rule #evalIBinOp(TYPE . mul, I1, I2) => #chop(< TYPE > (I1 *Int I2))
+    rule <k> ITYPE . add I1 I2 => #chop(< ITYPE > I1 +Int I2) ... </k>
+    rule <k> ITYPE . sub I1 I2 => #chop(< ITYPE > I1 -Int I2) ... </k>
+    rule <k> ITYPE . mul I1 I2 => #chop(< ITYPE > I1 *Int I2) ... </k>
 ```
 
 `div_*` and `rem_*` have extra side-conditions about when they are defined or not.
@@ -144,31 +140,26 @@ Note that we do not need to call `#chop` on the results here.
 ```k
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule #evalIBinOp(TYPE . div_u, I1, I2)
-      => #if I2 =/=Int 0
-            #then < TYPE > (I1 /Int I2)
-            #else undefined
-         #fi
-
-    rule #evalIBinOp(TYPE . rem_u, I1, I2)
-      => #if I2 =/=Int 0
-            #then < TYPE > (I1 %Int I2)
-            #else undefined
-         #fi
+    rule <k> ITYPE . div_u I1 I2 => #if I2 =/=Int 0 #then < ITYPE > (I1 /Int I2) #else undefined #fi ... </k>
+    rule <k> ITYPE . rem_u I1 I2 => #if I2 =/=Int 0 #then < ITYPE > (I1 %Int I2) #else undefined #fi ... </k>
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
-    rule #evalIBinOp(ITYPE . div_s, I1, I2)
-      => #if I2 =/=Int 0 andBool (I1 =/=Int #pow1(ITYPE) orBool (I2 =/=Int #pow(ITYPE) -Int 1))
-            #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
-            #else undefined
-         #fi
+    rule <k> ITYPE . div_s I1 I2
+          => #if I2 =/=Int 0 andBool (I1 =/=Int #pow1(ITYPE) orBool (I2 =/=Int #pow(ITYPE) -Int 1))
+                #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
+                #else undefined
+             #fi
+         ...
+         </k>
 
-    rule #evalIBinOp(ITYPE . rem_s, I1, I2)
-      => #if I2 =/=Int 0
-            #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
-            #else undefined
-         #fi
+    rule <k> ITYPE . rem_s I1 I2
+          => #if I2 =/=Int 0
+                #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
+                #else undefined
+             #fi
+         ...
+         </k>
 ```
 
 ### Bitwise Operations
@@ -179,9 +170,9 @@ These simply are the lifted K operators.
 ```k
     syntax IBinOp ::= "and" | "or" | "xor"
  // --------------------------------------
-    rule #evalIBinOp(TYPE . and, I1, I2) =>       < TYPE > (I1 &Int   I2)
-    rule #evalIBinOp(TYPE . or,  I1, I2) => #chop(< TYPE > (I1 |Int   I2))
-    rule #evalIBinOp(TYPE . xor, I1, I2) => #chop(< TYPE > (I1 xorInt I2))
+    rule <k> ITYPE . and I1 I2 =>       < ITYPE > I1 &Int   I2  ... </k>
+    rule <k> ITYPE . or  I1 I2 => #chop(< ITYPE > I1 |Int   I2) ... </k>
+    rule <k> ITYPE . xor I1 I2 => #chop(< ITYPE > I1 xorInt I2) ... </k>
 ```
 
 Similarly, K bitwise shift operators are lifted for `shl` and `shr_u`.
@@ -190,10 +181,10 @@ Careful attention is made for the signed version `shr_s`.
 ```k
     syntax IBinOp ::= "shl" | "shr_u" | "shr_s"
  // -------------------------------------------
-    rule #evalIBinOp(TYPE . shl,   I1, I2) => #chop(< TYPE > I1 <<Int (I2 %Int #width(TYPE)))
-    rule #evalIBinOp(TYPE . shr_u, I1, I2) =>       < TYPE > I1 >>Int (I2 %Int #width(TYPE))
+    rule <k> ITYPE . shl   I1 I2 => #chop(< ITYPE > I1 <<Int (I2 %Int #width(ITYPE))) ... </k>
+    rule <k> ITYPE . shr_u I1 I2 =>       < ITYPE > I1 >>Int (I2 %Int #width(ITYPE))  ... </k>
 
-    rule #evalIBinOp(TYPE . shr_s, I1, I2) => < TYPE > #unsigned(TYPE, #signed(TYPE, I1) >>Int (I2 %Int #width(TYPE)))
+    rule <k> ITYPE . shr_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) >>Int (I2 %Int #width(ITYPE))) ... </k>
 ```
 
 The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and so are built with a series of shifts.
@@ -201,8 +192,8 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
 ```k
     syntax IBinOp ::= "rotl" | "rotr"
  // ---------------------------------
-    rule #evalIBinOp(TYPE . rotl, I1, I2) => #chop(< TYPE > (I1 <<Int (I2 %Int #width(TYPE))) +Int (I1 >>Int (#width(TYPE) -Int (I2 %Int #width(TYPE)))))
-    rule #evalIBinOp(TYPE . rotr, I1, I2) => #chop(< TYPE > (I1 >>Int (I2 %Int #width(TYPE))) +Int (I1 <<Int (#width(TYPE) -Int (I2 %Int #width(TYPE)))))
+    rule <k> ITYPE . rotl I1 I2 => #chop(< ITYPE > (I1 <<Int (I2 %Int #width(ITYPE))) +Int (I1 >>Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE))))) ... </k>
+    rule <k> ITYPE . rotr I1 I2 => #chop(< ITYPE > (I1 >>Int (I2 %Int #width(ITYPE))) +Int (I1 <<Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE))))) ... </k>
 ```
 
 **TODO**: `clz`, `ctz`, `popcnt`.
@@ -218,24 +209,24 @@ All of the following opcodes are liftings of the K builtin operators using the h
 
     syntax IBinOp ::= "eq" | "ne"
  // -----------------------------
-    rule #evalIBinOp(TYPE . eq, I1, I2) => < TYPE > #bool(I1  ==Int I2)
-    rule #evalIBinOp(TYPE . ne, I1, I2) => < TYPE > #bool(I1 =/=Int I2)
+    rule <k> ITYPE . eq I1 I2 => < ITYPE > #bool(I1  ==Int I2) ... </k>
+    rule <k> ITYPE . ne I1 I2 => < ITYPE > #bool(I1 =/=Int I2) ... </k>
 
     syntax IBinOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
  // ---------------------------------------------------
-    rule #evalIBinOp(TYPE . lt_u, I1, I2) => < TYPE > #bool(I1 <Int I2)
-    rule #evalIBinOp(TYPE . gt_u, I1, I2) => < TYPE > #bool(I1 >Int I2)
+    rule <k> ITYPE . lt_u I1 I2 => < ITYPE > #bool(I1 <Int I2) ... </k>
+    rule <k> ITYPE . gt_u I1 I2 => < ITYPE > #bool(I1 >Int I2) ... </k>
 
-    rule #evalIBinOp(TYPE . lt_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) <Int #signed(TYPE, I2))
-    rule #evalIBinOp(TYPE . gt_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) >Int #signed(TYPE, I2))
+    rule <k> ITYPE . lt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . gt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2)) ... </k>
 
     syntax IBinOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
  // ---------------------------------------------------
-    rule #evalIBinOp(TYPE . le_u, I1, I2) => < TYPE > #bool(I1 <=Int I2)
-    rule #evalIBinOp(TYPE . ge_u, I1, I2) => < TYPE > #bool(I1 >=Int I2)
+    rule <k> ITYPE . le_u I1 I2 => < ITYPE > #bool(I1 <=Int I2) ... </k>
+    rule <k> ITYPE . ge_u I1 I2 => < ITYPE > #bool(I1 >=Int I2) ... </k>
 
-    rule #evalIBinOp(TYPE . le_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) <=Int #signed(TYPE, I2))
-    rule #evalIBinOp(TYPE . ge_s, I1, I2) => < TYPE > #bool(#signed(TYPE, I1) >=Int #signed(TYPE, I2))
+    rule <k> ITYPE . le_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . ge_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
 ```
 
 Stack Operations
