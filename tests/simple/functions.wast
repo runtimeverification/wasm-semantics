@@ -12,7 +12,7 @@ i32.const 7
 i32.const 8
 invoke 0
 #assertTopStack < i32 > 15 "invoke function 0"
-#assertFunction 0          "invoke function 0 exists"
+#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "invoke function 0 exists"
 
 ;; Remove return statement
 
@@ -26,7 +26,7 @@ i32.const 7
 i32.const 8
 invoke 0
 #assertTopStack < i32 > 15 "invoke function 0 no return"
-#assertFunction 0          "invoke function 0 exists no return"
+#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "invoke function 0 exists no return"
 
 ;; More complicated function with locals
 
@@ -46,4 +46,4 @@ i64.const 43
 i64.const 22
 invoke 1
 #assertTopStack < i64 > 35 "invoke function 1"
-#assertFunction 1          "invoke function 1 exists"
+#assertFunction 1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "invoke function 1 exists"
