@@ -26,6 +26,17 @@ invoke 0
 
 #assertFunction "add" [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 
+;; Exported name add function
+
+(func export "add" param i32 i32 result i32
+    get_local 0
+    get_local 1
+    i32.add
+    return
+)
+
+#assertFunction "add" [ i32 i32 ] -> [ i32 ] [ ] "exported function name add"
+
 ;; Remove return statement
 
 (func 0 param i32 i32 result i32

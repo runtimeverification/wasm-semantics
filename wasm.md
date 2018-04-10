@@ -387,12 +387,19 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FTypeKeyWord ::= "param" | "result" | "local"
     syntax FuncDecl     ::= "(" FuncDecl ")" [bracket]
                           | FTypeKeyWord ValTypes
+                          | "export" FunctionName
     syntax FuncDecls    ::= List{FuncDecl, ""}
  // ------------------------------------------
 
-    syntax Instr ::= "func" FunctionName FuncDecls Instrs
+    syntax Instr ::= "func" FuncDecls Instrs
+                   | "func" FunctionName FuncDecls Instrs
                    | "func" FunctionName "::" FuncType VecType Instrs
  // -----------------------------------------------------------------
+    rule <k> func FDECLS INSTRS
+          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherLocalType(FDECLS) INSTRS
+         ...
+         </k>
+
     rule <k> func FNAME FDECLS INSTRS
           => func FNAME :: gatherFuncType(FDECLS) gatherLocalType(FDECLS) INSTRS
          ...
@@ -411,6 +418,11 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
            )
            ...
          </funcs>
+
+    syntax FunctionName ::= gatherExportedName ( FuncDecls ) [function]
+ // -------------------------------------------------------------------
+    rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
+    rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
 
     syntax FuncType ::=  gatherFuncType ( FuncDecls )            [function]
                       | #gatherFuncType ( FuncDecls , FuncType ) [function]
