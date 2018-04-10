@@ -22,6 +22,18 @@ block [ i32 i32 ]
 end
 #assertStack < i32 > 3 : < i32 > 2 : .Stack "block 3 (invalid)"
 
+(block (result i32)
+    i32.const 1
+)
+#assertTopStack < i32 > 1 "block with named result 1"
+
+(block result i64 i32
+    i32.const 2
+    i32.const 1
+    i64.const 5
+)
+#assertStack < i64 > 5 : < i32 > 1 : .Stack "block with named result 2"
+
 ;; Breaks
 
 i32.const 1

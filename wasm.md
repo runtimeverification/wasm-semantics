@@ -267,8 +267,14 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
          <stack> STACK => #take(TYPES, STACK) ++ STACK' </stack>
 
-    syntax Instr ::= "block" VecType Instrs "end"
+    syntax Instr ::= "block" FuncDecls Instrs
+                   | "block" VecType Instrs "end"
  // ---------------------------------------------
+    rule <k> block FDECLS:FuncDecls INSTRS:Instrs
+          => block gatherTypes(result, FDECLS) INSTRS end
+         ...
+         </k>
+
     rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } STACK ... </k>
          <stack> STACK => .Stack </stack>
 ```
