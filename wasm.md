@@ -381,8 +381,8 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax FunctionName ::= Int
- // ---------------------------
+    syntax FunctionName ::= Int | String
+ // ------------------------------------
 
     syntax FTypeKeyWord ::= "param" | "result" | "local"
     syntax FuncDecl     ::= "(" FuncDecl ")" [bracket]
@@ -455,8 +455,8 @@ Unlike labels, only one frame can be "broken" through at a time.
          <stack> STACK => #take(TRANGE, STACK) ++ STACK' </stack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "invoke" Int
- // -----------------------------
+    syntax Instr ::= "invoke" FunctionName
+ // --------------------------------------
     rule <k> invoke FNAME
           => init_locals #take(TDOMAIN, STACK) ++ #zero(TLOCALS)
           ~> INSTRS

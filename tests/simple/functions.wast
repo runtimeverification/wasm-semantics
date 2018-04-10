@@ -14,6 +14,18 @@ invoke 0
 #assertTopStack < i32 > 15 "invoke function 0"
 #assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "invoke function 0 exists"
 
+;; String-named add function
+
+(func "add" :: [ i32 i32 ] -> [ i32 ]
+    [ ]
+    get_local 0
+    get_local 1
+    i32.add
+    return
+)
+
+#assertFunction "add" [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
+
 ;; Remove return statement
 
 (func 0 param i32 i32 result i32
