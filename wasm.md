@@ -384,24 +384,26 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FunctionName ::= Int | String
  // ------------------------------------
 
-    syntax FTypeKeyWord ::= "param" | "result" | "local"
-    syntax FuncDecl     ::= "(" FuncDecl ")" [bracket]
-                          | FTypeKeyWord ValTypes
-                          | "export" FunctionName
-    syntax FuncDecls    ::= List{FuncDecl, ""}
- // ------------------------------------------
+    syntax TypeKeyWord ::= "param" | "result" | "local"
+ // ---------------------------------------------------
+
+    syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
+                       | TypeKeyWord ValTypes
+                       | "export" FunctionName
+    syntax FuncDecls ::= List{FuncDecl, ""}
+ // ---------------------------------------
 
     syntax Instr ::= "func" FuncDecls Instrs
                    | "func" FunctionName FuncDecls Instrs
                    | "func" FunctionName "::" FuncType VecType Instrs
  // -----------------------------------------------------------------
     rule <k> func FDECLS INSTRS
-          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherLocalType(FDECLS) INSTRS
+          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
          ...
          </k>
 
     rule <k> func FNAME FDECLS INSTRS
-          => func FNAME :: gatherFuncType(FDECLS) gatherLocalType(FDECLS) INSTRS
+          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
          ...
          </k>
 
@@ -424,34 +426,20 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
     rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
 
-    syntax FuncType ::=  gatherFuncType ( FuncDecls )            [function]
-                      | #gatherFuncType ( FuncDecls , FuncType ) [function]
- // -----------------------------------------------------------------------
-    rule gatherFuncType(FDECLS) => #gatherFuncType(FDECLS, [ .ValTypes ] -> [ .ValTypes ])
+    syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
+ // -----------------------------------------------------------
+    rule gatherFuncType(FDECLS) => gatherTypes(param, FDECLS) -> gatherTypes(result, FDECLS)
 
-    rule #gatherFuncType(.FuncDecls , FTYPE) => FTYPE
+    syntax VecType ::=  gatherTypes ( TypeKeyWord , FuncDecls )            [function]
+                     | #gatherTypes ( TypeKeyWord , FuncDecls , ValTypes ) [function]
+ // ---------------------------------------------------------------------------------
+    rule gatherTypes(TKW, FDECLS) => #gatherTypes(TKW, FDECLS, .ValTypes)
 
-    rule #gatherFuncType(FDECL:FuncDecl FDECLS:FuncDecls , FTYPE)
-      => #gatherFuncType(               FDECLS           , FTYPE) [owise]
+    rule #gatherTypes(TKW , .FuncDecls            , TYPES) => [ TYPES ]
+    rule #gatherTypes(TKW , FDECL:FuncDecl FDECLS , TYPES) => #gatherTypes(TKW, FDECLS, TYPES) [owise]
 
-    rule #gatherFuncType(param TDOMAIN' FDECLS:FuncDecls , [ TDOMAIN            ] -> [ TRANGE ])
-      => #gatherFuncType(               FDECLS           , [ TDOMAIN + TDOMAIN' ] -> [ TRANGE ])
-
-    rule #gatherFuncType(result TRANGE' FDECLS:FuncDecls , [ TDOMAIN ] -> [ TRANGE           ])
-      => #gatherFuncType(               FDECLS           , [ TDOMAIN ] -> [ TRANGE + TRANGE' ])
-
-    syntax VecType ::=  gatherLocalType ( FuncDecls )           [function]
-                     | #gatherLocalType ( FuncDecls , VecType ) [function]
- // ----------------------------------------------------------------------
-    rule gatherLocalType(FDECLS) => #gatherLocalType(FDECLS, [ .ValTypes ])
-
-    rule #gatherLocalType(.FuncDecls , LTYPE) => LTYPE
-
-    rule #gatherLocalType(FDECL:FuncDecl FDECLS:FuncDecls , FTYPE)
-      => #gatherLocalType(               FDECLS           , FTYPE) [owise]
-
-    rule #gatherLocalType(local TLOCAL' FDECLS:FuncDecls , [ TLOCAL           ])
-      => #gatherLocalType(              FDECLS:FuncDecls , [ TLOCAL + TLOCAL' ])
+    rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
+      => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
 ```
 
 ### Function Invocation/Return
