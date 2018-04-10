@@ -497,6 +497,18 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> (return => .) ~> FR:Frame ... </k>
 ```
 
+Module Declaration
+------------------
+
+Currently, we support a single module.
+The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
+
+```k
+    syntax Instr ::= "module" Instrs
+ // --------------------------------
+    rule <k> module INSTRS => INSTRS ... </k>
+```
+
 ```k
 endmodule
 ```
