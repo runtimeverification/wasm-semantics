@@ -17,8 +17,10 @@ pretty_diff() {
 # -----------------
 
 run_env() {
+    local run_file="$1"
     local build_dir="$(pwd)/.build"
     local release_dir="$build_dir/k/k-distribution/target/release/k"
+    [[ "$run_file" =~ ^tests/* ]] && DEFN_DIRECTORY=$build_dir/defn/test
     export DEFN_DIR="${DEFN_DIRECTORY:-$build_dir/defn/wasm}"
     export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
     eval $(opam config env)
