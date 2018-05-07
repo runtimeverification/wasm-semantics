@@ -1,4 +1,4 @@
-// Simple add function
+;; Simple add function
 
 (func 0 param i32 i32 result i32
     get_local 0
@@ -13,7 +13,7 @@ invoke 0
 #assertTopStack < i32 > 15 "invoke function 0"
 #assertFunction 0          "invoke function 0 exists"
 
-// Remove return statement
+;; Remove return statement
 
 (func 0 param i32 i32 result i32
     get_local 0
@@ -27,7 +27,7 @@ invoke 0
 #assertTopStack < i32 > 15 "invoke function 0 no return"
 #assertFunction 0          "invoke function 0 exists no return"
 
-// More complicated function with locals
+;; More complicated function with locals
 
 (func 1 param i64 i64 i64 local i64 result i64
     get_local 0

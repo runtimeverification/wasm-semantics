@@ -1,4 +1,4 @@
-// Test locals
+;; Test locals
 
 init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .Stack
 
@@ -17,7 +17,7 @@ tee_local 2
 #assertTopStack < i32 > 67 "tee_local stack"
 #assertLocal 2 < i32 > 67 "tee_local local"
 
-// Test globals
+;; Test globals
 
 init_global 0 < i32 > 0
 init_global 1 < i32 > 0

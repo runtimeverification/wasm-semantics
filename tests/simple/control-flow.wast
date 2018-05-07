@@ -1,4 +1,4 @@
-// Blocks
+;; Blocks
 
 block [ i32 i32 i32 ]
     i32.const 1
@@ -22,7 +22,7 @@ block [ i32 i32 ]
 end
 #assertStack < i32 > 3 : < i32 > 2 : .Stack "block 3 (invalid)"
 
-// Breaks
+;; Breaks
 
 i32.const 1
 i32.const 2
@@ -98,7 +98,7 @@ block [ ]
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "br_if 1 true"
 
-// Conditional
+;; Conditional
 
 i32.const 1
 if [ i32 ] i32.const 1 else i32.const -1 end
@@ -108,24 +108,24 @@ i32.const 0
 if [ i32 ] i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
 
-// Looping
-// TODO: We need locals before loops become effective.
-// i32.const 0
-// loop [ ]
-//     block [ ]
-//         i32.const 10
-//         i32.eq
-//         br_if 1
-//     end
-//     i32.const 1
-//     i32.add
-// end
-// #assertTopStack < i32 > 10 "loop"
+;; Looping
+;; TODO: We need locals before loops become effective.
+;; i32.const 0
+;; loop [ ]
+;;     block [ ]
+;;         i32.const 10
+;;         i32.eq
+;;         br_if 1
+;;     end
+;;     i32.const 1
+;;     i32.add
+;; end
+;; #assertTopStack < i32 > 10 "loop"
 
-// Stack Underflow
-// TODO: We need to give semantics to stack underflow (though it could not happen with a validated program).
-// We need `trap` semantics first.
-// i32.const 0
-// block [ i32 i32 ]
-//     i32.const 7
-// end
+;; Stack Underflow
+;; TODO: We need to give semantics to stack underflow (though it could not happen with a validated program).
+;; We need `trap` semantics first.
+;; i32.const 0
+;; block [ i32 i32 ]
+;;     i32.const 7
+;; end

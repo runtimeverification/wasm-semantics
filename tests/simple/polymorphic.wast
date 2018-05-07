@@ -1,4 +1,4 @@
-// drop
+;; drop
 
 i32.const 15
 drop
@@ -16,7 +16,7 @@ f64.const 15.0
 drop
 #assertStack .Stack "drop f64"
 
-// select
+;; select
 
 i32.const -1
 i32.const 1

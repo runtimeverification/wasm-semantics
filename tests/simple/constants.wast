@@ -1,5 +1,5 @@
-// Integers
-// --------
+;; Integers
+;; --------
 
 i32.const 3
 #assertTopStack < i32 > 3 "i32 1"
@@ -22,8 +22,8 @@ i32.const -5
 i32.const #unsigned(i32, -5)
 #assertTopStack < i32 > -5 "i32 signed assert"
 
-// Floating point
-// --------------
+;; Floating point
+;; --------------
 
 f32.const 3.245
 #assertTopStack < f32 > 3.245 "f32"
@@ -40,13 +40,13 @@ f32.const 3.245
 (f64.const 1.63176601e-302)
 #assertTopStack < f64 > 1.63176601e-302 "f64 scientific 3"
 
-// Below examples do not work with current float parser
-// (f64.const 0x1.da21c460a6f44p+52)
-// (f64.const 0x1.60859d2e7714ap-321)
-// (f64.const 0x1.e63f1b7b660e1p-302)
+;; Below examples do not work with current float parser
+;; (f64.const 0x1.da21c460a6f44p+52)
+;; (f64.const 0x1.60859d2e7714ap-321)
+;; (f64.const 0x1.e63f1b7b660e1p-302)
 
-// Helper conversions
-// ------------------
+;; Helper conversions
+;; ------------------
 
 i32.const #unsigned(i32, #signed(i32, 0))
 #assertTopStack < i32 > 0 "#unsigned . #signed 1"

@@ -73,7 +73,7 @@ i32.const 10
 i32.rem_s
 #assertTrap "rem_s"
 
-// The following tests were generated using the reference OCaml WASM interpreter.
+;; The following tests were generated using the reference OCaml WASM interpreter.
 
 i32.const 3
 i32.const 10
