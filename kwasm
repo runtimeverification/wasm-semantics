@@ -43,7 +43,7 @@ run_kdebug() {
 
 run_test() {
     local test_file="$1" ; shift
-    local expected_file=$(dirname "$test_file")/success.out
+    local expected_file="tests/success.out"
     [[ -f "$expected_file" ]] \
         || die "Expected output file '$expected_file' does not exist..."
     local output_file="$(mktemp $test_file.out.XXXXXX)"
