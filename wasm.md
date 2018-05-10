@@ -42,14 +42,11 @@ That way, unsigned instructions can make use of `I` directly, whereas signed ins
 Instructions
 ------------
 
-### Parentheses and Sequencing
+### Sequencing
 
-WASM instructions are space-separated and (optionally) surrounded by paranthesis.
+WASM instructions are space-separated lists of instructions.
 
 ```k
-    syntax Instr ::= "(" Instr ")" [bracket]
- // ----------------------------------------
-
     syntax Instrs ::= List{Instr, ""}
  // ---------------------------------
     rule <k> .Instrs                       => .             ... </k>
@@ -84,11 +81,11 @@ Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
 
 ```k
-    syntax Instr ::= IValType "." "const" Int
-                   | FValType "." "const" Float
- // -------------------------------------------
-    rule <k> ITYPE:IValType . const VAL => < ITYPE > #unsigned(ITYPE, VAL) ... </k>
-    rule <k> FTYPE:FValType . const VAL => < FTYPE > VAL                   ... </k>
+    syntax Instr ::= "(" IValType "." "const" Int   ")"
+                   | "(" FValType "." "const" Float ")"
+ // ---------------------------------------------------
+    rule <k> ( ITYPE:IValType . const VAL ) => < ITYPE > #unsigned(ITYPE, VAL) ... </k>
+    rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL                   ... </k>
 ```
 
 ### Unary Operators
@@ -100,10 +97,10 @@ When a unary operator is the next instruction, the single argument is loaded fro
  //               | FUnOp
  // ---------------------
 
-    syntax Instr ::= IValType "." IUnOp | IValType "." IUnOp Int
- //                | FValType "." FUnOp | FValType "." FUnOp Float
- // --------------------------------------------------------------
-    rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP SI1 ... </k>
+    syntax Instr ::= "(" IValType "." IUnOp ")" | IValType "." IUnOp Int
+ //                | "(" FValType "." FUnOp ")" | FValType "." FUnOp Float
+ // ----------------------------------------------------------------------
+    rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP SI1 ... </k>
          <stack> < ITYPE > SI1 : STACK => STACK </stack>
 ```
 
@@ -116,10 +113,10 @@ When a binary operator is the next instruction, the two arguments are loaded fro
  //                | FBinOp
  // -----------------------
 
-    syntax Instr ::= IValType "." IBinOp | IValType "." IBinOp Int   Int
- //                | FValType "." FBinOp | FValType "." FBinOp Float Float
- // ----------------------------------------------------------------------
-    rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP SI1 SI2 ... </k>
+    syntax Instr ::= "(" IValType "." IBinOp ")" | IValType "." IBinOp Int   Int
+ //                | "(" FValType "." FBinOp ")" | FValType "." FBinOp Float Float
+ // ------------------------------------------------------------------------------
+    rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP SI1 SI2 ... </k>
          <stack> < ITYPE > SI1 : < ITYPE > SI2 : STACK => STACK </stack>
 ```
 
@@ -268,9 +265,9 @@ Conversion operators always take a single argument as input and cast it to anoth
 For each element added to `ConvOp`, function `#confSourceType` must be defined over it.
 
 ```k
-    syntax Instr ::= IValType "." ConvOp | IValType "." ConvOp Int
- // --------------------------------------------------------------
-    rule <k> ITYPE . CONVOP:ConvOp => ITYPE . CONVOP SI1 ... </k>
+    syntax Instr ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Int
+ // ----------------------------------------------------------------------
+    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP SI1 ... </k>
          <stack> < ITYPE' > SI1 : STACK => STACK </stack>
       requires #convSourceType(CONVOP) ==K ITYPE'
 
@@ -353,10 +350,10 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
          <stack> STACK => #take(TYPES, STACK) ++ STACK' </stack>
 
-    syntax Instr ::= "block" FuncDecls Instrs
+    syntax Instr ::= "(" "block" FuncDecls Instrs ")"
                    | "block" VecType Instrs "end"
  // ---------------------------------------------
-    rule <k> block FDECLS:FuncDecls INSTRS:Instrs
+    rule <k> ( block FDECLS:FuncDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
          </k>
@@ -485,16 +482,16 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FuncDecls ::= List{FuncDecl, ""}
  // ---------------------------------------
 
-    syntax Instr ::= "func" FuncDecls Instrs
-                   | "func" FunctionName FuncDecls Instrs
+    syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
+                   | "(" "func" FunctionName FuncDecls Instrs ")"
                    | "func" FunctionName "::" FuncType VecType "{" Instrs "}"
  // -------------------------------------------------------------------------
-    rule <k> func FDECLS INSTRS
+    rule <k> ( func FDECLS INSTRS )
           => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
 
-    rule <k> func FNAME FDECLS INSTRS
+    rule <k> ( func FNAME FDECLS INSTRS )
           => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
@@ -584,9 +581,9 @@ Currently, we support a single module.
 The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
 
 ```k
-    syntax Instr ::= "module" Instrs
- // --------------------------------
-    rule <k> module INSTRS => INSTRS ... </k>
+    syntax Instr ::= "(" "module" Instrs ")"
+ // ----------------------------------------
+    rule <k> ( module INSTRS ) => INSTRS ... </k>
 ```
 
 ```k
