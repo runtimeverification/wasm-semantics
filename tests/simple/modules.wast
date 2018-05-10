@@ -76,3 +76,17 @@ invoke "f2"
 #assertTopStack < i32 > 77000 "nested method call"
 #assertFunction "f2" [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
 #assertFunction "f1" [ i32 i32     ] -> [ i32 ] [ i32     ] "inner calling method"
+
+(module
+    (func $dummy)
+
+    (func "$add" (param i32 i32) (result i32)
+        get_local 0
+        get_local 1
+        i32.add
+        return
+    )
+)
+
+#assertFunction $dummy [         ] -> [     ] [ ] "$dummy function in module"
+#assertFunction "$add" [ i32 i32 ] -> [ i32 ] [ ] "second function in module"
