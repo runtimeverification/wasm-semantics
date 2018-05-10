@@ -1,19 +1,19 @@
 (module
-    (func $add :: [ i32 i32 ] -> [ i32 ]
-        [ ]
+    func $add :: [ i32 i32 ] -> [ i32 ]
+        [ ] {
         get_local 0
         get_local 1
         i32.add
         return
-    )
+    }
 
-    (func $mul :: [ i32 i32 ] -> [ i32 ]
-        [ ]
+    func $mul :: [ i32 i32 ] -> [ i32 ]
+        [ ] {
         get_local 0
         get_local 1
         i32.mul
         return
-    )
+    }
 
     (func (export $xor) (param i32 i32) (result i32)
         get_local 0
@@ -42,8 +42,8 @@ invoke $xor
 #assertFunction $xor [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
 
 (module
-    (func $f1 :: [ i32 i32 ] -> [ i32 ]
-        [ i32 ]
+    func $f1 :: [ i32 i32 ] -> [ i32 ]
+        [ i32 ] {
         get_local 0
         get_local 1
         i32.add
@@ -52,10 +52,10 @@ invoke $xor
         get_local 2
         i32.mul
         return
-    )
+    }
 
-    (func $f2 :: [ i32 i32 i32 ] -> [ i32 ]
-        [ i32 i32 ]
+    func $f2 :: [ i32 i32 i32 ] -> [ i32 ]
+        [ i32 i32 ] {
         get_local 0
         get_local 2
         invoke $f1
@@ -64,7 +64,7 @@ invoke $xor
         get_local 0
         i32.mul
         return
-    )
+    }
 )
 
 i32.const 3

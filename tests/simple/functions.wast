@@ -1,12 +1,12 @@
 ;; Simple add function
 
-(func 0 :: [ i32 i32 ] -> [ i32 ]
-    [ ]
+func 0 :: [ i32 i32 ] -> [ i32 ]
+    [ ] {
     get_local 0
     get_local 1
     i32.add
     return
-)
+}
 
 i32.const 7
 i32.const 8
@@ -16,13 +16,13 @@ invoke 0
 
 ;; String-named add function
 
-(func $add :: [ i32 i32 ] -> [ i32 ]
-    [ ]
+func $add :: [ i32 i32 ] -> [ i32 ]
+    [ ] {
     get_local 0
     get_local 1
     i32.add
     return
-)
+}
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 

@@ -487,19 +487,19 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     syntax Instr ::= "func" FuncDecls Instrs
                    | "func" FunctionName FuncDecls Instrs
-                   | "func" FunctionName "::" FuncType VecType Instrs
- // -----------------------------------------------------------------
+                   | "func" FunctionName "::" FuncType VecType "{" Instrs "}"
+ // -------------------------------------------------------------------------
     rule <k> func FDECLS INSTRS
-          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
+          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
 
     rule <k> func FNAME FDECLS INSTRS
-          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
+          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
 
-    rule <k> func FNAME :: FTYPE LTYPE INSTRS => . ... </k>
+    rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
          <funcs>
            ( .Bag
           => <funcDef>
