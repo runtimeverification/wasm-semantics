@@ -79,14 +79,14 @@ build-wasm: $(wasm_dir)/wasm-kompiled/interpreter
 $(wasm_dir)/wasm-kompiled/interpreter: $(defn_wasm_files)
 	@echo "== kompile: $@"
 	eval $$(opam config env) \
-	$(k_bin)/kompile --debug --gen-ml-only -O3 --non-strict \
+	$(k_bin)/kompile --gen-ml-only -O3 --non-strict \
 					 --main-module WASM --syntax-module WASM $< --directory $(wasm_dir) \
 		&& ocamlfind opt -c $(wasm_dir)/wasm-kompiled/constants.ml -package gmp -package zarith \
 		&& ocamlfind opt -c -I $(wasm_dir)/wasm-kompiled \
 		&& ocamlfind opt -a -o $(wasm_dir)/semantics.cmxa \
 		&& ocamlfind remove wasm-semantics-plugin \
 		&& ocamlfind install wasm-semantics-plugin META $(wasm_dir)/semantics.cmxa $(wasm_dir)/semantics.a \
-		&& $(k_bin)/kompile --debug --packages wasm-semantics-plugin -O3 --non-strict \
+		&& $(k_bin)/kompile --packages wasm-semantics-plugin -O3 --non-strict \
 					 --main-module WASM --syntax-module WASM $< --directory $(wasm_dir) \
 		&& cd $(wasm_dir)/wasm-kompiled \
 		&& ocamlfind opt -o interpreter \
@@ -98,14 +98,14 @@ build-test: $(test_dir)/test-kompiled/interpreter
 $(test_dir)/test-kompiled/interpreter: $(defn_test_files)
 	@echo "== kompile: $@"
 	eval $$(opam config env) \
-	$(k_bin)/kompile --debug --gen-ml-only -O3 --non-strict \
+	$(k_bin)/kompile --gen-ml-only -O3 --non-strict \
 					 --main-module WASM-TEST --syntax-module WASM-TEST $< --directory $(test_dir) \
 		&& ocamlfind opt -c $(test_dir)/test-kompiled/constants.ml -package gmp -package zarith \
 		&& ocamlfind opt -c -I $(test_dir)/test-kompiled \
 		&& ocamlfind opt -a -o $(test_dir)/semantics.cmxa \
 		&& ocamlfind remove test-semantics-plugin \
 		&& ocamlfind install test-semantics-plugin META $(test_dir)/semantics.cmxa $(test_dir)/semantics.a \
-		&& $(k_bin)/kompile --debug --packages test-semantics-plugin -O3 --non-strict \
+		&& $(k_bin)/kompile --packages test-semantics-plugin -O3 --non-strict \
 					 --main-module WASM-TEST --syntax-module WASM-TEST $< --directory $(test_dir) \
 		&& cd $(test_dir)/test-kompiled \
 		&& ocamlfind opt -o interpreter \
