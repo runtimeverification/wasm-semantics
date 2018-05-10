@@ -110,3 +110,9 @@ i64.const 8
 invoke 1
 #assertTopStack < i64 > 8 "empty type declaration + parens"
 #assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations + parens"
+
+;; Function with just a name
+
+(func 3)
+
+#assertFunction 3 [ ] -> [ ] [ ] "no domain/range or locals"
