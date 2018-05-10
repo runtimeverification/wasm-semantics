@@ -98,9 +98,11 @@ A `UnOp` operator always produces a result of the same type as its operand.
  //               | FUnOp
  // ---------------------
 
-    syntax Instr ::= "(" IValType "." IUnOp ")" | IValType "." IUnOp Int
- //                | "(" FValType "." FUnOp ")" | FValType "." FUnOp Float
- // ----------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." IUnOp ")" | "(" IValType "." IUnOp Instr ")" | IValType "." IUnOp Int
+ //                | "(" FValType "." FUnOp ")" | "(" FValType "." FUnOp Instr ")" | FValType "." FUnOp Float
+ // ---------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . UOP:IUnOp I:Instr ) => I ~> ( ITYPE . UOP ) ... </k>
+
     rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP C1 ... </k>
          <stack> < ITYPE > C1 : STACK => STACK </stack>
 ```
@@ -115,9 +117,11 @@ A `BinOp` operator always produces a result of the same type as its operands.
  //                | FBinOp
  // -----------------------
 
-    syntax Instr ::= "(" IValType "." IBinOp ")" | IValType "." IBinOp Int   Int
- //                | "(" FValType "." FBinOp ")" | FValType "." FBinOp Float Float
- // ------------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." IBinOp ")" | "(" IValType "." IBinOp Instr Instr ")" | IValType "." IBinOp Int   Int
+ //                | "(" FValType "." FBinOp ")" | "(" FValType "." FBinOp Instr Instr ")" | FValType "." FBinOp Float Float
+ // ------------------------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . BOP:IBinOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . BOP ) ... </k>
+
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
 ```
