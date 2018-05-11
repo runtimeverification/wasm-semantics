@@ -355,13 +355,20 @@ Operator `drop` removes a single item from the `<stack>`.
 The `select` operator picks one of the second or third stack values based on the first.
 
 ```k
-    syntax Instr ::= "drop"
- // -----------------------
-    rule <k> drop => . ... </k> <stack> _ : STACK => STACK </stack>
+    syntax Instr ::= "(" "drop" Instr ")"
+                   | "(" "drop"       ")"
+ // -------------------------------------
+    rule <k> ( drop I ) => I ~> ( drop ) ... </k>
 
-    syntax Instr ::= "select"
- // -------------------------
-    rule <k> select => . ... </k>
+    rule <k> ( drop ) => . ... </k>
+         <stack> _ : STACK => STACK </stack>
+
+    syntax Instr ::= "(" "select" Instr Instr Instr ")"
+                   | "(" "select"                   ")"
+ // ---------------------------------------------------
+    rule <k> ( select B1 B2 C ) => B1 ~> B2 ~> C ~> ( select ) ... </k>
+
+    rule <k> ( select ) => . ... </k>
          <stack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : STACK
               => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : STACK
          </stack>
