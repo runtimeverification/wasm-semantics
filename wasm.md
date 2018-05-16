@@ -400,7 +400,13 @@ Finally, we have the conditional and loop instructions.
 
 ```k
     syntax Instr ::= "if" VecType Instrs "else" Instrs "end"
- // --------------------------------------------------------
+                   | "(" "if" FuncDecls "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+ // -----------------------------------------------------------------------------------
+    rule <k> ( if FDECLS ( then IS ) ( else IS' ) )
+          => if gatherTypes(result, FDECLS) IS else IS' end
+         ...
+         </k>
+
     rule <k> if VTYPE IS else IS' end
           => #if VAL =/=Int 0 #then IS #else IS' #fi
           ~> label VTYPE { .Instrs } STACK

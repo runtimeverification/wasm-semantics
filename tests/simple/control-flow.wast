@@ -124,6 +124,20 @@ if [ i32 ] (i32.const 1) else (i32.const -1) end
 if [ i32 ] (i32.const 1) else (i32.const -1) end
 #assertTopStack < i32 > -1 "if false"
 
+(i32.const 1)
+(if (result i32)
+  (then (i32.const 1))
+  (else (i32.const -1))
+)
+#assertTopStack < i32 > 1 "if true concrete"
+
+(i32.const 0)
+(if (result i32)
+  (then (i32.const 1))
+  (else (i32.const -1))
+)
+#assertTopStack < i32 > -1 "if false concrete"
+
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .Stack
