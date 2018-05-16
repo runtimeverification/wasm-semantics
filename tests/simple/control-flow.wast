@@ -44,9 +44,9 @@ end
 (i32.const 2)
 block [ ]
     (i32.const 3)
-    br 0
+    (br 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "br 1"
 
@@ -57,10 +57,10 @@ block [ ]
     block [ i32 i32 ]
         (i32.const 4)
         (i32.const 5)
-        br 1
+        (br 1)
     end
     (i32.const 6)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "br 2"
 
@@ -71,10 +71,10 @@ block [ i32 i32 ]
     block [ i32 i32 ]
         (i32.const 4)
         (i32.const 5)
-        br 1
+        (br 1)
     end
     (i32.const 6)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 3"
 
@@ -85,10 +85,10 @@ block [ i32 i32 ]
     block [ ]
         (i32.const 4)
         (i32.const 5)
-        br 1
+        (br 1)
     end
     (i32.const 6)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 4"
 
@@ -97,9 +97,9 @@ end
 block [ i32 ]
     (i32.const 3)
     (i32.const 0)
-    br_if 0
+    (br_if 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br_if 1 false"
 
@@ -108,9 +108,9 @@ end
 block [ i32 ]
     (i32.const 3)
     (i32.const 1)
-    br_if 0
+    (br_if 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .Stack "br_if 1 true"
 
@@ -119,9 +119,9 @@ end
 block [ ]
     (i32.const 3)
     (i32.const 1)
-    br_if 0
+    (br_if 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "br_if 2 true"
 
@@ -149,7 +149,7 @@ block [ ]
         (i32.sub)
         tee_local 0
         (i32.eqz)
-        br_if 1
+        (br_if 1)
     end
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop"

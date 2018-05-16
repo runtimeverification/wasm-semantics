@@ -424,14 +424,14 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WASM specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax Instr ::= "br" Int
- // -------------------------
-    rule <k> br N ~> (I:Instr => .) ... </k>
-    rule <k> br N ~> L:Label => #if N ==Int 0 #then L #else br (N -Int 1) #fi ... </k>
+    syntax Instr ::= "(" "br" Int ")"
+ // ---------------------------------
+    rule <k> ( br N ) ~> (I:Instr => .) ... </k>
+    rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
 
-    syntax Instr ::= "br_if" Int
- // ----------------------------
-    rule <k> br_if N => #if VAL =/=Int 0 #then br N #else .K #fi ... </k>
+    syntax Instr ::= "(" "br_if" Int ")"
+ // ------------------------------------
+    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
          <stack> < TYPE > VAL : STACK => STACK </stack>
 ```
 
