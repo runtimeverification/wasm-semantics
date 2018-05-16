@@ -453,7 +453,10 @@ Finally, we have the conditional and loop instructions.
          <stack> < i32 > VAL : STACK => .Stack </stack>
 
     syntax Instr ::= "loop" VecType Instrs "end"
- // --------------------------------------------
+                   | "(" "loop" VecType Instrs ")"
+ // ----------------------------------------------
+    rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
+
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } STACK ... </k>
          <stack> STACK => .Stack </stack>
 ```
