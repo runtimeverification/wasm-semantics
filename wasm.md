@@ -414,8 +414,11 @@ Finally, we have the conditional and loop instructions.
          </k>
          <stack> < i32 > VAL : STACK => .Stack </stack>
 
-    syntax Instr ::= "loop" VecType Instrs "end"
+    syntax Instr ::= "(" "loop" FuncDecls Instrs ")"
+                   | "loop" VecType Instrs "end"
  // --------------------------------------------
+    rule <k> ( loop FDECLS IS ) => loop gatherTypes(result, FDECLS) IS end ... </k>
+
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } STACK ... </k>
          <stack> STACK => .Stack </stack>
 ```

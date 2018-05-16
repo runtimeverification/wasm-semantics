@@ -158,6 +158,24 @@ end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop"
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
 
+init_locals < i32 > 10 : < i32 > 0 : .Stack
+block [ ]
+    ( loop
+        get_local 0
+        get_local 1
+        (i32.add)
+        set_local 1
+        (i32.const 1)
+        get_local 0
+        (i32.sub)
+        tee_local 0
+        (i32.eqz)
+        (br_if 1)
+    )
+end
+#assertLocal 0 < i32 > 0  "sum 1 -> 10 loop concrete syntax"
+#assertLocal 1 < i32 > 55 "sum 1 -> 10 loop concrete syntax"
+
 ;; Stack Underflow
 ;; TODO: We need to give semantics to stack underflow (though it could not happen with a validated program).
 ;; We need `trap` semantics first.
