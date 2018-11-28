@@ -2,6 +2,15 @@
 
 set -e      # Exit immediately if any command fails
 set -u      # Using undefined variables is an error. Exit immediately
+# https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
+wasm_script="$0"
+while [[ -h "$wasm_script" ]]; do
+    wasm_dir="$(cd -P "$(dirname "$wasm_script")" && pwd)"
+    wasm_script="$(readlink "$wasm_script")"
+    [[ "$wasm_script" != /* ]] && wasm_script="$wasm_dir/$wasm_script"
+done
+wasm_dir="$(cd -P "$(dirname "$wasm_script")" && pwd)"
+build_dir="$wasm_dir/.build"
 
 # Utilities
 # ---------
@@ -18,8 +27,8 @@ pretty_diff() {
 
 run_env() {
     local run_file="$1"
-    local build_dir="$(pwd)/.build"
-    local release_dir="$build_dir/k/k-distribution/target/release/k"
+#    local build_dir="$(pwd)/.build"
+    local release_dir="${K_BIN:-$build_dir/k/k-distribution/target/release/k}"
     [[ "$run_file" =~ ^tests/* ]] && DEFN_DIRECTORY=$build_dir/defn/test
     export DEFN_DIR="${DEFN_DIRECTORY:-$build_dir/defn/wasm}"
     export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"

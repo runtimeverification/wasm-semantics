@@ -25,6 +25,14 @@ On Ubuntu >= 15.04 (for example):
 sudo apt-get install make gcc maven openjdk-8-jdk flex opam pkg-config libmpfr-dev autoconf libtool pandoc zlib1g-dev
 ```
 
+On OSX, using [Homebrew](https://brew.sh/), after installing the command line tools package:
+
+```sh
+brew tap caskroom/cask caskroom/version
+brew cask install java8
+brew install automake libtool gmp mpfr pkg-config pandoc maven opam z3
+```
+
 To run proofs, you will also need [Z3](https://github.com/Z3Prover/z3) prover; on Ubuntu:
 
 ```sh

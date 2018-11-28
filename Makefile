@@ -4,11 +4,11 @@
 build_dir:=$(CURDIR)/.build
 defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
-pandoc_tangle_submodule:=$(build_dir)/pandoc-tangle
+PANDOC_TANGLE_SUBMODULE:=.build/pandoc-tangle
 k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
-tangler:=$(pandoc_tangle_submodule)/tangle.lua
+tangler:=$(PANDOC_TANGLE_SUBMODULE)/tangle.lua
 
-LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
+LUA_PATH=$(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
 .PHONY: deps ocaml-deps \
@@ -25,7 +25,7 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
+deps: $(k_submodule)/make.timestamp $(PANDOC_TANGLE_SUBMODULE)/make.timestamp ocaml-deps
 
 $(k_submodule)/make.timestamp:
 	git submodule update --init -- $(k_submodule)
@@ -33,9 +33,9 @@ $(k_submodule)/make.timestamp:
 		&& mvn package -q -DskipTests
 	touch $(k_submodule)/make.timestamp
 
-$(pandoc_tangle_submodule)/make.timestamp:
-	git submodule update --init -- $(pandoc_tangle_submodule)
-	touch $(pandoc_tangle_submodule)/make.timestamp
+$(PANDOC_TANGLE_SUBMODULE)/make.timestamp:
+	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
+	touch $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 
 ocaml-deps:
 	opam init --quiet --no-setup
@@ -70,6 +70,23 @@ $(test_dir)/%.k: %.md
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
+
+
+# Java Backend
+
+build-java: build-java-wasm build-java-test
+
+build-java-wasm: $(wasm_dir)/wasm-kompiled/timestamp
+$(wasm_dir)/wasm-kompiled/timestamp: $(defn_wasm_files)
+	@echo "== kompile: $@"
+	$(k_bin)/kompile --debug --main-module WASM --backend java \
+					--syntax-module WASM $< --directory $(wasm_dir) -I .build/defn/wasm
+
+build-java-test: $(test_dir)/test-kompiled/timestamp
+$(test_dir)/test-kompiled/timestamp: $(defn_test_files)
+	@echo "== kompile: $@"
+	$(k_bin)/kompile --debug --main-module WASM-TEST --backend java \
+					--syntax-module WASM-TEST $< --directory $(test_dir) -I .build/defn/wasm
 
 # OCAML Backend
 
@@ -128,6 +145,12 @@ test: test-simple
 simple_tests:=$(wildcard tests/simple/*.wast)
 
 test-simple: $(simple_tests:=.test)
+
+## Passing tests
+
+passing_tests:=$(patsubst %, $(test_dir)/%, $(passing_files))
+
+passing_files=:arithmetic.wast bitwise.wast comments.wast comparison.wast constants.wast control-flow.wast memory.wast polymorphic.wast
 
 # Presentation
 # ------------
