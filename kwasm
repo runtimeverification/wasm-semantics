@@ -41,6 +41,14 @@ run_kdebug() {
     ( run_krun "$1" --debugger )
 }
 
+run_kast() {
+    progress "kast: $1"
+    local run_file=$1 ; shift
+    run_env "$run_file"
+    export K_OPTS=-Xss500m
+    kast --directory "$DEFN_DIR" "$run_file" "$@"
+}
+
 run_test() {
     local test_file="$1" ; shift
     local expected_file="tests/success.out"
@@ -64,7 +72,8 @@ case "$run_command" in
 
     # Running
     run)   run_krun   "$1" ;;
-    debug) run_kdebug "$1"             ;;
+    debug) run_kdebug "$1" ;;
+    kast)  run_kast "$1"             ;;
 
     # Testing
     test)  run_test   "$1" ;;
