@@ -22,6 +22,18 @@ block [ i32 i32 ]
 end
 #assertStack < i32 > 3 : < i32 > 2 : .Stack "block 3 (invalid)"
 
+(block (result i32)
+    i32.const 1
+)
+#assertTopStack < i32 > 1 "block with named result 1"
+
+(block result i64 i32
+    i32.const 2
+    i32.const 1
+    i64.const 5
+)
+#assertStack < i64 > 5 : < i32 > 1 : .Stack "block with named result 2"
+
 ;; Breaks
 
 i32.const 1
@@ -109,18 +121,24 @@ if [ i32 ] i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
 
 ;; Looping
-;; TODO: We need locals before loops become effective.
-;; i32.const 0
-;; loop [ ]
-;;     block [ ]
-;;         i32.const 10
-;;         i32.eq
-;;         br_if 1
-;;     end
-;;     i32.const 1
-;;     i32.add
-;; end
-;; #assertTopStack < i32 > 10 "loop"
+
+init_locals < i32 > 10 : < i32 > 0 : .Stack
+block [ ]
+    loop [ ]
+        get_local 0
+        get_local 1
+        i32.add
+        set_local 1
+        i32.const 1
+        get_local 0
+        i32.sub
+        tee_local 0
+        i32.eqz
+        br_if 1
+    end
+end
+#assertLocal 0 < i32 > 0  "sum 1 -> 10 loop"
+#assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
 
 ;; Stack Underflow
 ;; TODO: We need to give semantics to stack underflow (though it could not happen with a validated program).

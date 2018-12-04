@@ -23,11 +23,11 @@ Configuration
       <store>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fname>  0       </fname>
-            <fcode>  .Instrs </fcode>
-            <ftype>  .Type   </ftype>
-            <flocal> .Type   </flocal>
-            <faddrs> .Map    </faddrs>
+            <fname>  0              </fname>
+            <fcode>  .Instrs:Instrs </fcode>
+            <ftype>  .Type          </ftype>
+            <flocal> .Type          </flocal>
+            <faddrs> .Map           </faddrs>
           </funcDef>
         </funcs>
       </store>
@@ -267,8 +267,14 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
          <stack> STACK => #take(TYPES, STACK) ++ STACK' </stack>
 
-    syntax Instr ::= "block" VecType Instrs "end"
+    syntax Instr ::= "block" FuncDecls Instrs
+                   | "block" VecType Instrs "end"
  // ---------------------------------------------
+    rule <k> block FDECLS:FuncDecls INSTRS:Instrs
+          => block gatherTypes(result, FDECLS) INSTRS end
+         ...
+         </k>
+
     rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } STACK ... </k>
          <stack> STACK => .Stack </stack>
 ```
@@ -378,38 +384,68 @@ Function Declaration and Invocation
 ### Function Declaration
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
-Here, we only provide only two formats, one where all three of `param`, `local`, and `result` are provided, and one which omits `local`.
+Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax FunctionName ::= Int
- // ---------------------------
+    syntax FunctionName ::= Int | String
+ // ------------------------------------
 
-    syntax  ParamDecl  ::= "param"  ValTypes | "(" ParamDecl  ")" [bracket]
-    syntax  LocalDecl  ::= "local"  ValTypes | "(" LocalDecl  ")" [bracket]
-    syntax ResultDecl  ::= "result" ValType  | "(" ResultDecl ")" [bracket]
- // -----------------------------------------------------------------------
+    syntax TypeKeyWord ::= "param" | "result" | "local"
+ // ---------------------------------------------------
 
-    syntax Instr ::= "func" FunctionName ParamDecl           ResultDecl Instrs
-    syntax Instr ::= "func" FunctionName ParamDecl LocalDecl ResultDecl Instrs
- // --------------------------------------------------------------------------
-    rule <k> func FNAME param TDOMAIN                 result TRANGE INSTRS
-          => func FNAME param TDOMAIN local .ValTypes result TRANGE INSTRS
+    syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
+                       | TypeKeyWord ValTypes
+                       | "export" FunctionName
+    syntax FuncDecls ::= List{FuncDecl, ""}
+ // ---------------------------------------
+
+    syntax Instr ::= "func" FuncDecls Instrs
+                   | "func" FunctionName FuncDecls Instrs
+                   | "func" FunctionName "::" FuncType VecType Instrs
+ // -----------------------------------------------------------------
+    rule <k> func FDECLS INSTRS
+          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
          ...
          </k>
 
-    rule <k> func FNAME param TDOMAIN local TLOCAL result TRANGE INSTRS => . ... </k>
+    rule <k> func FNAME FDECLS INSTRS
+          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
+         ...
+         </k>
+
+    rule <k> func FNAME :: FTYPE LTYPE INSTRS => . ... </k>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fname>  FNAME                     </fname>
-               <fcode>  INSTRS                    </fcode>
-               <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
-               <flocal> [ TLOCAL ]                </flocal>
+               <fname>  FNAME  </fname>
+               <fcode>  INSTRS </fcode>
+               <ftype>  FTYPE  </ftype>
+               <flocal> LTYPE  </flocal>
                ...
              </funcDef>
            )
            ...
          </funcs>
+
+    syntax FunctionName ::= gatherExportedName ( FuncDecls ) [function]
+ // -------------------------------------------------------------------
+    rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
+    rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
+
+    syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
+ // -----------------------------------------------------------
+    rule gatherFuncType(FDECLS) => gatherTypes(param, FDECLS) -> gatherTypes(result, FDECLS)
+
+    syntax VecType ::=  gatherTypes ( TypeKeyWord , FuncDecls )            [function]
+                     | #gatherTypes ( TypeKeyWord , FuncDecls , ValTypes ) [function]
+ // ---------------------------------------------------------------------------------
+    rule gatherTypes(TKW, FDECLS) => #gatherTypes(TKW, FDECLS, .ValTypes)
+
+    rule #gatherTypes(TKW , .FuncDecls            , TYPES) => [ TYPES ]
+    rule #gatherTypes(TKW , FDECL:FuncDecl FDECLS , TYPES) => #gatherTypes(TKW, FDECLS, TYPES) [owise]
+
+    rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
+      => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
 ```
 
 ### Function Invocation/Return
@@ -425,8 +461,8 @@ Unlike labels, only one frame can be "broken" through at a time.
          <stack> STACK => #take(TRANGE, STACK) ++ STACK' </stack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "invoke" Int
- // -----------------------------
+    syntax Instr ::= "invoke" FunctionName
+ // --------------------------------------
     rule <k> invoke FNAME
           => init_locals #take(TDOMAIN, STACK) ++ #zero(TLOCALS)
           ~> INSTRS
@@ -441,9 +477,9 @@ Unlike labels, only one frame can be "broken" through at a time.
          </curFrame>
          <funcDef>
            <fname>  FNAME                     </fname>
+           <fcode>  INSTRS                    </fcode>
            <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
            <flocal> [ TLOCALS ]               </flocal>
-           <fcode>  INSTRS                    </fcode>
            <faddrs> ADDRS                     </faddrs>
            ...
          </funcDef>
@@ -453,5 +489,20 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> return ~> (I:Instr => .)  ... </k>
     rule <k> return ~> (L:Label => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
+```
+
+Module Declaration
+------------------
+
+Currently, we support a single module.
+The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
+
+```k
+    syntax Instr ::= "module" Instrs
+ // --------------------------------
+    rule <k> module INSTRS => INSTRS ... </k>
+```
+
+```k
 endmodule
 ```
