@@ -1,7 +1,7 @@
 # Settings
 # --------
 
-build_dir:=$(CURDIR)/.build
+build_dir:=.build
 defn_dir:=$(build_dir)/defn
 k_submodule:=$(build_dir)/k
 pandoc_tangle_submodule:=$(build_dir)/pandoc-tangle
