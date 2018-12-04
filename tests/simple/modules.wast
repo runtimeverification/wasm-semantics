@@ -1,5 +1,5 @@
 (module
-    (func "add" :: [ i32 i32 ] -> [ i32 ]
+    (func $add :: [ i32 i32 ] -> [ i32 ]
         [ ]
         get_local 0
         get_local 1
@@ -7,7 +7,7 @@
         return
     )
 
-    (func "mul" :: [ i32 i32 ] -> [ i32 ]
+    (func $mul :: [ i32 i32 ] -> [ i32 ]
         [ ]
         get_local 0
         get_local 1
