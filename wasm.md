@@ -23,7 +23,7 @@ Configuration
       <store>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fname>  0              </fname>
+            <fname>  .Name          </fname>
             <fcode>  .Instrs:Instrs </fcode>
             <ftype>  .Type          </ftype>
             <flocal> .Type          </flocal>
@@ -386,8 +386,11 @@ Function Declaration and Invocation
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
+Functions are referenced by an index, which can be given either as an integer, or as a symbolic index, starting with `$` followed by any sequence of printable ASCII46 characters that does not contain a space, quotation mark, comma, semicolon, or bracket.
 ```k
-    syntax FunctionName ::= Int | String
+    syntax SymbolicIndex ::= r"\\$[0-9a-zA-Z]+" [token]
+
+    syntax FunctionName ::=  Int | SymbolicIndex | ".Name"
  // ------------------------------------
 
     syntax TypeKeyWord ::= "param" | "result" | "local"
@@ -395,7 +398,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "export" FunctionName
+                       | "export" String
     syntax FuncDecls ::= List{FuncDecl, ""}
  // ---------------------------------------
 

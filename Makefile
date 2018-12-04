@@ -129,6 +129,12 @@ simple_tests:=$(wildcard tests/simple/*.wast)
 
 test-simple: $(simple_tests:=.test)
 
+## Passing tests
+
+passing_tests:=$(patsubst %, $(test_dir)/%, $(passing_files))
+
+passing_files=:arithmetic.wast bitwise.wast comments.wast comparison.wast constants.wast control-flow.wast memory.wast polymorphic.wast functions.wast
+
 # Presentation
 # ------------
 
