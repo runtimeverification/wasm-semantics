@@ -1,33 +1,57 @@
-;; Test locals
+memory 0
+#assertMemory 0 pow16 .Map "Basic sanity"
 
-init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .Stack
 
-i32.const 43
-set_local 0
-#assertLocal 0 < i32 > 43 "set_local"
+memory 0 0
+#assertMemory 0 0 .Map "Basic sanity"
 
-i32.const 55
-set_local 1
-get_local 1
-#assertTopStack < i32 > 55 "set_local stack"
-#assertLocal 1 < i32 > 55 "set_local"
 
-i32.const 67
-tee_local 2
-#assertTopStack < i32 > 67 "tee_local stack"
-#assertLocal 2 < i32 > 67 "tee_local local"
+(memory 1)
+(data (i32.const 0) "WASM")
+#assertMemory 1 pow16 #asMapBytes(String2Bytes("WASM")) "Bytes"
 
-;; Test globals
+(memory 1)
+(data (i32.const 0) "WASM")
+(i32.load8_u (i32.const 0))
+#assertTopStack < i32 > 87 "W in bytes" 
+#assertMemory 1 pow16 #asMapBytes(String2Bytes("WASM")) "Byteasds"
 
-init_global 0 < i32 > 0
-init_global 1 < i32 > 0
+(;
+memory 0 0
+memory.size
+#assertTopStack < i32 > 0 "empty memory on stack"
+#assertMemory 0 0 .Map "empty memory"
 
-i32.const 43
-set_global 0
-#assertGlobal 0 < i32 > 43 "set_global"
 
-i32.const 55
-set_global 1
-get_global 1
-#assertTopStack < i32 > 55 "set_global stack"
-#assertGlobal 1 < i32 > 55 "set_global"
+(memory 1)
+(data (i32.const 0) "WASM")
+(memory.size)
+#assertTopStack < i32 > 4 "size of stack" 
+
+
+  (memory 1)
+  (data (i32.const 0) "WASM")
+  (i32.load8_u (i32.const 1))
+  #assertTopStack < i32 > 65 "A in bytes" 
+
+(module
+  (memory 1)
+  (data (i32.const 0) "WASM")
+  (i32.load8_u (i32.const 2))
+  #assertTopStack < i32 > 83 "S in bytes" 
+)
+
+(module
+  (memory 1)
+  (data (i32.const 0) "WASM")
+  (i32.load8_u (i32.const 3))
+  #assertTopStack < i32 > 77 "M in bytes" 
+)
+
+(module
+  (memory 1)
+  (data (i32.const 0) "WASM")
+  (i32.load8_u (i32.const 4))
+  #assertTopStack < i32 > 0 "0 in bytes" 
+)
+;)

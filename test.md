@@ -42,7 +42,7 @@ These functions make assertions about the state of the `<stack>` cell.
     rule <k> #assertStack (S : STACK) STR => #assertTopStack S STR ~> #assertStack STACK STR ... </k>
 ```
 
-### Memory Assertions
+### Variable Assertions
 
 The operator `#assertLocal`/`#assertGlobal` operators perform a check for a local/global variable's value.
 
@@ -76,5 +76,22 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
            )
            ...
          </funcs>
+```
+
+### Memory Assertions
+
+Checks that memory is in a certain state
+
+```k
+    syntax Instr ::= "#assertMemory" Int Int Map String
+ // -----------------------------------------------------------------------
+    rule <k> #assertMemory MIN MAX DATA DESCRIPTION => . ... </k>
+         <mems>
+           <memInst>
+              <min> MIN </min>
+              <max> MAX </max>
+              <content> DATA </content>
+           </memInst> => .Bag
+         </mems>
 endmodule
 ```
