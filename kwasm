@@ -3,6 +3,16 @@
 set -e      # Exit immediately if any command fails
 set -u      # Using undefined variables is an error. Exit immediately
 
+# https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
+kwasm_script="$0"
+while [[ -h "$kwasm_script" ]]; do
+    kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
+    kwasm_script="$(readlink "$kwasm_script")"
+    [[ "$kwasm_script" != /* ]] && kwasm_script="$kwasm_dir/$kwasm_script"
+done
+kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
+build_dir="$kwasm_dir/.build"
+
 # Utilities
 # ---------
 
@@ -18,11 +28,11 @@ pretty_diff() {
 
 run_env() {
     local run_file="$1"
-    local build_dir="$(pwd)/.build"
     local release_dir="$build_dir/k/k-distribution/target/release/k"
     [[ "$run_file" =~ ^tests/* ]] && DEFN_DIRECTORY=$build_dir/defn/test
     export DEFN_DIR="${DEFN_DIRECTORY:-$build_dir/defn/wasm}"
     export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
+    export LD_LIBRARY_PATH="$release_dir/lib/native/linux64:${LD_LIBRARY_PATH:-}"
     eval $(opam config env)
 }
 
