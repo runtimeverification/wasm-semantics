@@ -18,7 +18,10 @@
   </curFrame>
   <store>
     <funcs>
-      .FuncDefCellMap
+      .Map
     </funcs>
+    <mems>
+      .MemInstCell
+    </mems>
   </store>
 </generatedTop>

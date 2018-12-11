@@ -30,6 +30,13 @@ Configuration
             <faddrs> .Map           </faddrs>
           </funcDef>
         </funcs>
+        <mems>
+          <memInst multiplicity="?">   //current WASM supports at most 1 memory instance
+            <min> 0 </min>
+            <max> pow16 </max>
+            <content> .Map </content>
+          </memInst>
+        </mems>
       </store>
 ```
 
@@ -78,11 +85,23 @@ Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
 
 ```k
-    syntax Instr ::= IValType "." "const" Int
-                   | FValType "." "const" Float
+  syntax Instr      ::= IValType "." "const" Int
+                      | FValType "." "const" Float
+
+/*
+    syntax Instr ::= Constant
+
+    //Todo: globals initialized as constants are constants too
+    syntax Constant ::= IValType "." "const" Int
+                      | FValType "." "const" Float
+*/
  // -------------------------------------------
     rule <k> ITYPE:IValType . const VAL => < ITYPE > #unsigned(ITYPE, VAL) ... </k>
     rule <k> FTYPE:FValType . const VAL => < FTYPE > VAL                   ... </k>
+
+//    syntax Int ::=  "#getVal" "(" Constant ")" [function]
+//    rule  TYPE:IValType.const VAL => VAL
+
 ```
 
 ### Unary Operators
@@ -406,11 +425,11 @@ Functions are referenced by an index, which can be given either as an integer, o
                    | "func" FunctionName FuncDecls Instrs
                    | "func" FunctionName "::" FuncType VecType Instrs
  // -----------------------------------------------------------------
-    rule <k> func FDECLS INSTRS
+/*    rule <k> func FDECLS INSTRS
           => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
          ...
          </k>
-
+*/
     rule <k> func FNAME FDECLS INSTRS
           => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
          ...
@@ -430,7 +449,7 @@ Functions are referenced by an index, which can be given either as an integer, o
            ...
          </funcs>
 
-    syntax FunctionName ::= gatherExportedName ( FuncDecls ) [function]
+    syntax String ::= gatherExportedName ( FuncDecls ) [function]
  // -------------------------------------------------------------------
     rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
     rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
@@ -493,6 +512,92 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> return ~> (L:Label => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
 ```
+Memory
+------------------
+Wasm memory in a module is a bounded sized array of bytes. The bound is specified as a multiple of "page size", where a page is `2^16` bytes. The bound constrains the minimum and optionally the maximum size of a memory. The maximum and default bound is `2^16` pages.
+
+
+Memory is instantiated by the `data` construct.
+//TODO: move stuff to 
+```k
+   syntax Instr ::= "memory" Int Int
+                  | "memory" Int
+                  | "memory" "(" Data ")"
+
+   rule <k> memory A => . ... </k>
+        <mems> .Bag =>
+          <memInst>
+            <min> A  </min>
+            <max> pow16 </max>
+            <content> .Map </content>
+          </memInst>
+        </mems>
+      requires A <=Int pow16 
+
+   rule <k> memory A B => . ... </k>
+        <mems> .Bag =>
+          <memInst>
+            <min> A </min>
+            <max> B </max>
+            <content> .Map </content>
+          </memInst>
+        </mems>
+      requires A <=Int B andBool B <=Int pow16
+   
+   syntax Instr ::= Data
+
+   syntax Data ::= "data" "(" Instr ")" Strings //TODO: General value types
+
+   //Loading instructions
+   syntax Instr ::= ValType ".load" "(" Instr ")"
+                  | IValType ".load8_s" "(" Instr ")"
+                  | IValType ".load8_u" "(" Instr ")"
+                  | IValType ".load16_s" "(" Instr ")"
+                  | IValType ".load16_u" "(" Instr ")"
+                  | IValType ".load32_s" "(" Instr ")" //only defined for i64
+                  | IValType ".load32_u" "(" Instr ")" //only defined for i64 
+
+
+   //Size
+   syntax Instr ::= "memory.size"
+
+/*   rule <k> memory.size => . ... </k>
+        <stack> STACK => < i32 > MIN : STACK </stack>
+        <mems>
+           <memInst>
+             <min> MIN </min>
+             <max> _ </max>
+             <content> DATA </content>
+           </memInst>
+        </mems>
+*/
+
+   //Storing
+   rule <k> data (i32.const OFFSET) SEG => . ... </k>
+        <mems>
+           <memInst>
+              <min> MIN </min>
+              <max> MAX </max>
+              <content> DATA => DATA [ OFFSET := String2Bytes(Flatten(SEG))] </content>
+           </memInst>
+        </mems>
+//        requires OFFSET +Int lengthBytes(String2Bytes(SEG)) <=Int MAX /Int pow16 //TODO: lengthBytes might be broken?
+
+
+   //Loading
+   rule <k> TYPE .load8_u (i32.const OFFSET) => . ... </k>
+        <stack> STACK => < TYPE > Bytes2Int(#range(DATA, OFFSET, 1), LE, Unsigned) : STACK </stack>
+        <mems>
+           <memInst>
+              <min> MIN </min>
+              <max> MAX </max>
+              <content> DATA </content>
+           </memInst>
+        </mems>
+
+
+```
+
 
 Module Declaration
 ------------------
