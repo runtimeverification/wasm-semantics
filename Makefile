@@ -25,7 +25,11 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
+deps: java-deps pandoc-deps ocaml-deps
+
+java-deps: $(k_submodule)/make.timestamp
+
+pandoc-deps: $(pandoc_tangle_submodule)/make.timestamp
 
 $(k_submodule)/make.timestamp:
 	git submodule update --init -- $(k_submodule)
@@ -70,6 +74,21 @@ $(test_dir)/%.k: %.md
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
+
+# Java Backend
+
+build-java: build-java-wasm build-java-test
+build-java-wasm: $(wasm_dir)/wasm-kompiled/timestamp
+$(wasm_dir)/wasm-kompiled/timestamp: $(defn_wasm_files)
+	@echo "== kompile: $@"
+	$(k_bin)/kompile --debug --main-module WASM --backend java \
+					--syntax-module WASM $< --directory $(wasm_dir) -I .build/defn/wasm
+build-java-test: $(test_dir)/test-kompiled/timestamp
+$(test_dir)/test-kompiled/timestamp: $(defn_test_files)
+	@echo "== kompile: $@"
+	$(k_bin)/kompile --debug --main-module WASM-TEST --backend java \
+					--syntax-module WASM-TEST $< --directory $(test_dir) -I .build/defn/wasm
+
 
 # OCAML Backend
 
