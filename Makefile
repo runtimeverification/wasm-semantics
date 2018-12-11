@@ -71,6 +71,21 @@ $(test_dir)/%.k: %.md
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
+# Java Backend
+
+build-java: build-java-wasm build-java-test
+build-java-wasm: $(wasm_dir)/wasm-kompiled/timestamp
+$(wasm_dir)/wasm-kompiled/timestamp: $(defn_wasm_files)
+	@echo "== kompile: $@"
+	$(k_bin)/kompile --debug --main-module WASM --backend java \
+					--syntax-module WASM $< --directory $(wasm_dir) -I .build/defn/wasm
+build-java-test: $(test_dir)/test-kompiled/timestamp
+$(test_dir)/test-kompiled/timestamp: $(defn_test_files)
+	@echo "== kompile: $@"
+	$(k_bin)/kompile --debug --main-module WASM-TEST --backend java \
+					--syntax-module WASM-TEST $< --directory $(test_dir) -I .build/defn/wasm
+
+
 # OCAML Backend
 
 build: build-wasm build-test
