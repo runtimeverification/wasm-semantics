@@ -30,7 +30,7 @@ pipeline {
           sh '''
             export PATH=$HOME/.local/bin:$PATH
             nprocs=$(nproc)
-            nprocs=$(echo "$nprocs / 2" | bc)
+            [ "$nprocs" -gt '4' ] && nprocs=4
             make test -j"$nprocs"
           '''
         }
