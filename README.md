@@ -22,14 +22,27 @@ The following are needed for building/running KWASM:
 On Ubuntu >= 15.04 (for example):
 
 ```sh
-sudo apt-get install make gcc maven openjdk-8-jdk flex opam pkg-config libmpfr-dev autoconf libtool pandoc zlib1g-dev
+sudo apt install                                                         \
+        autoconf curl flex gcc libffi-dev libmpfr-dev libtool make maven \
+        opam openjdk-8-jdk pandoc pkg-config python3 python-pygments     \
+        python-recommonmark python-sphinx time zlib1g-dev
 ```
 
 To run proofs, you will also need [Z3](https://github.com/Z3Prover/z3) prover; on Ubuntu:
 
 ```sh
-sudo apt-get install z3
+sudo apt-get install z3 libz3-dev
 ```
+
+In addition, you'll need to set ocaml dependencies on your system:
+
+```sh
+git submodule update --init --recursive
+./.build/k/k-distribution/src/main/scripts/bin/k-configure-opam-dev
+```
+
+**CAUTION**: It may prove useful to first do `rm -rf ~/.opam` if you've setup K projcets in the past and are experiencing trouble with the newest opam libraries.
+             This is a fairly destructive operation, and will break any other projects that depend on specific locally installed ocaml packages.
 
 Installing/Building
 -------------------
