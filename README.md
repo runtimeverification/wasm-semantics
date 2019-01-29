@@ -57,10 +57,10 @@ make build
 Testing
 -------
 
-The target `passing-test` contains all the currently passing tests.
+The target `test` contains all the currently passing tests.
 
 ```sh
-make passing-test
+make test
 ```
 
 Resources
