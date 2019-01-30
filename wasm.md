@@ -258,7 +258,7 @@ Structured Control Flow
 
 ```k
     syntax Instr ::= "unreachable"
- // -----------------------
+ // ------------------------------
     rule unreachable => trap
 ```
 
