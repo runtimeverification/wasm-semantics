@@ -254,6 +254,14 @@ Structured Control Flow
     rule <k> nop => . ... </k>
 ```
 
+`unreachable` causes an immediate `trap`.
+
+```k
+    syntax Instr ::= "unreachable"
+ // -----------------------
+    rule unreachable => trap
+```
+
 Labels are administrative instructions used to mark the targets of break instructions.
 They contain the continuation to use following the label, as well as the original stack to restore.
 The supplied type represents the values that should taken from the current stack.

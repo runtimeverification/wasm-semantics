@@ -1,3 +1,7 @@
+;; Unreachable
+unreachable
+#assertTrap "unreachable"
+
 ;; Blocks
 
 block [ i32 i32 i32 ]
