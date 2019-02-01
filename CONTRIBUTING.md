@@ -25,19 +25,19 @@ This Agreement is legally binding on You upon execution, and shall be relied upo
 
 5.  *Licenses; Moral Rights.*
 
-5.1 *Copyright License.*
-    You grant Runtime, and those who receive the Submission directly or indirectly from Runtime, a perpetual, worldwide, non-exclusive, royalty-free, transferrable, irrevocable license in the Submission to reproduce, modify and prepare derivative works of, publicly display, publicly perform, and distribute the Submission and such derivative works, and to sublicense any or all of the foregoing rights to third parties under such terms as Runtime determines.
+    5.1. *Copyright License.*
+         You grant Runtime, and those who receive the Submission directly or indirectly from Runtime, a perpetual, worldwide, non-exclusive, royalty-free, transferrable, irrevocable license in the Submission to reproduce, modify and prepare derivative works of, publicly display, publicly perform, and distribute the Submission and such derivative works, and to sublicense any or all of the foregoing rights to third parties under such terms as Runtime determines.
 
-5.2 *Patent License.*
-    You grant Runtime, and those who receive the Submission directly or indirectly from Runtime, a perpetual, worldwide, non-exclusive, royalty-free, transferrable, irrevocable license under Your patent claims that are necessarily infringed by the Submission, or the combination of the Submission with other materials of Runtime with which it may be combined, to make, have made, use, offer to sell, sell and import or otherwise dispose of the Submission alone or with other materials and under such terms as Runtime determines.
+    5.2. *Patent License.*
+         You grant Runtime, and those who receive the Submission directly or indirectly from Runtime, a perpetual, worldwide, non-exclusive, royalty-free, transferrable, irrevocable license under Your patent claims that are necessarily infringed by the Submission, or the combination of the Submission with other materials of Runtime with which it may be combined, to make, have made, use, offer to sell, sell and import or otherwise dispose of the Submission alone or with other materials and under such terms as Runtime determines.
 
-5.3 *Moral Rights.*
-    If moral rights apply to the Submission, to the maximum extent permitted by law You waive and agree not to assert such moral rights against Runtime or our successors in interest, or any of our licensees or sublicensees, either direct or indirect.
+    5.3. *Moral Rights.*
+         If moral rights apply to the Submission, to the maximum extent permitted by law You waive and agree not to assert such moral rights against Runtime or our successors in interest, or any of our licensees or sublicensees, either direct or indirect.
 
-5.4 *Other Rights Reserved.*
-    Each party reserves all rights not expressly granted in this Agreement.
-    Subject to the rights granted herein, You retain ownership of the copyright in Your Submission and have the same rights to use or license the Submission which You would have had without entering into the Agreement.
-    No additional licenses or rights whatsoever (including, without limitation, any implied licenses) are granted hereby, by implication or otherwise.
+    5.4. *Other Rights Reserved.*
+         Each party reserves all rights not expressly granted in this Agreement.
+         Subject to the rights granted herein, You retain ownership of the copyright in Your Submission and have the same rights to use or license the Submission which You would have had without entering into the Agreement.
+         No additional licenses or rights whatsoever (including, without limitation, any implied licenses) are granted hereby, by implication or otherwise.
 
 6.  *Representations and Warranties.*
     You represent and warrant that: (a) You own all rights necessary to, and are legally entitled to, grant the above licenses; (b) Each of Your Submissions is entirely Your original work (except as You may have disclosed under Section 3); (c) You have the authority to make the Submission, and have secured permission from Your employer to make the Submission in cases where Your Submission is made in the course of Your work for Your employer or Your employer has intellectual property rights in Your Submission by contract or applicable law; (d) Your grant of rights under this Agreement does not violate any grant of rights which You have made to third parties, including Your employer; and (e) If Your employer has any rights with respect to any Submission, You have the necessary authority to bind Your employer to the obligations contained in this Agreement.
