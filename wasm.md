@@ -224,6 +224,17 @@ All of the following opcodes are liftings of the K builtin operators using the h
     rule <k> ITYPE . ge_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
 ```
 
+### Conversion Operations
+
+These operators convert constant elements at the top of the stack to another type. The target type is before the `.`, and the source type is after the `_`.
+
+```k
+    syntax Instr ::= "i32" "." "wrap_i64"
+ // -------------------------------
+ rule <k> i32 . wrap_i64 => . ... </k>
+      <stack> (< i64 > I  => #chop(< i32 > I)) : STACK </stack>
+
+```
 Stack Operations
 ----------------
 
