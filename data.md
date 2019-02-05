@@ -104,8 +104,7 @@ Proper values are numbers annotated with their types.
 ```k
     syntax IVal ::= "<" IValType ">" Int
     syntax FVal ::= "<" FValType ">" Float
-    syntax  Val ::= "<"  ValType ">" Number
-                  | IVal | FVal
+    syntax  Val ::=  IVal | FVal
  // ---------------------------
 ```
 
