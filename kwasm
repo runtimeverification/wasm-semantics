@@ -81,6 +81,32 @@ run_test() {
     pretty_diff "$expected_file" "$output_file"
 }
 
+run_test_profile() {
+    local test_file exit_status
+    local output_log_dir stdout_log stderr_log
+
+    test_file="$1" ; shift
+
+    output_log_dir="$test_logs/$(dirname -- "$test_file")"
+    stdout_log="$test_logs/$test_file.stdout"
+    stderr_log="$test_logs/$test_file.stderr"
+    [[ -d "$output_log_dir" ]] || mkdir -p "$output_log_dir"
+
+    exit_status='0'
+    `which time` --quiet --format '%x %es %Us %Ss %MKB %C' --output "$test_log" --append \
+        bash -c "$0 test $test_file $@" \
+        1> "$stdout_log" 2> "$stderr_log" \
+        || exit_status="$?"
+
+    if [[ "$exit_status" == '0' ]]; then
+        progress "passed test: $test_file"
+    else
+        die "failed test: $test_file"
+    fi
+
+    exit "$exit_status"
+}
+
 # Main
 # ----
 
@@ -91,11 +117,12 @@ run_command="$1" ; shift
 case "$run_command" in
 
     # Running
-    run)   run_krun   "$1" ;;
-    debug) run_kdebug "$1"             ;;
+    run)   run_krun   "$@" ;;
+    debug) run_kdebug "$@" ;;
 
     # Testing
-    test)  run_test   "$1" ;;
+    test)         run_test         "$@" ;;
+    test-profile) run_test_profile "$@" ;;
 
     *) echo "
     usage: $0 <cmd> <file> <K args>*
@@ -109,7 +136,8 @@ case "$run_command" in
 
        # Testing
        # -------
-       $0 test <pgm>    Run a single WASM program like it's a test
+       $0 test         <pgm>    Run a single WASM program like it's a test
+       $0 test-profile <pgm>    Same as test, but recording timing and memory usage to $test_log.
 
        Note: This command is more for devs and CI servers.
 " ; exit ;;

@@ -88,7 +88,7 @@ $(test_dir)/test-kompiled/interpreter: $(defn_test_files)
 # Testing
 # -------
 
-TEST=./kwasm test
+TEST=./kwasm test-profile
 
 tests/%.test: tests/%
 	$(TEST) $<
