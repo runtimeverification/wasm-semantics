@@ -59,12 +59,12 @@ test_files:=test.k $(wasm_files)
 defn_wasm_files:=$(patsubst %, $(wasm_dir)/%, $(wasm_files))
 defn_test_files:=$(patsubst %, $(test_dir)/%, $(test_files))
 
-$(wasm_dir)/%.k: %.md
+$(wasm_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
-$(test_dir)/%.k: %.md
+$(test_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
