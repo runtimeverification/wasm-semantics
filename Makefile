@@ -77,13 +77,15 @@ build-test: $(test_dir)/test-kompiled/interpreter
 
 $(wasm_dir)/wasm-kompiled/interpreter: $(defn_wasm_files)
 	@echo "== kompile: $@"
-	eval $$(opam config env) \
-	    $(k_bin)/kompile --backend ocaml --directory $(wasm_dir) --main-module WASM --syntax-module WASM $<
+	eval $$(opam config env)                                               \
+	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                  \
+	    --directory $(wasm_dir) --main-module WASM --syntax-module WASM $<
 
 $(test_dir)/test-kompiled/interpreter: $(defn_test_files)
 	@echo "== kompile: $@"
-	eval $$(opam config env) \
-	    $(k_bin)/kompile --backend ocaml --directory $(test_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
+	eval $$(opam config env)                                                         \
+	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                            \
+	    --directory $(test_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 # Testing
 # -------
