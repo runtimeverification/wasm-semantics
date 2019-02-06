@@ -74,7 +74,7 @@ build-wasm: $(wasm_dir)/wasm-kompiled/interpreter
 $(wasm_dir)/wasm-kompiled/interpreter: $(defn_wasm_files)
 	@echo "== kompile: $@"
 	eval $$(opam config env) \
-	$(k_bin)/kompile --debug --gen-ml-only -O3 --non-strict \
+	$(k_bin)/kompile --gen-ml-only -O3 --non-strict \
 					 --main-module WASM --syntax-module WASM $< --directory $(wasm_dir) \
 		&& ocamlfind opt -c $(wasm_dir)/wasm-kompiled/constants.ml -package gmp -package zarith \
 		&& ocamlfind opt -c -I $(wasm_dir)/wasm-kompiled \
@@ -93,7 +93,7 @@ build-test: $(test_dir)/test-kompiled/interpreter
 $(test_dir)/test-kompiled/interpreter: $(defn_test_files)
 	@echo "== kompile: $@"
 	eval $$(opam config env) \
-	$(k_bin)/kompile --debug --gen-ml-only -O3 --non-strict \
+	$(k_bin)/kompile --gen-ml-only -O3 --non-strict \
 					 --main-module WASM-TEST --syntax-module WASM-TEST $< --directory $(test_dir) \
 		&& ocamlfind opt -c $(test_dir)/test-kompiled/constants.ml -package gmp -package zarith \
 		&& ocamlfind opt -c -I $(test_dir)/test-kompiled \
