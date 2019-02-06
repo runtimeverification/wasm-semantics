@@ -158,6 +158,11 @@ Data Structures
 WASM is a stack-machine, so here we provide the stack to operate over.
 Operator `_++_` implements an append operator for sort `Stack`.
 
+Integers in K are unbounded. As an invariant, however, for any integer `< iNN >
+I:Int` on the stack, `I` is between 0 and `#pow(NN) - 1`. That way, unsigned
+instructions can make use of `I` directly, whereas signed instructions may need
+`#signed(iNN, I)`.
+
 ```k
     syntax StackItem ::= Val
     syntax Stack     ::= ".Stack"
