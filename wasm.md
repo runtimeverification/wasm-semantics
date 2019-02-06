@@ -248,7 +248,7 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
     syntax Instr ::= "i64" "." "extend_i32_s"
  // -----------------------------------------
     rule <k> i64 . extend_i32_s => . ... </k>
-         <stack> (< i32 > N => < i64 > #signed(i32, N)) : STACK </stack>
+         <stack> (< i32 > N => < i64 > #unsigned(i64, #signed(i32, N))) : STACK </stack>
 ```
 
 Stack Operations
