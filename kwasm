@@ -1,7 +1,23 @@
 #!/usr/bin/env bash
 
-set -e      # Exit immediately if any command fails
-set -u      # Using undefined variables is an error. Exit immediately
+set -euo pipefail
+
+kwasm_script="$0"
+while [[ -h "$kwasm_script" ]]; do
+    kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
+    kwasm_script="$(readlink "$kwasm_script")"
+    [[ "$kwasm_script" != /* ]] && kwasm_script="$kwasm_dir/$kwasm_script"
+done
+kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
+
+build_dir="$kwasm_dir/.build"
+release_dir="$build_dir/k/k-distribution/target/release/k"
+wasm_defn="$build_dir/defn/wasm"
+test_defn="$build_dir/defn/test"
+
+test_logs="$build_dir/logs"
+mkdir -p "$test_logs"
+test_log="$test_logs/tests.log"
 
 # Utilities
 # ---------
@@ -17,11 +33,11 @@ pretty_diff() {
 # -----------------
 
 run_env() {
-    local run_file="$1"
-    local build_dir="$(pwd)/.build"
-    local release_dir="$build_dir/k/k-distribution/target/release/k"
+    local run_file
+
+    run_file="$1"
     [[ "$run_file" =~ ^tests/* ]] && DEFN_DIRECTORY=$build_dir/defn/test
-    export DEFN_DIR="${DEFN_DIRECTORY:-$build_dir/defn/wasm}"
+    export DEFN_DIRECTORY="${DEFN_DIRECTORY:-$wasm_defn}"
     export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
     eval $(opam config env)
 }
@@ -33,7 +49,7 @@ run_krun() {
     local run_file=$1 ; shift
     run_env "$run_file"
     export K_OPTS=-Xss500m
-    krun --directory "$DEFN_DIR" "$run_file" "$@"
+    krun --directory "$DEFN_DIRECTORY" "$run_file" "$@"
 }
 
 run_kdebug() {
@@ -42,13 +58,25 @@ run_kdebug() {
 }
 
 run_test() {
-    local test_file="$1" ; shift
-    local expected_file="tests/success.out"
+    local test_file expected_file output_file
+
+    test_file="$1" ; shift
+
+    test_log_name="$test_logs/$test_file"
+    mkdir -p "$(dirname "$test_log_name")"
+
+    output_file="$test_log_name.out"
+
+    if [[ -f "$test_file.out" ]]; then
+        expected_file="$test_file.out"
+    else
+        expected_file="tests/success.out"
+    fi
+
     [[ -f "$expected_file" ]] \
         || die "Expected output file '$expected_file' does not exist..."
-    local output_file="$(mktemp $test_file.out.XXXXXX)"
-    trap "rm -rf $output_file" INT TERM EXIT
-    export DEFN_DIRECTORY="$(pwd)/.build/defn/test"
+
+    export DEFN_DIRECTORY="$test_defn"
     run_krun "$test_file" > "$output_file"
     pretty_diff "$expected_file" "$output_file"
 }
