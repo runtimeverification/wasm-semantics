@@ -228,11 +228,27 @@ All of the following opcodes are liftings of the K builtin operators using the h
 
 These operators convert constant elements at the top of the stack to another type. The target type is before the `.`, and the source type is after the `_`.
 
+Wrapping cuts of the 32 most significant bits of an `i64` value.
+
 ```k
     syntax Instr ::= "i32" "." "wrap_i64"
  // -------------------------------
  rule <k> i32 . wrap_i64 => . ... </k>
       <stack> (< i64 > I  => #chop(< i32 > I)) : STACK </stack>
+```
+
+Extension turns an `i32` type value into the corresponding `i64` type value.
+
+```
+    syntax Instr ::= "i64" "." "extend_i32_u"
+ // -------------------------------------
+    rule <k> i64 . extend_i32_u => . ... </k>
+         <stack> (< i32 > N => < i64 > N) : STACK </stack>
+
+    syntax Instr ::= "i64" "." "extend_i32_s"
+ // -------------------------------------
+    rule <k> i64 . extend_i32_s => . ... </k>
+         <stack> (< i32 > N => < i64 > #signed(i32, N)) : STACK </stack>
 
 ```
 Stack Operations
