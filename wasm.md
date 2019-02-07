@@ -197,7 +197,35 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
     rule <k> ITYPE . rotr I1 I2 => #chop(< ITYPE > (I1 >>Int (I2 %Int #width(ITYPE))) +Int (I1 <<Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE))))) ... </k>
 ```
 
-**TODO**: `clz`, `ctz`, `popcnt`.
+The bit counting operators also lack appropriate K builtins, and are implemented by using width-agnostic helper functions.
+Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits, whereas the `#ctz` helper function considers it to have *no* zero-bits, in order for it to be width-agnostic.
+
+```k
+    syntax Int ::= #minWidth ( Int ) [function]
+                 | #ctz      ( Int ) [function]
+                 | #popcnt   ( Int ) [function]
+ // -------------------------------------------
+    rule #minWidth(0) => 0
+    rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)                                 requires N =/=Int 0
+
+    rule #ctz(0) => 0
+    rule #ctz(N) => #if N modInt 2 ==Int 1 #then 0 #else 1 +Int #ctz(N >>Int 1) #fi  requires N =/=Int 0
+
+    rule #popcnt(0) => 0
+    rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N =/=Int 0
+```
+
+`clz` counts the number of leading zero-bits, with 0 having all leading zero-bits.
+`ctz` counts the number of trailing zero-bits, with 0 having all trailing zero-bits.
+`popcnt` counts the number of non-zero bits.
+
+```k
+    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
+ // -----------------------------------------
+    rule <k> ITYPE . clz    I1 => < ITYPE > #width(ITYPE) -Int #minWidth(I1)                      ... </k>
+    rule <k> ITYPE . ctz    I1 => < ITYPE > #if I1 ==Int 0 #then #width(ITYPE) #else #ctz(I1) #fi ... </k>
+    rule <k> ITYPE . popcnt I1 => < ITYPE > #popcnt(I1)                                           ... </k>
+```
 
 ### Comparison Operations
 
