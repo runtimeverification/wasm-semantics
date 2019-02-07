@@ -1,5 +1,0 @@
-version = "1.0"
-description = "WASM Plugin for K -- OCAML"
-requires = "gmp zarith"
-archive(native) = "semantics.cmxa"
-archive(byte) = "semantics.cma"
