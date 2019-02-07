@@ -206,7 +206,7 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
     rule <k> ITYPE . clz I1 => #clz (I1, 0, ITYPE) ... </k>
       requires I1 =/=Int 0
 
-    rule <k> #clz ( I1, ACC, ITYPE ) => #clz( I1 *Int 2, ACC +Int 1, ITYPE) ... </k>
+    rule <k> #clz ( I1, ACC, ITYPE ) => #clz( I1 <<Int 1, ACC +Int 1, ITYPE) ... </k>
       requires I1 <Int #pow1(ITYPE)
     rule <k> #clz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k>
       [otherwise]
@@ -218,7 +218,7 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
     rule <k> ITYPE . ctz I1 => #ctz (I1, 0, ITYPE) ... </k>
       requires I1 =/=Int 0
 
-    rule <k> #ctz ( I1, ACC, ITYPE ) => #ctz( I1 /Int 2, ACC +Int 1, ITYPE) ... </k>
+    rule <k> #ctz ( I1, ACC, ITYPE ) => #ctz( I1 >>Int 1, ACC +Int 1, ITYPE) ... </k>
       requires I1 modInt 2 ==Int 0
     rule <k> #ctz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k>
       [otherwise]
@@ -230,7 +230,7 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
 
     rule <k> #popcnt(I1, ACC, ITYPE) => < ITYPE > ACC ...</k>
       requires I1 ==Int 0
-    rule <k> #popcnt(I1, ACC, ITYPE) => #popcnt(I1 /Int 2, ACC +Int #if I1 modInt 2 ==Int 0 #then 0 #else 1 #fi, ITYPE) ... </k>
+    rule <k> #popcnt(I1, ACC, ITYPE) => #popcnt(I1 >>Int 1, ACC +Int #if I1 modInt 2 ==Int 0 #then 0 #else 1 #fi, ITYPE) ... </k>
       [otherwise]
 ```
 
