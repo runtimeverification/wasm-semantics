@@ -264,29 +264,42 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
 Conversion Operations
 ---------------------
 
+Conversion operators always take a single argument as input and cast it to another type.
+For each element added to `ConvOp`, function `#confSourceType` must be defined over it.
+
+```k
+    syntax Instr ::= IValType "." ConvOp | IValType "." ConvOp Int
+ // --------------------------------------------------------------
+    rule <k> ITYPE . CONVOP:ConvOp => ITYPE . CONVOP SI1 ... </k>
+         <stack> < ITYPE' > SI1 : STACK => STACK </stack>
+      requires #convSourceType(CONVOP) ==K ITYPE'
+
+    syntax IValType ::= #convSourceType ( ConvOp ) [function]
+ // ---------------------------------------------------------
+```
+
 These operators convert constant elements at the top of the stack to another type. The target type is before the `.`, and the source type is after the `_`.
 
 Wrapping cuts of the 32 most significant bits of an `i64` value.
 
 ```k
-    syntax Instr ::= "i32" "." "wrap_i64"
- // -------------------------------------
- rule <k> i32 . wrap_i64 => . ... </k>
-      <stack> (< i64 > I  => #chop(< i32 > I)) : STACK </stack>
+    syntax ConvOp ::= "wrap_i64"
+ // ----------------------------
+    rule <k> i32 . wrap_i64 I => #chop(< i32 > I) ... </k>
+
+    rule #convSourceType(wrap_i64) => i64
 ```
 
 Extension turns an `i32` type value into the corresponding `i64` type value.
 
 ```k
-    syntax Instr ::= "i64" "." "extend_i32_u"
- // -----------------------------------------
-    rule <k> i64 . extend_i32_u => . ... </k>
-         <stack> (< i32 > N => < i64 > N) : STACK </stack>
+    syntax ConvOp ::= "extend_i32_u" | "extend_i32_s"
+ // -------------------------------------------------
+    rule <k> i64 . extend_i32_u I => < i64 > I                               ... </k>
+    rule <k> i64 . extend_i32_s I => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
 
-    syntax Instr ::= "i64" "." "extend_i32_s"
- // -----------------------------------------
-    rule <k> i64 . extend_i32_s => . ... </k>
-         <stack> (< i32 > N => < i64 > #unsigned(i64, #signed(i32, N))) : STACK </stack>
+    rule #convSourceType(extend_i32_u) => i32
+    rule #convSourceType(extend_i32_s) => i32
 ```
 
 Stack Operations
