@@ -118,3 +118,33 @@ i32.ctz
 i64.const 2 ^Int 64 -Int 1
 i64.ctz
 #assertTopStack < i64 > 0 "ctz 2^64 - 1"
+
+;; popcnt
+
+i32.const #pow1(i32)
+i32.popcnt
+#assertTopStack < i32 > 1 "popcnt #pow1(i32)"
+i64.const #pow1(i64)
+i64.popcnt
+#assertTopStack < i64 > 1 "popcnt #pow1(i32)"
+
+i32.const 0
+i32.popcnt
+#assertTopStack < i32 > 0 "popcnt 0"
+i64.const 0
+i64.popcnt
+#assertTopStack < i64 > 0 "popcnt 0"
+
+i32.const 1
+i32.popcnt
+#assertTopStack < i32 > 1 "popcnt 1"
+i64.const 1
+i64.popcnt
+#assertTopStack < i64 > 1 "popcnt 1"
+
+i32.const 2 ^Int 32 -Int 1
+i32.popcnt
+#assertTopStack < i32 > 32 "popcnt 2^32 - 1"
+i64.const 2 ^Int 64 -Int 1
+i64.popcnt
+#assertTopStack < i64 > 64 "popcnt 2^64 - 1"

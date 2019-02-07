@@ -220,9 +220,17 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
     rule <k> #ctz ( I1, ACC, ITYPE ) => #ctz( I1 /Int 2, ACC +Int 1, ITYPE) ... </k>
       requires I1 modInt 2 ==Int 0
     rule <k> #ctz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k> [otherwise]
-```
 
-**TODO**: `clz`, `ctz`, `popcnt`.
+    syntax IUnOp ::= "popcnt"
+                   | #popcnt(Int, Int, IValType)
+ // -------------------------
+    rule <k> ITYPE . popcnt I1 => #popcnt(I1, 0, ITYPE) ... </k>
+
+    rule <k> #popcnt(I1, ACC, ITYPE) => < ITYPE > ACC ...</k>
+      requires I1 ==Int 0
+    rule <k> #popcnt(I1, ACC, ITYPE) => #popcnt(I1 /Int 2, ACC +Int #if I1 modInt 2 ==Int 0 #then 0 #else 1 #fi, ITYPE) ... </k>
+      [otherwise]
+```
 
 ### Comparison Operations
 
