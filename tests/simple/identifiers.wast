@@ -1,6 +1,6 @@
 ;; tests of function identifier names
 
-( func "oeauth" :: [ i32 i32 ] -> [ i32 ]
+( func $oeauth :: [ i32 i32 ] -> [ i32 ]
     [ ]
     get_local 0
     get_local 1
@@ -8,7 +8,7 @@
     return
 )
 
-#assertFunction "oeauth" [ i32 i32 ] -> [ i32 ] [ ] "string function name"
+#assertFunction $oeauth [ i32 i32 ] -> [ i32 ] [ ] "simple function name"
 
 ( func $023eno!thu324 :: [ i32 i32 ] -> [ i32 ]
     [ ]

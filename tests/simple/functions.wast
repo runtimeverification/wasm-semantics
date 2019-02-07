@@ -16,7 +16,7 @@ invoke 0
 
 ;; String-named add function
 
-(func "add" :: [ i32 i32 ] -> [ i32 ]
+(func $add :: [ i32 i32 ] -> [ i32 ]
     [ ]
     get_local 0
     get_local 1
@@ -24,18 +24,18 @@ invoke 0
     return
 )
 
-#assertFunction "add" [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
+#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 
 ;; Exported name add function
 
-(func export "add" param i32 i32 result i32
+(func export $add param i32 i32 result i32
     get_local 0
     get_local 1
     i32.add
     return
 )
 
-#assertFunction "add" [ i32 i32 ] -> [ i32 ] [ ] "exported function name add"
+#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "exported function name add"
 
 ;; Remove return statement
 

@@ -456,8 +456,8 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax FunctionName ::= Int | String | Identifier
- // -------------------------------------------------
+    syntax FunctionName ::= Int | Identifier
+ // ----------------------------------------
 
     syntax TypeKeyWord ::= "param" | "result" | "local"
  // ---------------------------------------------------
