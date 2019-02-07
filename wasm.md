@@ -33,6 +33,12 @@ Configuration
       </store>
 ```
 
+### Assumptions and invariants
+
+Integers in K are unbounded.
+As an invariant, however, for any integer `< iNN > I:Int` on the stack, `I` is between 0 and `#pow(NN) - 1`.
+That way, unsigned instructions can make use of `I` directly, whereas signed instructions may need `#signed(iNN, I)`.
+
 Instructions
 ------------
 
