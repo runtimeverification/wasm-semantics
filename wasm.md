@@ -203,46 +203,37 @@ The bit counting operators also lack appropriate K builtins, and are implemented
 
 ```k
     syntax IUnOp ::= "clz"
-                   | #clz(Int, Int, IValType)
+                   | #clz(Int, Int, IValType) [function]
  // ------------------------------
     rule <k> ITYPE . clz 0 => < ITYPE > #width(ITYPE) ... </k>
     rule <k> ITYPE . clz I1 => #clz (I1, 0, ITYPE) ... </k>
       requires I1 =/=Int 0
 
-    rule <k> #clz ( I1, ACC, ITYPE ) => #clz( I1 <<Int 1, ACC +Int 1, ITYPE) ... </k>
-      requires I1 <Int #pow1(ITYPE)
-    rule <k> #clz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k>
-      [otherwise]
+    rule #clz ( I1, ACC, ITYPE ) => #if I1 <Int #pow1(ITYPE) #then #clz( I1 <<Int 1, ACC +Int 1, ITYPE) #else < ITYPE > ACC #fi
 ```
 
 `ctz` counts the number of trailing zero-bits.
 
 ```k
     syntax IUnOp ::= "ctz"
-                   | #ctz(Int, Int, IValType)
+                   | #ctz(Int, Int, IValType) [function]
  // ------------------------------
     rule <k> ITYPE . ctz 0 => < ITYPE > #width(ITYPE) ... </k>
     rule <k> ITYPE . ctz I1 => #ctz (I1, 0, ITYPE) ... </k>
       requires I1 =/=Int 0
 
-    rule <k> #ctz ( I1, ACC, ITYPE ) => #ctz( I1 >>Int 1, ACC +Int 1, ITYPE) ... </k>
-      requires I1 modInt 2 ==Int 0
-    rule <k> #ctz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k>
-      [otherwise]
+    rule #ctz ( I1, ACC, ITYPE ) => #if I1 modInt 2 ==Int 0 #then #ctz( I1 >>Int 1, ACC +Int 1, ITYPE) #else < ITYPE > ACC #fi
 ```
 
 `popcnt` counts the number of non-zero bits.
 
 ```k
     syntax IUnOp ::= "popcnt"
-                   | #popcnt(Int, Int, IValType)
+                   | #popcnt(Int, Int, IValType) [function]
  // -------------------------
     rule <k> ITYPE . popcnt I1 => #popcnt(I1, 0, ITYPE) ... </k>
 
-    rule <k> #popcnt(I1, ACC, ITYPE) => < ITYPE > ACC ...</k>
-      requires I1 ==Int 0
-    rule <k> #popcnt(I1, ACC, ITYPE) => #popcnt(I1 >>Int 1, ACC +Int #if I1 modInt 2 ==Int 0 #then 0 #else 1 #fi, ITYPE) ... </k>
-      [otherwise]
+    rule #popcnt(I1, ACC, ITYPE) => #if I1 ==Int 0 #then < ITYPE > ACC #else #popcnt(I1 >>Int 1, ACC +Int #if I1 modInt 2 ==Int 0 #then 0 #else 1 #fi, ITYPE) #fi
 ```
 
 ### Comparison Operations
