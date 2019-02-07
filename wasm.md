@@ -204,7 +204,7 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
     syntax Int ::= #minWidth ( Int ) [function]
                  | #ctz      ( Int ) [function]
                  | #popcnt   ( Int ) [function]
-    // ----------------------------------------
+ // -------------------------------------------
     rule #minWidth(0) => 0
     rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)                                 requires N =/=Int 0
 
