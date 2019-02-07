@@ -197,6 +197,9 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
     rule <k> ITYPE . rotr I1 I2 => #chop(< ITYPE > (I1 >>Int (I2 %Int #width(ITYPE))) +Int (I1 <<Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE))))) ... </k>
 ```
 
+The bit counting operators also lack appropriate K builtins, and are implemented by successive shifts.
+
+`clz` counts the number of leading zero-bits.
 
 ```k
     syntax IUnOp ::= "clz"
@@ -210,7 +213,11 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
       requires I1 <Int #pow1(ITYPE)
     rule <k> #clz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k>
       [otherwise]
+```
 
+`ctz` counts the number of trailing zero-bits.
+
+```k
     syntax IUnOp ::= "ctz"
                    | #ctz(Int, Int, IValType)
  // ------------------------------
@@ -222,7 +229,11 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
       requires I1 modInt 2 ==Int 0
     rule <k> #ctz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k>
       [otherwise]
+```
 
+`popcnt` counts the number of non-zero bits.
+
+```k
     syntax IUnOp ::= "popcnt"
                    | #popcnt(Int, Int, IValType)
  // -------------------------
