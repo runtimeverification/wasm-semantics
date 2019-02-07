@@ -66,4 +66,4 @@ make test
 Resources
 =========
 
-[WebAssembly]: <https://github.com/WebAssembly/design>
+[WebAssembly]: <https://webassembly.github.io/spec/>

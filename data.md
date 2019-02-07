@@ -8,17 +8,31 @@ module WASM-DATA
     imports DOMAINS
 ```
 
-Layout
-------
+Parsing
+-------
+
+### Layout
 
 WASM allows for block comments using `(;` and `;)`, and line comments using `;;`.
 Additionally, white-space is skipped/ignored.
+Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
 
 ```k
-    syntax #Layout ::= r"(\\(;([^;]|(;+([^;\\)])))*;\\))"
-                     | r"(;;[^\\n\\r]*)"
-                     | r"([\\ \\n\\r\\t])"
- // --------------------------------------
+    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)"
+                     | r";;[^\\n\\r]*"
+                     | r"[\\ \\n\\r\\t]"
+ // ------------------------------------
+```
+
+### Identifiers
+
+As defined in the [WASM Spec], the syntax of identifiers is as follows.
+
+**TODO**: Unsupported characters: `.:^@`
+
+```k
+    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
+ // ------------------------------------------------------------------------
 ```
 
 WASM Types
@@ -187,3 +201,8 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 endmodule
 ```
+
+Resources
+=========
+
+[WASM Spec]: <https://github.com/WebAssembly/design>
