@@ -15,6 +15,7 @@ release_dir="$build_dir/k/k-distribution/target/release/k"
 
 defn_dir="$build_dir/defn"
 ocaml_dir="$defn_dir/ocaml"
+haskell_dir="$defn_dir/haskell"
 
 test_logs="$build_dir/logs"
 test_log="$test_logs/tests.log"
