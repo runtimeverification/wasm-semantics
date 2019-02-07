@@ -206,13 +206,13 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
                  | #popcnt   ( Int ) [function]
     // ----------------------------------------
     rule #minWidth(0) => 0
-    rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)requires N =/=Int 0
+    rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)                                 requires N =/=Int 0
 
     rule #ctz(0) => 0
-    rule #ctz(N) => #if N modInt 2 ==Int 1 #then 0 #else 1 +Int #ctz(N >>Int 1) #fi
+    rule #ctz(N) => #if N modInt 2 ==Int 1 #then 0 #else 1 +Int #ctz(N >>Int 1) #fi  requires N =/=Int 0
 
     rule #popcnt(0) => 0
-    rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)
+    rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N =/=Int 0
 ```
 
 `clz` counts the number of leading zero-bits, with 0 having all leading zero-bits.
