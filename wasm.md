@@ -169,8 +169,10 @@ These operators convert constant elements at the top of the stack to another typ
 The target type is before the `.`, and the source type is after the `_`.
 
 ```k
-    syntax Instr  ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Number
- // --------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." ConvOp ")" | "(" IValType "." ConvOp Instr ")" | IValType "." ConvOp Int
+ // ----------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . CONVOP:ConvOp I:Instr ) => I ~> ( ITYPE . CONVOP ) ... </k>
+
     rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1  ... </k>
          <stack> < SRCTYPE > C1 : STACK => STACK </stack>
       requires #convSourceType(CONVOP) ==K SRCTYPE
@@ -178,7 +180,6 @@ The target type is before the `.`, and the source type is after the `_`.
     syntax IValType ::= #convSourceType ( ConvOp ) [function]
  // ---------------------------------------------------------
 ```
-
 
 Numeric Operators
 -----------------
