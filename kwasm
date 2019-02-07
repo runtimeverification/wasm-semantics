@@ -12,12 +12,13 @@ kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
 
 build_dir="$kwasm_dir/.build"
 release_dir="$build_dir/k/k-distribution/target/release/k"
-wasm_defn="$build_dir/defn/wasm"
-test_defn="$build_dir/defn/test"
+
+defn_dir="$build_dir/defn"
+ocaml_dir="$defn_dir/ocaml"
 
 test_logs="$build_dir/logs"
-mkdir -p "$test_logs"
 test_log="$test_logs/tests.log"
+mkdir -p "$test_logs"
 
 # Utilities
 # ---------
@@ -36,8 +37,7 @@ run_env() {
     local run_file
 
     run_file="$1"
-    [[ "$run_file" =~ ^tests/* ]] && DEFN_DIRECTORY=$build_dir/defn/test
-    export DEFN_DIRECTORY="${DEFN_DIRECTORY:-$wasm_defn}"
+    export DEFN_DIRECTORY="${DEFN_DIRECTORY:-$ocaml_dir}"
     export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
     eval $(opam config env)
 }
@@ -76,7 +76,6 @@ run_test() {
     [[ -f "$expected_file" ]] \
         || die "Expected output file '$expected_file' does not exist..."
 
-    export DEFN_DIRECTORY="$test_defn"
     run_krun "$test_file" > "$output_file"
     pretty_diff "$expected_file" "$output_file"
 }

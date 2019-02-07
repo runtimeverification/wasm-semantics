@@ -12,8 +12,8 @@ LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
 .PHONY: deps ocaml-deps \
-        build build-wasm build-test \
-        defn defn-wasm defn-test \
+        defn defn-ocaml \
+        build build-ocaml \
         test test-simple \
         media
 
@@ -44,48 +44,32 @@ ocaml-deps:
 # Building Definition
 # -------------------
 
+wasm_files:=test.k wasm.k data.k
+
+ocaml_dir:=$(defn_dir)/ocaml
+ocaml_defn:=$(patsubst %, $(ocaml_dir)/%, $(wasm_files))
+ocaml_kompiled:=$(ocaml_dir)/test-kompiled/interpreter
+
 # Tangle definition from *.md files
 
-defn: defn-wasm defn-test
-defn-wasm: $(defn_wasm_files)
-defn-test: $(defn_test_files)
+defn: defn-ocaml
+defn-ocaml: $(ocaml_defn)
 
-wasm_dir:=$(defn_dir)/wasm
-test_dir:=$(defn_dir)/test
-
-wasm_files:=wasm.k data.k
-test_files:=test.k $(wasm_files)
-
-defn_wasm_files:=$(patsubst %, $(wasm_dir)/%, $(wasm_files))
-defn_test_files:=$(patsubst %, $(test_dir)/%, $(test_files))
-
-$(wasm_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
+$(ocaml_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
-$(test_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
-	@echo "==  tangle: $@"
-	mkdir -p $(dir $@)
-	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
+# Build definitions
 
-# OCAML Backend
+build: build-ocaml
+build-ocaml: $(ocaml_kompiled)
 
-build: build-wasm build-test
-build-wasm: $(wasm_dir)/wasm-kompiled/interpreter
-build-test: $(test_dir)/test-kompiled/interpreter
-
-$(wasm_dir)/wasm-kompiled/interpreter: $(defn_wasm_files)
+$(ocaml_kompiled): $(ocaml_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                               \
-	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                  \
-	    --directory $(wasm_dir) --main-module WASM --syntax-module WASM $<
-
-$(test_dir)/test-kompiled/interpreter: $(defn_test_files)
-	@echo "== kompile: $@"
-	eval $$(opam config env)                                                         \
-	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                            \
-	    --directory $(test_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
+	eval $$(opam config env)                                                          \
+	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                             \
+	    --directory $(ocaml_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 # Testing
 # -------
