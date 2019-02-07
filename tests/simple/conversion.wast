@@ -8,6 +8,9 @@
 (i32.wrap_i64)
 #assertTopStack < i32 > 4294967295 "wrap 2^32 - 1"
 
+(i32.wrap_i64 (i64.const 4294967298))
+#assertTopStack < i32 > 2 "wrap 2^32 + 2"
+
 ;; Extend.
 
 (i32.const 4294967295)    ;; 2^32 - 1
@@ -25,3 +28,6 @@
 (i64.const 10)
 (i64.wrap_i64)
 #assertTrap "Bad return type for `wrap_i64`"
+
+(i64.extend_i32_s (i32.const 15))
+#assertTopStack < i64 > 15 "extend sig folded"

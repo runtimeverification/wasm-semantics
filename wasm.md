@@ -269,8 +269,10 @@ Conversion operators always take a single argument as input and cast it to anoth
 For each element added to `ConvOp`, function `#convSourceType` must be defined over it.
 
 ```k
-    syntax Instr ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Int
- // ----------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." ConvOp ")" | "(" IValType "." ConvOp Instr ")" | IValType "." ConvOp Int
+ // ----------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . CONVOP:ConvOp I:Instr ) => I ~> ( ITYPE . CONVOP ) ... </k>
+
     rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP SI1 ... </k>
          <stack> < ITYPE' > SI1 : STACK => STACK </stack>
       requires #convSourceType(CONVOP) ==K ITYPE'
