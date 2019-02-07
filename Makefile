@@ -21,6 +21,7 @@ all: build
 
 clean:
 	rm -rf $(build_dir)
+	git submodule update --init --recursive
 
 # Build Dependencies (K Submodule)
 # --------------------------------
@@ -28,9 +29,8 @@ clean:
 deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
 
 $(k_submodule)/make.timestamp:
-	git submodule update --init -- $(k_submodule)
-	cd $(k_submodule) \
-	    && mvn package -q -DskipTests -Dllvm.backend.skip
+	git submodule update --init --recursive
+	cd $(k_submodule) && mvn package -DskipTests -Dllvm.backend.skip
 	touch $(k_submodule)/make.timestamp
 
 $(pandoc_tangle_submodule)/make.timestamp:
