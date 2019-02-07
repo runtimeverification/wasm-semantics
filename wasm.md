@@ -209,6 +209,17 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
     rule <k> #clz ( I1, ACC, ITYPE ) => #clz( I1, ACC +Int 1, ITYPE) ... </k>
       requires I1 <Int (2 ^Int (#width(ITYPE) -Int 1 -Int ACC))
     rule <k> #clz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k> [otherwise]
+
+    syntax IUnOp ::= "ctz"
+                   | #ctz(Int, Int, IValType)
+ // ------------------------------
+    rule <k> ITYPE . ctz 0 => < ITYPE > #width(ITYPE) ... </k>
+    rule <k> ITYPE . ctz I1 => #ctz (I1, 0, ITYPE) ... </k>
+      requires I1 =/=Int 0
+
+    rule <k> #ctz ( I1, ACC, ITYPE ) => #ctz( I1 /Int 2, ACC +Int 1, ITYPE) ... </k>
+      requires I1 modInt 2 ==Int 0
+    rule <k> #ctz ( _, ACC, ITYPE ) => < ITYPE > ACC ... </k> [otherwise]
 ```
 
 **TODO**: `clz`, `ctz`, `popcnt`.

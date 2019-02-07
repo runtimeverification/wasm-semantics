@@ -89,3 +89,32 @@ i32.clz
 i64.const 2 ^Int 63 -Int 1
 i64.clz
 #assertTopStack < i64 > 1 "clz 2^63 - 1"
+
+;; ctz
+i32.const #pow1(i32)
+i32.ctz
+#assertTopStack < i32 > 31 "ctz #pow1(i32)"
+i64.const #pow1(i64)
+i64.ctz
+#assertTopStack < i64 > 63 "ctz #pow1(i32)"
+
+i32.const 0
+i32.ctz
+#assertTopStack < i32 > 32 "ctz 0"
+i64.const 0
+i64.ctz
+#assertTopStack < i64 > 64 "ctz 0"
+
+i32.const 1
+i32.ctz
+#assertTopStack < i32 > 0 "ctz 1"
+i64.const 1
+i64.ctz
+#assertTopStack < i64 > 0 "ctz 1"
+
+i32.const 2 ^Int 32 -Int 1
+i32.ctz
+#assertTopStack < i32 > 0 "ctz 2^32 - 1"
+i64.const 2 ^Int 64 -Int 1
+i64.ctz
+#assertTopStack < i64 > 0 "ctz 2^64 - 1"
