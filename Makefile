@@ -108,7 +108,7 @@ $(haskell_kompiled): $(haskell_defn)
 # Testing
 # -------
 
-TEST=./kwasm test-profile
+TEST=./kwasm test
 
 tests/%.test: tests/%
 	$(TEST) $<
