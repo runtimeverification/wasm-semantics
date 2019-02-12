@@ -71,7 +71,7 @@ run_test() {
     if [[ -f "$test_file.out" ]]; then
         expected_file="$test_file.out"
     else
-        expected_file="tests/success.out"
+        expected_file="tests/success-$backend.out"
     fi
 
     [[ -f "$expected_file" ]] \
