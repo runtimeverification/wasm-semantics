@@ -53,11 +53,6 @@ run_krun() {
     krun --directory "$DEFN_DIRECTORY" "$run_file" "$@"
 }
 
-run_kdebug() {
-    progress "debugging: $1"
-    ( run_krun "$1" --debugger )
-}
-
 run_test() {
     local test_file expected_file output_file
 
@@ -117,28 +112,18 @@ run_command="$1" ; shift
 case "$run_command" in
 
     # Running
-    run)   run_krun   "$@" ;;
-    debug) run_kdebug "$@" ;;
-
-    # Testing
+    run)          run_krun         "$@" ;;
     test)         run_test         "$@" ;;
     test-profile) run_test_profile "$@" ;;
 
     *) echo "
-    usage: $0 <cmd> <file> <K args>*
+    usage: $0 [run|test|test-profile] <pgm> <K args>*
 
-       # Running
-       # -------
-       $0 run   <pgm>   Run a single WASM program
-       $0 debug <pgm>   Run a single WASM program in the debugger
+       $0 run          <pgm>    Run a single WASM program
+       $0 test         <pgm>    Run a single WASM program like it's a test
+       $0 test-profile <pgm>    Same as test, but recording timing and memory usage to '$test_log'.
 
        Note: <pgm> is a path to a file containing a WASM program.
-
-       # Testing
-       # -------
-       $0 test         <pgm>    Run a single WASM program like it's a test
-       $0 test-profile <pgm>    Same as test, but recording timing and memory usage to $test_log.
-
-       Note: This command is more for devs and CI servers.
+             <K args> are any arguments you want to pass to K when executing.
 " ; exit ;;
 esac
