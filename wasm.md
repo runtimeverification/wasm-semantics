@@ -283,6 +283,7 @@ Wrapping cuts of the 32 most significant bits of an `i64` value.
     syntax ConvOp ::= "wrap_i64"
  // ----------------------------
     rule <k> i32 . wrap_i64 I => #chop(< i32 > I) ... </k>
+    rule <k> i64 . wrap_i64 I => trap             ... </k>
 
     rule #convSourceType(wrap_i64) => i64
 ```
@@ -294,6 +295,9 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
  // -------------------------------------------------
     rule <k> i64 . extend_i32_u I => < i64 > I                               ... </k>
     rule <k> i64 . extend_i32_s I => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
+
+    rule <k> i32 . extend_i32_u I => trap ... </k>
+    rule <k> i32 . extend_i32_s I => trap ... </k>
 
     rule #convSourceType(extend_i32_u) => i32
     rule #convSourceType(extend_i32_s) => i32
