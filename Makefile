@@ -108,7 +108,8 @@ $(haskell_kompiled): $(haskell_defn)
 # Testing
 # -------
 
-TEST=./kwasm test
+TEST_BACKEND=ocaml
+TEST=./kwasm --backend $(TEST_BACKEND) test
 
 tests/%.test: tests/%
 	$(TEST) $<
