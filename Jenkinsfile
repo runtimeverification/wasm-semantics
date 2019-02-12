@@ -23,13 +23,24 @@ pipeline {
         }
       }
     }
-    stage('Test') {
+    stage('OCaml Backend') {
       steps {
         ansiColor('xterm') {
           sh '''
             nprocs=$(nproc)
             [ "$nprocs" -gt '4' ] && nprocs=4
-            make test -j"$nprocs"
+            make TEST_CONCRETE_BACKEND=ocaml test-execution -j"$nprocs"
+          '''
+        }
+      }
+    }
+    stage('Java Backend') {
+      steps {
+        ansiColor('xterm') {
+          sh '''
+            nprocs=$(nproc)
+            [ "$nprocs" -gt '4' ] && nprocs=4
+            make TEST_CONCRETE_BACKEND=java test-execution -j"$nprocs"
           '''
         }
       }
