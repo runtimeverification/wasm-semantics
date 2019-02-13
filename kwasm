@@ -58,6 +58,16 @@ run_krun() {
     krun --directory "$backend_dir" "$run_file" "$@"
 }
 
+run_proof() {
+    local proof_file
+
+    proof_file="$1" ; shift
+    [[ -f "$proof_file" ]] || die "$proof_file does not exist"
+
+    export K_OPTS=-Xmx8G
+    kprove --directory "$backend_dir" "$proof_file" "$@"
+}
+
 run_test() {
     local test_file expected_file output_file
 
@@ -119,13 +129,15 @@ case "$run_command" in
 
     # Running
     run)          run_krun         "$@" ;;
+    prove)        run_proof        "$@" ;;
     test)         run_test         "$@" ;;
     test-profile) run_test_profile "$@" ;;
 
     *) echo "
-    usage: $0 [--backend <K backend>] [run|test|test-profile] <pgm> <K args>*
+    usage: $0 [--backend <K backend>] [run|prove|test|test-profile] <pgm> <K args>*
 
        $0 run          <pgm>    Run a single WASM program
+       $0 prove        <kspec>  Run a WASM K proof
        $0 test         <pgm>    Run a single WASM program like it's a test
        $0 test-profile <pgm>    Same as test, but recording timing and memory usage to '$test_log'.
 
