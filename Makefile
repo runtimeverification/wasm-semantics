@@ -14,7 +14,7 @@ export LUA_PATH
 .PHONY: deps ocaml-deps \
         defn defn-ocaml defn-haskell \
         build build-ocaml build-haskell \
-        test test-simple \
+        test test-execution test-simple test-proof \
         media
 
 all: build
@@ -108,19 +108,31 @@ $(haskell_kompiled): $(haskell_defn)
 # Testing
 # -------
 
-TEST_BACKEND=ocaml
-TEST=./kwasm --backend $(TEST_BACKEND) test
+TEST_CONCRETE_BACKEND=ocaml
+TEST_SYMBOLIC_BACKEND=java
+TEST=./kwasm
 
 tests/%.test: tests/%
-	$(TEST) $<
+	 $(TEST) --backend $(TEST_CONCRETE_BACKEND) test $<
 
-test: test-simple
+tests/%.prove: tests/%
+	$(TEST) --backend $(TEST_SYMBOLIC_BACKEND) prove $<
 
-### Simple Tests
+test: test-execution test-proof
+
+### Execution Tests
+
+test-execution: test-simple
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
 test-simple: $(simple_tests:=.test)
+
+### Proof Tests
+
+proof_tests:=$(wildcard tests/proofs/*-spec.k)
+
+test-proof: $(proof_tests:=.prove)
 
 # Presentation
 # ------------

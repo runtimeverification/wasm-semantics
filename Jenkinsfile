@@ -45,5 +45,16 @@ pipeline {
         }
       }
     }
+    stage('Test Proofs') {
+      steps {
+        ansiColor('xterm') {
+          sh '''
+            nprocs=$(nproc)
+            [ "$nprocs" -gt '4' ] && nprocs=4
+            make test-proof -j"$nprocs"
+          '''
+        }
+      }
+    }
   }
 }
