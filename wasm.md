@@ -23,7 +23,7 @@ Configuration
       <store>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fname>  0              </fname>
+            <fname>  .FunctionName  </fname>
             <fcode>  .Instrs:Instrs </fcode>
             <ftype>  .Type          </ftype>
             <flocal> .Type          </flocal>
@@ -42,14 +42,11 @@ That way, unsigned instructions can make use of `I` directly, whereas signed ins
 Instructions
 ------------
 
-### Parentheses and Sequencing
+### Sequencing
 
-WASM instructions are space-separated and (optionally) surrounded by paranthesis.
+WASM instructions are space-separated lists of instructions.
 
 ```k
-    syntax Instr ::= "(" Instr ")" [bracket]
- // ----------------------------------------
-
     syntax Instrs ::= List{Instr, ""}
  // ---------------------------------
     rule <k> .Instrs                       => .             ... </k>
@@ -72,11 +69,11 @@ If the value is the special `undefined`, then `trap` is generated instead.
       requires V =/=K undefined
 ```
 
-Numeric Operators
------------------
+Common Operator Machinery
+-------------------------
 
-A large portion of the available opcodes are pure arithmetic.
-This allows us to give purely functional semantics to many numeric opcodes.
+Common machinery for operators is supplied here, based on their categorization.
+This allows us to give purely functional semantics to many of the opcodes.
 
 ### Constants
 
@@ -84,11 +81,11 @@ Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
 
 ```k
-    syntax Instr ::= IValType "." "const" Int
-                   | FValType "." "const" Float
- // -------------------------------------------
-    rule <k> ITYPE:IValType . const VAL => < ITYPE > #unsigned(ITYPE, VAL) ... </k>
-    rule <k> FTYPE:FValType . const VAL => < FTYPE > VAL                   ... </k>
+    syntax Instr ::= "(" IValType "." "const" Int   ")"
+                   | "(" FValType "." "const" Float ")"
+ // ---------------------------------------------------
+    rule <k> ( ITYPE:IValType . const VAL ) => < ITYPE > #unsigned(ITYPE, VAL) ... </k>
+    rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL                   ... </k>
 ```
 
 ### Unary Operators
@@ -100,10 +97,10 @@ When a unary operator is the next instruction, the single argument is loaded fro
  //               | FUnOp
  // ---------------------
 
-    syntax Instr ::= IValType "." IUnOp | IValType "." IUnOp Int
- //                | FValType "." FUnOp | FValType "." FUnOp Float
- // --------------------------------------------------------------
-    rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP SI1 ... </k>
+    syntax Instr ::= "(" IValType "." IUnOp ")" | IValType "." IUnOp Int
+ //                | "(" FValType "." FUnOp ")" | FValType "." FUnOp Float
+ // ----------------------------------------------------------------------
+    rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP SI1 ... </k>
          <stack> < ITYPE > SI1 : STACK => STACK </stack>
 ```
 
@@ -116,12 +113,15 @@ When a binary operator is the next instruction, the two arguments are loaded fro
  //                | FBinOp
  // -----------------------
 
-    syntax Instr ::= IValType "." IBinOp | IValType "." IBinOp Int   Int
- //                | FValType "." FBinOp | FValType "." FBinOp Float Float
- // ----------------------------------------------------------------------
-    rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP SI1 SI2 ... </k>
+    syntax Instr ::= "(" IValType "." IBinOp ")" | IValType "." IBinOp Int   Int
+ //                | "(" FValType "." FBinOp ")" | FValType "." FBinOp Float Float
+ // ------------------------------------------------------------------------------
+    rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP SI1 SI2 ... </k>
          <stack> < ITYPE > SI1 : < ITYPE > SI2 : STACK => STACK </stack>
 ```
+
+Numeric Operators
+-----------------
 
 ### Integer Arithmetic
 
@@ -163,7 +163,39 @@ Note that we do not need to call `#chop` on the results here.
          </k>
 ```
 
-### Bitwise Operations
+### Comparison Operations
+
+All of the following opcodes are liftings of the K builtin operators using the helper `#bool`.
+
+```k
+    syntax IUnOp ::= "eqz"
+ // ----------------------
+    rule <k> ITYPE . eqz I1 => < ITYPE > #bool(I1 ==Int 0) ... </k>
+
+    syntax IBinOp ::= "eq" | "ne"
+ // -----------------------------
+    rule <k> ITYPE . eq I1 I2 => < ITYPE > #bool(I1  ==Int I2) ... </k>
+    rule <k> ITYPE . ne I1 I2 => < ITYPE > #bool(I1 =/=Int I2) ... </k>
+
+    syntax IBinOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
+ // ---------------------------------------------------
+    rule <k> ITYPE . lt_u I1 I2 => < ITYPE > #bool(I1 <Int I2) ... </k>
+    rule <k> ITYPE . gt_u I1 I2 => < ITYPE > #bool(I1 >Int I2) ... </k>
+
+    rule <k> ITYPE . lt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . gt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2)) ... </k>
+
+    syntax IBinOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
+ // ---------------------------------------------------
+    rule <k> ITYPE . le_u I1 I2 => < ITYPE > #bool(I1 <=Int I2) ... </k>
+    rule <k> ITYPE . ge_u I1 I2 => < ITYPE > #bool(I1 >=Int I2) ... </k>
+
+    rule <k> ITYPE . le_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . ge_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
+```
+
+Bitwise Operations
+------------------
 
 Of the bitwise operators, `and` will not overflow, but `or` and `xor` could.
 These simply are the lifted K operators.
@@ -198,9 +230,20 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
 ```
 
 The bit counting operators also lack appropriate K builtins, and are implemented by using width-agnostic helper functions.
+
+`clz` counts the number of leading zero-bits, with 0 having all leading zero-bits.
+`ctz` counts the number of trailing zero-bits, with 0 having all trailing zero-bits.
+`popcnt` counts the number of non-zero bits.
+
 Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits, whereas the `#ctz` helper function considers it to have *no* zero-bits, in order for it to be width-agnostic.
 
 ```k
+    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
+ // -----------------------------------------
+    rule <k> ITYPE . clz    I1 => < ITYPE > #width(ITYPE) -Int #minWidth(I1)                      ... </k>
+    rule <k> ITYPE . ctz    I1 => < ITYPE > #if I1 ==Int 0 #then #width(ITYPE) #else #ctz(I1) #fi ... </k>
+    rule <k> ITYPE . popcnt I1 => < ITYPE > #popcnt(I1)                                           ... </k>
+
     syntax Int ::= #minWidth ( Int ) [function]
                  | #ctz      ( Int ) [function]
                  | #popcnt   ( Int ) [function]
@@ -215,74 +258,49 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
     rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N =/=Int 0
 ```
 
-`clz` counts the number of leading zero-bits, with 0 having all leading zero-bits.
-`ctz` counts the number of trailing zero-bits, with 0 having all trailing zero-bits.
-`popcnt` counts the number of non-zero bits.
+Conversion Operations
+---------------------
+
+Conversion operators always take a single argument as input and cast it to another type.
+For each element added to `ConvOp`, function `#convSourceType` must be defined over it.
 
 ```k
-    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
- // -----------------------------------------
-    rule <k> ITYPE . clz    I1 => < ITYPE > #width(ITYPE) -Int #minWidth(I1)                      ... </k>
-    rule <k> ITYPE . ctz    I1 => < ITYPE > #if I1 ==Int 0 #then #width(ITYPE) #else #ctz(I1) #fi ... </k>
-    rule <k> ITYPE . popcnt I1 => < ITYPE > #popcnt(I1)                                           ... </k>
+    syntax Instr ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Int
+ // ----------------------------------------------------------------------
+    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP SI1 ... </k>
+         <stack> < ITYPE' > SI1 : STACK => STACK </stack>
+      requires #convSourceType(CONVOP) ==K ITYPE'
+
+    syntax IValType ::= #convSourceType ( ConvOp ) [function]
+ // ---------------------------------------------------------
 ```
-
-### Comparison Operations
-
-All of the following opcodes are liftings of the K builtin operators using the helper `#bool`.
-
-```k
-    syntax IUnOp ::= "eqz"
- // ----------------------
-    rule <k> ITYPE . eqz I1 => < ITYPE > #bool(I1 ==Int 0) ... </k>
-
-    syntax IBinOp ::= "eq" | "ne"
- // -----------------------------
-    rule <k> ITYPE . eq I1 I2 => < ITYPE > #bool(I1  ==Int I2) ... </k>
-    rule <k> ITYPE . ne I1 I2 => < ITYPE > #bool(I1 =/=Int I2) ... </k>
-
-    syntax IBinOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
- // ---------------------------------------------------
-    rule <k> ITYPE . lt_u I1 I2 => < ITYPE > #bool(I1 <Int I2) ... </k>
-    rule <k> ITYPE . gt_u I1 I2 => < ITYPE > #bool(I1 >Int I2) ... </k>
-
-    rule <k> ITYPE . lt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2)) ... </k>
-    rule <k> ITYPE . gt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2)) ... </k>
-
-    syntax IBinOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
- // ---------------------------------------------------
-    rule <k> ITYPE . le_u I1 I2 => < ITYPE > #bool(I1 <=Int I2) ... </k>
-    rule <k> ITYPE . ge_u I1 I2 => < ITYPE > #bool(I1 >=Int I2) ... </k>
-
-    rule <k> ITYPE . le_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2)) ... </k>
-    rule <k> ITYPE . ge_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
-```
-
-### Conversion Operations
 
 These operators convert constant elements at the top of the stack to another type. The target type is before the `.`, and the source type is after the `_`.
 
 Wrapping cuts of the 32 most significant bits of an `i64` value.
 
 ```k
-    syntax Instr ::= "i32" "." "wrap_i64"
- // -------------------------------------
- rule <k> i32 . wrap_i64 => . ... </k>
-      <stack> (< i64 > I  => #chop(< i32 > I)) : STACK </stack>
+    syntax ConvOp ::= "wrap_i64"
+ // ----------------------------
+    rule <k> i32 . wrap_i64 I => #chop(< i32 > I) ... </k>
+    rule <k> i64 . wrap_i64 I => trap             ... </k>
+
+    rule #convSourceType(wrap_i64) => i64
 ```
 
 Extension turns an `i32` type value into the corresponding `i64` type value.
 
 ```k
-    syntax Instr ::= "i64" "." "extend_i32_u"
- // -----------------------------------------
-    rule <k> i64 . extend_i32_u => . ... </k>
-         <stack> (< i32 > N => < i64 > N) : STACK </stack>
+    syntax ConvOp ::= "extend_i32_u" | "extend_i32_s"
+ // -------------------------------------------------
+    rule <k> i64 . extend_i32_u I => < i64 > I                               ... </k>
+    rule <k> i64 . extend_i32_s I => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
 
-    syntax Instr ::= "i64" "." "extend_i32_s"
- // -----------------------------------------
-    rule <k> i64 . extend_i32_s => . ... </k>
-         <stack> (< i32 > N => < i64 > #unsigned(i64, #signed(i32, N))) : STACK </stack>
+    rule <k> i32 . extend_i32_u I => trap ... </k>
+    rule <k> i32 . extend_i32_s I => trap ... </k>
+
+    rule #convSourceType(extend_i32_u) => i32
+    rule #convSourceType(extend_i32_s) => i32
 ```
 
 Stack Operations
@@ -336,10 +354,10 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
          <stack> STACK => #take(TYPES, STACK) ++ STACK' </stack>
 
-    syntax Instr ::= "block" FuncDecls Instrs
+    syntax Instr ::= "(" "block" FuncDecls Instrs ")"
                    | "block" VecType Instrs "end"
  // ---------------------------------------------
-    rule <k> block FDECLS:FuncDecls INSTRS:Instrs
+    rule <k> ( block FDECLS:FuncDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
          </k>
@@ -456,8 +474,8 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax FunctionName ::= Int | Identifier
- // ----------------------------------------
+    syntax FunctionName ::= ".FunctionName" | Int | Identifier
+ // ----------------------------------------------------------
 
     syntax TypeKeyWord ::= "param" | "result" | "local"
  // ---------------------------------------------------
@@ -468,21 +486,21 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FuncDecls ::= List{FuncDecl, ""}
  // ---------------------------------------
 
-    syntax Instr ::= "func" FuncDecls Instrs
-                   | "func" FunctionName FuncDecls Instrs
-                   | "func" FunctionName "::" FuncType VecType Instrs
- // -----------------------------------------------------------------
-    rule <k> func FDECLS INSTRS
-          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
+    syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
+                   | "(" "func" FunctionName FuncDecls Instrs ")"
+                   | "func" FunctionName "::" FuncType VecType "{" Instrs "}"
+ // -------------------------------------------------------------------------
+    rule <k> ( func FDECLS INSTRS )
+          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
 
-    rule <k> func FNAME FDECLS INSTRS
-          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) INSTRS
+    rule <k> ( func FNAME FDECLS INSTRS )
+          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
 
-    rule <k> func FNAME :: FTYPE LTYPE INSTRS => . ... </k>
+    rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
          <funcs>
            ( .Bag
           => <funcDef>
@@ -567,9 +585,9 @@ Currently, we support a single module.
 The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
 
 ```k
-    syntax Instr ::= "module" Instrs
- // --------------------------------
-    rule <k> module INSTRS => INSTRS ... </k>
+    syntax Instr ::= "(" "module" Instrs ")"
+ // ----------------------------------------
+    rule <k> ( module INSTRS ) => INSTRS ... </k>
 ```
 
 ```k
