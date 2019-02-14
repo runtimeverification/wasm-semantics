@@ -262,7 +262,7 @@ Conversion Operations
 ---------------------
 
 Conversion operators always take a single argument as input and cast it to another type.
-For each element added to `ConvOp`, function `#confSourceType` must be defined over it.
+For each element added to `ConvOp`, function `#convSourceType` must be defined over it.
 
 ```k
     syntax Instr ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Int
