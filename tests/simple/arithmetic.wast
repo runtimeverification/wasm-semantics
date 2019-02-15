@@ -75,18 +75,18 @@
 
 ;; The following tests were generated using the reference OCaml WASM interpreter.
 
-(i32.const 3)
 (i32.const 10)
+(i32.const 3)
 (i32.rem_s)
 #assertTopStack < i32 > 1 "i32.rem_s 1"
 
-(i32.const 4)
 (i32.const 10)
+(i32.const 4)
 (i32.rem_s)
 #assertTopStack < i32 > 2 "i32.rem_s 2"
 
-(i32.const 5)
 (i32.const 10)
+(i32.const 5)
 (i32.rem_s)
 #assertTopStack < i32 > 0 "i32.rem_s 3"
 

@@ -54,11 +54,11 @@ invoke 0
 ;; More complicated function with locals
 
 (func 1 param i64 i64 i64 result i64 local i64
-    get_local 0
-    get_local 1
-    (i64.add)
-    get_local 2
-    (i64.sub)
+        get_local 2
+          get_local 0
+          get_local 1
+        (i64.add)
+      (i64.sub)
     set_local 3
     get_local 3
     return
