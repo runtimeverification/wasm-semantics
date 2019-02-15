@@ -137,7 +137,7 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 ```k
     syntax IVal ::= #chop ( IVal ) [function]
  // -----------------------------------------
-    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
+    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
 ```
 
 ### Signed Interpretation
