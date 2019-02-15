@@ -18,10 +18,10 @@ Additionally, white-space is skipped/ignored.
 Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
 
 ```k
-    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)"
-                     | r";;[^\\n\\r]*"
-                     | r"[\\ \\n\\r\\t]"
- // ------------------------------------
+    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
+                     | r";;[^\\n\\r]*"                  [token]
+                     | r"[\\ \\n\\r\\t]"                [token]
+ // -----------------------------------------------------------
 ```
 
 ### Identifiers
