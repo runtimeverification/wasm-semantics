@@ -120,6 +120,34 @@ When a binary operator is the next instruction, the two arguments are loaded fro
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
 ```
 
+### Test Operations
+
+Test operations consume one operand and produce a bool, which is an `i32` value.
+They are parametric in the operand type.
+
+```k
+    syntax Instr  ::= "(" IValType "." ITestOp ")"
+    syntax Int    ::=  #itestop(ITestOp, IValType, Int) [function]
+ // --------------------------------------------------------------
+    rule <k> ( ITYPE . TOP:ITestOp ) => . ... </k>
+         <stack> < ITYPE > SI1 : STACK => < i32 > #itestop(TOP, ITYPE, SI1) : STACK </stack>
+```
+
+### Comparison Operations
+
+Comparisons consume two operands and produce a bool, which is an `i32` value.
+They are parametric in the operand type.
+
+```k
+    syntax Instr  ::= "(" IValType "." RelOp ")"
+    syntax RelOp  ::= IRelOp
+ //                 | FRelOp
+    syntax Number ::= #relop(RelOp, IValType, Int, Int) [function]
+ // --------------------------------------------------------------
+    rule <k> ( ITYPE . ROP:RelOp ) => . ... </k>
+         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => < i32 > #relop(ROP, ITYPE, C1, C2) : STACK </stack>
+```
+
 Numeric Operators
 -----------------
 
@@ -163,35 +191,41 @@ Note that we do not need to call `#chop` on the results here.
          </k>
 ```
 
-### Comparison Operations
+### Tests
 
-All of the following opcodes are liftings of the K builtin operators using the helper `#bool`.
+`eqz` checks wether its operand is 0.
 
 ```k
-    syntax IUnOp ::= "eqz"
- // ----------------------
-    rule <k> ITYPE . eqz I1 => < ITYPE > #bool(I1 ==Int 0) ... </k>
+    syntax ITestOp ::= "eqz"
+ // ------------------------
+    rule #itestop(eqz, _, Int) => #bool(Int ==Int 0)
+```
 
-    syntax IBinOp ::= "eq" | "ne"
+### Comparisons
+
+The comparisons test for equality and different types of inequalities between numbers.
+
+```k
+    syntax IRelOp ::= "eq" | "ne"
  // -----------------------------
-    rule <k> ITYPE . eq I1 I2 => < ITYPE > #bool(I1  ==Int I2) ... </k>
-    rule <k> ITYPE . ne I1 I2 => < ITYPE > #bool(I1 =/=Int I2) ... </k>
+    rule #relop(eq, _, I1, I2) => #bool(I1 ==Int  I2)
+    rule #relop(ne, _, I1, I2) => #bool(I1 =/=Int I2)
 
-    syntax IBinOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
+    syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
  // ---------------------------------------------------
-    rule <k> ITYPE . lt_u I1 I2 => < ITYPE > #bool(I1 <Int I2) ... </k>
-    rule <k> ITYPE . gt_u I1 I2 => < ITYPE > #bool(I1 >Int I2) ... </k>
+    rule #relop(lt_u, _, I1, I2)     => #bool( I1 <Int I2)
+    rule #relop(gt_u, _, I1, I2)     => #bool( I1 >Int I2)
 
-    rule <k> ITYPE . lt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2)) ... </k>
-    rule <k> ITYPE . gt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2)) ... </k>
+    rule #relop(lt_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2))
+    rule #relop(gt_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2))
 
-    syntax IBinOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
+    syntax IRelOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
  // ---------------------------------------------------
-    rule <k> ITYPE . le_u I1 I2 => < ITYPE > #bool(I1 <=Int I2) ... </k>
-    rule <k> ITYPE . ge_u I1 I2 => < ITYPE > #bool(I1 >=Int I2) ... </k>
+    rule #relop(le_u, _, I1, I2)     => #bool(I1 <=Int I2)
+    rule #relop(ge_u, _, I1, I2)     => #bool(I1 >=Int I2)
 
-    rule <k> ITYPE . le_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2)) ... </k>
-    rule <k> ITYPE . ge_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
+    rule #relop(le_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2))
+    rule #relop(ge_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2))
 ```
 
 Bitwise Operations
