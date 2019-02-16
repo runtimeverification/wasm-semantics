@@ -100,8 +100,8 @@ When a unary operator is the next instruction, the single argument is loaded fro
     syntax Instr ::= "(" IValType "." IUnOp ")" | IValType "." IUnOp Int
  //                | "(" FValType "." FUnOp ")" | FValType "." FUnOp Float
  // ----------------------------------------------------------------------
-    rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP SI1 ... </k>
-         <stack> < ITYPE > SI1 : STACK => STACK </stack>
+    rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP C1 ... </k>
+         <stack> < ITYPE > C1 : STACK => STACK </stack>
 ```
 
 ### Binary Operators
@@ -116,8 +116,8 @@ When a binary operator is the next instruction, the two arguments are loaded fro
     syntax Instr ::= "(" IValType "." IBinOp ")" | IValType "." IBinOp Int   Int
  //                | "(" FValType "." FBinOp ")" | FValType "." FBinOp Float Float
  // ------------------------------------------------------------------------------
-    rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP SI1 SI2 ... </k>
-         <stack> < ITYPE > SI2 : < ITYPE > SI1 : STACK => STACK </stack>
+    rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
+         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
 ```
 
 Numeric Operators
