@@ -47,8 +47,8 @@ Instructions
 WASM instructions are space-separated lists of instructions.
 
 ```k
-    syntax Instrs ::= List{Instr, ""}
- // ---------------------------------
+    syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
+ // -----------------------------------------------------
     rule <k> .Instrs                       => .             ... </k>
     rule <k> I:Instr IS:Instrs             => I ~> IS       ... </k>
     rule <k> I:Instr ~> .Instrs            => I             ... </k>
@@ -543,8 +543,8 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
                        | "export" FunctionName
-    syntax FuncDecls ::= List{FuncDecl, ""}
- // ---------------------------------------
+    syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
+ // --------------------------------------------------------------
 
     syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
                    | "(" "func" FunctionName FuncDecls Instrs ")"
