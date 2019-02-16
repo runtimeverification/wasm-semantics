@@ -113,10 +113,10 @@ TEST_SYMBOLIC_BACKEND=java
 TEST=./kwasm
 
 tests/%.test: tests/%
-	 $(TEST) --backend $(TEST_CONCRETE_BACKEND) test $<
+	 $(TEST) test --backend $(TEST_CONCRETE_BACKEND) $<
 
 tests/%.prove: tests/%
-	$(TEST) --backend $(TEST_SYMBOLIC_BACKEND) prove $<
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $<
 
 test: test-execution test-proof
 
