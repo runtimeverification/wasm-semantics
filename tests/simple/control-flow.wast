@@ -133,8 +133,8 @@ block [ ]
         get_local 1
         (i32.add)
         set_local 1
-        (i32.const 1)
         get_local 0
+        (i32.const 1)
         (i32.sub)
         tee_local 0
         (i32.eqz)
