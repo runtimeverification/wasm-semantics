@@ -17,11 +17,3 @@
 (i32.const -1)    ;; 2^32 - 1
 (i64.extend_i32_s)
 #assertTopStack < i64 > -1 "extend sig"
-
-(i32.const 10)
-(i32.extend_i32_s)
-#assertTrap "Bad return type for `extend_i32_s`"
-
-(i64.const 10)
-(i64.wrap_i64)
-#assertTrap "Bad return type for `wrap_i64`"
