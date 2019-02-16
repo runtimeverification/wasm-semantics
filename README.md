@@ -72,6 +72,8 @@ To only build specific backends, you can do `make build-java`, `make build-ocaml
 This Repository
 ---------------
 
+### Semantics Layout
+
 The following files constitute the KEVM semantics:
 
 -   [data.md](data.md) provides the (functional) data of WASM (basic types, type constructors, and values).
@@ -80,6 +82,37 @@ The following files constitute the KEVM semantics:
 These additional files extend the semantics to make the repository more useful:
 
 -   [test.md](test.md) is an execution harness for KWASM, providing a simple language for describing tests/programs.
+
+### Example usage: `./kwasm` runner script
+
+After building the definition, you can run the definition using `./kwasm`.
+The most up-to-date documentation will always be in `./kwasm help`.
+
+Run the file `tests/simple/arithmetic.wast`:
+
+```sh
+./kwasm run tests/simple/arithmetic.wasm
+```
+
+Run the same file as a test:
+
+```sh
+./kwasm test tests/simple/arithmetic.wasm
+```
+
+To run proofs, you can similarly use `./kwasm`.
+For example, to prove the specification `tests/proofs/simple-arithmetic-spec.k`:
+
+```sh
+./kwasm prove tests/proofs/simple-arithmetic-spec.k
+```
+
+You can optionally override the default backend using the `--backend BACKEND` flag:
+
+```sh
+./kwasm run   --backend java    tests/simple/arithmetic.wast
+./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k
+```
 
 Testing
 -------
