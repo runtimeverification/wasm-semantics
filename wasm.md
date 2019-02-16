@@ -49,10 +49,8 @@ WASM instructions are space-separated lists of instructions.
 ```k
     syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
  // -----------------------------------------------------
-    rule <k> .Instrs                       => .             ... </k>
-    rule <k> I:Instr IS:Instrs             => I ~> IS       ... </k>
-    rule <k> I:Instr ~> .Instrs            => I             ... </k>
-    rule <k> I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS ... </k>
+    rule <k> .Instrs           => .       ... </k>
+    rule <k> I:Instr IS:Instrs => I ~> IS ... </k>
 ```
 
 ### Traps
@@ -426,7 +424,7 @@ Note that, unlike in the WASM specification document, we do not need the special
 ```k
     syntax Instr ::= "(" "br" Int ")"
  // ---------------------------------
-    rule <k> ( br N ) ~> (I:Instr => .) ... </k>
+    rule <k> ( br N ) ~> (IS:Instrs => .) ... </k>
     rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
 
     syntax Instr ::= "(" "br_if" Int ")"
@@ -633,8 +631,8 @@ Unlike labels, only one frame can be "broken" through at a time.
 
     syntax Instr ::= "return"
  // -------------------------
-    rule <k> return ~> (I:Instr => .)  ... </k>
-    rule <k> return ~> (L:Label => .)  ... </k>
+    rule <k> return ~> (IS:Instrs => .)  ... </k>
+    rule <k> return ~> (L:Label   => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
 ```
 
