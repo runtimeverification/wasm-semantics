@@ -17,7 +17,6 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh '''
-            export PATH=$HOME/.local/bin:$PATH
             make deps  -B
             make build -B -j4
           '''
@@ -28,7 +27,6 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh '''
-            export PATH=$HOME/.local/bin:$PATH
             nprocs=$(nproc)
             [ "$nprocs" -gt '4' ] && nprocs=4
             make test -j"$nprocs"
