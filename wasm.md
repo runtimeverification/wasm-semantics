@@ -267,8 +267,8 @@ For each element added to `ConvOp`, function `#convSourceType` must be defined o
 ```k
     syntax Instr ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Int
  // ----------------------------------------------------------------------
-    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP SI1 ... </k>
-         <stack> < ITYPE' > SI1 : STACK => STACK </stack>
+    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1 ... </k>
+         <stack> < ITYPE' > C1 : STACK => STACK </stack>
       requires #convSourceType(CONVOP) ==K ITYPE'
 
     syntax IValType ::= #convSourceType ( ConvOp ) [function]
