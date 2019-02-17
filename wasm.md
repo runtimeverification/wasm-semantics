@@ -438,9 +438,9 @@ Note that, unlike in the WASM specification document, we do not need the special
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= "if" VecType Instrs "else" Instrs "end"
- // --------------------------------------------------------
-    rule <k> if VTYPE IS else IS' end
+    syntax Instr ::= "(" "if" VecType Instrs "else" Instrs "end" ")"
+ // ----------------------------------------------------------------
+    rule <k> ( if VTYPE IS else IS' end )
           => #if VAL =/=Int 0 #then IS #else IS' #fi
           ~> label VTYPE { .Instrs } STACK
          ...
