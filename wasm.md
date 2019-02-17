@@ -510,17 +510,17 @@ The `*_local` instructions are defined here.
 
 ```k
     syntax Instr ::= "init_global" Int Val
-                   |  "get_global" Int
-                   |  "set_global" Int
- // ----------------------------------
+                   | "(" "global.get" Int ")"
+                   | "(" "global.set" Int ")"
+ // -----------------------------------------
     rule <k> init_global INDEX VALUE => . ... </k>
          <globals> GLOBALS => GLOBALS [ INDEX <- VALUE ] </globals>
 
-    rule <k> get_global INDEX => . ... </k>
+    rule <k> ( global.get INDEX ) => . ... </k>
          <stack> STACK => VALUE : STACK </stack>
          <globals> ... INDEX |-> VALUE ... </globals>
 
-    rule <k> set_global INDEX => . ... </k>
+    rule <k> ( global.set INDEX ) => . ... </k>
          <stack> VALUE : STACK => STACK </stack>
          <globals> ... INDEX |-> (_ => VALUE) ... </globals>
 ```
