@@ -50,7 +50,7 @@ run_proof() {
     [[ -f "$proof_file" ]] || die "$proof_file does not exist"
 
     export K_OPTS=-Xmx8G
-    kprove --directory "$backend_dir" "$proof_file" "$@"
+    kprove --directory "$backend_dir" -m KWASM-LEMMAS "$proof_file" "$@"
 }
 
 run_test() {

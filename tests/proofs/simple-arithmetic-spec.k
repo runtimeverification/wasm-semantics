@@ -1,3 +1,5 @@
+requires "kwasm-lemmas.k"
+
 module SIMPLE-ARITHMETIC-SPEC
     imports WASM
 
