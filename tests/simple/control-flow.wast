@@ -152,14 +152,14 @@ end
 init_locals < i32 > 10 : < i32 > 0 : .Stack
 block [ ]
     loop [ ]
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.add)
-        set_local 1
-        get_local 0
+        (local.set 1)
+        (local.get 0)
         (i32.const 1)
         (i32.sub)
-        tee_local 0
+        (local.tee 0)
         (i32.eqz)
         (br_if 1)
     end
@@ -170,14 +170,14 @@ end
 init_locals < i32 > 10 : < i32 > 0 : .Stack
 block [ ]
     ( loop [ ]
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.add)
-        set_local 1
-        get_local 0
+        (local.set 1)
+        (local.get 0)
         (i32.const 1)
         (i32.sub)
-        tee_local 0
+        (local.tee 0)
         (i32.eqz)
         (br_if 1)
     )

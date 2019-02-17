@@ -489,19 +489,19 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax Instr ::= "get_local" Int
-                   | "set_local" Int
-                   | "tee_local" Int
- // --------------------------------
-    rule <k> get_local INDEX => . ... </k>
+    syntax Instr ::= "(" "local.get" Int ")"
+                   | "(" "local.set" Int ")"
+                   | "(" "local.tee" Int ")"
+ // ----------------------------------------
+    rule <k> ( local.get INDEX ) => . ... </k>
          <stack> STACK => VALUE : STACK </stack>
          <locals> ... INDEX |-> VALUE ... </locals>
 
-    rule <k> set_local INDEX => . ... </k>
+    rule <k> ( local.set INDEX ) => . ... </k>
          <stack> VALUE : STACK => STACK </stack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 
-    rule <k> tee_local INDEX => . ... </k>
+    rule <k> ( local.tee INDEX ) => . ... </k>
          <stack> VALUE : STACK </stack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 ```
