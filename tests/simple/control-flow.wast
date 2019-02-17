@@ -135,6 +135,18 @@ end
 (if [ i32 ] (i32.const 1) else (i32.const -1) end)
 #assertTopStack < i32 > -1 "if false"
 
+(i32.const -1)
+(if [ ] (i32.const 0) (then))
+#assertTopStack < i32 > -1 "if folded false empty"
+
+(i32.const -1)
+(if [ i32 ] (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
+#assertStack < i32 > 1 : < i32 > -1 : .Stack "if folded true"
+
+(i32.const -1)
+(if [ i32 ] (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
+#assertStack < i32 > 2 : < i32 > -1 : .Stack "if folded false"
+
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .Stack

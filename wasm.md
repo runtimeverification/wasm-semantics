@@ -439,7 +439,12 @@ Finally, we have the conditional and loop instructions.
 
 ```k
     syntax Instr ::= "(" "if" VecType Instrs "else" Instrs "end" ")"
- // ----------------------------------------------------------------
+                   | "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
+                   | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+ // ----------------------------------------------------------------------------------------
+    rule <k> ( if VTYPE C:Instrs ( then IS ) )              => C ~> ( if VTYPE IS else .Instrs end ) ... </k>
+    rule <k> ( if VTYPE C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if VTYPE IS else IS'     end ) ... </k>
+
     rule <k> ( if VTYPE IS else IS' end )
           => #if VAL =/=Int 0 #then IS #else IS' #fi
           ~> label VTYPE { .Instrs } STACK
