@@ -33,9 +33,9 @@ Configuration
         </funcs>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <memAddr>               0     </memAddr>
-            <mmax multiplicity="?"> 0     </max>
-            <mdata>                 .List </mdata>
+            <memAddr> 0    </memAddr>
+            <mmax>    0    </mmax>
+            <mdata>   .Map </mdata>
           </memInst>
         </mems>
       </store>
@@ -645,6 +645,40 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> return ~> (L:Label   => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
 ```
+
+Memory
+------
+
+```k
+    syntax Instr ::= "(" "memory" "." "size" ")"
+ // --------------------------------------------
+    rule <k> ( memory . size ) => < i32 > size(DATA) /Int #pageSize() ... </k>
+         <curFrame>
+           ...
+           <memAddrs> I </memAddrs>
+         </curFrame>
+         <memInst>
+           <memAddr> I    </memAddr>
+           <mdata>   DATA </mdata>
+           ...
+         </memInst>
+```
+
+`grow` is non-deterministic and may fail either due to trying to exceed explicit max values, or because the embedder does not have resources available.
+Failure is indicated by pushing -1 to the stack.
+Success is indicated by returning the previous memory size, in number of pages.
+
+```k
+    syntax Instr ::= "(" "memory" "." "grow" ")" | "grow" Int
+ // ------------------------------------
+    rule <k> ( memory . grow ) => grow N ... </k>
+         <stack> < i32 > N : STACK => STACK </stack>
+
+    rule <k> grow N => < i32 > -1 </k>
+    // TODO: Successfull grow
+ 
+```
+
 
 Module Declaration
 ------------------
