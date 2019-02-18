@@ -16,9 +16,10 @@ Configuration
       <k> $PGM:Instrs </k>
       <stack> .Stack </stack>
       <curFrame>
-        <addrs>   .Map </addrs>
-        <locals>  .Map </locals>
-        <globals> .Map </globals>
+        <addrs>    .Map  </addrs>
+        <locals>   .Map  </locals>
+        <globals>  .Map  </globals>
+        <memAddrs> 0     </memAddrs>  // TODO: Currently can deal only with one memory, so this is always only one integer, not a list.
       </curFrame>
       <store>
         <funcs>
@@ -30,6 +31,13 @@ Configuration
             <faddrs> .Map           </faddrs>
           </funcDef>
         </funcs>
+        <mems>
+          <memInst multiplicity="*" type="Map">
+            <memAddr>               0     </memAddr>
+            <mmax multiplicity="?"> 0     </max>
+            <mdata>                 .List </mdata>
+          </memInst>
+        </mems>
       </store>
 ```
 
@@ -38,6 +46,8 @@ Configuration
 Integers in K are unbounded.
 As an invariant, however, for any integer `< iNN > I:Int` on the stack, `I` is between 0 and `#pow(NN) - 1`.
 That way, unsigned instructions can make use of `I` directly, whereas signed instructions may need `#signed(iNN, I)`.
+
+The highest address in a memory instance divided by the `#pageSize` may not exceed the value in `<max>`, if present.
 
 Instructions
 ------------

@@ -15,10 +15,16 @@
     <globals>
       .Map
     </globals>
+    <memAddrs>
+      0
+    </memAddrs>
   </curFrame>
   <store>
     <funcs>
       .FuncDefCellMap
     </funcs>
+    <mems>
+      .MemInstCellMap
+    </mems>
   </store>
 </generatedTop>
