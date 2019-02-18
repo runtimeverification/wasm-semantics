@@ -147,7 +147,7 @@ Since comparison operations can not trap, it suffices to lift the values into a 
     syntax Instr  ::= "(" IValType "." RelOp ")"
     syntax RelOp  ::= IRelOp
  //                 | FRelOp
-    syntax Number ::= #relop(RelOp, IValType, Int, Int) [function]
+    syntax Number ::= #relOp(RelOp, IValType, Int, Int) [function]
  // --------------------------------------------------------------
     rule <k> ( ITYPE . ROP:RelOp ) => . ... </k>
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => < i32 > #relOp(ROP, ITYPE, C1, C2) : STACK </stack>
