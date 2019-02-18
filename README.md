@@ -91,13 +91,13 @@ The most up-to-date documentation will always be in `./kwasm help`.
 Run the file `tests/simple/arithmetic.wast`:
 
 ```sh
-./kwasm run tests/simple/arithmetic.wasm
+./kwasm run tests/simple/arithmetic.wast
 ```
 
 Run the same file as a test:
 
 ```sh
-./kwasm test tests/simple/arithmetic.wasm
+./kwasm test tests/simple/arithmetic.wast
 ```
 
 To run proofs, you can similarly use `./kwasm`.
