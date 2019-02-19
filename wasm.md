@@ -222,7 +222,7 @@ Note that we do not need to call `#chop` on the results here.
 ```k
     syntax ITestOp ::= "eqz"
  // ------------------------
-    rule <k> ITYPE . eqz I => < i32 > #bool(I ==Int 0) ... </k>
+    rule <k> _ . eqz I => < i32 > #bool(I ==Int 0) ... </k>
 ```
 
 The comparisons test for equality and different types of inequalities between numbers.
