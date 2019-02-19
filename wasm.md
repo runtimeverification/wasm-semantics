@@ -91,6 +91,7 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 ### Unary Operators
 
 When a unary operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+A `UnOp` operator always produces a result of the same type as its operand.
 
 ```k
     syntax UnOp ::= IUnOp
@@ -107,6 +108,7 @@ When a unary operator is the next instruction, the single argument is loaded fro
 ### Binary Operators
 
 When a binary operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+A `BinOp` operator always produces a result of the same type as its operands.
 
 ```k
     syntax BinOp ::= IBinOp
@@ -119,6 +121,56 @@ When a binary operator is the next instruction, the two arguments are loaded fro
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
 ```
+
+### Test Operations
+
+When a test operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+Test operations consume one operand and produce a bool, which is an `i32` value.
+
+```k
+    syntax Instr  ::= "(" IValType "." ITestOp ")" | IValType "." ITestOp Int
+ // -------------------------------------------------------------------------
+    rule <k> ( ITYPE . TOP:ITestOp ) => ITYPE . TOP C1 ... </k>
+         <stack> < ITYPE > C1 : STACK => STACK </stack>
+```
+
+### Comparison Operations
+
+When a comparison operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+Comparisons consume two operands and produce a bool, which is an `i32` value.
+
+
+```k
+    syntax RelOp ::= IRelOp
+ //                | FRelOp
+ // -----------------------
+
+    syntax Instr ::= "(" IValType "." IRelOp ")" | IValType "." IRelOp Int   Int
+ //                  "(" FValType "." FRelOp ")" | IValType "." FRelOp Float Float
+ // ------------------------------------------------------------------------------
+    rule <k> ( ITYPE . ROP:IRelOp ) => ITYPE . ROP C1 C2 ... </k>
+         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK  </stack>
+```
+
+### Conversion Operations
+
+Conversion operators always take a single argument as input and cast it to another type.
+For each element added to `ConvOp`, functions `#convSourceType` and `#convOp` must be defined over it.
+
+These operators convert constant elements at the top of the stack to another type.
+The target type is before the `.`, and the source type is after the `_`.
+
+```k
+    syntax Instr  ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Number
+ // --------------------------------------------------------------------------
+    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1  ... </k>
+         <stack> < SRCTYPE > C1 : STACK => STACK </stack>
+      requires #convSourceType(CONVOP) ==K SRCTYPE
+
+    syntax IValType ::= #convSourceType ( ConvOp ) [function]
+ // ---------------------------------------------------------
+```
+
 
 Numeric Operators
 -----------------
@@ -163,35 +215,39 @@ Note that we do not need to call `#chop` on the results here.
          </k>
 ```
 
-### Comparison Operations
+### Predicates
 
-All of the following opcodes are liftings of the K builtin operators using the helper `#bool`.
+`eqz` checks wether its operand is 0.
 
 ```k
-    syntax IUnOp ::= "eqz"
- // ----------------------
-    rule <k> ITYPE . eqz I1 => < ITYPE > #bool(I1 ==Int 0) ... </k>
+    syntax ITestOp ::= "eqz"
+ // ------------------------
+    rule <k> _ . eqz I => < i32 > #bool(I ==Int 0) ... </k>
+```
 
-    syntax IBinOp ::= "eq" | "ne"
+The comparisons test for equality and different types of inequalities between numbers.
+
+```k
+    syntax IRelOp ::= "eq" | "ne"
  // -----------------------------
-    rule <k> ITYPE . eq I1 I2 => < ITYPE > #bool(I1  ==Int I2) ... </k>
-    rule <k> ITYPE . ne I1 I2 => < ITYPE > #bool(I1 =/=Int I2) ... </k>
+    rule <k> _ . eq I1 I2 => < i32 > #bool(I1 ==Int   I2) ... </k>
+    rule <k> _ . ne I1 I2 => < i32 > #bool(I1 =/=Int  I2) ... </k>
 
-    syntax IBinOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
+    syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
  // ---------------------------------------------------
-    rule <k> ITYPE . lt_u I1 I2 => < ITYPE > #bool(I1 <Int I2) ... </k>
-    rule <k> ITYPE . gt_u I1 I2 => < ITYPE > #bool(I1 >Int I2) ... </k>
+    rule <k> _     . lt_u I1 I2 => < i32 > #bool(I1 <Int I2) ... </k>
+    rule <k> _     . gt_u I1 I2 => < i32 > #bool(I1 >Int I2) ... </k>
 
-    rule <k> ITYPE . lt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2)) ... </k>
-    rule <k> ITYPE . gt_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . lt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . gt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2)) ... </k>
 
-    syntax IBinOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
+    syntax IRelOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
  // ---------------------------------------------------
-    rule <k> ITYPE . le_u I1 I2 => < ITYPE > #bool(I1 <=Int I2) ... </k>
-    rule <k> ITYPE . ge_u I1 I2 => < ITYPE > #bool(I1 >=Int I2) ... </k>
+    rule <k> _     . le_u I1 I2 => < i32 > #bool(I1 <=Int I2) ... </k>
+    rule <k> _     . ge_u I1 I2 => < i32 > #bool(I1 >=Int I2) ... </k>
 
-    rule <k> ITYPE . le_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2)) ... </k>
-    rule <k> ITYPE . ge_s I1 I2 => < ITYPE > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . le_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . ge_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
 ```
 
 Bitwise Operations
@@ -258,24 +314,8 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
     rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N =/=Int 0
 ```
 
-Conversion Operations
----------------------
-
-Conversion operators always take a single argument as input and cast it to another type.
-For each element added to `ConvOp`, function `#convSourceType` must be defined over it.
-
-```k
-    syntax Instr ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Int
- // ----------------------------------------------------------------------
-    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1 ... </k>
-         <stack> < ITYPE' > C1 : STACK => STACK </stack>
-      requires #convSourceType(CONVOP) ==K ITYPE'
-
-    syntax IValType ::= #convSourceType ( ConvOp ) [function]
- // ---------------------------------------------------------
-```
-
-These operators convert constant elements at the top of the stack to another type. The target type is before the `.`, and the source type is after the `_`.
+Conversions
+-----------
 
 Wrapping cuts of the 32 most significant bits of an `i64` value.
 
@@ -283,7 +323,6 @@ Wrapping cuts of the 32 most significant bits of an `i64` value.
     syntax ConvOp ::= "wrap_i64"
  // ----------------------------
     rule <k> i32 . wrap_i64 I => #chop(< i32 > I) ... </k>
-    rule <k> i64 . wrap_i64 I => trap             ... </k>
 
     rule #convSourceType(wrap_i64) => i64
 ```
@@ -295,9 +334,6 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
  // -------------------------------------------------
     rule <k> i64 . extend_i32_u I => < i64 > I                               ... </k>
     rule <k> i64 . extend_i32_s I => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
-
-    rule <k> i32 . extend_i32_u I => trap ... </k>
-    rule <k> i32 . extend_i32_s I => trap ... </k>
 
     rule #convSourceType(extend_i32_u) => i32
     rule #convSourceType(extend_i32_s) => i32
