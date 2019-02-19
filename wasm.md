@@ -123,34 +123,31 @@ When a binary operator is the next instruction, the two arguments are loaded fro
 ### Test Operations
 
 Test operations consume one operand and produce a bool, which is an `i32` value.
-They are parametric in the operand type.
-For each element added to `ITestOp`, function `#iTestOp` must be defined over it.
-Since test operations can not trap, it suffices to lift the values into a function.
+When a test operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
 
 ```k
-    syntax Instr  ::= "(" IValType "." ITestOp ")"
-    syntax Int    ::=  #iTestOp(ITestOp, IValType, Int) [function]
- // --------------------------------------------------------------
-    rule <k> ( ITYPE . TOP:ITestOp ) => . ... </k>
-         <stack> (< ITYPE > SI1 => < i32 > #iTestOp(TOP, ITYPE, SI1)) : STACK </stack>
+    syntax Instr  ::= "(" IValType "." ITestOp ")" | IValType "." ITestOp Int
+ // -------------------------------------------------------------------------
+    rule <k> ( ITYPE . TOP:ITestOp ) => ITYPE . TOP C1 ... </k>
+         <stack> < ITYPE > C1 : STACK => STACK </stack>
 ```
 
 ### Comparison Operations
 
 Comparisons consume two operands and produce a bool, which is an `i32` value.
-They are parametric in the operand type.
-For each element added to `RelOp`, function `#relOp` must be defined over it.
-Since comparison operations can not trap, it suffices to lift the values into a function.
+When a comparison operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
 
 
 ```k
-    syntax Instr  ::= "(" IValType "." RelOp ")"
-    syntax RelOp  ::= IRelOp
- //                 | FRelOp
-    syntax Number ::= #relOp(RelOp, IValType, Int, Int) [function]
- // --------------------------------------------------------------
-    rule <k> ( ITYPE . ROP:RelOp ) => . ... </k>
-         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => < i32 > #relOp(ROP, ITYPE, C1, C2) : STACK </stack>
+    syntax RelOp ::= IRelOp
+ //                | FRelOp
+ // -----------------------
+
+    syntax Instr ::= "(" IValType "." IRelOp ")" | IValType "." IRelOp Int   Int
+ //                  "(" FValType "." FRelOp ")" | IValType "." FRelOp Float Float
+ // ------------------------------------------------------------------------------
+    rule <k> ( ITYPE . ROP:IRelOp ) => ITYPE . ROP C1 C2 ... </k>
+         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK  </stack>
 ```
 
 ### Conversion Operations
@@ -223,7 +220,7 @@ Note that we do not need to call `#chop` on the results here.
 ```k
     syntax ITestOp ::= "eqz"
  // ------------------------
-    rule #iTestOp(eqz, _, Int) => #bool(Int ==Int 0)
+    rule <k> ITYPE . eqz I => < i32 > #bool(I ==Int 0) ... </k>
 ```
 
 The comparisons test for equality and different types of inequalities between numbers.
@@ -231,24 +228,24 @@ The comparisons test for equality and different types of inequalities between nu
 ```k
     syntax IRelOp ::= "eq" | "ne"
  // -----------------------------
-    rule #relOp(eq, _, I1, I2) => #bool(I1 ==Int  I2)
-    rule #relOp(ne, _, I1, I2) => #bool(I1 =/=Int I2)
+    rule <k> _ . eq I1 I2 => < i32 > #bool(I1 ==Int   I2) ... </k>
+    rule <k> _ . ne I1 I2 => < i32 > #bool(I1 =/=Int  I2) ... </k>
 
     syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
  // ---------------------------------------------------
-    rule #relOp(lt_u, _, I1, I2)     => #bool( I1 <Int I2)
-    rule #relOp(gt_u, _, I1, I2)     => #bool( I1 >Int I2)
+    rule <k> _     . lt_u I1 I2 => < i32 > #bool(I1 <Int I2) ... </k>
+    rule <k> _     . gt_u I1 I2 => < i32 > #bool(I1 >Int I2) ... </k>
 
-    rule #relOp(lt_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2))
-    rule #relOp(gt_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2))
+    rule <k> ITYPE . lt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . gt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2)) ... </k>
 
     syntax IRelOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
  // ---------------------------------------------------
-    rule #relOp(le_u, _, I1, I2)     => #bool(I1 <=Int I2)
-    rule #relOp(ge_u, _, I1, I2)     => #bool(I1 >=Int I2)
+    rule <k> _     . le_u I1 I2 => < i32 > #bool(I1 <=Int I2) ... </k>
+    rule <k> _     . ge_u I1 I2 => < i32 > #bool(I1 >=Int I2) ... </k>
 
-    rule #relOp(le_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2))
-    rule #relOp(ge_s, ITYPE, I1, I2) => #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2))
+    rule <k> ITYPE . le_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . ge_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2)) ... </k>
 ```
 
 Bitwise Operations
