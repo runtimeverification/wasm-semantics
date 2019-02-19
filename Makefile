@@ -26,11 +26,14 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
+haskell_backend_skip=-Dhaskell.backend.skip
+haskell-deps: deps
+haskell-deps: haskell_backend_skip=
 deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
 
 $(k_submodule)/make.timestamp:
 	git submodule update --init --recursive
-	cd $(k_submodule) && mvn package -DskipTests -Dllvm.backend.skip
+	cd $(k_submodule) && mvn package -DskipTests -Dllvm.backend.skip ${haskell_backend_skip}
 	touch $(k_submodule)/make.timestamp
 
 $(pandoc_tangle_submodule)/make.timestamp:
