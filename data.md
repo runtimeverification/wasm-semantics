@@ -18,10 +18,10 @@ Additionally, white-space is skipped/ignored.
 Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
 
 ```k
-    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)"
-                     | r";;[^\\n\\r]*"
-                     | r"[\\ \\n\\r\\t]"
- // ------------------------------------
+    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
+                     | r";;[^\\n\\r]*"                  [token]
+                     | r"[\\ \\n\\r\\t]"                [token]
+ // -----------------------------------------------------------
 ```
 
 ### Identifiers
@@ -116,9 +116,9 @@ WASM values are either integers or floating-point numbers, of 32- or 64-bit widt
 Proper values are numbers annotated with their types.
 
 ```k
-    syntax IVal ::= "<" IValType ">" Int
-    syntax FVal ::= "<" FValType ">" Float
-    syntax  Val ::= "<"  ValType ">" Number
+    syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
+    syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
+    syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
                   | IVal | FVal
  // ---------------------------
 ```
@@ -137,7 +137,7 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 ```k
     syntax IVal ::= #chop ( IVal ) [function]
  // -----------------------------------------
-    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
+    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
 ```
 
 ### Signed Interpretation

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+shopt -s extglob
 
 kwasm_script="$0"
 while [[ -h "$kwasm_script" ]]; do
@@ -12,12 +13,13 @@ kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
 
 build_dir="$kwasm_dir/.build"
 release_dir="$build_dir/k/k-distribution/target/release/k"
-wasm_defn="$build_dir/defn/wasm"
-test_defn="$build_dir/defn/test"
+defn_dir="$build_dir/defn"
+
+export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
 
 test_logs="$build_dir/logs"
-mkdir -p "$test_logs"
 test_log="$test_logs/tests.log"
+mkdir -p "$test_logs"
 
 # Utilities
 # ---------
@@ -29,32 +31,26 @@ pretty_diff() {
     git --no-pager diff --no-index "$@"
 }
 
-# Environment Setup
-# -----------------
-
-run_env() {
-    local run_file
-
-    run_file="$1"
-    [[ "$run_file" =~ ^tests/* ]] && DEFN_DIRECTORY=$build_dir/defn/test
-    export DEFN_DIRECTORY="${DEFN_DIRECTORY:-$wasm_defn}"
-    export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
-    eval $(opam config env)
-}
-
 # Runners
 # -------
 
 run_krun() {
-    local run_file=$1 ; shift
-    run_env "$run_file"
+    local run_file
+
+    run_file="$1" ; shift
+
     export K_OPTS=-Xss500m
-    krun --directory "$DEFN_DIRECTORY" "$run_file" "$@"
+    krun --directory "$backend_dir" "$run_file" "$@"
 }
 
-run_kdebug() {
-    progress "debugging: $1"
-    ( run_krun "$1" --debugger )
+run_proof() {
+    local proof_file
+
+    proof_file="$1" ; shift
+    [[ -f "$proof_file" ]] || die "$proof_file does not exist"
+
+    export K_OPTS=-Xmx8G
+    kprove --directory "$backend_dir" "$proof_file" "$@"
 }
 
 run_test() {
@@ -70,13 +66,12 @@ run_test() {
     if [[ -f "$test_file.out" ]]; then
         expected_file="$test_file.out"
     else
-        expected_file="tests/success.out"
+        expected_file="tests/success-$backend.out"
     fi
 
     [[ -f "$expected_file" ]] \
         || die "Expected output file '$expected_file' does not exist..."
 
-    export DEFN_DIRECTORY="$test_defn"
     run_krun "$test_file" > "$output_file"
     pretty_diff "$expected_file" "$output_file"
 }
@@ -94,7 +89,7 @@ run_test_profile() {
 
     exit_status='0'
     `which time` --quiet --format '%x %es %Us %Ss %MKB %C' --output "$test_log" --append \
-        bash -c "$0 test $test_file $@" \
+        bash -c "$0 --backend "$backend" test $test_file $@" \
         1> "$stdout_log" 2> "$stderr_log" \
         || exit_status="$?"
 
@@ -114,31 +109,36 @@ cd "$(dirname $0)"
 
 # main functionality
 run_command="$1" ; shift
-case "$run_command" in
+
+backend="ocaml"
+[[ ! "$run_command" == 'prove' ]] || backend='java'
+if [[ $# -gt 0 ]] && [[ $1 == '--backend' ]]; then
+    backend="$2"
+    shift 2
+fi
+backend_dir="$defn_dir/$backend"
+[[ ! "$backend" == "ocaml" ]] || eval $(opam config env)
+
+case "$run_command-$backend" in
 
     # Running
-    run)   run_krun   "$@" ;;
-    debug) run_kdebug "$@" ;;
+    run-@(ocaml|java|haskell) )          run_krun         "$@" ;;
+    prove-@(java|haskell)     )          run_proof        "$@" ;;
 
-    # Testing
-    test)         run_test         "$@" ;;
-    test-profile) run_test_profile "$@" ;;
+    test-@(ocaml|java|haskell)         ) run_test         "$@" ;;
+    test-profile-@(ocaml|java|haskell) ) run_test_profile "$@" ;;
 
     *) echo "
-    usage: $0 <cmd> <file> <K args>*
+    usage: $0 (run|test|test-profile) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
+           $0 prove                   [--backend (java|haskell)]       <spec> <K args>*
 
-       # Running
-       # -------
-       $0 run   <pgm>   Run a single WASM program
-       $0 debug <pgm>   Run a single WASM program in the debugger
+       $0 run          : Run a single WASM program
+       $0 test         : Run a single WASM program like it's a test
+       $0 test-profile : Additionally record timing and memory usage to '${test_log#$(pwd)/}'
+       $0 prove        : Run a WASM K proof
 
        Note: <pgm> is a path to a file containing a WASM program.
-
-       # Testing
-       # -------
-       $0 test         <pgm>    Run a single WASM program like it's a test
-       $0 test-profile <pgm>    Same as test, but recording timing and memory usage to $test_log.
-
-       Note: This command is more for devs and CI servers.
+             <spec> is a K specification to be proved.
+             <K args> are any arguments you want to pass to K when executing/proving.
 " ; exit ;;
 esac

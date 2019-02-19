@@ -12,25 +12,28 @@ LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
 .PHONY: deps ocaml-deps \
-        build build-wasm build-test \
-        defn defn-wasm defn-test \
-        test test-simple \
+        defn defn-ocaml defn-haskell \
+        build build-ocaml build-haskell \
+        test test-execution test-simple test-proof \
         media
 
 all: build
 
 clean:
 	rm -rf $(build_dir)
+	git submodule update --init --recursive
 
 # Build Dependencies (K Submodule)
 # --------------------------------
 
+haskell_backend_skip=-Dhaskell.backend.skip
+haskell-deps: deps
+haskell-deps: haskell_backend_skip=
 deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
 
 $(k_submodule)/make.timestamp:
-	git submodule update --init -- $(k_submodule)
-	cd $(k_submodule) \
-	    && mvn package -q -DskipTests -Dllvm.backend.skip
+	git submodule update --init --recursive
+	cd $(k_submodule) && mvn package -DskipTests -Dllvm.backend.skip ${haskell_backend_skip}
 	touch $(k_submodule)/make.timestamp
 
 $(pandoc_tangle_submodule)/make.timestamp:
@@ -44,64 +47,95 @@ ocaml-deps:
 # Building Definition
 # -------------------
 
+wasm_files:=test.k wasm.k data.k
+
+ocaml_dir:=$(defn_dir)/ocaml
+ocaml_defn:=$(patsubst %, $(ocaml_dir)/%, $(wasm_files))
+ocaml_kompiled:=$(ocaml_dir)/test-kompiled/interpreter
+
+java_dir:=$(defn_dir)/java
+java_defn:=$(patsubst %, $(java_dir)/%, $(wasm_files))
+java_kompiled:=$(java_dir)/test-kompiled/kore.txt
+
+haskell_dir:=$(defn_dir)/haskell
+haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
+haskell_kompiled:=$(haskell_dir)/test-kompiled/kore.txt
+
 # Tangle definition from *.md files
 
-defn: defn-wasm defn-test
-defn-wasm: $(defn_wasm_files)
-defn-test: $(defn_test_files)
+defn: defn-ocaml defn-java defn-haskell
+defn-ocaml: $(ocaml_defn)
+defn-java: $(java_defn)
+defn-haskell: $(haskell_defn)
 
-wasm_dir:=$(defn_dir)/wasm
-test_dir:=$(defn_dir)/test
-
-wasm_files:=wasm.k data.k
-test_files:=test.k $(wasm_files)
-
-defn_wasm_files:=$(patsubst %, $(wasm_dir)/%, $(wasm_files))
-defn_test_files:=$(patsubst %, $(test_dir)/%, $(test_files))
-
-$(wasm_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
+$(ocaml_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
-$(test_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
+$(java_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
-# OCAML Backend
+$(haskell_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
+	@echo "==  tangle: $@"
+	mkdir -p $(dir $@)
+	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
 
-build: build-wasm build-test
-build-wasm: $(wasm_dir)/wasm-kompiled/interpreter
-build-test: $(test_dir)/test-kompiled/interpreter
+# Build definitions
 
-$(wasm_dir)/wasm-kompiled/interpreter: $(defn_wasm_files)
+build: build-ocaml build-java build-haskell
+build-ocaml: $(ocaml_kompiled)
+build-java: $(java_kompiled)
+build-haskell: $(haskell_kompiled)
+
+$(ocaml_kompiled): $(ocaml_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                               \
-	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                  \
-	    --directory $(wasm_dir) --main-module WASM --syntax-module WASM $<
+	eval $$(opam config env)                                                          \
+	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                             \
+	    --directory $(ocaml_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
 
-$(test_dir)/test-kompiled/interpreter: $(defn_test_files)
+$(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
 	eval $$(opam config env)                                                         \
-	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                            \
-	    --directory $(test_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
+	    $(k_bin)/kompile --backend java                                              \
+	    --directory $(java_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
+
+$(haskell_kompiled): $(haskell_defn)
+	@echo "== kompile: $@"
+	eval $$(opam config env)                                                            \
+	    $(k_bin)/kompile --backend haskell                                              \
+	    --directory $(haskell_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 # Testing
 # -------
 
-TEST=./kwasm test-profile
+TEST_CONCRETE_BACKEND=ocaml
+TEST_SYMBOLIC_BACKEND=java
+TEST=./kwasm
 
 tests/%.test: tests/%
-	$(TEST) $<
+	 $(TEST) test --backend $(TEST_CONCRETE_BACKEND) $<
 
-test: test-simple
+tests/%.prove: tests/%
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $<
 
-### Simple Tests
+test: test-execution test-proof
+
+### Execution Tests
+
+test-execution: test-simple
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
 test-simple: $(simple_tests:=.test)
+
+### Proof Tests
+
+proof_tests:=$(wildcard tests/proofs/*-spec.k)
+
+test-proof: $(proof_tests:=.prove)
 
 # Presentation
 # ------------

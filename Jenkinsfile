@@ -17,21 +17,41 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh '''
-            export PATH=$HOME/.local/bin:$PATH
             make deps  -B
             make build -B -j4
           '''
         }
       }
     }
-    stage('Test') {
+    stage('OCaml Backend') {
       steps {
         ansiColor('xterm') {
           sh '''
-            export PATH=$HOME/.local/bin:$PATH
             nprocs=$(nproc)
             [ "$nprocs" -gt '4' ] && nprocs=4
-            make test -j"$nprocs"
+            make TEST_CONCRETE_BACKEND=ocaml test-execution -j"$nprocs"
+          '''
+        }
+      }
+    }
+    stage('Java Backend') {
+      steps {
+        ansiColor('xterm') {
+          sh '''
+            nprocs=$(nproc)
+            [ "$nprocs" -gt '4' ] && nprocs=4
+            make TEST_CONCRETE_BACKEND=java test-execution -j"$nprocs"
+          '''
+        }
+      }
+    }
+    stage('Test Proofs') {
+      steps {
+        ansiColor('xterm') {
+          sh '''
+            nprocs=$(nproc)
+            [ "$nprocs" -gt '4' ] && nprocs=4
+            make test-proof -j"$nprocs"
           '''
         }
       }
