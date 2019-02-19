@@ -91,6 +91,7 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 ### Unary Operators
 
 When a unary operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+A `UnOp` operator always produces a result of the same type as its operand.
 
 ```k
     syntax UnOp ::= IUnOp
@@ -107,6 +108,7 @@ When a unary operator is the next instruction, the single argument is loaded fro
 ### Binary Operators
 
 When a binary operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+A `BinOp` operator always produces a result of the same type as its operands.
 
 ```k
     syntax BinOp ::= IBinOp
@@ -122,8 +124,8 @@ When a binary operator is the next instruction, the two arguments are loaded fro
 
 ### Test Operations
 
-Test operations consume one operand and produce a bool, which is an `i32` value.
 When a test operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+Test operations consume one operand and produce a bool, which is an `i32` value.
 
 ```k
     syntax Instr  ::= "(" IValType "." ITestOp ")" | IValType "." ITestOp Int
@@ -134,8 +136,8 @@ When a test operator is the next instruction, the single argument is loaded from
 
 ### Comparison Operations
 
-Comparisons consume two operands and produce a bool, which is an `i32` value.
 When a comparison operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+Comparisons consume two operands and produce a bool, which is an `i32` value.
 
 
 ```k
