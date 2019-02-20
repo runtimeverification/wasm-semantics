@@ -28,6 +28,9 @@
 (i32.const -1)
 #assertTopStackExactly < i32 > #pow(i32) -Int 1 "i32 overflow"
 
+(i64.const -1)
+#assertTopStackExactly < i64 > #pow(i64) -Int 1 "i62 overflow"
+
 ;; Floating point
 ;; --------------
 
