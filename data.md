@@ -156,7 +156,6 @@ These functions assume that the argument integer is in the valid range of signed
 
     rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
     rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
-
 ```
 
 These ranges help check whether a K integer is in the correct ranges for Wasm integers.
@@ -168,7 +167,7 @@ These ranges help check whether a K integer is in the correct ranges for Wasm in
 
     syntax Bool ::= #inUnsignedRange (IValType, Int) [function]
     syntax Bool ::= #inSignedRange   (IValType, Int) [function]
- // ---------------------------------------------------------
+ // -----------------------------------------------------------
     rule #inUnsignedRange (ITYPE, I) => 0                 <=Int I andBool I <Int #pow (ITYPE)
     rule #inSignedRange   (ITYPE, I) => #minSigned(ITYPE) <=Int I andBool I <Int #pow1(ITYPE)
 
