@@ -143,6 +143,7 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 ### Signed Interpretation
 
 Functions `#signed` and `#unsigned` allow for easier operation on twos-complement numbers.
+These functions assume that the argument integer is in the valid range of signed and unsigned values of the respective type, so they will not correctly map arbitrary integers into the corret range.
 
 ```k
     syntax Int ::= #signed   ( IValType , Int ) [function]
