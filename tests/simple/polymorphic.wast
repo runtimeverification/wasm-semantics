@@ -51,3 +51,15 @@
 
 (select (i64.const 1) (i64.const 0) (i32.const 0))
 #assertTopStack < i64 > 0 "folded select i64"
+
+(select (unreachable) (i64.const -1) (i32.const 0))
+#assertTrap                "select strict in first branch"
+
+(select (i64.const 1) (unreachable) (i32.const 0))
+#assertTrap               "select strict in second branch"
+#assertTopStack < i64 > 1 "select strict in second branch"
+
+(select (i64.const 1) (i64.const -1) (unreachable))
+#assertTrap                "select strict in condition"
+#assertTopStack < i64 > -1 "select strict in condition"
+#assertTopStack < i64 >  1 "select strict in condition"
