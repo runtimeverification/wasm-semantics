@@ -147,6 +147,21 @@ end
 (if [ i32 ] (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
 #assertStack < i32 > 2 : < i32 > -1 : .Stack "if folded false"
 
+(if [ i32 ] (i32.const 1) (then (unreachable)) (else (i32.const 1)))
+#assertTrap "if lazy first branch true"
+
+(if [ i32 ] (i32.const 0) (then (unreachable)) (else (i32.const 1)))
+#assertTopStack < i32 > 1 "if lazy first branch false"
+
+(if [ i32 ] (i32.const 1) (then (i32.const -1)) (else (unreachable)))
+#assertTopStack < i32 > -1 "if lazy second branch true"
+
+(if [ i32 ] (i32.const 0) (then (i32.const -1)) (else (unreachable)))
+#assertTrap "if lazy second branch false"
+
+(if [ i32 ] (unreachable) (then (i32.const -1)) (else (unreachable)))
+#assertTrap "if strict condition"
+
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .Stack

@@ -23,7 +23,8 @@ This asserts that a `trap` was just thrown.
 ```k
     syntax Instr ::= "#assertTrap" String
  // -------------------------------------
-    rule <k> trap ~> #assertTrap _ => . ... </k>
+    rule <k> trap ~>            (#assertTrap _ IS:Instrs) => IS ... </k>
+    rule <k> trap ~> L:Label ~> (#assertTrap _ IS:Instrs) => IS ... </k>
 ```
 
 ### Stack Assertions
