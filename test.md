@@ -16,7 +16,8 @@ Assertions
 These assertions will check the supplied property, and then clear that state from the configuration.
 In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
 
-We'll make `Assertion` a subsort of `Instr`, so that we can consume them with `trap` statements.
+We'll make `Assertion` a subsort of `Instr`, so that we can easily consume `Instr` with `trap`s, but not consume `Assertion`s.
+This will allow `trap` to "bubble up" (more correctly, to "consume the continuation") until it reaches its paired `#assertTrap_` statement.
 
 ```k
     syntax Instr ::= Assertion
