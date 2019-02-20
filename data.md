@@ -137,7 +137,9 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 ```k
     syntax IVal ::= #chop ( IVal ) [function]
  // -----------------------------------------
-    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
+    rule #chop(< ITYPE > N) => < ITYPE > N                      requires #inUnsignedRange(ITYPE, N)
+    rule #chop(< ITYPE > N) => < ITYPE > #unsigned(ITYPE, N)    requires #inSignedRange  (ITYPE, N)
+    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) requires notBool (#inSignedRange(ITYPE, N) orBool #inUnsignedRange(ITYPE, N))   [concrete] 
 ```
 
 ### Signed Interpretation
@@ -156,8 +158,14 @@ These functions assume that the argument integer is in the valid range of signed
     rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
 
     syntax Int ::= #minSigned  ( IValType ) [function]
- // ------------------------------------------------------
+ // --------------------------------------------------
     rule #minSigned(ITYPE) => 0 -Int #pow1(ITYPE)
+
+    syntax Bool ::= #inUnsignedRange (IValType, Int) [function]
+    syntax Bool ::= #inSignedRange   (IValType, Int) [function]
+ // ---------------------------------------------------------
+    rule #inUnsignedRange (ITYPE, I) => 0                 <=Int I andBool I <Int #pow (ITYPE)
+    rule #inSignedRange   (ITYPE, I) => #minSigned(ITYPE) <=Int I andBool I <Int #pow1(ITYPE)
 
 ```
 

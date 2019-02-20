@@ -96,8 +96,8 @@ Function `#unsigned` is called on integers to allow programs to use negative num
     syntax Instr ::= "(" IValType "." "const" Int   ")"
                    | "(" FValType "." "const" Float ")"
  // ---------------------------------------------------
-    rule <k> ( ITYPE:IValType . const VAL ) => < ITYPE > #unsigned(ITYPE, VAL) ... </k>
-    rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL                   ... </k>
+    rule <k> ( ITYPE:IValType . const VAL ) => #chop(< ITYPE > VAL) ... </k>
+    rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL        ... </k>
 ```
 
 ### Unary Operators
