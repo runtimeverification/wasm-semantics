@@ -132,8 +132,10 @@ When a test operator is the next instruction, the single argument is loaded from
 Test operations consume one operand and produce a bool, which is an `i32` value.
 
 ```k
-    syntax Instr  ::= "(" IValType "." ITestOp ")" | IValType "." ITestOp Int
- // -------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." ITestOp ")" | "(" IValType "." ITestOp Instr ")" | IValType "." ITestOp Int
+ // -------------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . TOP:ITestOp I:Instr ) => I ~> ( ITYPE . TOP ) ... </k>
+
     rule <k> ( ITYPE . TOP:ITestOp ) => ITYPE . TOP C1 ... </k>
          <stack> < ITYPE > C1 : STACK => STACK </stack>
 ```
@@ -149,9 +151,11 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
  //                | FRelOp
  // -----------------------
 
-    syntax Instr ::= "(" IValType "." IRelOp ")" | IValType "." IRelOp Int   Int
- //                  "(" FValType "." FRelOp ")" | IValType "." FRelOp Float Float
- // ------------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." IRelOp ")" | "(" IValType "." IRelOp Instr Instr ")" | IValType "." IRelOp Int   Int
+ //                  "(" FValType "." FRelOp ")" | "(" IValType "." FRelOp Instr Instr ")" | IValType "." FRelOp Float Float
+ // ------------------------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . ROP:IRelOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . ROP ) ... </k>
+
     rule <k> ( ITYPE . ROP:IRelOp ) => ITYPE . ROP C1 C2 ... </k>
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK  </stack>
 ```

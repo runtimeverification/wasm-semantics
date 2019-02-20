@@ -6,6 +6,9 @@
 (i32.eqz)
 #assertTopStack < i32 > 0 "eqz2"
 
+(i32.eqz (i32.const 3))
+#assertTopStack < i32 > 0 "eqz folded"
+
 (i32.const 3)
 (i32.const 3)
 (i32.eq)
@@ -30,6 +33,9 @@
 (i32.const 32)
 (i32.lt_u)
 #assertTopStack < i32 > 1 "lt_u"
+
+(i32.lt_u (i32.const 32) (i32.const 2))
+#assertTopStack < i32 > 0 "lt_u"
 
 (i32.const 2)
 (i32.const 32)
