@@ -16,13 +16,25 @@ Assertions
 These assertions will check the supplied property, and then clear that state from the configuration.
 In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
 
+We'll make `Assertion` a subsort of `Instr`, so that we can easily consume `Instr` with `trap`s, but not consume `Assertion`s.
+This will allow `trap` to "bubble up" (more correctly, to "consume the continuation") until it reaches its paired `#assertTrap_` statement.
+
+```k
+    syntax Instr ::= Assertion
+ // --------------------------
+    rule <k> trap ~> (L:Label => .) ... </k>
+    rule <k> trap ~> (I:Instr => .) ... </k> requires notBool isAssertion(I)
+
+    rule <k> trap ~> (I:Instr IS:Instrs => I ~> IS) ... </k>
+```
+
 ### Trap Assertion
 
 This asserts that a `trap` was just thrown.
 
 ```k
-    syntax Instr ::= "#assertTrap" String
- // -------------------------------------
+    syntax Assertion ::= "#assertTrap" String
+ // -----------------------------------------
     rule <k> trap ~> #assertTrap _ => . ... </k>
 ```
 
@@ -31,9 +43,9 @@ This asserts that a `trap` was just thrown.
 These functions make assertions about the state of the `<stack>` cell.
 
 ```k
-    syntax Instr ::= "#assertTopStack" StackItem String
-                   | "#assertStack"    Stack     String
- // ---------------------------------------------------
+    syntax Assertion ::= "#assertTopStack" StackItem String
+                       | "#assertStack"    Stack     String
+ // -------------------------------------------------------
     rule <k> #assertTopStack S                      _ => . ... </k> <stack> S              : STACK => STACK </stack>
     rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <stack> < ITYPE > VAL' : STACK => STACK </stack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'
@@ -47,9 +59,9 @@ These functions make assertions about the state of the `<stack>` cell.
 The operator `#assertLocal`/`#assertGlobal` operators perform a check for a local/global variable's value.
 
 ```k
-    syntax Instr ::= "#assertLocal"  Int Val String
-                   | "#assertGlobal" Int Val String
- // -----------------------------------------------
+    syntax Assertion ::= "#assertLocal"  Int Val String
+                       | "#assertGlobal" Int Val String
+ // ---------------------------------------------------
     rule <k> #assertLocal INDEX VALUE _ => . ... </k>
          <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
 
@@ -62,8 +74,8 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Instr ::= "#assertFunction" FunctionName FuncType VecType String
- // -----------------------------------------------------------------------
+    syntax Assertion ::= "#assertFunction" FunctionName FuncType VecType String
+ // ---------------------------------------------------------------------------
     rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
          <funcs>
            ( <funcDef>

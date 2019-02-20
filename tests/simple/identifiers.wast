@@ -2,8 +2,8 @@
 
 func $oeauth :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }
@@ -12,8 +12,8 @@ func $oeauth :: [ i32 i32 ] -> [ i32 ]
 
 func $023eno!thu324 :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }
@@ -22,8 +22,8 @@ func $023eno!thu324 :: [ i32 i32 ] -> [ i32 ]
 
 func $02$3e%no!t&hu324 :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }
@@ -32,8 +32,8 @@ func $02$3e%no!t&hu324 :: [ i32 i32 ] -> [ i32 ]
 
 func $02$3e%no!t&hu3'24*32++2ao-eunth :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }
@@ -42,8 +42,8 @@ func $02$3e%no!t&hu3'24*32++2ao-eunth :: [ i32 i32 ] -> [ i32 ]
 
 func $02$3e%no!t&hu3'24*32++2ao-eu//n<t>h? :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }
@@ -52,8 +52,8 @@ func $02$3e%no!t&hu3'24*32++2ao-eu//n<t>h? :: [ i32 i32 ] -> [ i32 ]
 
 func $aenuth_ae`st|23~423 :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }

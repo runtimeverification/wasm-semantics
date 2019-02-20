@@ -1,5 +1,5 @@
 ;; Unreachable
-unreachable
+( unreachable )
 #assertTrap "unreachable"
 
 ;; Blocks
@@ -15,7 +15,7 @@ block [ i32 i32 ]
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
-    drop
+    (drop)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "block 2"
 
@@ -44,9 +44,9 @@ end
 (i32.const 2)
 block [ ]
     (i32.const 3)
-    br 0
+    (br 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "br 1"
 
@@ -57,10 +57,10 @@ block [ ]
     block [ i32 i32 ]
         (i32.const 4)
         (i32.const 5)
-        br 1
+        (br 1)
     end
     (i32.const 6)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "br 2"
 
@@ -71,10 +71,10 @@ block [ i32 i32 ]
     block [ i32 i32 ]
         (i32.const 4)
         (i32.const 5)
-        br 1
+        (br 1)
     end
     (i32.const 6)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 3"
 
@@ -85,10 +85,10 @@ block [ i32 i32 ]
     block [ ]
         (i32.const 4)
         (i32.const 5)
-        br 1
+        (br 1)
     end
     (i32.const 6)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 4"
 
@@ -97,9 +97,9 @@ end
 block [ i32 ]
     (i32.const 3)
     (i32.const 0)
-    br_if 0
+    (br_if 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br_if 1 false"
 
@@ -108,9 +108,9 @@ end
 block [ i32 ]
     (i32.const 3)
     (i32.const 1)
-    br_if 0
+    (br_if 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .Stack "br_if 1 true"
 
@@ -119,41 +119,86 @@ end
 block [ ]
     (i32.const 3)
     (i32.const 1)
-    br_if 0
+    (br_if 0)
     (i32.const 4)
-    br 0
+    (br 0)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .Stack "br_if 2 true"
 
 ;; Conditional
 
 (i32.const 1)
-if [ i32 ] (i32.const 1) else (i32.const -1) end
+(if [ i32 ] (i32.const 1) else (i32.const -1) end)
 #assertTopStack < i32 > 1 "if true"
 
 (i32.const 0)
-if [ i32 ] (i32.const 1) else (i32.const -1) end
+(if [ i32 ] (i32.const 1) else (i32.const -1) end)
 #assertTopStack < i32 > -1 "if false"
+
+(i32.const -1)
+(if [ ] (i32.const 0) (then))
+#assertTopStack < i32 > -1 "if folded false empty"
+
+(i32.const -1)
+(if [ i32 ] (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
+#assertStack < i32 > 1 : < i32 > -1 : .Stack "if folded true"
+
+(i32.const -1)
+(if [ i32 ] (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
+#assertStack < i32 > 2 : < i32 > -1 : .Stack "if folded false"
+
+(if [ i32 ] (i32.const 1) (then (unreachable)) (else (i32.const 1)))
+#assertTrap "if lazy first branch true"
+
+(if [ i32 ] (i32.const 0) (then (unreachable)) (else (i32.const 1)))
+#assertTopStack < i32 > 1 "if lazy first branch false"
+
+(if [ i32 ] (i32.const 1) (then (i32.const -1)) (else (unreachable)))
+#assertTopStack < i32 > -1 "if lazy second branch true"
+
+(if [ i32 ] (i32.const 0) (then (i32.const -1)) (else (unreachable)))
+#assertTrap "if lazy second branch false"
+
+(if [ i32 ] (unreachable) (then (i32.const -1)) (else (unreachable)))
+#assertTrap "if strict condition"
 
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .Stack
 block [ ]
     loop [ ]
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.add)
-        set_local 1
-        get_local 0
+        (local.set 1)
+        (local.get 0)
         (i32.const 1)
         (i32.sub)
-        tee_local 0
+        (local.tee 0)
         (i32.eqz)
-        br_if 1
+        (br_if 1)
     end
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop"
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
+
+init_locals < i32 > 10 : < i32 > 0 : .Stack
+block [ ]
+    ( loop [ ]
+        (local.get 0)
+        (local.get 1)
+        (i32.add)
+        (local.set 1)
+        (local.get 0)
+        (i32.const 1)
+        (i32.sub)
+        (local.tee 0)
+        (i32.eqz)
+        (br_if 1)
+    )
+end
+#assertLocal 0 < i32 > 0  "sum 1 -> 10 loop concrete syntax"
+#assertLocal 1 < i32 > 55 "sum 1 -> 10 loop concrete syntax"
 
 ;; Stack Underflow
 ;; TODO: We need to give semantics to stack underflow (though it could not happen with a validated program).

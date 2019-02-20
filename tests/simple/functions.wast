@@ -2,8 +2,8 @@
 
 func 0 :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }
@@ -18,8 +18,8 @@ invoke 0
 
 func $add :: [ i32 i32 ] -> [ i32 ]
     [ ] {
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 }
@@ -29,8 +29,8 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 ;; Exported name add function
 
 (func export $add param i32 i32 result i32
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
     return
 )
@@ -40,8 +40,8 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 ;; Remove return statement
 
 (func 0 param i32 i32 result i32
-    get_local 0
-    get_local 1
+    (local.get 0)
+    (local.get 1)
     (i32.add)
 )
 
@@ -54,13 +54,13 @@ invoke 0
 ;; More complicated function with locals
 
 (func 1 param i64 i64 i64 result i64 local i64
-        get_local 2
-          get_local 0
-          get_local 1
+        (local.get 2)
+          (local.get 0)
+          (local.get 1)
         (i64.add)
       (i64.sub)
-    set_local 3
-    get_local 3
+    (local.set 3)
+    (local.get 3)
     return
 )
 
@@ -74,7 +74,7 @@ invoke 1
 ;; Function with complicated declaration of types
 
 (func 1 local i32 result i32 param i32 i64 param i64
-    get_local 0
+    (local.get 0)
     return
 )
 
@@ -88,7 +88,7 @@ invoke 1
 ;; Function with empty declarations of types
 
 (func 1 local param i64 i64 result local result i64 param
-    get_local 0
+    (local.get 0)
     return
 )
 
@@ -101,7 +101,7 @@ invoke 1
 ;; Function with empty declarations of types, and bracketed in parentheses
 
 (func 1 (local) (param i64 i64) (result) (local) (result i64) (param)
-    get_local 0
+    (local.get 0)
     return
 )
 

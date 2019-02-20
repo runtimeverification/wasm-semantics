@@ -98,9 +98,11 @@ A `UnOp` operator always produces a result of the same type as its operand.
  //               | FUnOp
  // ---------------------
 
-    syntax Instr ::= "(" IValType "." IUnOp ")" | IValType "." IUnOp Int
- //                | "(" FValType "." FUnOp ")" | FValType "." FUnOp Float
- // ----------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." IUnOp ")" | "(" IValType "." IUnOp Instr ")" | IValType "." IUnOp Int
+ //                | "(" FValType "." FUnOp ")" | "(" FValType "." FUnOp Instr ")" | FValType "." FUnOp Float
+ // ---------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . UOP:IUnOp I:Instr ) => I ~> ( ITYPE . UOP ) ... </k>
+
     rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP C1 ... </k>
          <stack> < ITYPE > C1 : STACK => STACK </stack>
 ```
@@ -115,9 +117,11 @@ A `BinOp` operator always produces a result of the same type as its operands.
  //                | FBinOp
  // -----------------------
 
-    syntax Instr ::= "(" IValType "." IBinOp ")" | IValType "." IBinOp Int   Int
- //                | "(" FValType "." FBinOp ")" | FValType "." FBinOp Float Float
- // ------------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." IBinOp ")" | "(" IValType "." IBinOp Instr Instr ")" | IValType "." IBinOp Int   Int
+ //                | "(" FValType "." FBinOp ")" | "(" FValType "." FBinOp Instr Instr ")" | FValType "." FBinOp Float Float
+ // ------------------------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . BOP:IBinOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . BOP ) ... </k>
+
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
 ```
@@ -128,8 +132,10 @@ When a test operator is the next instruction, the single argument is loaded from
 Test operations consume one operand and produce a bool, which is an `i32` value.
 
 ```k
-    syntax Instr  ::= "(" IValType "." ITestOp ")" | IValType "." ITestOp Int
- // -------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." ITestOp ")" | "(" IValType "." ITestOp Instr ")" | IValType "." ITestOp Int
+ // -------------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . TOP:ITestOp I:Instr ) => I ~> ( ITYPE . TOP ) ... </k>
+
     rule <k> ( ITYPE . TOP:ITestOp ) => ITYPE . TOP C1 ... </k>
          <stack> < ITYPE > C1 : STACK => STACK </stack>
 ```
@@ -145,9 +151,11 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
  //                | FRelOp
  // -----------------------
 
-    syntax Instr ::= "(" IValType "." IRelOp ")" | IValType "." IRelOp Int   Int
- //                  "(" FValType "." FRelOp ")" | IValType "." FRelOp Float Float
- // ------------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." IRelOp ")" | "(" IValType "." IRelOp Instr Instr ")" | IValType "." IRelOp Int   Int
+ //                  "(" FValType "." FRelOp ")" | "(" IValType "." FRelOp Instr Instr ")" | IValType "." FRelOp Float Float
+ // ------------------------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . ROP:IRelOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . ROP ) ... </k>
+
     rule <k> ( ITYPE . ROP:IRelOp ) => ITYPE . ROP C1 C2 ... </k>
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK  </stack>
 ```
@@ -161,8 +169,10 @@ These operators convert constant elements at the top of the stack to another typ
 The target type is before the `.`, and the source type is after the `_`.
 
 ```k
-    syntax Instr  ::= "(" IValType "." ConvOp ")" | IValType "." ConvOp Number
- // --------------------------------------------------------------------------
+    syntax Instr ::= "(" IValType "." ConvOp ")" | "(" IValType "." ConvOp Instr ")" | IValType "." ConvOp Int
+ // ----------------------------------------------------------------------------------------------------------
+    rule <k> ( ITYPE . CONVOP:ConvOp I:Instr ) => I ~> ( ITYPE . CONVOP ) ... </k>
+
     rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1  ... </k>
          <stack> < SRCTYPE > C1 : STACK => STACK </stack>
       requires #convSourceType(CONVOP) ==K SRCTYPE
@@ -170,7 +180,6 @@ The target type is before the `.`, and the source type is after the `_`.
     syntax IValType ::= #convSourceType ( ConvOp ) [function]
  // ---------------------------------------------------------
 ```
-
 
 Numeric Operators
 -----------------
@@ -346,14 +355,21 @@ Operator `drop` removes a single item from the `<stack>`.
 The `select` operator picks one of the second or third stack values based on the first.
 
 ```k
-    syntax Instr ::= "drop"
- // -----------------------
-    rule <k> drop => . ... </k> <stack> S1 : STACK => STACK </stack>
+    syntax Instr ::= "(" "drop" Instr ")"
+                   | "(" "drop"       ")"
+ // -------------------------------------
+    rule <k> ( drop I ) => I ~> ( drop ) ... </k>
 
-    syntax Instr ::= "select"
- // -------------------------
-    rule <k> select => . ... </k>
-         <stack> < i32 > C : < TYPE > V1:Number : < TYPE > V2:Number : STACK
+    rule <k> ( drop ) => . ... </k>
+         <stack> _ : STACK => STACK </stack>
+
+    syntax Instr ::= "(" "select" Instr Instr Instr ")"
+                   | "(" "select"                   ")"
+ // ---------------------------------------------------
+    rule <k> ( select B1 B2 C ) => B1 ~> B2 ~> C ~> ( select ) ... </k>
+
+    rule <k> ( select ) => . ... </k>
+         <stack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : STACK
               => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : STACK
          </stack>
 ```
@@ -372,9 +388,9 @@ Structured Control Flow
 `unreachable` causes an immediate `trap`.
 
 ```k
-    syntax Instr ::= "unreachable"
- // ------------------------------
-    rule unreachable => trap
+    syntax Instr ::= "(" "unreachable" ")"
+ // --------------------------------------
+    rule <k> ( unreachable ) => trap ... </k>
 ```
 
 Labels are administrative instructions used to mark the targets of break instructions.
@@ -408,23 +424,28 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WASM specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax Instr ::= "br" Int
- // -------------------------
-    rule <k> br N ~> (I:Instr => .) ... </k>
-    rule <k> br N ~> L:Label => #if N ==Int 0 #then L #else br (N -Int 1) #fi ... </k>
+    syntax Instr ::= "(" "br" Int ")"
+ // ---------------------------------
+    rule <k> ( br N ) ~> (I:Instr => .) ... </k>
+    rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
 
-    syntax Instr ::= "br_if" Int
- // ----------------------------
-    rule <k> br_if N => #if VAL =/=Int 0 #then br N #else .K #fi ... </k>
+    syntax Instr ::= "(" "br_if" Int ")"
+ // ------------------------------------
+    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
          <stack> < TYPE > VAL : STACK => STACK </stack>
 ```
 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= "if" VecType Instrs "else" Instrs "end"
- // --------------------------------------------------------
-    rule <k> if VTYPE IS else IS' end
+    syntax Instr ::= "(" "if" VecType Instrs "else" Instrs "end" ")"
+                   | "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
+                   | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+ // ----------------------------------------------------------------------------------------
+    rule <k> ( if VTYPE C:Instrs ( then IS ) )              => C ~> ( if VTYPE IS else .Instrs end ) ... </k>
+    rule <k> ( if VTYPE C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if VTYPE IS else IS'     end ) ... </k>
+
+    rule <k> ( if VTYPE IS else IS' end )
           => #if VAL =/=Int 0 #then IS #else IS' #fi
           ~> label VTYPE { .Instrs } STACK
          ...
@@ -432,7 +453,10 @@ Finally, we have the conditional and loop instructions.
          <stack> < i32 > VAL : STACK => .Stack </stack>
 
     syntax Instr ::= "loop" VecType Instrs "end"
- // --------------------------------------------
+                   | "(" "loop" VecType Instrs ")"
+ // ----------------------------------------------
+    rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
+
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } STACK ... </k>
          <stack> STACK => .Stack </stack>
 ```
@@ -465,19 +489,19 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax Instr ::= "get_local" Int
-                   | "set_local" Int
-                   | "tee_local" Int
- // --------------------------------
-    rule <k> get_local INDEX => . ... </k>
+    syntax Instr ::= "(" "local.get" Int ")"
+                   | "(" "local.set" Int ")"
+                   | "(" "local.tee" Int ")"
+ // ----------------------------------------
+    rule <k> ( local.get INDEX ) => . ... </k>
          <stack> STACK => VALUE : STACK </stack>
          <locals> ... INDEX |-> VALUE ... </locals>
 
-    rule <k> set_local INDEX => . ... </k>
+    rule <k> ( local.set INDEX ) => . ... </k>
          <stack> VALUE : STACK => STACK </stack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 
-    rule <k> tee_local INDEX => . ... </k>
+    rule <k> ( local.tee INDEX ) => . ... </k>
          <stack> VALUE : STACK </stack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 ```
@@ -486,17 +510,17 @@ The `*_local` instructions are defined here.
 
 ```k
     syntax Instr ::= "init_global" Int Val
-                   |  "get_global" Int
-                   |  "set_global" Int
- // ----------------------------------
+                   | "(" "global.get" Int ")"
+                   | "(" "global.set" Int ")"
+ // -----------------------------------------
     rule <k> init_global INDEX VALUE => . ... </k>
          <globals> GLOBALS => GLOBALS [ INDEX <- VALUE ] </globals>
 
-    rule <k> get_global INDEX => . ... </k>
+    rule <k> ( global.get INDEX ) => . ... </k>
          <stack> STACK => VALUE : STACK </stack>
          <globals> ... INDEX |-> VALUE ... </globals>
 
-    rule <k> set_global INDEX => . ... </k>
+    rule <k> ( global.set INDEX ) => . ... </k>
          <stack> VALUE : STACK => STACK </stack>
          <globals> ... INDEX |-> (_ => VALUE) ... </globals>
 ```

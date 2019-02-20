@@ -1,23 +1,23 @@
 (module
     func $add :: [ i32 i32 ] -> [ i32 ]
         [ ] {
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.add)
         return
     }
 
     func $mul :: [ i32 i32 ] -> [ i32 ]
         [ ] {
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.mul)
         return
     }
 
     (func (export $xor) (param i32 i32) (result i32)
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.xor)
     )
 )
@@ -44,24 +44,24 @@ invoke $xor
 (module
     func $f1 :: [ i32 i32 ] -> [ i32 ]
         [ i32 ] {
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.add)
-        set_local 2
-        get_local 0
-        get_local 2
+        (local.set 2)
+        (local.get 0)
+        (local.get 2)
         (i32.mul)
         return
     }
 
     func $f2 :: [ i32 i32 i32 ] -> [ i32 ]
         [ i32 i32 ] {
-        get_local 0
-        get_local 2
+        (local.get 0)
+        (local.get 2)
         invoke $f1
-        get_local 1
+        (local.get 1)
         invoke $f1
-        get_local 0
+        (local.get 0)
         (i32.mul)
         return
     }
@@ -81,8 +81,8 @@ invoke $f2
     (func $dummy)
 
     (func $add (param i32 i32) (result i32)
-        get_local 0
-        get_local 1
+        (local.get 0)
+        (local.get 1)
         (i32.add)
         return
     )
