@@ -1,5 +1,5 @@
 ;; Unreachable
-unreachable
+( unreachable )
 #assertTrap "unreachable"
 
 ;; Blocks

@@ -388,9 +388,9 @@ Structured Control Flow
 `unreachable` causes an immediate `trap`.
 
 ```k
-    syntax Instr ::= "unreachable"
- // ------------------------------
-    rule unreachable => trap
+    syntax Instr ::= "(" "unreachable" ")"
+ // --------------------------------------
+    rule <k> ( unreachable ) => trap ... </k>
 ```
 
 Labels are administrative instructions used to mark the targets of break instructions.
