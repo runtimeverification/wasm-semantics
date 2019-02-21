@@ -14,7 +14,7 @@ This repository generates the build-products for both backends in `.build/defn/j
 
 ### System Dependencies
 
-The following are needed for building/running KEVM:
+The following are needed for building/running KWASM:
 
 -   [git](https://git-scm.com/)
 -   [Pandoc >= 1.17](https://pandoc.org) is used to generate the `*.k` files from the `*.md` files.
@@ -74,7 +74,7 @@ This Repository
 
 ### Semantics Layout
 
-The following files constitute the KEVM semantics:
+The following files constitute the KWASM semantics:
 
 -   [data.md](data.md) provides the (functional) data of WASM (basic types, type constructors, and values).
 -   [wasm.md](wasm.md) is the main KWASM semantics, containing the configuration and transition rules of WebAssembly.
