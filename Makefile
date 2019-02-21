@@ -55,7 +55,7 @@ ocaml_kompiled:=$(ocaml_dir)/test-kompiled/interpreter
 
 java_dir:=$(defn_dir)/java
 java_defn:=$(patsubst %, $(java_dir)/%, $(wasm_files))
-java_kompiled:=$(java_dir)/test-kompiled/kore.txt
+java_kompiled:=$(java_dir)/test-kompiled/compiled.txt
 
 haskell_dir:=$(defn_dir)/haskell
 haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
