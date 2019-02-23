@@ -199,8 +199,5 @@ Operator `_++_` implements an append operator for sort `Stack`.
 
     rule #drop(.ValTypes,   STACK)                       => STACK
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
-```
-
-```k
 endmodule
 ```
