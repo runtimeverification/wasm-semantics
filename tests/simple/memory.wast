@@ -5,3 +5,4 @@
 ;; (memory.grow 10)
 ;; (memory.size)
 ;; #assertTopStack <i32> 10 "memory grow"
+
