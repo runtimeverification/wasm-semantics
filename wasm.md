@@ -12,6 +12,8 @@ Configuration
 -------------
 
 ```k
+    syntax OptionInt ::= Int | "none"
+
     configuration
       <k> $PGM:Instrs </k>
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
@@ -21,7 +23,7 @@ Configuration
         <locals> .Map </locals>
         <moduleInst>
           <globals>  .Map  </globals>
-          <memAddrs> 0 </memAddrs>
+          <memAddrs> none  </memAddrs>
         </moduleInst>
       </curFrame>
       <store>
@@ -36,9 +38,9 @@ Configuration
         </funcs>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <memAddr> 0         </memAddr>
-            <mmax>    unbounded </mmax>
-            <msize>   0         </msize>
+            <memAddr> 0    </memAddr>
+            <mmax>    none </mmax>
+            <msize>   0    </msize>
           </memInst>
         </mems>
       </store>
@@ -657,10 +659,9 @@ However, the absolute max allowed size if 2^16 pages.
 Incidentally, the page size is 2^16 bytes.
 
 ```k
-    syntax MemBound ::= Int | "unbounded"
-    syntax Int      ::= #pageSize()      [function]
-    syntax Int      ::= #maxMemorySize() [function]
- // -----------------------------------------------
+    syntax Int ::= #pageSize()      [function]
+    syntax Int ::= #maxMemorySize() [function]
+ // ------------------------------------------
     rule #maxMemorySize() => 65536
     rule #pageSize()      => 65536
 ```
