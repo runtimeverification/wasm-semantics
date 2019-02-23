@@ -11,7 +11,6 @@ module WASM
 Configuration
 -------------
 
-      // TODO: Move globals into "moduleInst" (need to fix "globals", to use addr). Maybe remove <addrs>, doesn't seem to be in use.
 ```k
     configuration
       <k> $PGM:Instrs </k>
