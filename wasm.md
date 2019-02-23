@@ -687,11 +687,32 @@ Success is indicated by returning the previous memory size, in number of pages.
     rule <k> ( memory . grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
-    rule <k> grow N => < i32 > -1 </k>
-         <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi </k>
+         <moduleInst>
+           <memAddrs> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <memAddr> ADDR                </memAddr>
+           <mmax>    unbounded           </mmax>
+           <msize>   SIZE => #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else SIZE #fi </msize>
+           ...
+         </memInst>
 
-    // TODO: Successfull grow
- 
+    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi </k>
+         <moduleInst>
+           <memAddrs> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <memAddr> ADDR                </memAddr>
+           <mmax>    MAX:Int             </mmax>
+           <msize>   SIZE => #if SIZE +Int N <=Int MAX #then SIZE +Int N #else SIZE #fi </msize>
+           ...
+         </memInst>
+
+        rule <k> grow N => < i32 > -1 </k>
+             <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
 ```
 
 
