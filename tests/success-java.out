@@ -15,10 +15,18 @@
     <globals>
       .Map
     </globals>
+    <moduleInst>
+      <memAddrs>
+        0
+      </memAddrs>
+    </moduleInst>
   </curFrame>
   <store>
     <funcs>
       .Map
     </funcs>
+    <mems>
+      .Map
+    </mems>
   </store>
 </generatedTop>

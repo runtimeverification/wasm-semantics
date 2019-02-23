@@ -11,15 +11,19 @@ module WASM
 Configuration
 -------------
 
+      // TODO: Move globals into "moduleInst" (need to fix "globals", to use addr). Maybe remove <addrs>, doesn't seem to be in use.
 ```k
     configuration
       <k> $PGM:Instrs </k>
+      <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <stack> .Stack </stack>
       <curFrame>
         <addrs>    .Map  </addrs>
         <locals>   .Map  </locals>
         <globals>  .Map  </globals>
-        <memAddrs> 0     </memAddrs>  // TODO: Currently can deal only with one memory, so this is always only one integer, not a list.
+        <moduleInst>
+          <memAddrs> 0 </memAddrs>
+        </moduleInst>
       </curFrame>
       <store>
         <funcs>
@@ -33,9 +37,10 @@ Configuration
         </funcs>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <memAddr> 0    </memAddr>
-            <mmax>    0    </mmax>
-            <mdata>   .Map </mdata>
+            <memAddr> 0         </memAddr>
+            <mmax>    unbounded </mmax>
+            <msize>   0         </msize>
+            <mdata>   .Map      </mdata>
           </memInst>
         </mems>
       </store>
@@ -650,31 +655,41 @@ Memory
 ------
 
 ```k
+    syntax MemBound ::= Int | "unbounded"
+    syntax Int ::= #maxMemorySize () [function]
+ // --------------------------------
+    rule #maxMemorySize() => 65536
+```
+
+```k
     syntax Instr ::= "(" "memory" "." "size" ")"
  // --------------------------------------------
     rule <k> ( memory . size ) => < i32 > size(DATA) /Int #pageSize() ... </k>
-         <curFrame>
+         <moduleInst>
+           <memAddrs> ADDR </memAddrs>
            ...
-           <memAddrs> I </memAddrs>
-         </curFrame>
+         </moduleInst>
          <memInst>
-           <memAddr> I    </memAddr>
+           <memAddr> ADDR    </memAddr>
            <mdata>   DATA </mdata>
            ...
          </memInst>
 ```
 
 `grow` is non-deterministic and may fail either due to trying to exceed explicit max values, or because the embedder does not have resources available.
-Failure is indicated by pushing -1 to the stack.
+By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
+Failure` is indicated by pushing -1 to the stack.
 Success is indicated by returning the previous memory size, in number of pages.
 
 ```k
     syntax Instr ::= "(" "memory" "." "grow" ")" | "grow" Int
- // ------------------------------------
+ // ---------------------------------------------------------
     rule <k> ( memory . grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
     rule <k> grow N => < i32 > -1 </k>
+         <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+
     // TODO: Successfull grow
  
 ```

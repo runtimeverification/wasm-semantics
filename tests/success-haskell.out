@@ -2,6 +2,9 @@
   <k>
     .
   </k>
+  <deterministicMemoryGrowth>
+    true
+  </deterministicMemoryGrowth>
   <stack>
     .Stack
   </stack>
@@ -15,9 +18,11 @@
     <globals>
       .Map
     </globals>
-    <memAddrs>
-      0
-    </memAddrs>
+    <moduleInst>
+      <memAddrs>
+        0
+      </memAddrs>
+    </moduleInst>
   </curFrame>
   <store>
     <funcs>
