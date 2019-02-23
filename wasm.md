@@ -666,10 +666,7 @@ Memory
     syntax Instr ::= "(" "memory" "." "size" ")"
  // --------------------------------------------
     rule <k> ( memory . size ) => < i32 > SIZE ... </k>
-         <moduleInst>
-           <memAddrs> ADDR </memAddrs>
-           ...
-         </moduleInst>
+         <memAddrs> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR    </memAddr>
            <msize>   SIZE    </msize>
@@ -689,10 +686,7 @@ Success is indicated by returning the previous memory size, in number of pages.
          <stack> < i32 > N : STACK => STACK </stack>
 
     rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi </k>
-         <moduleInst>
-           <memAddrs> ADDR </memAddrs>
-           ...
-         </moduleInst>
+         <memAddrs> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR                </memAddr>
            <mmax>    unbounded           </mmax>
@@ -701,10 +695,7 @@ Success is indicated by returning the previous memory size, in number of pages.
          </memInst>
 
     rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi </k>
-         <moduleInst>
-           <memAddrs> ADDR </memAddrs>
-           ...
-         </moduleInst>
+         <memAddrs> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR                </memAddr>
            <mmax>    MAX:Int             </mmax>
