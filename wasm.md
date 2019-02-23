@@ -20,8 +20,8 @@ Configuration
       <curFrame>
         <addrs>    .Map  </addrs>
         <locals>   .Map  </locals>
-        <globals>  .Map  </globals>
         <moduleInst>
+          <globals>  .Map  </globals>
           <memAddrs> 0 </memAddrs>
         </moduleInst>
       </curFrame>
