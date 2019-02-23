@@ -660,7 +660,7 @@ Incidentally, the page size is 2^16 bytes.
     syntax MemBound ::= Int | "unbounded"
     syntax Int      ::= #pageSize()      [function]
     syntax Int      ::= #maxMemorySize() [function]
- // -------------------------------------------
+ // -----------------------------------------------
     rule #maxMemorySize() => 65536
     rule #pageSize()      => 65536
 ```
@@ -686,12 +686,13 @@ Success is indicated by pushing the previous memory size to the stack.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
 
 ```k
-    syntax Instr ::= "(" "memory" "." "grow" ")" | "grow" Int
- // ---------------------------------------------------------
+    syntax Instr ::= "(" "memory" "." "grow" ")" | "(" "memory" "." "grow" Instr ")" | "grow" Int
+ // ---------------------------------------------------------------------------------------------
+    rule <k> ( memory . grow I:Instr ) => I ~> ( memory . grow ) ... </k>
     rule <k> ( memory . grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
-    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi </k>
+    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi ... </k>
          <memAddrs> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR                </memAddr>
@@ -700,7 +701,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
            ...
          </memInst>
 
-    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi </k>
+    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi  ...</k>
          <memAddrs> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR                </memAddr>
