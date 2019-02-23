@@ -201,19 +201,6 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 ```
 
-Constants
----------
-
-There are some common contant values used repeatedly, which we define for convenience and readability.
-
-The page size specifies the number of bytes in a page of memory.
-
-```k
-    syntax Int ::= #pageSize()    [function]
- // ----------------------------------------
-    rule #pageSize() => 65536
-```
-
 ```k
 endmodule
 ```

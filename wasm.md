@@ -40,7 +40,6 @@ Configuration
             <memAddr> 0         </memAddr>
             <mmax>    unbounded </mmax>
             <msize>   0         </msize>
-            <mdata>   .Map      </mdata>
           </memInst>
         </mems>
       </store>
@@ -656,22 +655,24 @@ Memory
 
 ```k
     syntax MemBound ::= Int | "unbounded"
+    syntax Int ::= #pageSize()    [function]
     syntax Int ::= #maxMemorySize () [function]
- // --------------------------------
+ // -------------------------------------------
     rule #maxMemorySize() => 65536
+    rule #pageSize() => 65536
 ```
 
 ```k
     syntax Instr ::= "(" "memory" "." "size" ")"
  // --------------------------------------------
-    rule <k> ( memory . size ) => < i32 > size(DATA) /Int #pageSize() ... </k>
+    rule <k> ( memory . size ) => < i32 > SIZE ... </k>
          <moduleInst>
            <memAddrs> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
            <memAddr> ADDR    </memAddr>
-           <mdata>   DATA </mdata>
+           <msize>   SIZE    </msize>
            ...
          </memInst>
 ```
