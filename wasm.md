@@ -653,14 +653,20 @@ Unlike labels, only one frame can be "broken" through at a time.
 Memory
 ------
 
+Memory instances can be either bounded by a max number of pages, or unbounded.
+However, the absolute max allowed size if 2^16 pages.
+Incidentally, the page size is 2^16 bytes.
+
 ```k
     syntax MemBound ::= Int | "unbounded"
-    syntax Int ::= #pageSize()    [function]
-    syntax Int ::= #maxMemorySize () [function]
+    syntax Int      ::= #pageSize()      [function]
+    syntax Int      ::= #maxMemorySize() [function]
  // -------------------------------------------
     rule #maxMemorySize() => 65536
-    rule #pageSize() => 65536
+    rule #pageSize()      => 65536
 ```
+
+The `size` operation return the size of the memory, measured in pages.
 
 ```k
     syntax Instr ::= "(" "memory" "." "size" ")"
@@ -674,10 +680,11 @@ Memory
          </memInst>
 ```
 
+`grow` increases the size of memory in units of pages.
+Failure to grow is indicated by pushing -1 to the stack.
+Success is indicated by pushing the previous memory size to the stack.
 `grow` is non-deterministic and may fail either due to trying to exceed explicit max values, or because the embedder does not have resources available.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
-Failure` is indicated by pushing -1 to the stack.
-Success is indicated by returning the previous memory size, in number of pages.
 
 ```k
     syntax Instr ::= "(" "memory" "." "grow" ")" | "grow" Int
