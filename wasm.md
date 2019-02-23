@@ -17,8 +17,8 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <stack> .Stack </stack>
       <curFrame>
-        <addrs>    .Map  </addrs>
-        <locals>   .Map  </locals>
+        <addrs>  .Map </addrs>
+        <locals> .Map </locals>
         <moduleInst>
           <globals>  .Map  </globals>
           <memAddrs> 0 </memAddrs>
