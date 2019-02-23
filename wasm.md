@@ -692,7 +692,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> ( memory . grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
-    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi ... </k>
+    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE #else -1 #fi ... </k>
          <memAddrs> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR                </memAddr>
