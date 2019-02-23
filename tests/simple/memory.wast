@@ -4,7 +4,11 @@
 
 ;; (memory.grow 10)
 ;; (memory.size)
-;; #assertTopStack <i32> 10 "memory grow"
+;; #assertStack <i32> 10 : < i32 > 0 : .Stack "memory grow"
+
+;; (memory.grow 10)
+;; (memory.grow #pow(i32)
+;; #assertStack <i32> -1 : <i32> 0 : .Stack "memory grow overflow"
 
 (i32.const 1)
 #assertTopStack <i32> 1 "dummy test"

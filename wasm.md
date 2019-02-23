@@ -674,8 +674,8 @@ The `size` operation return the size of the memory, measured in pages.
     rule <k> ( memory . size ) => < i32 > SIZE ... </k>
          <memAddrs> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR    </memAddr>
-           <msize>   SIZE    </msize>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
            ...
          </memInst>
 ```
@@ -687,27 +687,22 @@ Success is indicated by pushing the previous memory size to the stack.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
 
 ```k
+    syntax Bool  ::= #growthAllowed(Int, OptionInt) [function]
     syntax Instr ::= "(" "memory" "." "grow" ")" | "(" "memory" "." "grow" Instr ")" | "grow" Int
  // ---------------------------------------------------------------------------------------------
+    rule #growthAllowed(SIZE, none ) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int) => SIZE <=Int I
+
     rule <k> ( memory . grow I:Instr ) => I ~> ( memory . grow ) ... </k>
     rule <k> ( memory . grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
-    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE #else -1 #fi ... </k>
+    rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else -1 #fi ... </k>
          <memAddrs> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR                </memAddr>
-           <mmax>    unbounded           </mmax>
-           <msize>   SIZE => #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else SIZE #fi </msize>
-           ...
-         </memInst>
-
-    rule <k> grow N => < i32 > #if SIZE +Int N <=Int #maxMemorySize() #then SIZE +Int N #else -1 #fi  ...</k>
-         <memAddrs> ADDR </memAddrs>
-         <memInst>
-           <memAddr> ADDR                </memAddr>
-           <mmax>    MAX:Int             </mmax>
-           <msize>   SIZE => #if SIZE +Int N <=Int MAX #then SIZE +Int N #else SIZE #fi </msize>
+           <memAddr> ADDR  </memAddr>
+           <mmax>    MAX  </mmax>
+           <msize>   SIZE => #if #growthAllowed(SIZE +Int N, MAX) #then SIZE +Int N #else SIZE #fi </msize>
            ...
          </memInst>
 

@@ -20,7 +20,7 @@
         .Map
       </globals>
       <memAddrs>
-        0
+        none
       </memAddrs>
     </moduleInst>
   </curFrame>
