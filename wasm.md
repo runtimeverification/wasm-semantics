@@ -12,7 +12,7 @@ Configuration
 -------------
 
 ```k
-    syntax OptionInt ::= Int | "none"
+    syntax OptionInt ::= "some" Int | "none"
 
     configuration
       <k> $PGM:Instrs </k>
@@ -36,6 +36,7 @@ Configuration
             <faddrs> .Map           </faddrs>
           </funcDef>
         </funcs>
+        <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
             <memAddr> 0    </memAddr>
@@ -654,6 +655,33 @@ Unlike labels, only one frame can be "broken" through at a time.
 Memory
 ------
 
+```k
+    syntax Instr ::= "(" "memory" Int Int ")" // Min and max.
+                   |  "memory" Int OptionInt
+ // ----------------------------------------
+    rule <k> ( memory MIN MAX ) => memory MIN some MAX ... </k>
+
+    rule <k> memory _:Int _:OptionInt => trap ... </k>
+         <memAddrs> some _ </memAddrs>
+
+    rule <k> memory MIN MAX:OptionInt => . ... </k>
+         <memAddrs>    none => some NEXT </memAddrs>
+         <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
+         <mems>
+           ( .Bag
+          => <memInst>
+               <memAddr> NEXT </memAddr>
+               <mmax>    MAX  </mmax>
+               <msize>   MIN  </msize>
+             </memInst>
+           )
+           ...
+         </mems>
+```
+
+TODO: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
+
+
 Memory instances can be either bounded by a max number of pages, or unbounded.
 However, the absolute max allowed size if 2^16 pages.
 Incidentally, the page size is 2^16 bytes.
@@ -690,15 +718,15 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     syntax Bool  ::= #growthAllowed(Int, OptionInt) [function]
     syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
  // ---------------------------------------------------------------------------------------------
-    rule #growthAllowed(SIZE, none ) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, I:Int) => SIZE <=Int I
+    rule #growthAllowed(SIZE, none  ) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, some I) => SIZE <=Int I
 
     rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
     rule <k> ( memory.grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else -1 #fi ... </k>
-         <memAddrs> ADDR </memAddrs>
+         <memAddrs> some ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR  </memAddr>
            <mmax>    MAX  </mmax>
