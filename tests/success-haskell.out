@@ -28,7 +28,9 @@
     <funcs>
       .FuncDefCellMap
     </funcs>
-    <nextMemAddress> 0 </nextMemAddress>
+    <nextMemAddr>
+      0
+    </nextMemAddr>
     <mems>
       .MemInstCellMap
     </mems>
