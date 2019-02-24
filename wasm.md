@@ -660,11 +660,11 @@ Memory can only grow in size, so the minimum size is the initial value.
 Optionally, a max size which the memory may not grow beyond can be specified.
 
 ```k
-    syntax Instr ::= "(" "memory"         ")"
-                   | "(" "memory" Int     ")" // Max only
-                   | "(" "memory" Int Int ")" // Min and max.
-                   |      "memory" Int OptionInt
- // ----------------------------------------
+    syntax Instr ::= "(" "memory"               ")"
+                   | "(" "memory" Int           ")" // Max only
+                   | "(" "memory" Int Int       ")" // Min and max.
+                   |     "memory" Int OptionInt
+ // --------------------------------------------
     rule <k> ( memory         ) => memory 0   none     ... </k>
     rule <k> ( memory     MAX ) => memory 0   some MAX ... </k>
     rule <k> ( memory MIN MAX ) => memory MIN some MAX ... </k>
@@ -706,7 +706,7 @@ The `size` operation return the size of the memory, measured in pages.
 
 ```k
     syntax Instr ::= "(" "memory.size" ")"
- // --------------------------------------------
+ // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
          <memAddrs> some ADDR </memAddrs>
          <memInst>
@@ -725,7 +725,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 ```k
     syntax Bool  ::= #growthAllowed(Int, OptionInt) [function]
     syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
- // ---------------------------------------------------------------------------------------------
+ // ---------------------------------------------------------------------------------
     rule #growthAllowed(SIZE, none  ) => SIZE <=Int #maxMemorySize()
     rule #growthAllowed(SIZE, some I) => #growthAllowed(SIZE, none) andBool SIZE <=Int I
 
