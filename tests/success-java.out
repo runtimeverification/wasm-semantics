@@ -28,6 +28,7 @@
     <funcs>
       .Map
     </funcs>
+    <nextMemAddress> 0 </nextMemAddress>
     <mems>
       .Map
     </mems>
