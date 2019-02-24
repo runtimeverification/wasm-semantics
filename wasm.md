@@ -669,10 +669,10 @@ Incidentally, the page size is 2^16 bytes.
 The `size` operation return the size of the memory, measured in pages.
 
 ```k
-    syntax Instr ::= "(" "memory" "." "size" ")"
+    syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------------
-    rule <k> ( memory . size ) => < i32 > SIZE ... </k>
-         <memAddrs> ADDR </memAddrs>
+    rule <k> ( memory.size ) => < i32 > SIZE ... </k>
+         <memAddrs> some ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
            <msize>   SIZE </msize>
@@ -688,13 +688,13 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 
 ```k
     syntax Bool  ::= #growthAllowed(Int, OptionInt) [function]
-    syntax Instr ::= "(" "memory" "." "grow" ")" | "(" "memory" "." "grow" Instr ")" | "grow" Int
+    syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
  // ---------------------------------------------------------------------------------------------
     rule #growthAllowed(SIZE, none ) => SIZE <=Int #maxMemorySize()
     rule #growthAllowed(SIZE, I:Int) => SIZE <=Int I
 
-    rule <k> ( memory . grow I:Instr ) => I ~> ( memory . grow ) ... </k>
-    rule <k> ( memory . grow ) => grow N ... </k>
+    rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
+    rule <k> ( memory.grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else -1 #fi ... </k>
