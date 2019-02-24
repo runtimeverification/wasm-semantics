@@ -655,6 +655,10 @@ Unlike labels, only one frame can be "broken" through at a time.
 Memory
 ------
 
+When memory is allocated, it is put into the store at the next available index.
+Memory can only grow in size, so the minimum size is the initial value.
+Optionally, a max size which the memory may not grow beyond can be specified.
+
 ```k
     syntax Instr ::= "(" "memory" Int Int ")" // Min and max.
                    |  "memory" Int OptionInt
