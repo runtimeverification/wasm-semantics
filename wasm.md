@@ -660,9 +660,13 @@ Memory can only grow in size, so the minimum size is the initial value.
 Optionally, a max size which the memory may not grow beyond can be specified.
 
 ```k
-    syntax Instr ::= "(" "memory" Int Int ")" // Min and max.
-                   |  "memory" Int OptionInt
+    syntax Instr ::= "(" "memory"         ")"
+                   | "(" "memory" Int     ")" // Max only
+                   | "(" "memory" Int Int ")" // Min and max.
+                   |      "memory" Int OptionInt
  // ----------------------------------------
+    rule <k> ( memory         ) => memory 0   none     ... </k>
+    rule <k> ( memory     MAX ) => memory 0   some MAX ... </k>
     rule <k> ( memory MIN MAX ) => memory MIN some MAX ... </k>
 
     rule <k> memory _:Int _:OptionInt => trap ... </k>
@@ -723,7 +727,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
  // ---------------------------------------------------------------------------------------------
     rule #growthAllowed(SIZE, none  ) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, some I) => SIZE <=Int I
+    rule #growthAllowed(SIZE, some I) => #growthAllowed(SIZE, none) andBool SIZE <=Int I
 
     rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
     rule <k> ( memory.grow ) => grow N ... </k>
