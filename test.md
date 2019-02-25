@@ -1,4 +1,4 @@
-KWASM Testing
+KWasm Testing
 =============
 
 For testing, we augment the semantics with some helpers.

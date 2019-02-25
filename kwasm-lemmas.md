@@ -1,7 +1,7 @@
 KWASM Lemmas
 ============
 
-These lemmas aid in verifying WASM programs behavior.
+These lemmas aid in verifying WebAssembly programs behavior.
 They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k

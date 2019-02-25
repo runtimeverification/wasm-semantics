@@ -104,11 +104,11 @@ case "$run_command-$backend" in
     usage: $0 (run|test) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
            $0 prove      [--backend (java|haskell)]       <spec> <K args>*
 
-       $0 run   : Run a single WASM program
-       $0 test  : Run a single WASM program like it's a test
-       $0 prove : Run a WASM K proof
+       $0 run   : Run a single WebAssembly program
+       $0 test  : Run a single WebAssembly program like it's a test
+       $0 prove : Run a WebAssembly K proof
 
-       Note: <pgm> is a path to a file containing a WASM program.
+       Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.
              <K args> are any arguments you want to pass to K when executing/proving.
 " ; exit ;;

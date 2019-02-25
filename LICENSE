@@ -1,10 +1,10 @@
 ==============================================================================
-The WASM Semantics in K Release License
+The WebAssembly Semantics in K Release License
 ==============================================================================
 University of Illinois/NCSA
 Open Source License
 
-Copyright (c) 2009-2015 University of Illinois at Urbana-Champaign.
+Copyright (c) 2009-2019 University of Illinois at Urbana-Champaign.
 All rights reserved.
 
 Developed by:
@@ -14,7 +14,6 @@ Developed by:
 
       * University of Illinois at Urbana-Champaign (http://fsl.cs.illinois.edu/)
       * Runtime Verification, Inc (https://www.runtimeverification.com)
-      * University Alexandru-Ioan Cuza, Romania (https://fmse.info.uaic.ro)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal with
@@ -32,9 +31,9 @@ so, subject to the following conditions:
       documentation and/or other materials provided with the distribution.
 
     * Neither the names of the K Team, Runtime Verification, the University of
-      Illinois at Urbana-Champaign, the University Alexandru-Ioan Cuza, nor 
-      the names of its contributors may be used to endorse or promote products
-      derived from this Software without specific prior written permission.
+      Illinois at Urbana-Champaign, nor the names of its contributors may be
+      used to endorse or promote products derived from this Software without
+      specific prior written permission.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -45,16 +44,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
 SOFTWARE.
 
 ==============================================================================
-Copyrights and Licenses for Third Party Software Distributed with the WASM
+Copyrights and Licenses for Third Party Software Distributed with the WebAssembly
 Semantics in K:
 ==============================================================================
-The WASM Semantics in K software contains code written by third parties. 
-Licenses for this software can be found in the licenses directory 
+The WebAssembly Semantics in K software contains code written by third parties.
+Licenses for this software can be found in the licenses directory
 in the file as specified below. These files will describe the copyrights,
 license, and restrictions which apply to that code.
 
 The disclaimer of warranty in the University of Illinois Open Source License
-applies to all code in the WASM Semantics in K Distribution, and nothing in any of
-the other licenses gives permission to use the names of the K Team, Runtime
-Verification, the University of Illinois, or the University Alexandru-Ioan Cuza
+applies to all code in the WebAssembly Semantics in K Distribution, and nothing
+in any of the other licenses gives permission to use the names of the K Team,
+Runtime Verification, or the University of Illinois
 to endorse or promote products derived from this Software.

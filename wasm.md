@@ -1,5 +1,5 @@
-WASM State and Semantics
-========================
+WebAssembly State and Semantics
+===============================
 
 ```k
 require "data.k"
@@ -44,7 +44,7 @@ Instructions
 
 ### Sequencing
 
-WASM instructions are space-separated lists of instructions.
+WebAssembly instructions are space-separated lists of instructions.
 
 ```k
     syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
@@ -419,7 +419,7 @@ It simply executes the block then records a label with an empty continuation.
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
 Upon reaching it, the label itself is executed.
 
-Note that, unlike in the WASM specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
+Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
     syntax Instr ::= "(" "br" Int ")"
