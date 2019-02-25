@@ -12,8 +12,6 @@ Configuration
 -------------
 
 ```k
-    syntax OptionInt ::= "some" Int | "none"
-
     configuration
       <k> $PGM:Instrs </k>
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
