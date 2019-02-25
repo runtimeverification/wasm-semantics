@@ -64,7 +64,8 @@ WebAssembly instructions are space-separated lists of instructions.
     syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
  // -----------------------------------------------------
     rule <k> .Instrs           => .       ... </k>
-    rule <k> I:Instr IS:Instrs => I ~> IS ... </k>
+    rule <k> I:Instr .Instrs   => I       ... </k>
+    rule <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .List
 ```
 
 ### Traps
