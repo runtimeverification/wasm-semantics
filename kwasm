@@ -53,6 +53,21 @@ run_proof() {
     kprove --directory "$backend_dir" -m KWASM-LEMMAS "$proof_file" "$@"
 }
 
+run_klab() {
+    local run_mode run_file
+
+    run_mode="$1" ; shift
+    run_file="$1" ; shift
+
+    $0 $run_mode --backend java $run_file \
+        --state-log --state-log-path /tmp/klab --state-log-id wasmtest \
+        --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
+        --output json \
+        >/dev/null
+
+    progress 'Run `TMPDIR=/tmp KLAB_EVMS_PATH=foo klab debugg wasmtest` to explore execution trace.'
+}
+
 run_test() {
     local test_file expected_file output_file
 
@@ -85,7 +100,8 @@ cd "$(dirname $0)"
 run_command="$1" ; shift
 
 backend="ocaml"
-[[ ! "$run_command" == 'prove' ]] || backend='java'
+[[ ! "$run_command" == prove ]] || backend='java'
+[[ ! "$run_command" =~ klab* ]] || backend='java'
 if [[ $# -gt 0 ]] && [[ $1 == '--backend' ]]; then
     backend="$2"
     shift 2
@@ -96,13 +112,15 @@ backend_dir="$defn_dir/$backend"
 case "$run_command-$backend" in
 
     # Running
-    run-@(ocaml|java|haskell)  ) run_krun  "$@" ;;
-    prove-@(java|haskell)      ) run_proof "$@" ;;
-    test-@(ocaml|java|haskell) ) run_test  "$@" ;;
+    run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
+    prove-@(java|haskell)      ) run_proof                       "$@" ;;
+    test-@(ocaml|java|haskell) ) run_test                        "$@" ;;
+    klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
 
     *) echo "
     usage: $0 (run|test) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
            $0 prove      [--backend (java|haskell)]       <spec> <K args>*
+           $0 klab-(run|prove)                            <spec> <K args>*
 
        $0 run   : Run a single WebAssembly program
        $0 test  : Run a single WebAssembly program like it's a test
