@@ -21,6 +21,7 @@ all: build
 
 clean:
 	rm -rf $(build_dir)
+	rm tests/*.out
 	git submodule update --init --recursive
 
 # Build Dependencies (K Submodule)
@@ -113,9 +114,10 @@ $(haskell_kompiled): $(haskell_defn)
 
 TEST_CONCRETE_BACKEND=ocaml
 TEST_SYMBOLIC_BACKEND=java
+TEST_SUCCESS_FILE=tests/success-gen.wast
 TEST=./kwasm
 
-tests/%.test: tests/%
+tests/%.test: tests/% $(TEST_CONCRETE_BACKEND)-success-gen
 	 $(TEST) test --backend $(TEST_CONCRETE_BACKEND) $<
 
 tests/%.prove: tests/%
@@ -136,6 +138,19 @@ test-simple: $(simple_tests:=.test)
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
 test-proof: $(proof_tests:=.prove)
+
+### Generate Golden Files
+
+ocaml-success-gen:
+	$(TEST) run --backend ocaml   $(TEST_SUCCESS_FILE) > tests/success-ocaml.out
+
+java-success-gen:
+	$(TEST) run --backend java    $(TEST_SUCCESS_FILE) > tests/success-java.out
+
+haskell-success-gen:
+	$(TEST) run --backend haskell $(TEST_SUCCESS_FILE) > tests/success-haskell.out
+
+tests-success-gen: ocaml-success-gen java-success-gen haskell-success-gen
 
 # Presentation
 # ------------
