@@ -13,7 +13,8 @@ When reasoning about `#chop`, it's often the case that the precondition to the p
 In this case, it's simpler (and safe) to simply discard the `#chop`, instead of evaluating it.
 
 ```k
-    rule #chop(< ITYPE:IValType > N) => < ITYPE > N requires N <Int #pow(ITYPE)
+    rule #chop(< ITYPE:IValType > N) => < ITYPE > N
+      requires 0 <=Int N andBool N <Int #pow(ITYPE)
 ```
 
 ```k
