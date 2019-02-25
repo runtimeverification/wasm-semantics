@@ -98,7 +98,7 @@ This checks that the last allocated memory has the given size and max value.
 ```k
     syntax Assertion ::= "#assertMemory"    Int OptionInt String
                        | "#assertMemoryAux" Int Int OptionInt String
- // ---------------------------------------------------------
+ // ----------------------------------------------------------------
     rule <k> #assertMemory SIZE MAX MSG => #assertMemoryAux (NEXT -Int 1) SIZE MAX MSG ... </k>
          <nextMemAddr> NEXT </nextMemAddr>
 
