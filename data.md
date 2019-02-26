@@ -130,13 +130,6 @@ We also add `undefined` as a value, which makes many partial functions in the se
  // --------------------------
 ```
 
-Some values are optional.
-When convenient, they can be represented by wrapping them in the following data types.
-
-```k
-syntax OptionInt ::= "some" Int | "none"
-```
-
 ### Value Operations
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.

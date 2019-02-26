@@ -37,9 +37,9 @@ Configuration
         <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <memAddr> 0    </memAddr>
-            <mmax>    none </mmax>
-            <msize>   0    </msize>
+            <memAddr> 0         </memAddr>
+            <mmax>    .MemBound </mmax>
+            <msize>   0         </msize>
           </memInst>
         </mems>
       </store>
@@ -658,20 +658,21 @@ Memory can only grow in size, so the minimum size is the initial value.
 Optionally, a max size which the memory may not grow beyond can be specified.
 
 ```k
+    syntax MemBound ::= Int | ".MemBound"
     syntax Instr ::= "(" "memory"               ")"
                    | "(" "memory" Int           ")" // Max only
                    | "(" "memory" Int Int       ")" // Min and max.
-                   |     "memory" Int OptionInt
- // --------------------------------------------
-    rule <k> ( memory         ) => memory 0   none     ... </k>
-    rule <k> ( memory     MAX ) => memory 0   some MAX ... </k>
-    rule <k> ( memory MIN MAX ) => memory MIN some MAX ... </k>
+                   |     "memory" "{" Int MemBound "}"
+ // --------------------------------------------------
+    rule <k> ( memory                 ) => memory { 0   .MemBound } ... </k>
+    rule <k> ( memory         MAX:Int ) => memory { 0   MAX       } ... </k>
+    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
 
-    rule <k> memory _:Int _:OptionInt => trap ... </k>
-         <memAddrs> MAP </memAddrs>  requires MAP =/=K .Map
+    rule <k> memory { _ _ } => trap ... </k>
+         <memAddrs> MAP </memAddrs> requires MAP =/=K .Map
 
-    rule <k> memory MIN MAX:OptionInt => . ... </k>
-         <memAddrs>    .Map => 0 |-> NEXT  </memAddrs>
+    rule <k> memory { MIN MAX } => . ... </k>
+         <memAddrs>    .Map => (0 |-> NEXT)  </memAddrs>
          <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
@@ -721,11 +722,11 @@ Success is indicated by pushing the previous memory size to the stack.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
 
 ```k
-    syntax Bool  ::= #growthAllowed(Int, OptionInt) [function]
+    syntax Bool  ::= #growthAllowed(Int, MemBound) [function]
     syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
  // ---------------------------------------------------------------------------------
-    rule #growthAllowed(SIZE, none  ) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, some I) => #growthAllowed(SIZE, none) andBool SIZE <=Int I
+    rule #growthAllowed(SIZE, .MemBound) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MemBound) andBool SIZE <=Int I
 
     rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
     rule <k> ( memory.grow ) => grow N ... </k>

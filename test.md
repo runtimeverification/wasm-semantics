@@ -96,8 +96,8 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory"    Int OptionInt String
-                       | "#assertMemoryAux" Int Int OptionInt String
+    syntax Assertion ::= "#assertMemory"    Int MemBound String
+                       | "#assertMemoryAux" Int Int MemBound String
  // ----------------------------------------------------------------
     rule <k> #assertMemory SIZE MAX MSG => #assertMemoryAux (NEXT -Int 1) SIZE MAX MSG ... </k>
          <nextMemAddr> NEXT </nextMemAddr>
