@@ -103,7 +103,7 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <memAddrs> some ADDR => none </memAddrs>
+         <memAddrs> (0 |-> ADDR) => .Map </memAddrs>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>

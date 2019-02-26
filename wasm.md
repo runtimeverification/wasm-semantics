@@ -21,7 +21,7 @@ Configuration
         <locals> .Map </locals>
         <moduleInst>
           <globals>  .Map  </globals>
-          <memAddrs> none  </memAddrs>
+          <memAddrs> .Map  </memAddrs>
         </moduleInst>
       </curFrame>
       <store>
@@ -668,10 +668,10 @@ Optionally, a max size which the memory may not grow beyond can be specified.
     rule <k> ( memory MIN MAX ) => memory MIN some MAX ... </k>
 
     rule <k> memory _:Int _:OptionInt => trap ... </k>
-         <memAddrs> some _ </memAddrs>
+         <memAddrs> MAP </memAddrs>  requires MAP =/=K .Map
 
     rule <k> memory MIN MAX:OptionInt => . ... </k>
-         <memAddrs>    none => some NEXT </memAddrs>
+         <memAddrs>    .Map => 0 |-> NEXT  </memAddrs>
          <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
@@ -706,7 +706,7 @@ The `size` operation return the size of the memory, measured in pages.
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
-         <memAddrs> some ADDR </memAddrs>
+         <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
            <msize>   SIZE </msize>
@@ -732,7 +732,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <stack> < i32 > N : STACK => STACK </stack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else -1 #fi ... </k>
-         <memAddrs> some ADDR </memAddrs>
+         <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR  </memAddr>
            <mmax>    MAX  </mmax>
