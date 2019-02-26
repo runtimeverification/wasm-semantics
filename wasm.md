@@ -655,10 +655,8 @@ Memory
 
 When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
-Optionally, a max size which the memory may not grow beyond can be specified.
 
 ```k
-    syntax MemBound ::= Int | ".MemBound"
     syntax Instr ::= "(" "memory"               ")"
                    | "(" "memory" Int           ")" // Max only
                    | "(" "memory" Int Int       ")" // Min and max.
@@ -685,23 +683,9 @@ Optionally, a max size which the memory may not grow beyond can be specified.
            ...
          </mems>
 ```
-
 TODO: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
 
-
-Memory instances can be either bounded by a max number of pages, or unbounded.
-However, the absolute max allowed size if 2^16 pages.
-Incidentally, the page size is 2^16 bytes.
-
-```k
-    syntax Int ::= #pageSize()      [function]
-    syntax Int ::= #maxMemorySize() [function]
- // ------------------------------------------
-    rule #maxMemorySize() => 65536
-    rule #pageSize()      => 65536
-```
-
-The `size` operation return the size of the memory, measured in pages.
+The `size` operation returns the size of the memory, measured in pages.
 
 ```k
     syntax Instr ::= "(" "memory.size" ")"
@@ -722,12 +706,8 @@ Success is indicated by pushing the previous memory size to the stack.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
 
 ```k
-    syntax Bool  ::= #growthAllowed(Int, MemBound) [function]
     syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
  // ---------------------------------------------------------------------------------
-    rule #growthAllowed(SIZE, .MemBound) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MemBound) andBool SIZE <=Int I
-
     rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
     rule <k> ( memory.grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
@@ -743,8 +723,30 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 
         rule <k> grow N => < i32 > -1 </k>
              <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+
+    syntax Bool ::= #growthAllowed(Int, MemBound) [function]
+ // --------------------------------------------------------
+    rule #growthAllowed(SIZE, .MemBound) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MemBound) andBool SIZE <=Int I
+
 ```
 
+Memories can optionally have a max size which the memory may not grow beyond.
+
+```k
+    syntax MemBound ::= Int | ".MemBound"
+```
+
+However, the absolute max allowed size if 2^16 pages.
+Incidentally, the page size is 2^16 bytes.
+
+```k
+    syntax Int ::= #pageSize()      [function]
+    syntax Int ::= #maxMemorySize() [function]
+ // ------------------------------------------
+    rule #maxMemorySize() => 65536
+    rule #pageSize()      => 65536
+```
 
 Module Declaration
 ------------------
