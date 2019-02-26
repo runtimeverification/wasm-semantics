@@ -1,4 +1,4 @@
-KWASM Testing
+KWasm Testing
 =============
 
 For testing, we augment the semantics with some helpers.
@@ -23,6 +23,7 @@ This will allow `trap` to "bubble up" (more correctly, to "consume the continuat
     syntax Instr ::= Assertion
  // --------------------------
     rule <k> trap ~> (L:Label => .) ... </k>
+    rule <k> trap ~> (.Instrs => .) ... </k>
     rule <k> trap ~> (I:Instr => .) ... </k> requires notBool isAssertion(I)
 
     rule <k> trap ~> (I:Instr IS:Instrs => I ~> IS) ... </k>

@@ -1,5 +1,5 @@
-WASM Data
-=========
+WebAssembly Data
+================
 
 ```k
 require "domains.k"
@@ -13,7 +13,7 @@ Parsing
 
 ### Layout
 
-WASM allows for block comments using `(;` and `;)`, and line comments using `;;`.
+WebAssembly allows for block comments using `(;` and `;)`, and line comments using `;;`.
 Additionally, white-space is skipped/ignored.
 Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
 
@@ -26,7 +26,7 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
 
 ### Identifiers
 
-As defined in the [WASM Spec], the syntax of identifiers is as follows.
+As defined in the WebAssembly spec, the syntax of identifiers is as follows.
 
 **TODO**: Unsupported characters: `.:^@`
 
@@ -35,12 +35,12 @@ As defined in the [WASM Spec], the syntax of identifiers is as follows.
  // ------------------------------------------------------------------------
 ```
 
-WASM Types
-----------
+WebAssembly Types
+-----------------
 
 ### Base Types
 
-WASM has four basic types, for 32 and 64 bit integers and floats.
+WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 
 ```k
     syntax IValType ::= "i32" | "i64"
@@ -106,7 +106,7 @@ Values
 
 ### Basic Values
 
-WASM values are either integers or floating-point numbers, of 32- or 64-bit widths.
+WebAssembly values are either integers or floating-point numbers, of 32- or 64-bit widths.
 
 ```k
     syntax Number ::= Int | Float
@@ -169,7 +169,7 @@ Function `#bool` converts a `Bool` into an `Int`.
 Data Structures
 ---------------
 
-WASM is a stack-machine, so here we provide the stack to operate over.
+WebAssembly is a stack-machine, so here we provide the stack to operate over.
 Operator `_++_` implements an append operator for sort `Stack`.
 
 ```k
@@ -201,8 +201,3 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 endmodule
 ```
-
-Resources
-=========
-
-[WASM Spec]: <https://github.com/WebAssembly/design>

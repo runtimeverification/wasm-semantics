@@ -1,4 +1,4 @@
-KWASM: Semantics of WebAssembly in K
+KWasm: Semantics of WebAssembly in K
 ====================================
 
 This repository presents a prototype formal semantics of [WebAssembly].
@@ -14,7 +14,7 @@ This repository generates the build-products for both backends in `.build/defn/j
 
 ### System Dependencies
 
-The following are needed for building/running KEVM:
+The following are needed for building/running KWasm:
 
 -   [git](https://git-scm.com/)
 -   [Pandoc >= 1.17](https://pandoc.org) is used to generate the `*.k` files from the `*.md` files.
@@ -74,14 +74,14 @@ This Repository
 
 ### Semantics Layout
 
-The following files constitute the KEVM semantics:
+The following files constitute the KWasm semantics:
 
--   [data.md](data.md) provides the (functional) data of WASM (basic types, type constructors, and values).
--   [wasm.md](wasm.md) is the main KWASM semantics, containing the configuration and transition rules of WebAssembly.
+-   [data.md](data.md) provides the (functional) data of WebAssembly (basic types, type constructors, and values).
+-   [wasm.md](wasm.md) is the main KWasm semantics, containing the configuration and transition rules of WebAssembly.
 
 These additional files extend the semantics to make the repository more useful:
 
--   [test.md](test.md) is an execution harness for KWASM, providing a simple language for describing tests/programs.
+-   [test.md](test.md) is an execution harness for KWasm, providing a simple language for describing tests/programs.
 
 ### Example usage: `./kwasm` runner script
 

@@ -1,5 +1,5 @@
-WASM State and Semantics
-========================
+WebAssembly State and Semantics
+===============================
 
 ```k
 require "data.k"
@@ -44,15 +44,13 @@ Instructions
 
 ### Sequencing
 
-WASM instructions are space-separated lists of instructions.
+WebAssembly instructions are space-separated lists of instructions.
 
 ```k
-    syntax Instrs ::= List{Instr, ""}
- // ---------------------------------
-    rule <k> .Instrs                       => .             ... </k>
-    rule <k> I:Instr IS:Instrs             => I ~> IS       ... </k>
-    rule <k> I:Instr ~> .Instrs            => I             ... </k>
-    rule <k> I:Instr ~> I':Instr IS:Instrs => I ~> I' ~> IS ... </k>
+    syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
+ // -----------------------------------------------------
+    rule <k> .Instrs           => .       ... </k>
+    rule <k> I:Instr IS:Instrs => I ~> IS ... </k>
 ```
 
 ### Traps
@@ -421,12 +419,12 @@ It simply executes the block then records a label with an empty continuation.
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
 Upon reaching it, the label itself is executed.
 
-Note that, unlike in the WASM specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
+Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
     syntax Instr ::= "(" "br" Int ")"
  // ---------------------------------
-    rule <k> ( br N ) ~> (I:Instr => .) ... </k>
+    rule <k> ( br N ) ~> (IS:Instrs => .) ... </k>
     rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
 
     syntax Instr ::= "(" "br_if" Int ")"
@@ -543,8 +541,8 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
                        | "export" FunctionName
-    syntax FuncDecls ::= List{FuncDecl, ""}
- // ---------------------------------------
+    syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
+ // --------------------------------------------------------------
 
     syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
                    | "(" "func" FunctionName FuncDecls Instrs ")"
@@ -633,8 +631,8 @@ Unlike labels, only one frame can be "broken" through at a time.
 
     syntax Instr ::= "return"
  // -------------------------
-    rule <k> return ~> (I:Instr => .)  ... </k>
-    rule <k> return ~> (L:Label => .)  ... </k>
+    rule <k> return ~> (IS:Instrs => .)  ... </k>
+    rule <k> return ~> (L:Label   => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
 ```
 

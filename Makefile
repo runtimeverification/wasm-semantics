@@ -47,7 +47,7 @@ ocaml-deps:
 # Building Definition
 # -------------------
 
-wasm_files:=test.k wasm.k data.k
+wasm_files:=test.k wasm.k data.k kwasm-lemmas.k
 
 ocaml_dir:=$(defn_dir)/ocaml
 ocaml_defn:=$(patsubst %, $(ocaml_dir)/%, $(wasm_files))
@@ -55,7 +55,7 @@ ocaml_kompiled:=$(ocaml_dir)/test-kompiled/interpreter
 
 java_dir:=$(defn_dir)/java
 java_defn:=$(patsubst %, $(java_dir)/%, $(wasm_files))
-java_kompiled:=$(java_dir)/test-kompiled/kore.txt
+java_kompiled:=$(java_dir)/test-kompiled/compiled.txt
 
 haskell_dir:=$(defn_dir)/haskell
 haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
@@ -92,21 +92,24 @@ build-haskell: $(haskell_kompiled)
 
 $(ocaml_kompiled): $(ocaml_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                                          \
-	    $(k_bin)/kompile -O3 --non-strict --backend ocaml                             \
-	    --directory $(ocaml_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
+	eval $$(opam config env)                                 \
+	    $(k_bin)/kompile -O3 --non-strict --backend ocaml    \
+	    --directory $(ocaml_dir) -I $(ocaml_dir)             \
+	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                                         \
-	    $(k_bin)/kompile --backend java                                              \
-	    --directory $(java_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
+	eval $$(opam config env)                                 \
+	    $(k_bin)/kompile --backend java                      \
+	    --directory $(java_dir) -I $(java_dir)               \
+	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                                            \
-	    $(k_bin)/kompile --backend haskell                                              \
-	    --directory $(haskell_dir) --main-module WASM-TEST --syntax-module WASM-TEST $<
+	eval $$(opam config env)                                 \
+	    $(k_bin)/kompile --backend haskell                   \
+	    --directory $(haskell_dir) -I $(haskell_dir)         \
+	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 # Testing
 # -------

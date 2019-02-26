@@ -50,7 +50,7 @@ run_proof() {
     [[ -f "$proof_file" ]] || die "$proof_file does not exist"
 
     export K_OPTS=-Xmx8G
-    kprove --directory "$backend_dir" "$proof_file" "$@"
+    kprove --directory "$backend_dir" -m KWASM-LEMMAS "$proof_file" "$@"
 }
 
 run_test() {
@@ -72,34 +72,8 @@ run_test() {
     [[ -f "$expected_file" ]] \
         || die "Expected output file '$expected_file' does not exist..."
 
-    run_krun "$test_file" > "$output_file"
+    run_krun "$test_file" > "$output_file" || true
     pretty_diff "$expected_file" "$output_file"
-}
-
-run_test_profile() {
-    local test_file exit_status
-    local output_log_dir stdout_log stderr_log
-
-    test_file="$1" ; shift
-
-    output_log_dir="$test_logs/$(dirname -- "$test_file")"
-    stdout_log="$test_logs/$test_file.stdout"
-    stderr_log="$test_logs/$test_file.stderr"
-    [[ -d "$output_log_dir" ]] || mkdir -p "$output_log_dir"
-
-    exit_status='0'
-    `which time` --quiet --format '%x %es %Us %Ss %MKB %C' --output "$test_log" --append \
-        bash -c "$0 --backend "$backend" test $test_file $@" \
-        1> "$stdout_log" 2> "$stderr_log" \
-        || exit_status="$?"
-
-    if [[ "$exit_status" == '0' ]]; then
-        progress "passed test: $test_file"
-    else
-        die "failed test: $test_file"
-    fi
-
-    exit "$exit_status"
 }
 
 # Main
@@ -122,22 +96,19 @@ backend_dir="$defn_dir/$backend"
 case "$run_command-$backend" in
 
     # Running
-    run-@(ocaml|java|haskell) )          run_krun         "$@" ;;
-    prove-@(java|haskell)     )          run_proof        "$@" ;;
-
-    test-@(ocaml|java|haskell)         ) run_test         "$@" ;;
-    test-profile-@(ocaml|java|haskell) ) run_test_profile "$@" ;;
+    run-@(ocaml|java|haskell)  ) run_krun  "$@" ;;
+    prove-@(java|haskell)      ) run_proof "$@" ;;
+    test-@(ocaml|java|haskell) ) run_test  "$@" ;;
 
     *) echo "
-    usage: $0 (run|test|test-profile) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
-           $0 prove                   [--backend (java|haskell)]       <spec> <K args>*
+    usage: $0 (run|test) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
+           $0 prove      [--backend (java|haskell)]       <spec> <K args>*
 
-       $0 run          : Run a single WASM program
-       $0 test         : Run a single WASM program like it's a test
-       $0 test-profile : Additionally record timing and memory usage to '${test_log#$(pwd)/}'
-       $0 prove        : Run a WASM K proof
+       $0 run   : Run a single WebAssembly program
+       $0 test  : Run a single WebAssembly program like it's a test
+       $0 prove : Run a WebAssembly K proof
 
-       Note: <pgm> is a path to a file containing a WASM program.
+       Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.
              <K args> are any arguments you want to pass to K when executing/proving.
 " ; exit ;;
