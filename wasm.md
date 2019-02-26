@@ -655,6 +655,9 @@ Memory
 
 When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
+Currently, only one memory may be accessible to a module, and thus the `<memAddrs>` cell is an array with at most one value, at index 0.
+
+**TODO**: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
 
 ```k
     syntax Instr ::= "(" "memory"               ")"
@@ -683,7 +686,6 @@ Memory can only grow in size, so the minimum size is the initial value.
            ...
          </mems>
 ```
-TODO: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
 
 The `size` operation returns the size of the memory, measured in pages.
 
@@ -721,14 +723,13 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
            ...
          </memInst>
 
-        rule <k> grow N => < i32 > -1 </k>
-             <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+    rule <k> grow N => < i32 > -1 </k>
+          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
 
     syntax Bool ::= #growthAllowed(Int, MemBound) [function]
  // --------------------------------------------------------
     rule #growthAllowed(SIZE, .MemBound) => SIZE <=Int #maxMemorySize()
     rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MemBound) andBool SIZE <=Int I
-
 ```
 
 Memories can optionally have a max size which the memory may not grow beyond.
