@@ -96,15 +96,13 @@ $(ocaml_kompiled): $(ocaml_defn)
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                 \
-	    $(k_bin)/kompile --backend java                      \
+	$(k_bin)/kompile --backend java                          \
 	    --directory $(java_dir) -I $(java_dir)               \
 	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                 \
-	    $(k_bin)/kompile --backend haskell                   \
+	$(k_bin)/kompile --backend haskell                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)         \
 	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
