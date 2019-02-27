@@ -53,11 +53,16 @@ for f in glob.glob('tests/simple/*.wast'):
                          .then(proj.check(expected = 'tests/success-java.out')) \
                          .default()
     tests_simple += [test]
+t_simple = proj.alias('test-simple', tests_simple)
+t_exec   = proj.alias('test-exec',   t_simple)
 
 tests_proofs = []
 for f in glob.glob('tests/proofs/*-spec.k'):
     test = proj.source(f).then(symbolic_backend.kprove()) \
                          .default()
     tests_proofs += [test]
+t_proofs = proj.alias('test-proof', tests_proofs)
+
+proj.alias('tests', [t_exec, t_proofs])
 
 proj.main()
