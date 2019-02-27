@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import glob
 import os
 import subprocess
 import sys
@@ -46,22 +45,17 @@ wasm_haskell = build_wasm(backend = 'haskell')
 concrete_backend = wasm_java
 symbolic_backend = wasm_java
 
-tests_simple = []
-for f in glob.glob('tests/simple/*.wast'):
-    test = proj.source(f).then(concrete_backend.krun()) \
-                         .then(proj.check(expected = 'tests/success-java.out')) \
-                         .default()
-    tests_simple += [test]
-t_simple = proj.alias('test-simple', tests_simple)
-t_exec   = proj.alias('test-exec',   t_simple)
+t_simple = concrete_backend.tests( glob = 'tests/simple/*.wast'
+                                 , alias = 'test-simple'
+                                 , expected = 'tests/success-java.out'
+                                 )
+t_proofs = symbolic_backend.proofs( glob = 'tests/proofs/*-spec.k'
+                                  , alias = 'test-proofs'
+                                  )
+t_exec   = proj.alias('test-exec'  , t_simple          )
+t_tests  = proj.alias('tests'      , [t_exec, t_proofs])
 
-tests_proofs = []
-for f in glob.glob('tests/proofs/*-spec.k'):
-    test = proj.source(f).then(symbolic_backend.kprove()) \
-                         .default()
-    tests_proofs += [test]
-t_proofs = proj.alias('test-proof', tests_proofs)
-
-proj.alias('tests', [t_exec, t_proofs])
+# Main
+# ====
 
 proj.main()
