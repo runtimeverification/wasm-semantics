@@ -26,30 +26,19 @@ test_k = proj.tangle('test.md')
 wasm_k = proj.tangle('wasm.md')
 data_k = proj.tangle('data.md')
 
-wasm_java = proj.definition( alias     = 'wasm-java'
-                           , backend   = 'java'
-                           , main      = test_k
-                           , other     = [ wasm_k, data_k ]
-                           , directory = proj.builddir('defn/java')
-                           , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
-                           )
+def build_wasm(backend, flags = ''):
+    return proj.definition( alias     = 'wasm-' + backend
+                          , backend   = backend
+                          , main      = test_k
+                          , other     = [ wasm_k, data_k ]
+                          , directory = proj.builddir('defn', backend)
+                          , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
+                                      + flags
+                          )
 
-wasm_ocaml = proj.definition( alias     = 'wasm-ocaml'
-                            , backend   = 'ocaml'
-                            , main      = test_k
-                            , other     = [ wasm_k, data_k ]
-                            , directory = proj.builddir('defn/ocaml')
-                            , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
-                                        + '-O3 --non-strict'
-                            )
-
-wasm_haskell = proj.definition( alias     = 'wasm-haskell'
-                              , backend   = 'haskell'
-                              , main      = test_k
-                              , other     = [ wasm_k, data_k ]
-                              , directory = proj.builddir('defn/haskell')
-                              , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
-                              )
+wasm_java = build_wasm(backend = 'java')
+wasm_ocaml = build_wasm(backend = 'ocaml', flags = '-O3 --non-strict')
+wasm_haskell = build_wasm(backend = 'haskell')
 
 # Testing
 # =======
