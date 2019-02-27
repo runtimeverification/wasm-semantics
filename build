@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import glob
+import os
+import subprocess
+import sys
+
+# TODO: Bootstrapping code is very ugly
+kninja_submodule = '.build/kninja/'
+if not os.path.exists(kninja_submodule + '/.git'):
+    subprocess.check_call(['git', 'submodule', 'update', '--init', kninja_submodule])
+sys.path.append(os.path.join(os.path.dirname(__file__), '.build'))
+
+from kninja import *
+
+proj = KProject(extdir = '.build')
+
+test_k = proj.tangle('test.md')
+wasm_k = proj.tangle('wasm.md')
+data_k = proj.tangle('data.md')
+
+wasm_java = proj.definition( alias     = 'wasm-java'
+                           , backend   = 'java'
+                           , main      = test_k
+                           , other     = [ wasm_k, data_k ]
+                           , directory = proj.builddir('defn/java')
+                           , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
+                           )
+
+wasm_ocaml = proj.definition( alias     = 'wasm-ocaml'
+                            , backend   = 'ocaml'
+                            , main      = test_k
+                            , other     = [ wasm_k, data_k ]
+                            , directory = proj.builddir('defn/ocaml')
+                            , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
+                                        + '-O3 --non-strict'
+                            )
+
+wasm_haskell = proj.definition( alias     = 'wasm-haskell'
+                              , backend   = 'haskell'
+                              , main      = test_k
+                              , other     = [ wasm_k, data_k ]
+                              , directory = proj.builddir('defn/haskell')
+                              , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
+                              )
+
+concrete_backend = wasm_java
+symbolic_backend = wasm_java
+
+tests_simple = []
+for f in glob.glob('tests/simple/*.wast'):
+    test = proj.source(f).then(concrete_backend.krun()) \
+                         .then(proj.check(expected = 'tests/success-java.out')) \
+                         .default()
+    tests_simple += [test]
+
+tests_proofs = []
+for f in glob.glob('tests/proofs/*-spec.k'):
+    test = proj.source(f).then(symbolic_backend.kprove()) \
+                         .default()
+    tests_proofs += [test]
+
+proj.main()
