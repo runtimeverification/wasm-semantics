@@ -9,17 +9,18 @@ import sys
 
 # Make sure the KNinja repo is available.
 #
-kninja_submodule = '.build/kninja/'
+extdir = '.build'
+kninja_submodule = extdir + '/kninja'
 if not os.path.exists(kninja_submodule + '/.git'):
     subprocess.check_call(['git', 'submodule', 'update', '--init', kninja_submodule])
-sys.path.append(os.path.join(os.path.dirname(__file__), '.build'))
+sys.path.append(os.path.join(os.path.dirname(__file__), extdir))
 
 from kninja import *
 
 # Build
 # =====
 
-proj = KProject(extdir = '.build')
+proj = KProject(extdir = extdir)
 
 test_k = proj.tangle('test.md')
 wasm_k = proj.tangle('wasm.md')
