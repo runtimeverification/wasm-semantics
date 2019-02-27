@@ -30,9 +30,9 @@ The following are needed for building/running KWasm:
 On Ubuntu >= 15.04 (for example):
 
 ```sh
-sudo apt install                                                          \
-         autoconf curl flex gcc libffi-dev libmpfr-dev libtool make maven \
-         opam openjdk-8-jdk pandoc pkg-config python3 python-pygments     \
+sudo apt install                                                                 \
+         autoconf curl flex gcc libffi-dev libmpfr-dev libtool maven ninja-build \
+         opam openjdk-8-jdk pandoc pkg-config python3 python-pygments            \
          python-recommonmark python-sphinx time zlib1g-dev
 ```
 
@@ -63,11 +63,10 @@ If you haven't already setup K's OCaml dependencies more recently than February 
 Finally, you can install repository specific dependencies and build the semantics:
 
 ```sh
-make deps
-make build
+./build
 ```
 
-To only build specific backends, you can do `make build-java`, `make build-ocaml`, or `make build-haskell`.
+To only build specific backends, you can do `./build wasm-java`, `./build wasm-ocaml`, or `./build wasm-haskell`.
 
 This Repository
 ---------------
