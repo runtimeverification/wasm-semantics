@@ -1,33 +1,35 @@
-;; Test locals
+( memory )
+#assertMemory 0 .MemBound "memory initial 1"
 
-init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .Stack
+( memory 34)
+#assertMemory 0 34 "memory initial 2"
 
-(i32.const 43)
-(local.set 0)
-#assertLocal 0 < i32 > 43 "set_local"
+( memory 4 10 )
+#assertMemory 4 10 "memory initial 3"
 
-(i32.const 55)
-(local.set 1)
-(local.get 1)
-#assertTopStack < i32 > 55 "set_local stack"
-#assertLocal 1 < i32 > 55 "set_local"
+( memory 0 10 )
+(memory.size)
+#assertTopStack <i32> 0 "memory.size 1"
+#assertMemory 0 10 "memory ungrown"
 
-(i32.const 67)
-(local.tee 2)
-#assertTopStack < i32 > 67 "tee_local stack"
-#assertLocal 2 < i32 > 67 "tee_local local"
+( memory 0 10 )
+(memory.grow (i32.const 10))
+(memory.size)
+#assertStack <i32> 10 : < i32 > 0 : .Stack "memory grow"
+(memory.grow (i32.const 1))
+#assertTopStack <i32> -1 "memory grow"
+#assertMemory 10 10 "memory grown"
 
-;; Test globals
+( memory #maxMemorySize() +Int 10)
+(memory.grow (i32.const #maxMemorySize() +Int 1))
+#assertTopStack <i32> -1 "memory grow max too large"
+#assertMemory 0 #maxMemorySize() +Int 10 "memory grow max too large"
 
-init_global 0 < i32 > 0
-init_global 1 < i32 > 0
-
-(i32.const 43)
-(global.set 0)
-#assertGlobal 0 < i32 > 43 "set_global"
-
-(i32.const 55)
-(global.set 1)
-(global.get 1)
-#assertTopStack < i32 > 55 "set_global stack"
-#assertGlobal 1 < i32 > 55 "set_global"
+( memory )
+(memory.grow (i32.const #maxMemorySize()))
+(memory.size)
+#assertStack <i32> #maxMemorySize() : < i32 > 0 : .Stack "memory grow unbounded"
+(memory.grow (i32.const 1))
+(memory.size)
+#assertStack <i32> #maxMemorySize() : < i32 > -1 : .Stack "memory grow unbounded"
+#assertMemory #maxMemorySize() .MemBound "memory grown unbounded"

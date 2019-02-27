@@ -14,11 +14,15 @@ Configuration
 ```k
     configuration
       <k> $PGM:Instrs </k>
+      <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <stack> .Stack </stack>
       <curFrame>
-        <addrs>   .Map </addrs>
-        <locals>  .Map </locals>
-        <globals> .Map </globals>
+        <addrs>  .Map </addrs>
+        <locals> .Map </locals>
+        <moduleInst>
+          <globals>  .Map  </globals>
+          <memAddrs> .Map  </memAddrs>
+        </moduleInst>
       </curFrame>
       <store>
         <funcs>
@@ -30,6 +34,14 @@ Configuration
             <faddrs> .Map           </faddrs>
           </funcDef>
         </funcs>
+        <nextMemAddr> 0 </nextMemAddr>
+        <mems>
+          <memInst multiplicity="*" type="Map">
+            <memAddr> 0         </memAddr>
+            <mmax>    .MemBound </mmax>
+            <msize>   0         </msize>
+          </memInst>
+        </mems>
       </store>
 ```
 
@@ -38,6 +50,8 @@ Configuration
 Integers in K are unbounded.
 As an invariant, however, for any integer `< iNN > I:Int` on the stack, `I` is between 0 and `#pow(NN) - 1`.
 That way, unsigned instructions can make use of `I` directly, whereas signed instructions may need `#signed(iNN, I)`.
+
+The highest address in a memory instance divided by the `#pageSize()` constant (defined below) may not exceed the value in the `<max>` cell, if present.
 
 Instructions
 ------------
@@ -634,6 +648,105 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> return ~> (IS:Instrs => .)  ... </k>
     rule <k> return ~> (L:Label   => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
+```
+
+Memory
+------
+
+When memory is allocated, it is put into the store at the next available index.
+Memory can only grow in size, so the minimum size is the initial value.
+Currently, only one memory may be accessible to a module, and thus the `<memAddrs>` cell is an array with at most one value, at index 0.
+
+**TODO**: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
+
+```k
+    syntax Instr ::= "(" "memory"               ")"
+                   | "(" "memory" Int           ")" // Max only
+                   | "(" "memory" Int Int       ")" // Min and max.
+                   |     "memory" "{" Int MemBound "}"
+ // --------------------------------------------------
+    rule <k> ( memory                 ) => memory { 0   .MemBound } ... </k>
+    rule <k> ( memory         MAX:Int ) => memory { 0   MAX       } ... </k>
+    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
+
+    rule <k> memory { _ _ } => trap ... </k>
+         <memAddrs> MAP </memAddrs> requires MAP =/=K .Map
+
+    rule <k> memory { MIN MAX } => . ... </k>
+         <memAddrs>    .Map => (0 |-> NEXT)  </memAddrs>
+         <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
+         <mems>
+           ( .Bag
+          => <memInst>
+               <memAddr> NEXT </memAddr>
+               <mmax>    MAX  </mmax>
+               <msize>   MIN  </msize>
+             </memInst>
+           )
+           ...
+         </mems>
+```
+
+The `size` operation returns the size of the memory, measured in pages.
+
+```k
+    syntax Instr ::= "(" "memory.size" ")"
+ // --------------------------------------
+    rule <k> ( memory.size ) => < i32 > SIZE ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           ...
+         </memInst>
+```
+
+`grow` increases the size of memory in units of pages.
+Failure to grow is indicated by pushing -1 to the stack.
+Success is indicated by pushing the previous memory size to the stack.
+`grow` is non-deterministic and may fail either due to trying to exceed explicit max values, or because the embedder does not have resources available.
+By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
+
+```k
+    syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
+ // ---------------------------------------------------------------------------------
+    rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
+    rule <k> ( memory.grow ) => grow N ... </k>
+         <stack> < i32 > N : STACK => STACK </stack>
+
+    rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else -1 #fi ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR  </memAddr>
+           <mmax>    MAX  </mmax>
+           <msize>   SIZE => #if #growthAllowed(SIZE +Int N, MAX) #then SIZE +Int N #else SIZE #fi </msize>
+           ...
+         </memInst>
+
+    rule <k> grow N => < i32 > -1 </k>
+          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+
+    syntax Bool ::= #growthAllowed(Int, MemBound) [function]
+ // --------------------------------------------------------
+    rule #growthAllowed(SIZE, .MemBound) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MemBound) andBool SIZE <=Int I
+```
+
+Memories can optionally have a max size which the memory may not grow beyond.
+
+```k
+    syntax MemBound ::= Int | ".MemBound"
+```
+
+However, the absolute max allowed size if 2^16 pages.
+Incidentally, the page size is 2^16 bytes.
+
+```k
+    syntax Int ::= #pageSize()      [function]
+    syntax Int ::= #maxMemorySize() [function]
+ // ------------------------------------------
+    rule #maxMemorySize() => 65536
+    rule #pageSize()      => 65536
 ```
 
 Module Declaration

@@ -2,6 +2,9 @@
   <k>
     .
   </k>
+  <deterministicMemoryGrowth>
+    true
+  </deterministicMemoryGrowth>
   <stack>
     .Stack
   </stack>
@@ -12,13 +15,24 @@
     <locals>
       .Map
     </locals>
-    <globals>
-      .Map
-    </globals>
+    <moduleInst>
+      <globals>
+        .Map
+      </globals>
+      <memAddrs>
+        .Map
+      </memAddrs>
+    </moduleInst>
   </curFrame>
   <store>
     <funcs>
       .FuncDefCellMap
     </funcs>
+    <nextMemAddr>
+      0
+    </nextMemAddr>
+    <mems>
+      .MemInstCellMap
+    </mems>
   </store>
 </generatedTop>
