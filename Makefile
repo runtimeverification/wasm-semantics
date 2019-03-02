@@ -11,9 +11,10 @@ tangler:=$(pandoc_tangle_submodule)/tangle.lua
 LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
-.PHONY: deps ocaml-deps \
-        defn defn-ocaml defn-haskell \
-        build build-ocaml build-haskell \
+.PHONY: all clean \
+        deps ocaml-deps haskell-deps \
+        defn defn-ocaml defn-java defn-haskell \
+        build build-ocaml defn-haskell build-haskell \
         test test-execution test-simple test-proof \
         media
 
