@@ -21,21 +21,15 @@ from kninja import *
 # =====
 
 proj = KProject(extdir = extdir)
-
-test_k = proj.tangle('test.md')
-wasm_k = proj.tangle('wasm.md')
-data_k = proj.tangle('data.md')
-
 def build_wasm(backend, flags = ''):
     return proj.definition( alias     = 'wasm-' + backend
                           , backend   = backend
-                          , main      = test_k
-                          , other     = [ wasm_k, data_k ]
+                          , main      = 'test.md'
+                          , other     = [ 'wasm.md', 'data.md' ]
                           , directory = proj.builddir('defn', backend)
                           , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
                                       + flags
                           )
-
 wasm_java = build_wasm(backend = 'java')
 wasm_ocaml = build_wasm(backend = 'ocaml', flags = '-O3 --non-strict')
 wasm_haskell = build_wasm(backend = 'haskell')
