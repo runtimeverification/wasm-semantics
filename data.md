@@ -92,9 +92,9 @@ The `#width` function returns the bit-width of a given `IValType`.
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
 
 ```k
-    syntax Int ::= #pow  ( IValType ) [function] /* 2 ^Int #width(T)          */
-                 | #pow1 ( IValType ) [function] /* 2 ^Int (#width(T) -Int 1) */
- // ----------------------------------------------------------------------------
+    syntax Int ::= #pow  ( IValType ) [function, smtlib(pow )] /* 2 ^Int #width(T)          */
+                 | #pow1 ( IValType ) [function, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */
+ // ------------------------------------------------------------------------------------------
     rule #pow1(i32) => 2147483648
     rule #pow (i32) => 4294967296
     rule #pow1(i64) => 9223372036854775808
@@ -143,6 +143,7 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 ### Signed Interpretation
 
 Functions `#signed` and `#unsigned` allow for easier operation on twos-complement numbers.
+These functions assume that the argument integer is in the valid range of signed and unsigned values of the respective type, so they will not correctly map arbitrary integers into the corret range.
 
 ```k
     syntax Int ::= #signed   ( IValType , Int ) [function]

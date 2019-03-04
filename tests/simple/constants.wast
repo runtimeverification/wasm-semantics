@@ -22,6 +22,15 @@
 (i32.const #unsigned(i32, -5))
 #assertTopStack < i32 > -5 "i32 signed assert"
 
+(i32.const #pow(i32) +Int 1)
+#assertTopStack < i32 > 1 "i32 overflow"
+
+(i32.const -1)
+#assertTopStackExactly < i32 > #pow(i32) -Int 1 "i32 overflow"
+
+(i64.const -1)
+#assertTopStackExactly < i64 > #pow(i64) -Int 1 "i62 overflow"
+
 ;; Floating point
 ;; --------------
 

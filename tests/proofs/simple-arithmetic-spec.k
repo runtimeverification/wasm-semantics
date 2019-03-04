@@ -5,15 +5,16 @@ module SIMPLE-ARITHMETIC-SPEC
 
     rule <k> ( ITYPE:IValType . const X:Int ) => . ... </k>
          <stack> S:Stack => < ITYPE > X : S </stack>
-      requires 0 <=Int X
+      requires #inUnsignedRange(ITYPE, X)
 
     rule <k> ( ITYPE:IValType . const X:Int ) => . ... </k>
          <stack> S:Stack => < ITYPE > (X +Int #pow(ITYPE)) : S </stack>
-      requires X <Int 0
+      requires (#minSigned(ITYPE) <=Int X) andBool (X <Int 0)
 
     rule <k> ( ITYPE:IValType . const X:Int ) ( ITYPE . const Y:Int ) => . ... </k>
          <stack> S:Stack => < ITYPE > Y : < ITYPE > X : S </stack>
-      requires 0 <=Int X andBool 0 <=Int Y
+      requires #inUnsignedRange(ITYPE, X)
+       andBool #inUnsignedRange(ITYPE, Y)
 
     rule <k> ( ITYPE:IValType . const X:Int ) ( ITYPE . const Y:Int ) ( ITYPE . add ) => . ... </k>
          <stack> S:Stack => < ITYPE > (X +Int Y) : S </stack>
