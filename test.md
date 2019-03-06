@@ -119,6 +119,19 @@ This checks that the last allocated memory has the given size and max value.
            )
            ...
          </mems>
+
+    syntax Assertion ::= "#assertMemoryData"    "(" Int "," Int ")" String
+ // ----------------------------------------------------------
+    rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <mems>
+           <memInst>
+             <memAddr> ADDR </memAddr>
+             <mdata> ...  KEY |-> VAL => .Map ... </mdata>
+               ...
+           </memInst>
+           ...
+         </mems>
 ```
 
 ```k

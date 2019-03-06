@@ -215,10 +215,42 @@ We are using the polymorphic `Map` sort for this byte maps.
 -   `#range(M, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position $START$ (padding with zeros as needed).
 
 ```k
-/*    syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
+    // TODO: Change to standard Bytes implementation.
+    syntax Bytes ::= ".Bytes" | Int ":" Bytes
+    syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
+ // ----------------------------------------------------
+    rule BM[ N:Int := .Bytes ] => BM
+    rule BM[ N := (B : BS) ] => (BM[N <- B])[N +Int 1 := BS] //[concrete]
+
+    // TODO: Change to standard Bytes implementation.
+    syntax Bytes ::= String2Bytes(String) [function, functional]
+ // ------------------------------------------------------------
+    rule String2Bytes(S) => ordChar(substrString(S, 0, 1)) : String2Bytes(substrString(S, 1, lengthString(S))) requires lengthString(S) >=Int 1
+    rule String2Bytes("") => .Bytes
+
+    // TODO: Change to standard Bytes implementation.
+    syntax Int ::= lengthBytes ( Bytes ) [function]
+ // -----------------------------------------------
+    rule lengthBytes (.Bytes) => 0
+    rule lengthBytes (_ : BS) => 1 +Int lengthBytes(BS)
+
+    syntax Strings ::= List{String, ""}
+    syntax String  ::= #flatten ( Strings ) [function]
+ // --------------------------------------------------
+    rule #flatten(.Strings) => ""
+    rule #flatten(A:String) => A
+    rule #flatten(A:String BC:Strings) => A +String #flatten(BC)
+```
+
+### TODO: Integrate the rest of the WIP stuff
+
+```
+
+/*
+    syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
  // --------------------------------------------------------
-    rule BM[ N := nilBytes ] => BM
-    rule BM[ N := B : BS     ] => (BM[N <- B])[N +Int 1 := BS] //[concrete]
+    rule BM[ N:Int := nilBytes ] => BM
+    rule BM[ N := (B : BS) ] => (BM[N <- B])[N +Int 1 := BS] //[concrete]
 
     syntax Map ::= #asMapBytes ( Bytes ) [function]
  // -------------------------------------------------------
@@ -260,15 +292,6 @@ We are using the polymorphic `Map` sort for this byte maps.
  // -----------------------------------------------
     rule #update( M, KEY, VAL ) => M [ KEY <- VAL ] //[concrete]
 */
-
-    syntax Strings ::= List{String, ""}
-    syntax String  ::= "Flatten" "(" Strings ")"
-    rule Flatten(.String) => ""
-    rule Flatten(A:String) => A
-    rule Flatten(A:String BC:Strings) => A +String Flatten(BC)
-    
-    syntax Int ::= "pow16"
-    rule pow16  => 65536 [macro]
 
 ```
 

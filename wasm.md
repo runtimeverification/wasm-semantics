@@ -40,6 +40,7 @@ Configuration
             <memAddr> 0         </memAddr>
             <mmax>    .MemBound </mmax>
             <msize>   0         </msize>
+            <mdata>   .Map      </mdata>
           </memInst>
         </mems>
       </store>
@@ -749,14 +750,17 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
     syntax Instr ::= "(" "memory"                  ")"
                    | "(" "memory"     Int          ")" // Size only
                    | "(" "memory"     Int Int      ")" // Min and max.
+                   | "(" "memory"     Data         ")"
                    |     "memory" "{" Int MemBound "}"
  // --------------------------------------------------
-    rule <k> ( memory                 ) => memory { 0   .MemBound } ... </k>
-    rule <k> ( memory MIN:Int         ) => memory { MIN .MemBound } ... </k>
+    rule <k> ( memory                 ) => memory { 0                 .MemBound         }         ... </k>
+    rule <k> ( memory MIN:Int         ) => memory { MIN               .MemBound         }         ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
+    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN               MAX               }         ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
+    rule <k> ( memory ( DATA:Data )   ) => memory { #lengthData(DATA) #lengthData(DATA) } ~> DATA ... </k>
+      requires #lengthData(DATA) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
          <memAddrs> MAP </memAddrs> requires MAP =/=K .Map
@@ -770,10 +774,16 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
                <memAddr> NEXT </memAddr>
                <mmax>    MAX  </mmax>
                <msize>   MIN  </msize>
+               <mdata>   .Map </mdata>
              </memInst>
            )
            ...
          </mems>
+
+    syntax MemId ::= Identifier | Int
+
+    syntax Offset ::= "(" "offset" Instr ")"
+                   | Instr
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
@@ -836,6 +846,40 @@ Incidentally, the page size is 2^16 bytes.
  // ------------------------------------------
     rule #maxMemorySize() => 65536
     rule #pageSize()      => 65536
+```
+
+### Data Segments
+
+```k
+    syntax Instr ::= Data
+    syntax Data ::= "(" "data" MemId Offset Strings ")"
+                  | "(" "data"       Offset Strings ")"
+                  |     "data" "{" String "}"
+ // ---------------------------------------------------
+    // The MemId must always resolve to 0, due to validation, so we discard it.
+    rule <k> ( data _   OFFSET STRINGS ) => ( data   OFFSET STRINGS ) ... </k>
+    rule <k> ( data     OFFSET STRINGS ) =>  OFFSET ~> data { #flatten(STRINGS) } ... </k>
+
+    rule <k> data { STRING } => . ... </k>
+         <stack> < i32 > OFFSET : STACK => STACK </stack>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <mdata>   DATA => DATA [ OFFSET := String2Bytes(STRING)] </mdata> // TODO
+           ...
+         </memInst>
+
+    syntax Int ::= #lengthData    ( Data    ) [function]
+                 | #lengthDataAux ( Strings ) [function]
+                 | Int "/ceilInt" Int         [function]
+ // ----------------------------------------------
+    rule #lengthData((data  _:MemId _ SS)) => #lengthDataAux(SS)
+    rule #lengthData((data          _ SS)) => #lengthDataAux(SS)
+    rule #lengthData( data {          SS}) => #lengthDataAux(SS)
+
+    rule #lengthDataAux(SS) => lengthBytes(String2Bytes(#flatten(SS))) /ceilInt #pageSize()
+
+    rule I1 /ceilInt I2 => (I1 /Int I2) +Int #if I1 modInt I2 ==Int 0 #then 0 #else 1 #fi
 ```
 
 Module Declaration
