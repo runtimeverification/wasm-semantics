@@ -2,6 +2,7 @@ requires "kwasm-lemmas.k"
 
 module SIMPLE-ARITHMETIC-SPEC
     imports WASM
+    imports KWASM-LEMMAS
 
     rule <k> ( ITYPE:IValType . const X:Int ) => . ... </k>
          <stack> S:Stack => < ITYPE > X : S </stack>
