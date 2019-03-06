@@ -6,8 +6,8 @@ require "domains.k"
 
 module WASM-DATA
     imports DOMAINS
-    imports BYTES
-    imports COLLECTIONS
+//    imports BYTES
+//    imports COLLECTIONS
 ```
 
 Parsing
@@ -203,6 +203,7 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(.ValTypes,   STACK)                       => STACK
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 ```
+
 Byte Map
 --------
 
@@ -214,7 +215,7 @@ We are using the polymorphic `Map` sort for this byte maps.
 -   `#range(M, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position $START$ (padding with zeros as needed).
 
 ```k
-    syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
+/*    syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
  // --------------------------------------------------------
     rule BM[ N := nilBytes ] => BM
     rule BM[ N := B : BS     ] => (BM[N <- B])[N +Int 1 := BS] //[concrete]
@@ -231,18 +232,20 @@ We are using the polymorphic `Map` sort for this byte maps.
     rule #range(BM,           END, WIDTH, BS) => BS                                           requires WIDTH ==Int 0
     rule #range(BM,           END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, 0 : BS) requires (WIDTH >Int 0) andBool notBool END in_keys(BM)
     rule #range(END |-> B BM, END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, B : BS) requires (WIDTH >Int 0)
+*/
 ```
 
 -   `#removeZeros` removes any entries in a map with zero values.
 
 ```k
-    syntax Map ::= #removeZeros ( Map ) [function]
+/*    syntax Map ::= #removeZeros ( Map ) [function]
                  | #removeZeros ( List , Map ) [function, klabel(#removeZerosAux)]
  // ------------------------------------------------------------------------------
     rule #removeZeros( M )                                   => #removeZeros(Set2List(keys(M)), M)
     rule #removeZeros( .List, .Map )                         => .Map
     rule #removeZeros( ListItem(KEY) L, KEY |-> 0 REST )     => #removeZeros(L, REST)
     rule #removeZeros( ListItem(KEY) L, KEY |-> VALUE REST ) => KEY |-> VALUE #removeZeros(L, REST) requires VALUE =/=K 0
+*/
 ```
 
 -   `#lookup` looks up a key in a map and returns 0 if the key doesn't exist, otherwise returning its value.
@@ -267,5 +270,8 @@ We are using the polymorphic `Map` sort for this byte maps.
     syntax Int ::= "pow16"
     rule pow16  => 65536 [macro]
 
+```
+
+```k
 endmodule
 ```
