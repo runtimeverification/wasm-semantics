@@ -661,13 +661,16 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
 
 ```k
     syntax Instr ::= "(" "memory"               ")"
-                   | "(" "memory" Int           ")" // Max only
+                   | "(" "memory" Int           ")" // Size only
                    | "(" "memory" Int Int       ")" // Min and max.
                    |     "memory" "{" Int MemBound "}"
  // --------------------------------------------------
-    rule <k> ( memory                 ) => memory { 0   .MemBound } ... </k>
-    rule <k> ( memory         MAX:Int ) => memory { 0   MAX       } ... </k>
-    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
+    rule <k> ( memory                 ) => memory { 0                 .MemBound         }         ... </k>
+    rule <k> ( memory MIN:Int         ) => memory { MIN               .MemBound         }         ... </k>
+      requires MIN <=Int #maxMemorySize()
+    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN               MAX               }         ... </k>
+      requires MIN <=Int #maxMemorySize()
+       andBool MAX <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
          <memAddrs> MAP </memAddrs> requires MAP =/=K .Map
