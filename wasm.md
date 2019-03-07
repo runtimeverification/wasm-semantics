@@ -24,7 +24,7 @@ Configuration
           <memAddrs> .Map  </memAddrs>
         </moduleInst>
       </curFrame>
-      <store>
+      <mainStore>
         <funcs>
           <funcDef multiplicity="*" type="Map">
             <fname>  .FunctionName  </fname>
@@ -43,7 +43,7 @@ Configuration
             <mdata>   .Map      </mdata>
           </memInst>
         </mems>
-      </store>
+      </mainStore>
 ```
 
 ### Assumptions and invariants
@@ -784,6 +784,50 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
 
     syntax Offset ::= "(" "offset" Instr ")"
                    | Instr
+```
+
+TODO: Add documentation.
+
+Store:
+
+The `align` parameter is for optimization only and is not allowed to influence the semantics, and is thus simply stripped.
+
+```k
+// TODO: Instance of BinOp? Some other nice way to do folded syntax? Or a store command, like binop, but with memargs?
+    syntax Instr ::= "(" IValType  "." "store" ")" | "(" IValType  "." "store" MemArg ")"
+ //                | "(" FValType  "." "store" ")" | "(" FValType  "." "store" MemArg ")"
+                   | IValType "." "store" Int Int Int
+ // -------------------------------------------------
+    rule <k> ( ITYPE . store )        => ( ITYPE . store offset=0 ) ... </k>
+    rule <k> ( ITYPE . store MEMARG ) => ITYPE . store IDX #getOffset(MEMARG) VAL ... </k>
+         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+    rule <k> ITYPE . store IDX OFFSET VAL => . ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           <mdata> DATA => DATA [IDX +Int OFFSET := Int2Bytes(#numBytes(ITYPE), VAL, LE) ] </mdata>
+           ...
+         </memInst>
+         requires (#numBytes(ITYPE) +Int OFFSET) <=Int (SIZE *Int #pageSize())
+
+    syntax MemArg ::= Offset | Align | Offset Align
+    syntax Offset ::= "offset" "=" U32
+    syntax Align  ::= "align"  "=" U32
+ // ----------------------------------
+
+    syntax Int ::= #getOffset ( MemArg ) [function]
+ // -----------------------------------------------
+    rule #getOffset(offset= O) => #u32ToInt(O)
+    rule #getOffset(offset= O _:Align) => #u32ToInt(O)
+    rule #getOffset(_:Align) => 0
+
+    syntax U32 ::= Int
+                 | HexNum
+    syntax Int ::= #u32ToInt ( U32 ) [function]
+ // -------------------------------------------
+    rule #u32ToInt(I:Int)    => I
+    rule #u32ToInt(H:HexNum) => #hexToInt(H)
 ```
 
 The `size` operation returns the size of the memory, measured in pages.

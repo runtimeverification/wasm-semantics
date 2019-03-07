@@ -6,7 +6,7 @@ require "domains.k"
 
 module WASM-DATA
     imports DOMAINS
-//    imports BYTES
+    imports BYTES
 //    imports COLLECTIONS
 ```
 
@@ -85,10 +85,13 @@ We can append two `ValTypes`s with the `_+_` operator.
 The `#width` function returns the bit-width of a given `IValType`.
 
 ```k
-    syntax Int ::= #width ( IValType ) [function]
+    syntax Int ::= #width    ( IValType ) [function]
+    syntax Int ::= #numBytes ( IValType ) [function]
  // ---------------------------------------------
     rule #width(i32) => 32
     rule #width(i64) => 64
+
+    rule #numBytes(ITYPE) => #width(ITYPE) /Int 8
 ```
 
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
@@ -204,6 +207,32 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 ```
 
+Strings
+-------
+
+Sometimes, data can be specified as a string, or even several consequtive strings, which should then be treated as a single string.
+The `Strings` type and `#flatten` function help with this.
+
+```k
+    syntax Strings ::= List{String, ""}
+    syntax String  ::= #flatten ( Strings ) [function]
+ // --------------------------------------------------
+    rule #flatten(.Strings) => ""
+    rule #flatten(A:String BC:Strings) => A +String #flatten(BC)
+```
+
+Hexadecimals
+------------
+
+Some data, such as memory offsets, can be specified in hexadecimal form.
+
+```k
+    syntax HexNum    ::= "0x" String
+    syntax Int       ::= #hexToInt    ( HexNum         ) [function]
+ // ------------------------------------------------
+    rule #hexToInt(0x H) => String2Base(H, 16) requires H =/=String ""
+```
+
 Byte Map
 --------
 
@@ -215,37 +244,29 @@ We are using the polymorphic `Map` sort for this byte maps.
 -   `#range(M, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position $START$ (padding with zeros as needed).
 
 ```k
-    // TODO: Change to standard Bytes implementation.
-    syntax Bytes ::= ".Bytes" | Int ":" Bytes
     syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
- // ----------------------------------------------------
-    rule BM[ N:Int := .Bytes ] => BM
-    rule BM[ N := (B : BS) ] => (BM[N <- B])[N +Int 1 := BS] //[concrete]
+    syntax Map ::= #insertBytes (Map, Int, Bytes, Int, Int) [function]
+ // ------------------------------------------------------------------
+    rule BM [ IDX := BS ] => #insertBytes(BM, IDX, BS, 0, lengthBytes(BS))
 
-    // TODO: Change to standard Bytes implementation.
-    syntax Bytes ::= String2Bytes(String) [function, functional]
- // ------------------------------------------------------------
-    rule String2Bytes(S) => ordChar(substrString(S, 0, 1)) : String2Bytes(substrString(S, 1, lengthString(S))) requires lengthString(S) >=Int 1
-    rule String2Bytes("") => .Bytes
-
-    // TODO: Change to standard Bytes implementation.
-    syntax Int ::= lengthBytes ( Bytes ) [function]
- // -----------------------------------------------
-    rule lengthBytes (.Bytes) => 0
-    rule lengthBytes (_ : BS) => 1 +Int lengthBytes(BS)
-
-    syntax Strings ::= List{String, ""}
-    syntax String  ::= #flatten ( Strings ) [function]
- // --------------------------------------------------
-    rule #flatten(.Strings) => ""
-    rule #flatten(A:String) => A
-    rule #flatten(A:String BC:Strings) => A +String #flatten(BC)
+    rule #insertBytes(BM, MEMIDX, BS, BSIDX, LEN) => BM  requires BSIDX ==Int LEN
+    rule #insertBytes(BM, MEMIDX, BS, BSIDX, LEN) =>
+      #insertBytes(
+        // Don't insert 0 bytes.
+        #if substrBytes(BS, BSIDX, BSIDX +Int 1) ==K String2Bytes("\x00")
+          #then BM
+          #else BM [MEMIDX <- substrBytes(BS, BSIDX, BSIDX +Int 1)]
+        #fi
+        , MEMIDX +Int 1
+        , BS
+        , BSIDX +Int 1
+        , LEN)
+      requires BSIDX <Int LEN
 ```
 
 ### TODO: Integrate the rest of the WIP stuff
 
 ```
-
 /*
     syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
  // --------------------------------------------------------
