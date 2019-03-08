@@ -232,9 +232,9 @@ Hexadecimals
 Some data, such as memory offsets, can be specified in hexadecimal form.
 
 ```k
-    syntax HexNum    ::= "0x" String
-    syntax Int       ::= #hexToInt    ( HexNum         ) [function]
- // ------------------------------------------------
+    syntax HexNum ::= "0x" String
+    syntax Int    ::= #hexToInt ( HexNum ) [function]
+ // -------------------------------------------------
     rule #hexToInt(0x H) => String2Base(H, 16) requires H =/=String ""
 ```
 
@@ -274,18 +274,18 @@ We are using the polymorphic `Map` sort for this byte maps.
 ```
 /*
     syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
- // --------------------------------------------------------
+ // ----------------------------------------------------
     rule BM[ N:Int := nilBytes ] => BM
-    rule BM[ N := (B : BS) ] => (BM[N <- B])[N +Int 1 := BS] //[concrete]
+    rule BM[ N := (B : BS) ] => (BM[N <- B])[N +Int 1 := BS] [concrete]
 
     syntax Map ::= #asMapBytes ( Bytes ) [function]
- // -------------------------------------------------------
+ // -----------------------------------------------
     rule #asMapBytes(BS:Bytes) => .Map [ 0 := BS ]
 
     syntax Bytes ::= #range ( Map , Int , Int )        [function]
     syntax Bytes ::= #range ( Map , Int , Int , Bytes) [function, klabel(#rangeAux)]
- // ----------------------------------------------------------------------------------------
-    rule #range(BM:Map, START, WIDTH) => #range(BM, START +Int WIDTH -Int 1, WIDTH, nilBytes) //[concrete]
+ // --------------------------------------------------------------------------------
+    rule #range(BM:Map, START, WIDTH) => #range(BM, START +Int WIDTH -Int 1, WIDTH, nilBytes) [concrete]
 
     rule #range(BM,           END, WIDTH, BS) => BS                                           requires WIDTH ==Int 0
     rule #range(BM,           END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, 0 : BS) requires (WIDTH >Int 0) andBool notBool END in_keys(BM)
@@ -310,13 +310,13 @@ We are using the polymorphic `Map` sort for this byte maps.
 
 ```k
 /*    syntax Byte ::= #lookup ( Map , Int ) [function]
- // -----------------------------------------------
-    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               //[concrete]
-    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) //[concrete]
+ // --------------------------------------------------
+    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
+    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
 
     syntax Map ::= #update ( Map , Int , Byte ) [function]
- // -----------------------------------------------
-    rule #update( M, KEY, VAL ) => M [ KEY <- VAL ] //[concrete]
+ // ------------------------------------------------------
+    rule #update( M, KEY, VAL ) => M [ KEY <- VAL ] [concrete]
 */
 
 ```

@@ -933,7 +933,7 @@ Incidentally, the page size is 2^16 bytes.
     syntax Int ::= #lengthData    ( Data    ) [function]
                  | #lengthDataAux ( Strings ) [function]
                  | Int "/ceilInt" Int         [function]
- // ----------------------------------------------
+ // ----------------------------------------------------
     rule #lengthData((data  _:MemId _ SS)) => #lengthDataAux(SS)
     rule #lengthData((data          _ SS)) => #lengthDataAux(SS)
     rule #lengthData( data {          SS}) => #lengthDataAux(SS)
