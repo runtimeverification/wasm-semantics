@@ -293,58 +293,6 @@ We are using the polymorphic `Map` sort for this byte maps.
     rule #range(END |-> B BM, END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, B +Bytes BS) requires (WIDTH >Int 0)
 ```
 
-### TODO: Integrate the rest of the WIP stuff
-
-```
-/*
-    syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
- // ----------------------------------------------------
-    rule BM[ N:Int := nilBytes ] => BM
-    rule BM[ N := (B : BS) ] => (BM[N <- B])[N +Int 1 := BS] [concrete]
-
-    syntax Map ::= #asMapBytes ( Bytes ) [function]
- // -----------------------------------------------
-    rule #asMapBytes(BS:Bytes) => .Map [ 0 := BS ]
-
-    syntax Bytes ::= #range ( Map , Int , Int )        [function]
-    syntax Bytes ::= #range ( Map , Int , Int , Bytes) [function, klabel(#rangeAux)]
- // --------------------------------------------------------------------------------
-    rule #range(BM:Map, START, WIDTH) => #range(BM, START +Int WIDTH -Int 1, WIDTH, nilBytes) [concrete]
-
-    rule #range(BM,           END, WIDTH, BS) => BS                                           requires WIDTH ==Int 0
-    rule #range(BM,           END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, 0 : BS) requires (WIDTH >Int 0) andBool notBool END in_keys(BM)
-    rule #range(END |-> B BM, END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, B : BS) requires (WIDTH >Int 0)
-*/
-```
-
--   `#removeZeros` removes any entries in a map with zero values.
-
-```k
-/*    syntax Map ::= #removeZeros ( Map ) [function]
-                 | #removeZeros ( List , Map ) [function, klabel(#removeZerosAux)]
- // ------------------------------------------------------------------------------
-    rule #removeZeros( M )                                   => #removeZeros(Set2List(keys(M)), M)
-    rule #removeZeros( .List, .Map )                         => .Map
-    rule #removeZeros( ListItem(KEY) L, KEY |-> 0 REST )     => #removeZeros(L, REST)
-    rule #removeZeros( ListItem(KEY) L, KEY |-> VALUE REST ) => KEY |-> VALUE #removeZeros(L, REST) requires VALUE =/=K 0
-*/
-```
-
--   `#lookup` looks up a key in a map and returns 0 if the key doesn't exist, otherwise returning its value.
-
-```k
-/*    syntax Byte ::= #lookup ( Map , Int ) [function]
- // --------------------------------------------------
-    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
-    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
-
-    syntax Map ::= #update ( Map , Int , Byte ) [function]
- // ------------------------------------------------------
-    rule #update( M, KEY, VAL ) => M [ KEY <- VAL ] [concrete]
-*/
-
-```
-
 ```k
 endmodule
 ```
