@@ -793,12 +793,11 @@ The `storeX` operations first wrap the the value to be stored to the bit wdith `
 The `align` parameter is for optimization only and is not allowed to influence the semantics, and is thus simply stripped.
 
 ```k
-    syntax Instr ::= "(" IValType  "." StoreOp ")" | "(" IValType  "." StoreOp MemArg ")"
- //                | "(" FValType  "." StoreOp ")" | "(" FValType  "." StoreOp MemArg ")"
+    syntax Instr ::= "(" IValType  "." StoreOp MemArg ")"
+ //                | "(" FValType  "." StoreOp MemArg ")"
                    | IValType "." StoreOp Int Int
                    | "store" "{" Int Int Int "}"
  // --------------------------------------------
-    rule <k> ( ITYPE . SOP:StoreOp        ) => ( ITYPE . SOP offset=0 ) ... </k>
     rule <k> ( ITYPE . SOP:StoreOp MEMARG ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
          <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
 
@@ -828,16 +827,17 @@ The `align` parameter is for optimization only and is not allowed to influence t
     rule <k> _     . store16 EA VAL => store { 16               EA #wrap(16, VAL) } ... </k>
     rule <k> i64   . store32 EA VAL => store { 32               EA #wrap(32, VAL) } ... </k>
 
-    syntax MemArg ::= Offset | Align | Offset Align
+    syntax MemArg ::= "" | Offset | Align | Offset Align
     syntax Offset ::= "offset" "=" U32
     syntax Align  ::= "align"  "=" U32
  // ----------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function]
  // -----------------------------------------------
-    rule #getOffset(offset= O) => #u32ToInt(O)
-    rule #getOffset(offset= O _:Align) => #u32ToInt(O)
-    rule #getOffset(_:Align) => 0
+    rule #getOffset(                  ) => 0
+    rule #getOffset(           _:Align) => 0
+    rule #getOffset(offset= OS        ) => #u32ToInt(OS)
+    rule #getOffset(offset= OS _:Align) => #u32ToInt(OS)
 
     syntax U32 ::= Int
                  | HexNum
