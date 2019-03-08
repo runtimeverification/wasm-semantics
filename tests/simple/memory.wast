@@ -67,4 +67,35 @@
 (i64.const 1)
 (i64.store offset=2)
 #assertMemoryData (3, 1) "store is little endian"
+(i32.const 1)
+(i64.const 257)
+(i64.store8 offset=2)
+#assertMemoryData (3, 1) "store8"
+(i32.const 1)
+(i64.const 65537)
+(i64.store16 offset=2)
+#assertMemoryData (3, 1) "store16"
+(i32.const 1)
+(i64.const #pow(i32) +Int 1)
+(i64.store16 offset=2)
+#assertMemoryData (3, 1) "store32"
 #assertMemory 1 .MemBound ""
+
+(memory 0)
+(i32.const 0)
+(i32.const 0)
+(i32.store8)
+#assertTrap "store to 0 size memory"
+#assertMemory 0 .MemBound ""
+
+(memory 1)
+(i32.const 65535)
+(i32.const 1)
+(i32.store8)
+#assertMemoryData (65535, 1) "store to memory edge"
+(i32.const 65535)
+(i32.const 1)
+(i32.store16)
+#assertTrap "store outside of size memory"
+#assertMemory 1 .MemBound ""
+

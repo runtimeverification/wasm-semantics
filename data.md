@@ -138,11 +138,16 @@ We also add `undefined` as a value, which makes many partial functions in the se
 ### Value Operations
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
+The `#wrap` function wraps an integer to a given bit width.
 
 ```k
     syntax IVal ::= #chop ( IVal ) [function]
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
+
+    syntax Int  ::= #wrap(Int, Int) [function]
+ // ------------------------------------------
+    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
 ```
 
 ### Signed Interpretation

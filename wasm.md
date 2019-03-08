@@ -786,30 +786,47 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
                    | Instr
 ```
 
-TODO: Add documentation.
-
-Store:
-
+The assorted store operations take an address of type `i32` and a value.
+Optionally, they can specify an offseet or align parameter as part of the instruction.
+The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
+The `storeX` operations first wrap the the value to be stored to the bit wdith `X`.
 The `align` parameter is for optimization only and is not allowed to influence the semantics, and is thus simply stripped.
 
 ```k
-// TODO: Instance of BinOp? Some other nice way to do folded syntax? Or a store command, like binop, but with memargs?
-    syntax Instr ::= "(" IValType  "." "store" ")" | "(" IValType  "." "store" MemArg ")"
- //                | "(" FValType  "." "store" ")" | "(" FValType  "." "store" MemArg ")"
-                   | IValType "." "store" Int Int Int
- // -------------------------------------------------
-    rule <k> ( ITYPE . store )        => ( ITYPE . store offset=0 ) ... </k>
-    rule <k> ( ITYPE . store MEMARG ) => ITYPE . store IDX #getOffset(MEMARG) VAL ... </k>
+    syntax Instr ::= "(" IValType  "." StoreOp ")" | "(" IValType  "." StoreOp MemArg ")"
+ //                | "(" FValType  "." StoreOp ")" | "(" FValType  "." StoreOp MemArg ")"
+                   | IValType "." StoreOp Int Int
+                   | "store" "{" Int Int Int "}"
+ // --------------------------------------------
+    rule <k> ( ITYPE . SOP:StoreOp        ) => ( ITYPE . SOP offset=0 ) ... </k>
+    rule <k> ( ITYPE . SOP:StoreOp MEMARG ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
          <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
-    rule <k> ITYPE . store IDX OFFSET VAL => . ... </k>
+
+    rule <k> store { WIDTH  EA  VAL } => . ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
            <msize>   SIZE </msize>
-           <mdata> DATA => DATA [IDX +Int OFFSET := Int2Bytes(#numBytes(ITYPE), VAL, LE) ] </mdata>
+           <mdata>   DATA => DATA [EA := Int2Bytes(WIDTH, VAL, LE) ] </mdata>
            ...
          </memInst>
-         requires (#numBytes(ITYPE) +Int OFFSET) <=Int (SIZE *Int #pageSize())
+         requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
+
+    rule <k> store { WIDTH  EA  _ } => trap ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           ...
+         </memInst>
+         requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
+
+    syntax StoreOp ::= "store" | "store8" | "store16" | "store32"
+ // -------------------------------------------------------------
+    rule <k> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL            } ... </k>
+    rule <k> _     . store8  EA VAL => store { 8                EA #wrap(8,  VAL) } ... </k>
+    rule <k> _     . store16 EA VAL => store { 16               EA #wrap(16, VAL) } ... </k>
+    rule <k> i64   . store32 EA VAL => store { 32               EA #wrap(32, VAL) } ... </k>
 
     syntax MemArg ::= Offset | Align | Offset Align
     syntax Offset ::= "offset" "=" U32
