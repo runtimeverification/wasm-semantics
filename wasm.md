@@ -658,7 +658,7 @@ When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<memAddrs>` cell is an array with at most one value, at index 0.
 
-**TODO**: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
+**TODO**: Allow instantiation with an identifier and inline export and import.
 
 ```k
     syntax Instr ::= "(" "memory"                  ")"
@@ -777,7 +777,7 @@ The value is fethced from the "effective address", which is the address given on
     syntax LoadOp ::= "load"
                     | "load8_u" | "load16_u" | "load32_u"
                     | "load8_s" | "load16_s" | "load32_s"
- // --------------------------------------------------------
+ // -----------------------------------------------------
     rule <k> ITYPE . load     EA => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </k>
     rule <k> ITYPE . load8_u  EA => load { ITYPE 8                EA Unsigned } ... </k>
     rule <k> ITYPE . load16_u EA => load { ITYPE 16               EA Unsigned } ... </k>

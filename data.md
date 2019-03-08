@@ -241,18 +241,10 @@ Some data, such as memory offsets, can be specified in hexadecimal form.
 Byte Map
 --------
 
-WASM memory is held as a bounded finite maps.
-We are using the polymorphic `Map` sort for this byte maps.
-
--   `BM [ N := BS ]` assigns a contiguous chunk of `BS` to `BM` starting at position $N$.
--   `#asMapBytes` converts `Bytes` to a `Map`.
--   `#range(M, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position $START$ (padding with zeros as needed).
+Wasm memory is held as a bounded finite maps of bytes.
+`BM [ N := BS ]` assigns a contiguous chunk of `BS` to `BM` starting at position $N$.
 
 ```k
-    syntax Bytes ::= #zeroByte() [function]
- // ---------------------------------------
-    rule #zeroByte() => String2Bytes("\x00")
-
     syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
     syntax Map ::= #insertBytes (Map, Int, Bytes, Int, Int) [function]
  // ------------------------------------------------------------------
@@ -272,25 +264,26 @@ We are using the polymorphic `Map` sort for this byte maps.
         , LEN)
       requires BSIDX <Int LEN
 
+    syntax Bytes ::= #zeroByte() [function]
+ // ---------------------------------------
+    rule #zeroByte() => String2Bytes("\x00")
 ```
 
--   `#lookup` looks up a key in a map and returns 0 if the key doesn't exist, otherwise returning its value.
+`#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`.
+
+```k
+    syntax Bytes ::= #range ( Map , Int , Int ) [function]
+ // ------------------------------------------------------
+    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Bytes #range(BM, START +Int 1, WIDTH) [concrete]
+```
+
+`#lookup` looks up a key in a map, defaulting to a `#zeroByte()` is the map does not contain the key.
 
 ```k
     syntax Bytes ::= #lookup ( Map , Int ) [function]
- // ------------------------------------------------
-    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                                                  [concrete]
+ // -------------------------------------------------
+    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                                         [concrete]
     rule #lookup(               M, KEY ) => #zeroByte() requires notBool KEY in_keys(M) [concrete]
-
-    syntax Bytes ::= #range ( Map , Int , Int )        [function]
-    syntax Bytes ::= #range ( Map , Int , Int , Bytes) [function, klabel(#rangeAux)]
- // --------------------------------------------------------------------------------
-    rule #range(BM:Map, START, WIDTH) => #range(BM, START +Int WIDTH -Int 1, WIDTH, .Bytes) [concrete]
-
-// TODO: Simplify by constructing from the front (okay since we use +Bytes instead of :)
-    rule #range(BM,           END, WIDTH, BS) => BS                                           requires WIDTH ==Int 0
-    rule #range(BM,           END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, #zeroByte() +Bytes BS) requires (WIDTH >Int 0) andBool notBool END in_keys(BM)
-    rule #range(END |-> B BM, END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, B +Bytes BS) requires (WIDTH >Int 0)
 ```
 
 ```k
