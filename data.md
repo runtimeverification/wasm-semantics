@@ -249,6 +249,10 @@ We are using the polymorphic `Map` sort for this byte maps.
 -   `#range(M, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position $START$ (padding with zeros as needed).
 
 ```k
+    syntax Bytes ::= #zeroByte() [function]
+ // ---------------------------------------
+    rule #zeroByte() => String2Bytes("\x00")
+
     syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
     syntax Map ::= #insertBytes (Map, Int, Bytes, Int, Int) [function]
  // ------------------------------------------------------------------
@@ -258,7 +262,7 @@ We are using the polymorphic `Map` sort for this byte maps.
     rule #insertBytes(BM, MEMIDX, BS, BSIDX, LEN) =>
       #insertBytes(
         // Don't insert 0 bytes.
-        #if substrBytes(BS, BSIDX, BSIDX +Int 1) ==K String2Bytes("\x00")
+        #if substrBytes(BS, BSIDX, BSIDX +Int 1) ==K #zeroByte()
           #then BM
           #else BM [MEMIDX <- substrBytes(BS, BSIDX, BSIDX +Int 1)]
         #fi
@@ -267,6 +271,26 @@ We are using the polymorphic `Map` sort for this byte maps.
         , BSIDX +Int 1
         , LEN)
       requires BSIDX <Int LEN
+
+```
+
+-   `#lookup` looks up a key in a map and returns 0 if the key doesn't exist, otherwise returning its value.
+
+```k
+    syntax Bytes ::= #lookup ( Map , Int ) [function]
+ // ------------------------------------------------
+    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                                                  [concrete]
+    rule #lookup(               M, KEY ) => #zeroByte() requires notBool KEY in_keys(M) [concrete]
+
+    syntax Bytes ::= #range ( Map , Int , Int )        [function]
+    syntax Bytes ::= #range ( Map , Int , Int , Bytes) [function, klabel(#rangeAux)]
+ // --------------------------------------------------------------------------------
+    rule #range(BM:Map, START, WIDTH) => #range(BM, START +Int WIDTH -Int 1, WIDTH, .Bytes) [concrete]
+
+// TODO: Simplify by constructing from the front (okay since we use +Bytes instead of :)
+    rule #range(BM,           END, WIDTH, BS) => BS                                           requires WIDTH ==Int 0
+    rule #range(BM,           END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, #zeroByte() +Bytes BS) requires (WIDTH >Int 0) andBool notBool END in_keys(BM)
+    rule #range(END |-> B BM, END, WIDTH, BS) => #range(BM, END -Int 1, WIDTH -Int 1, B +Bytes BS) requires (WIDTH >Int 0)
 ```
 
 ### TODO: Integrate the rest of the WIP stuff

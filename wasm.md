@@ -809,7 +809,9 @@ The value is encoded as bytes and stored at the "effective address", which is th
          </memInst>
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
-    rule <k> store { WIDTH EA _ } => trap ... </k>
+// TODO: Join the trapping because of memory out of bounds cases for load and store. With syntax MemOp ::= LoadOp | StoreOp
+
+    rule <k> store { WIDTH  EA  _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
@@ -824,6 +826,51 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> _     . store8  EA VAL => store { 8                EA #wrap(8,  VAL) } ... </k>
     rule <k> _     . store16 EA VAL => store { 16               EA #wrap(16, VAL) } ... </k>
     rule <k> i64   . store32 EA VAL => store { 32               EA #wrap(32, VAL) } ... </k>
+```
+
+The assorted load operations take an address of type `i32` and a value.
+The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned.
+The value is fethced from the "effective address", which is the address given on the stack plus offset.
+
+```k
+    syntax Instr ::= "(" IValType  "." LoadOp MemArg ")"
+ //                | "(" FValType  "." LoadOp MemArg ")"
+                   | IValType "." LoadOp Int
+                   | "load" "{" IValType Int Int Signedness "}"
+ // -----------------------------------------------------------
+   rule <k> ( ITYPE . LOP:LoadOp MEMARG) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
+         <stack> < i32 > IDX : STACK => STACK </stack>
+
+    rule <k> load { ITYPE WIDTH EA SIGN } => < ITYPE > Bytes2Int(#range(DATA, EA, WIDTH /Int 8), LE, SIGN) ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           <mdata>   DATA </mdata>
+           ...
+         </memInst>
+         requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
+
+    rule <k> load { _ WIDTH EA _ } => trap ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           ...
+         </memInst>
+         requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
+
+    syntax LoadOp ::= "load"
+                    | "load8_u" | "load16_u" | "load32_u"
+                    | "load8_s" | "load16_s" | "load32_s"
+ // --------------------------------------------------------
+    rule <k> ITYPE . load     EA => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </k>
+    rule <k> ITYPE . load8_u  EA => load { ITYPE 8                EA Unsigned } ... </k>
+    rule <k> ITYPE . load16_u EA => load { ITYPE 16               EA Unsigned } ... </k>
+    rule <k> i64   . load32_u EA => load { i64   32               EA Unsigned } ... </k>
+    rule <k> ITYPE . load8_s  EA => load { ITYPE 8                EA Signed   } ... </k>
+    rule <k> ITYPE . load16_s EA => load { ITYPE 16               EA Signed   } ... </k>
+    rule <k> i64   . load32_s EA => load { i64   32               EA Signed   } ... </k>
 ```
 
 `MemArg`s can optionally be passed to `load` and `store` operations.
