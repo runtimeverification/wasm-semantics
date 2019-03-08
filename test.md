@@ -100,13 +100,13 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory"    Int MemBound String
-                       | "#assertMemoryAux" Int Int MemBound String
- // ---------------------------------------------------------------
-    rule <k> #assertMemory SIZE MAX MSG => #assertMemoryAux (NEXT -Int 1) SIZE MAX MSG ... </k>
+    syntax Assertion ::= "#assertEmptyMemory"    Int MemBound String
+                       | "#assertEmptyMemoryAux" Int Int MemBound String
+ // --------------------------------------------------------------------
+    rule <k> #assertEmptyMemory SIZE MAX MSG => #assertEmptyMemoryAux (NEXT -Int 1) SIZE MAX MSG ... </k>
          <nextMemAddr> NEXT </nextMemAddr>
 
-    rule <k> #assertMemoryAux ADDR SIZE MAX _ => .  ... </k>
+    rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
          <memAddrs> (0 |-> ADDR) => .Map </memAddrs>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
@@ -114,6 +114,7 @@ This checks that the last allocated memory has the given size and max value.
                <memAddr> ADDR  </memAddr>
                <mmax>    MAX   </mmax>
                <msize>   SIZE  </msize>
+               <mdata>   .Map  </mdata>
                ...
              </memInst>
           => .Bag
