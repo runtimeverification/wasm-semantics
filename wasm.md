@@ -787,10 +787,8 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
 ```
 
 The assorted store operations take an address of type `i32` and a value.
-Optionally, they can specify an offseet or align parameter as part of the instruction.
-The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 The `storeX` operations first wrap the the value to be stored to the bit wdith `X`.
-The `align` parameter is for optimization only and is not allowed to influence the semantics, and is thus simply stripped.
+The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 
 ```k
     syntax Instr ::= "(" IValType  "." StoreOp MemArg ")"
@@ -801,7 +799,7 @@ The `align` parameter is for optimization only and is not allowed to influence t
     rule <k> ( ITYPE . SOP:StoreOp MEMARG ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
          <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
 
-    rule <k> store { WIDTH  EA  VAL } => . ... </k>
+    rule <k> store { WIDTH EA VAL } => . ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
@@ -811,7 +809,7 @@ The `align` parameter is for optimization only and is not allowed to influence t
          </memInst>
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
-    rule <k> store { WIDTH  EA  _ } => trap ... </k>
+    rule <k> store { WIDTH EA _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
@@ -826,7 +824,13 @@ The `align` parameter is for optimization only and is not allowed to influence t
     rule <k> _     . store8  EA VAL => store { 8                EA #wrap(8,  VAL) } ... </k>
     rule <k> _     . store16 EA VAL => store { 16               EA #wrap(16, VAL) } ... </k>
     rule <k> i64   . store32 EA VAL => store { 32               EA #wrap(32, VAL) } ... </k>
+```
 
+`MemArg`s can optionally be passed to `load` and `store` operations.
+The `offset` parameter is added to the the address given on the stack, resulting in the "effective address" to store to or load from.
+The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
+
+```k
     syntax MemArg ::= "" | Offset | Align | Offset Align
     syntax Offset ::= "offset" "=" U32
     syntax Align  ::= "align"  "=" U32
