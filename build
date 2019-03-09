@@ -9,7 +9,7 @@ import sys
 
 # Make sure the KNinja repo is available.
 #
-subprocess.check_call(['git', 'submodule', 'update', '--init'])
+subprocess.check_call(['git', 'submodule', 'update', '--init', '--recursive'])
 extdir = '.build'
 sys.path.append(os.path.join(os.path.dirname(__file__), extdir))
 
