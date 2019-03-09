@@ -13,26 +13,15 @@ pipeline {
         }
       }
     }
-
-    stage('Build Java') {
+    stage('Build') {
       steps {
         ansiColor('xterm') {
           sh '''
-            ./build wasm-java
+            ./build wasm-java wasm-ocaml wasm-haskell
           '''
         }
       }
     }
-    stage('Build OCaml') {
-      steps {
-        ansiColor('xterm') {
-          sh '''
-            ./build wasm-ocaml
-          '''
-        }
-      }
-    }
-
     stage('Exec OCaml') {
       steps {
         ansiColor('xterm') {
@@ -55,7 +44,6 @@ pipeline {
         }
       }
     }
-
     stage('Proofs Java') {
       steps {
         ansiColor('xterm') {
