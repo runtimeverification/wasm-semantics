@@ -660,15 +660,15 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
 **TODO**: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
 
 ```k
-    syntax Instr ::= "(" "memory"               ")"
-                   | "(" "memory" Int           ")" // Size only
-                   | "(" "memory" Int Int       ")" // Min and max.
+    syntax Instr ::= "(" "memory"                  ")"
+                   | "(" "memory"     Int          ")" // Size only
+                   | "(" "memory"     Int Int      ")" // Min and max.
                    |     "memory" "{" Int MemBound "}"
  // --------------------------------------------------
-    rule <k> ( memory                 ) => memory { 0                 .MemBound         }         ... </k>
-    rule <k> ( memory MIN:Int         ) => memory { MIN               .MemBound         }         ... </k>
+    rule <k> ( memory                 ) => memory { 0   .MemBound } ... </k>
+    rule <k> ( memory MIN:Int         ) => memory { MIN .MemBound } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN               MAX               }         ... </k>
+    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
