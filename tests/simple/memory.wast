@@ -99,3 +99,30 @@
 #assertTrap "store outside of size memory"
 #assertEmptyMemory 1 .MemBound ""
 
+(memory 1)
+(i64.store (i32.const 15) (i64.const #pow(i32) -Int 1))
+(i32.const 15)
+(i32.load8_u)
+#assertTopStack <i32> 255 "load8 unsigned"
+
+
+;; Here's a weird bug I don't understand, in load8
+
+(i32.load8_s (i32.const 0))              ;; Works
+#assertTopStack <i32> 0 "load8 signed"
+(i32.load8_s (i32.const 2))              ;; Works
+#assertTopStack <i32> 0 "load8 signed"
+(i32.const 1)
+(i32.load8_s)                            ;; Works
+#assertTopStack <i32> 0 "load8 signed"
+(i32.load8_s align=1 (i32.const 0))      ;; Works
+#assertTopStack <i32> 0 "load8 signed"
+(i32.load8_s (i32.const 1))              ;; Doesn't work!
+#assertTopStack <i32> 0 "load8 signed"
+
+#assertMemoryData (15, 255) ""
+#assertMemoryData (16, 255) ""
+#assertMemoryData (17, 255) ""
+#assertMemoryData (18, 255) ""
+#assertEmptyMemory 1 .MemBound ""
+
