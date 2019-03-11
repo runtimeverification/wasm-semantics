@@ -274,7 +274,9 @@ Wasm memory is held as a bounded finite maps of bytes.
 ```k
     syntax Bytes ::= #range ( Map , Int , Int ) [function]
  // ------------------------------------------------------
-    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Bytes #range(BM, START +Int 1, WIDTH) [concrete]
+    rule #range(BM:Map, START, 0    ) => .Bytes
+    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Bytes #range(BM, START +Int 1, WIDTH -Int 1)
+      requires WIDTH >Int 0 [concrete]
 ```
 
 `#lookup` looks up a key in a map, defaulting to a `#zeroByte()` is the map does not contain the key.
