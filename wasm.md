@@ -705,11 +705,14 @@ The `storeX` operations first wrap the the value to be stored to the bit wdith `
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= "(" IValType  "." StoreOp MemArg ")"
- //                | "(" FValType  "." StoreOp MemArg ")"
+    syntax Instr ::= "(" IValType "." StoreOp MemArg Instr Instr ")" | "(" IValType  "." StoreOp MemArg ")"
+ //                | "(" FValType "." StoreOp MemArg Instr Instr ")" | "(" FValType  "." StoreOp MemArg ")"
                    | IValType "." StoreOp Int Int
-                   | "store" "{" Int Int Int "}"
- // --------------------------------------------
+ //                | FValType "." StoreOp Int Float
+                   | "store" "{" Int Int Number "}"
+ // -----------------------------------------------
+    rule <k> ( ITYPE . SOP:StoreOp MEMARG I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOP MEMARG ) ... </k>
+
     rule <k> ( ITYPE . SOP:StoreOp MEMARG ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
          <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
 
@@ -747,12 +750,14 @@ The `loadX_sx` operations loads `X` bits from memory, and extend it to the right
 The value is fethced from the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= "(" IValType  "." LoadOp MemArg ")"
- //                | "(" FValType  "." LoadOp MemArg ")"
+    syntax Instr ::= "(" IValType  "." LoadOp MemArg Instr ")" | "(" IValType  "." LoadOp MemArg ")"
+ //                | "(" FValType  "." LoadOp MemArg Instr ")" | "(" FValType  "." LoadOp MemArg ")"
                    | IValType "." LoadOp Int
                    | "load" "{" IValType Int Int Signedness "}"
  // -----------------------------------------------------------
-   rule <k> ( ITYPE . LOP:LoadOp MEMARG) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
+    rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg I:Instr ) => I ~> ( ITYPE . LOP MEMARG ) ... </k>
+
+    rule <k> ( ITYPE . LOP:LoadOp MEMARG) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
          <stack> < i32 > IDX : STACK => STACK </stack>
 
     rule <k> load { ITYPE WIDTH EA SIGN } => < ITYPE > Bytes2Int(#range(DATA, EA, WIDTH /Int 8), LE, SIGN) ... </k>
