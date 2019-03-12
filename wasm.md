@@ -741,8 +741,8 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> i64   . store32 EA VAL => store { 32               EA #wrap(32, VAL) } ... </k>
 ```
 
-The assorted load operations take an address of type `i32` and a value.
-The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned.
+The assorted load operations take an address of type `i32`.
+The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
 The value is fethced from the "effective address", which is the address given on the stack plus offset.
 
 ```k
