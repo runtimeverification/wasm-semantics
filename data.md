@@ -221,9 +221,10 @@ Operator `_++_` implements an append operator for sort `Stack`.
 Byte Map
 --------
 
-Wasm memory is held as a bounded finite map of bytes, which may be very sparse.
-`BM [ N := BS ]` assigns a contiguous chunk of `BS` to `BM` starting at position $N$.
-It is an invariant of the data structure that it stores only integers between 1 and 255, inclusive.
+Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
+To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
+The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
+`BM [ N := I ]` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
     syntax Map ::= Map "[" Int ":=" Int "]" [function]
