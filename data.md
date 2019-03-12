@@ -212,20 +212,6 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 ```
 
-Strings
--------
-
-Sometimes, data can be specified as a string, or even several consequtive strings, which should then be treated as a single string.
-The `Strings` type and `#flatten` function help with this.
-
-```k
-    syntax Strings ::= List{String, ""}
-    syntax String  ::= #flatten ( Strings ) [function]
- // --------------------------------------------------
-    rule #flatten(.Strings) => ""
-    rule #flatten(A:String BC:Strings) => A +String #flatten(BC)
-```
-
 Hexadecimals
 ------------
 
