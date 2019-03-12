@@ -661,7 +661,7 @@ When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<memAddrs>` cell is an array with at most one value, at index 0.
 
-**TODO**: Allow instantiation with an identifier and inline export and import.
+**TODO**: Allow instantiation with data, and with an identifier and inline export and import.
 
 ```k
     syntax Instr ::= "(" "memory"                  ")"
@@ -723,8 +723,6 @@ The value is encoded as bytes and stored at the "effective address", which is th
            ...
          </memInst>
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
-
-// TODO: Join the trapping because of memory out of bounds cases for load and store. With syntax MemOp ::= LoadOp | StoreOp
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>

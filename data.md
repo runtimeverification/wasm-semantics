@@ -85,7 +85,7 @@ The `#width` function returns the bit-width of a given `IValType`.
 ```k
     syntax Int ::= #width    ( IValType ) [function]
     syntax Int ::= #numBytes ( IValType ) [function]
- // ---------------------------------------------
+ // ------------------------------------------------
     rule #width(i32) => 32
     rule #width(i64) => 64
 
@@ -249,7 +249,7 @@ The function interprets the range of bytes as little-endian.
 
 ```k
     syntax Int ::= #range ( Map , Int , Int ) [function]
- // ------------------------------------------------------
+ // ----------------------------------------------------
     rule #range(BM:Map, START, 0    ) => 0
     rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires WIDTH >Int 0 [concrete]
@@ -259,7 +259,7 @@ The function interprets the range of bytes as little-endian.
 
 ```k
     syntax Int ::= #lookup ( Map , Int ) [function]
- // -------------------------------------------------
+ // -----------------------------------------------
     rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
     rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
 ```
