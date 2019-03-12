@@ -212,18 +212,6 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 ```
 
-Hexadecimals
-------------
-
-Some data, such as memory offsets, can be specified in hexadecimal form.
-
-```k
-    syntax HexNum ::= "0x" String
-    syntax Int    ::= #hexToInt ( HexNum ) [function]
- // -------------------------------------------------
-    rule #hexToInt(0x H) => String2Base(H, 16) requires H =/=String ""
-```
-
 Byte Map
 --------
 

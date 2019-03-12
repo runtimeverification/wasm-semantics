@@ -790,23 +790,16 @@ The `align` parameter is for optimization only and is not allowed to influence t
 
 ```k
     syntax MemArg ::= "" | Offset | Align | Offset Align
-    syntax Offset ::= "offset" "=" U32
-    syntax Align  ::= "align"  "=" U32
+    syntax Offset ::= "offset" "=" Int
+    syntax Align  ::= "align"  "=" Int
  // ----------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function]
  // -----------------------------------------------
     rule #getOffset(                  ) => 0
     rule #getOffset(           _:Align) => 0
-    rule #getOffset(offset= OS        ) => #u32ToInt(OS)
-    rule #getOffset(offset= OS _:Align) => #u32ToInt(OS)
-
-    syntax U32 ::= Int
-                 | HexNum
-    syntax Int ::= #u32ToInt ( U32 ) [function]
- // -------------------------------------------
-    rule #u32ToInt(I:Int)    => I
-    rule #u32ToInt(H:HexNum) => #hexToInt(H)
+    rule #getOffset(offset= OS        ) => OS
+    rule #getOffset(offset= OS _:Align) => OS
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
