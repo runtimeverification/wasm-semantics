@@ -228,20 +228,14 @@ The maps store integers, but maintains the invariant that each stored integer is
 
 ```k
     syntax Map ::= Map "[" Int ":=" Int "]" [function]
-    syntax Map ::= #insertBytes(Map, Int, Int) [function]
- // -----------------------------------------------------
-    rule BM [ IDX := BS ] => #insertBytes(BM, IDX, BS)
-
-    rule #insertBytes(BM, MEMIDX, 0) => BM
-    rule #insertBytes(BM, MEMIDX, VAL) =>
-      #insertBytes(
+ // --------------------------------------------------
+    rule BM [ IDX := 0  ] => BM
+    rule BM [ IDX := VAL] =>
         // Don't store 0 bytes.
         #if VAL modInt 256 =/=Int 0
-          #then BM [MEMIDX <- VAL modInt 256]
+          #then BM [IDX <- VAL modInt 256 ]
           #else BM
-        #fi
-        , MEMIDX +Int 1
-        , VAL /Int 256)
+        #fi [ IDX +Int 1 := VAL /Int 256 ]
       requires VAL >Int 0
 ```
 
