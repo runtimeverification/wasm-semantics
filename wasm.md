@@ -700,15 +700,18 @@ The `storeX` operations first wrap the the value to be stored to the bit wdith `
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= "(" IValType "." StoreOp MemArg Instr Instr ")" | "(" IValType  "." StoreOp MemArg ")"
- //                | "(" FValType "." StoreOp MemArg Instr Instr ")" | "(" FValType  "." StoreOp MemArg ")"
+    syntax Instr ::= "(" IValType "." StoreOpM Instr Instr ")" | "(" IValType  "." StoreOpM ")"
+ //                | "(" FValType "." StoreOpM Instr Instr ")" | "(" FValType  "." StoreOpM ")"
                    | IValType "." StoreOp Int Int
  //                | FValType "." StoreOp Int Float
                    | "store" "{" Int Int Number "}"
+    syntax StoreOpM ::= StoreOp | StoreOp MemArg
  // -----------------------------------------------
-    rule <k> ( ITYPE . SOP:StoreOp MEMARG I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOP MEMARG ) ... </k>
+    rule <k> ( ITYPE . SOPM:StoreOpM I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOPM ) ... </k>
 
-    rule <k> ( ITYPE . SOP:StoreOp MEMARG ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
+    rule <k> ( ITYPE . SOP:StoreOp               ) => ITYPE . SOP  IDX                          VAL ... </k>
+         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+    rule <k> ( ITYPE . SOP:StoreOp MEMARG:MemArg ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
          <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
@@ -745,14 +748,17 @@ The `loadX_sx` operations loads `X` bits from memory, and extend it to the right
 The value is fethced from the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= "(" IValType  "." LoadOp MemArg Instr ")" | "(" IValType  "." LoadOp MemArg ")"
- //                | "(" FValType  "." LoadOp MemArg Instr ")" | "(" FValType  "." LoadOp MemArg ")"
+    syntax Instr ::= "(" IValType  "." LoadOpM Instr ")" | "(" IValType  "." LoadOpM ")"
+ //                | "(" FValType  "." LoadOpM Instr ")" | "(" FValType  "." LoadOpM ")"
                    | IValType "." LoadOp Int
                    | "load" "{" IValType Int Int Signedness"}"
+    syntax LoadOpM ::= LoadOp | LoadOp MemArg
     syntax Signedness ::= "Signed" | "Unsigned"
  // -------------------------------------------
-    rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg I:Instr ) => I ~> ( ITYPE . LOP MEMARG ) ... </k>
+    rule <k> ( ITYPE . LOPM:LoadOpM I:Instr ) => I ~> ( ITYPE . LOPM ) ... </k>
 
+    rule <k> ( ITYPE . LOP:LoadOp              ) => ITYPE . LOP  IDX                          ... </k>
+         <stack> < i32 > IDX : STACK => STACK </stack>
     rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
          <stack> < i32 > IDX : STACK => STACK </stack>
 
@@ -797,14 +803,13 @@ The `offset` parameter is added to the the address given on the stack, resulting
 The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
 
 ```k
-    syntax MemArg ::= "" | Offset | Align | Offset Align
+    syntax MemArg ::= Offset | Align | Offset Align
     syntax Offset ::= "offset" "=" Int
     syntax Align  ::= "align"  "=" Int
  // ----------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function]
  // -----------------------------------------------
-    rule #getOffset(                  ) => 0
     rule #getOffset(           _:Align) => 0
     rule #getOffset(offset= OS        ) => OS
     rule #getOffset(offset= OS _:Align) => OS
