@@ -54,6 +54,9 @@ That way, unsigned instructions can make use of `I` directly, whereas signed ins
 
 The highest address in a memory instance divided by the `#pageSize()` constant (defined below) may not exceed the value in the `<max>` cell, if present.
 
+Since memory data is bytes, all integers in the `Map` in the `<mdata>` cell are bounded to be between 1 and 255, inclusive.
+All places in the data with no entry are considered zero bytes.
+
 Instructions
 ------------
 
@@ -713,7 +716,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <memInst>
            <memAddr> ADDR </memAddr>
            <msize>   SIZE </msize>
-           <mdata>   DATA => DATA [EA := Int2Bytes(WIDTH, VAL, LE) ] </mdata>
+           <mdata>   DATA => DATA [EA := VAL ] </mdata>
            ...
          </memInst>
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
@@ -745,14 +748,19 @@ The value is fethced from the "effective address", which is the address given on
     syntax Instr ::= "(" IValType  "." LoadOp MemArg Instr ")" | "(" IValType  "." LoadOp MemArg ")"
  //                | "(" FValType  "." LoadOp MemArg Instr ")" | "(" FValType  "." LoadOp MemArg ")"
                    | IValType "." LoadOp Int
-                   | "load" "{" IValType Int Int Signedness "}"
- // -----------------------------------------------------------
+                   | "load" "{" IValType Int Int Signedness"}"
+    syntax Signedness ::= "Signed" | "Unsigned"
+ // -------------------------------------------
     rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg I:Instr ) => I ~> ( ITYPE . LOP MEMARG ) ... </k>
 
     rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
          <stack> < i32 > IDX : STACK => STACK </stack>
 
-    rule <k> load { ITYPE WIDTH EA SIGN } => < ITYPE > Bytes2Int(#range(DATA, EA, WIDTH /Int 8), LE, SIGN) ... </k>
+    rule <k> load { ITYPE WIDTH EA SIGN } =>
+      < ITYPE > #if SIGN ==K Signed
+                #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH /Int 8))
+                #else #range(DATA, EA, WIDTH /Int 8)
+                #fi ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>

@@ -6,8 +6,6 @@ require "domains.k"
 
 module WASM-DATA
     imports DOMAINS
-    imports BYTES
-//    imports COLLECTIONS
 ```
 
 Parsing
@@ -154,16 +152,24 @@ The `#wrap` function wraps an integer to a given bit width.
 
 Functions `#signed` and `#unsigned` allow for easier operation on twos-complement numbers.
 These functions assume that the argument integer is in the valid range of signed and unsigned values of the respective type, so they will not correctly map arbitrary integers into the corret range.
+Some operations extend integers from 1, 2, or 4 bytes, so a special function with a bit width argument helps with the conversion.
 
 ```k
-    syntax Int ::= #signed   ( IValType , Int ) [function]
-                 | #unsigned ( IValType , Int ) [function]
- // ------------------------------------------------------
+    syntax Int ::= #signed      ( IValType , Int ) [function]
+                 | #unsigned    ( IValType , Int ) [function]
+                 | #signedWidth ( Int      , Int ) [function]
+ // ---------------------------------------------------------
     rule #signed(ITYPE, N) => N                  requires 0            <=Int N andBool N <Int #pow1(ITYPE)
     rule #signed(ITYPE, N) => N -Int #pow(ITYPE) requires #pow1(ITYPE) <=Int N andBool N <Int #pow (ITYPE)
 
     rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
     rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
+
+    rule #signedWidth(8,  N) => N            requires 0     <=Int N andBool N <Int 128
+    rule #signedWidth(8,  N) => N -Int 256   requires 128   <=Int N andBool N <Int 256
+    rule #signedWidth(16, N) => N            requires 0     <=Int N andBool N <Int 32768
+    rule #signedWidth(16, N) => N -Int 65536 requires 32768 <=Int N andBool N <Int 65536
+    rule #signedWidth(32, N) => #signed(i32, N)
 ```
 
 ### Boolean Interpretation
@@ -215,51 +221,47 @@ Operator `_++_` implements an append operator for sort `Stack`.
 Byte Map
 --------
 
-Wasm memory is held as a bounded finite maps of bytes.
+Wasm memory is held as a bounded finite map of bytes, which may be very sparse.
 `BM [ N := BS ]` assigns a contiguous chunk of `BS` to `BM` starting at position $N$.
+It is an invariant of the data structure that it stores only integers between 1 and 255, inclusive.
 
 ```k
-    syntax Map ::= Map "[" Int ":=" Bytes "]" [function]
-    syntax Map ::= #insertBytes (Map, Int, Bytes, Int, Int) [function]
- // ------------------------------------------------------------------
-    rule BM [ IDX := BS ] => #insertBytes(BM, IDX, BS, 0, lengthBytes(BS))
+    syntax Map ::= Map "[" Int ":=" Int "]" [function]
+    syntax Map ::= #insertBytes(Map, Int, Int) [function]
+ // -----------------------------------------------------
+    rule BM [ IDX := BS ] => #insertBytes(BM, IDX, BS)
 
-    rule #insertBytes(BM, MEMIDX, BS, BSIDX, LEN) => BM  requires BSIDX ==Int LEN
-    rule #insertBytes(BM, MEMIDX, BS, BSIDX, LEN) =>
+    rule #insertBytes(BM, MEMIDX, 0) => BM
+    rule #insertBytes(BM, MEMIDX, VAL) =>
       #insertBytes(
-        // Don't insert 0 bytes.
-        #if substrBytes(BS, BSIDX, BSIDX +Int 1) ==K #zeroByte()
-          #then BM
-          #else BM [MEMIDX <- substrBytes(BS, BSIDX, BSIDX +Int 1)]
+        // Don't store 0 bytes.
+        #if VAL modInt 256 =/=Int 0
+          #then BM [MEMIDX <- VAL modInt 256]
+          #else BM
         #fi
         , MEMIDX +Int 1
-        , BS
-        , BSIDX +Int 1
-        , LEN)
-      requires BSIDX <Int LEN
-
-    syntax Bytes ::= #zeroByte() [function]
- // ---------------------------------------
-    rule #zeroByte() => String2Bytes("\x00")
+        , VAL /Int 256)
+      requires VAL >Int 0
 ```
 
-`#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`.
+`#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
+The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Bytes ::= #range ( Map , Int , Int ) [function]
+    syntax Int ::= #range ( Map , Int , Int ) [function]
  // ------------------------------------------------------
-    rule #range(BM:Map, START, 0    ) => .Bytes
-    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Bytes #range(BM, START +Int 1, WIDTH -Int 1)
+    rule #range(BM:Map, START, 0    ) => 0
+    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires WIDTH >Int 0 [concrete]
 ```
 
-`#lookup` looks up a key in a map, defaulting to a `#zeroByte()` is the map does not contain the key.
+`#lookup` looks up a key in a map, defaulting to 0 if the map does not contain the key.
 
 ```k
-    syntax Bytes ::= #lookup ( Map , Int ) [function]
+    syntax Int ::= #lookup ( Map , Int ) [function]
  // -------------------------------------------------
-    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                                         [concrete]
-    rule #lookup(               M, KEY ) => #zeroByte() requires notBool KEY in_keys(M) [concrete]
+    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
+    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
 ```
 
 ```k

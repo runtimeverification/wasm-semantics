@@ -78,22 +78,20 @@
 (i32.const 15)
 (i32.load8_u)
 #assertTopStack <i32> 255 "load8 unsigned"
-
-
-;; Here's a weird bug I don't understand, in load8
-
-(i32.load8_s (i32.const 0))              ;; Works
-#assertTopStack <i32> 0 "load8 signed"
-(i32.load8_s (i32.const 2))              ;; Works
-#assertTopStack <i32> 0 "load8 signed"
-(i32.const 1)
-(i32.load8_s)                            ;; Works
-#assertTopStack <i32> 0 "load8 signed"
-(i32.load8_s align=1 (i32.const 0))      ;; Works
-#assertTopStack <i32> 0 "load8 signed"
-(i32.load8_s (i32.const 1))              ;; Doesn't work!
-#assertTopStack <i32> 0 "load8 signed"
-
+(i32.load8_s (i32.const 15))
+#assertTopStack <i32> -1 "load8 signed"
+(i32.load16_u (i32.const 16))
+#assertTopStack <i32> 65535 "load16 unsigned"
+(i32.load16_s (i32.const 16))
+#assertTopStack <i32> -1 "load16 signed"
+(i64.load32_u (i32.const 15))
+#assertTopStack <i64> #pow(i32) -Int 1 "load32 unsigned1"
+(i64.load32_s (i32.const 15))
+#assertTopStack <i64> -1 "load32 signed1"
+(i64.load32_u (i32.const 17))
+#assertTopStack <i64> 65535 "load32 unsigned2"
+(i64.load32_u (i32.const 17))
+#assertTopStack <i64> 65535 "load32 signed2"
 #assertMemoryData (15, 255) ""
 #assertMemoryData (16, 255) ""
 #assertMemoryData (17, 255) ""

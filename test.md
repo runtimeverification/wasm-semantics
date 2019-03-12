@@ -8,7 +8,6 @@ require "wasm.k"
 
 module WASM-TEST
     imports WASM
-    imports BYTES
 ```
 
 Assertions
@@ -129,12 +128,11 @@ This checks that the last allocated memory has the given size and max value.
          <mems>
            <memInst>
              <memAddr> ADDR </memAddr>
-             <mdata> ...  KEY |-> BYTE => .Map ... </mdata>
+             <mdata> ...  KEY |-> VAL => .Map ... </mdata>
                ...
            </memInst>
            ...
          </mems>
-       requires Bytes2Int(BYTE, LE, Unsigned) ==Int VAL
 ```
 
 ```k
