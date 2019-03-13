@@ -6,6 +6,7 @@ require "data.k"
 
 module WASM
     imports WASM-DATA
+    imports BYTES
 ```
 
 Configuration
@@ -760,7 +761,6 @@ The value is fethced from the "effective address", which is the address given on
                    | IValType "." LoadOp Int
                    | "load" "{" IValType Int Int Signedness"}"
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
-    syntax Signedness ::= "Signed" | "Unsigned"
  // -------------------------------------------
     rule <k> ( ITYPE . LOPM:LoadOpM I:Instr ) => I ~> ( ITYPE . LOPM ) ... </k>
 
@@ -903,7 +903,7 @@ Incidentally, the page size is 2^16 bytes.
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
-           <mdata>   DATA => DATA [ OFFSET := String2Bytes(STRING)] </mdata> // TODO
+           <mdata>   DATA => DATA [ OFFSET := Bytes2Int(String2Bytes(STRING), LE, Unsigned)] </mdata> // TODO
            ...
          </memInst>
 
