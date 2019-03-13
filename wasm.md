@@ -719,7 +719,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <memInst>
            <memAddr> ADDR </memAddr>
            <msize>   SIZE </msize>
-           <mdata>   DATA => DATA [EA := VAL ] </mdata>
+           <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH -Int 1) [EA := VAL ] </mdata>
            ...
          </memInst>
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())

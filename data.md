@@ -234,7 +234,7 @@ The maps store integers, but maintains the invariant that each stored integer is
         // Don't store 0 bytes.
         #if VAL modInt 256 =/=Int 0
           #then BM [IDX <- VAL modInt 256 ]
-          #else BM
+          #else BM [IDX <- undef          ]
         #fi [ IDX +Int 1 := VAL /Int 256 ]
       requires VAL >Int 0
 ```
@@ -257,6 +257,15 @@ The function interprets the range of bytes as little-endian.
  // -----------------------------------------------
     rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
     rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
+```
+
+`#clearRange(MAP, START, END)` removes all entries from the map from `START` to `END`, inclusive.
+
+```k
+    syntax Map ::= #clearRange(Map, Int, Int) [function]
+ // ----------------------------------------------------
+    rule #clearRange(M, START, END) => M                                     requires START >=Int END
+    rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END) requires START <Int END
 ```
 
 ```k
