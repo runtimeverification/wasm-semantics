@@ -706,7 +706,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
  //                | FValType "." StoreOp Int Float
                    | "store" "{" Int Int Number "}"
     syntax StoreOpM ::= StoreOp | StoreOp MemArg
- // -----------------------------------------------
+ // --------------------------------------------
     rule <k> ( ITYPE . SOPM:StoreOpM I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOPM ) ... </k>
 
     rule <k> ( ITYPE . SOP:StoreOp               ) => ITYPE . SOP  IDX                          VAL ... </k>
