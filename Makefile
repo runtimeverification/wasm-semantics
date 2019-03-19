@@ -139,8 +139,7 @@ test-proof: $(proof_tests:=.prove)
 # Presentation
 # ------------
 
-media: media/201803-ethcc/presentation.pdf
+media: media/201803-ethcc.pdf
 
-media/%/presentation.pdf: media/%/presentation.md
-	cd media/$* \
-		&& pandoc --from markdown --to beamer --output presentation.pdf presentation.md
+media/%.pdf: media/%.md media/citations.md
+	cat $^ | pandoc --from markdown-latex_macros --to beamer --filter pandoc-citeproc --output $@
