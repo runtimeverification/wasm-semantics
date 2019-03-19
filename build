@@ -25,6 +25,7 @@ def build_wasm(backend, flags = ''):
                           , main      = 'test.md'
                           , other     = [ 'wasm.md', 'data.md', 'kwasm-lemmas.md' ]
                           , directory = proj.builddir('defn', backend)
+                          , runner_script = './kwasm'
                           , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
                                       + flags
                           )
@@ -53,7 +54,6 @@ def proof_tests(defn, backend):
     return defn.proofs( glob = 'tests/proofs/*-spec.k'
                       , alias = 'test-proofs-' + backend
                       , default = False
-                      , flags = '-m KWASM-LEMMAS'
                       )
 
 exec_tests(wasm_java, 'java')
