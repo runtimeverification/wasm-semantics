@@ -9,10 +9,8 @@ import sys
 
 # Make sure the KNinja repo is available.
 #
+subprocess.check_call(['git', 'submodule', 'update', '--init'])
 extdir = '.build'
-kninja_submodule = extdir + '/kninja'
-if not os.path.exists(kninja_submodule + '/.git'):
-    subprocess.check_call(['git', 'submodule', 'update', '--init', kninja_submodule])
 sys.path.append(os.path.join(os.path.dirname(__file__), extdir))
 
 from kninja import *
@@ -37,18 +35,35 @@ wasm_haskell = build_wasm(backend = 'haskell')
 # Testing
 # =======
 
-concrete_backend = wasm_java
+concrete_backend = wasm_ocaml
 symbolic_backend = wasm_java
 
-t_simple = concrete_backend.tests( glob = 'tests/simple/*.wast'
-                                 , alias = 'test-simple'
-                                 , expected = 'tests/success-java.out'
-                                 )
-t_proofs = symbolic_backend.proofs( glob = 'tests/proofs/*-spec.k'
-                                  , alias = 'test-proofs'
-                                  )
-t_exec   = proj.alias('test-exec'  , t_simple          )
-t_tests  = proj.alias('tests'      , [t_exec, t_proofs])
+def exec_tests(defn, backend):
+    simple = defn.tests( glob = 'tests/simple/*.wast'
+                       , alias = 'test-simple-' + backend
+                       , expected = 'tests/success-' + backend + '.out'
+                       , default = False
+                       )
+    exec = proj.alias( name = 'test-exec-' + backend
+                     , targets = simple
+                     )
+    return exec
+
+def proof_tests(defn, backend):
+    return defn.proofs( glob = 'tests/proofs/*-spec.k'
+                      , alias = 'test-proofs-' + backend
+                      , default = False
+                      )
+
+exec_tests(wasm_java, 'java')
+exec_tests(wasm_ocaml, 'ocaml')
+proof_tests(wasm_java, 'java')
+proof_tests(wasm_haskell, 'haskell')
+
+proj.alias(name = 'test-exec',   targets = 'test-exec-java')
+proj.alias(name = 'test-simple', targets = 'test-simple-java')
+proj.alias(name = 'test-proofs', targets = 'test-proofs-java')
+proj.default(['test-exec', 'test-simple', 'test-proofs'])
 
 # Main
 # ====
