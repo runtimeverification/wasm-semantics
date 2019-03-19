@@ -72,7 +72,6 @@ run_klab() {
         >/dev/null || true
 
     export KLAB_OUT="$klab_dir"
-    export PATH=$HOME/src/klab/bin:$PATH
     klab debug klab-statelog
 }
 
@@ -138,5 +137,7 @@ case "$run_command-$backend" in
        Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.
              <K args> are any arguments you want to pass to K when executing/proving.
+
+       KLab: Make sure that the 'klab/bin' directory is on your PATH to use this option.
 " ; exit ;;
 esac
