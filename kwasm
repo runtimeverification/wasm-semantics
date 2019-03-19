@@ -21,6 +21,8 @@ test_logs="$build_dir/logs"
 test_log="$test_logs/tests.log"
 mkdir -p "$test_logs"
 
+klab_dir="$build_dir/klab"
+
 # Utilities
 # ---------
 
@@ -59,13 +61,18 @@ run_klab() {
     run_mode="$1" ; shift
     run_file="$1" ; shift
 
-    $0 $run_mode --backend java $run_file \
-        --state-log --state-log-path /tmp/klab --state-log-id wasmtest \
+    $0 "$run_mode" --backend java "$run_file" \
+        --state-log --state-log-path "$klab_dir/data" --state-log-id klab-statelog \
         --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
+        --output-flatten "_Map_ #And" \
+        --no-alpha-renaming --restore-original-names --no-sort-collections \
         --output json \
-        >/dev/null
+        "$@" \
+        >/dev/null || true
 
-    progress 'Run `TMPDIR=/tmp KLAB_EVMS_PATH=foo klab debugg wasmtest` to explore execution trace.'
+    export KLAB_OUT="$klab_dir"
+    export PATH=$HOME/src/klab/bin:$PATH
+    klab debug klab-statelog
 }
 
 run_test() {
