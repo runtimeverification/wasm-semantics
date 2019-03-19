@@ -132,6 +132,7 @@ case "$run_command-$backend" in
        $0 run   : Run a single WebAssembly program
        $0 test  : Run a single WebAssembly program like it's a test
        $0 prove : Run a WebAssembly K proof
+       $0 klab-(run|prove) : Run or prove a spec and launch KLab on the execution graph.
 
        Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.
