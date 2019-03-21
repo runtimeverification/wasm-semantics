@@ -21,18 +21,67 @@ header-includes:
 Overview
 --------
 
-1.  Why WebAssembly, and why in K?
+1.  Background
 2.  Introduction to WebAssembly (Wasm)
 3.  Introduction to K
 4.  Demo: implement a Wasm subset
 5.  Proving things
 6.  Results: What did I do
 
+Why WebAssembly in K?
+==============================
+
+Smart contracts and formal methods
+------------
+
+![](media/img/ethereum.png){ width=65%}
+
+- Blockchain technology, **smart contracts** in particular, caught my interest.
+- Public, immutable code handling lots of money? Great area of application for formal methods!
+
+Existing projects
+-------
+
+![](media/img/maker.png){ width=20% align=center style="margin-bottom:40px"}
+
+- Contacted friends at MakerDAO.
+- They have verified the core contracts of their "stablecoin", Dai.
+
+. . .
+
+![](media/img/dapphub.png){ width=40% align=center style="margin-bottom:40px"}
+
+- The verification was largely done by a related organization, DappHub ...
+
+. . .
+
+![](media/img/k.png){ height=15% hspace=30px } &nbsp;&nbsp;&nbsp;
+<!-- ![](media/img/rv.png){ height=15%} -->
+
+- ... using the K framework.
+
+Verifying Ethereum contracts
+---------
+
+1. Contracts are compiled to EVM bytecode.
+2. Some properties or invariant is specified in K.
+3. K tries to construct proves that every possible execution path fulfills the
+   stated properties
+4. The tool KLab (by DappHub) offers an interactive view of execution paths,
+   great for seeing what paths where the prover failed.
+
+
+
+<!---
+
+
+* Explain semantics of imp, that Id's always refer to unique identifiers.
+* Replace `loop` example with own example (smth you wrote)
 
 
 
 
-<!-- SCRATCH: From EDCON presentation -->
+
 
 
 (Brief) Introduction to K/KEVM
@@ -505,3 +554,5 @@ References
 
 \tiny
 
+
+-->
