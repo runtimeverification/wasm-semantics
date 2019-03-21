@@ -140,7 +140,8 @@ test-proof: $(proof_tests:=.prove)
 # ------------
 
 media: media/201803-ethcc.pdf \
-       media/201903-edcon.pdf
+       media/201903-edcon.pdf \
+       media/201903-chalmers.pdf
 
 media/%.pdf: media/%.md media/citations.md
 	cat $^ | pandoc --from markdown-latex_macros --to beamer --filter pandoc-citeproc --output $@
