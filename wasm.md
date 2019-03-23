@@ -680,7 +680,7 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          <memAddrs>    .Map => (0 |-> NEXT)  </memAddrs>
          <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
          <mems>
-           ( .Bag
+         ( .Bag
           => <memInst>
                <memAddr> NEXT </memAddr>
                <mmax>    MAX  </mmax>
