@@ -22,6 +22,7 @@ header-includes:
 -   \newcommand{\DATA}{\texttt{data}}
 -   \newcommand{\FUNCS}{\texttt{funcs}}
 -   \newcommand{\GLOBALS}{\texttt{globals}}
+-   \newcommand{\GROW}{\texttt{grow}}
 -   \newcommand{\ITHREETWO}{\texttt{i32}}
 -   \newcommand{\LOCALS}{\texttt{locals}}
 -   \newcommand{\MEMADDRS}{\texttt{memaddrs}}
@@ -30,8 +31,9 @@ header-includes:
 -   \newcommand{\MODULE}{\texttt{module}}
 -   \newcommand{\SIZE}{\texttt{size}}
 -   \newcommand{\TABLES}{\texttt{tables}}
--   \newcommand{\stepto}{\hookrightarrow}
--   \newcommand{\ite}[1]{\text{if}~#1}
+-   \newcommand{\with}{\textit{~with~}}
+-   \newcommand{\stepto}{~\hookrightarrow~}
+-   \newcommand{\wif}[1]{\text{if}~#1}
 -   \newcommand{\diminish}[1]{\begin{footnotesize}#1\end{footnotesize}}
 ---
 
@@ -507,10 +509,38 @@ $$
 \STORE; \FRAME; \MEMORY.\SIZE \stepto \STORE; \FRAME; (\ITHREETWO.\CONST~sz)
 $$
 $$
-(\ite{|\STORE.\MEMS[\FRAME.\MODULE.\MEMADDRS[0]].\DATA| = sz * 64 Ki)}
+(\wif{|\STORE.\MEMS[\FRAME.\MODULE.\MEMADDRS[0]].\DATA| = sz * 64 Ki)}
 $$
 
 [^memIdxZero]: Every module in Wasm has a single memory for now, so we always implicitly work on `memaddrs[0]`.
+
+
+Demo: implement a Wasm subset
+=============================
+
+`(memory.size)`
+---------------
+
+$$
+\STORE ; \FRAME ; \MEMORY.\SIZE \stepto \STORE ; \FRAME ; (\ITHREETWO.\CONST sz)
+$$
+$$
+\wif {
+|\STORE.\MEMS[\FRAME.\MODULE.\MEMADDRS[0]].\DATA| = sz \cdot 64 Ki
+}
+$$
+
+`(memory.grow)`
+---------------
+
+\begin{align*}
+\STORE; \FRAME ; &(\ITHREETWO.\CONST n)~(\MEMORY.\GROW) \stepto \STORE ' ; \FRAME ; (\ITHREETWO.\CONST sz ) \\
+(&\wif{\FRAME.\MODULE.\MEMADDRS[0] = a \\
+&\land sz = |\STORE.\MEMS[a].\DATA|/64 Ki \\
+&\land \STORE ' = \STORE \with \MEMS[a] = growmem(\STORE.\MEMS[a], n))} \\
+\\
+\STORE; \FRAME ; &(\ITHREETWO.\CONST n)~(\MEMORY.\GROW) \stepto \STORE ; \FRAME ; (\ITHREETWO.\CONST {-1} ) \\
+\end{align*}
 
 
 Conclusion/Questions?
