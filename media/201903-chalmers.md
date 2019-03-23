@@ -18,7 +18,7 @@ header-includes:
 -   \newcommand{\instr}{instr}
 -   \newcommand{\STORE}{\textit{S}}
 -   \newcommand{\FRAME}{\textit{F}}
--   \newcommand{\CONST}{\texttt{const}}
+-   \newcommand{\CONST}{\texttt{const~}}
 -   \newcommand{\DATA}{\texttt{data}}
 -   \newcommand{\FUNCS}{\texttt{funcs}}
 -   \newcommand{\GLOBALS}{\texttt{globals}}
@@ -46,8 +46,8 @@ With Everett
 -->
 
 1.  Background
-2.  Introduction to WebAssembly (Wasm)
-3.  Introduction to K
+2.  Introduction to K
+3.  Introduction to WebAssembly (Wasm)
 4.  Demo: implement a Wasm subset
 5.  (Proving things)
 <!-- 6.  Results: What did I do -->
@@ -105,8 +105,8 @@ The KEVM
 - Verification made possible by KEVM [@hildenbrandt-saxena-zhu-rosu-k-evm], modelling the EVM.
 - The EVM is a stack machine with $\approx$ 120 opcodes.
 
-(Brief) Introduction to K/KEVM
-==============================
+(Brief) Introduction to K
+==========================
 
 The Vision: Language Independence
 ---------------------------------
@@ -178,7 +178,7 @@ For example, a simple imperative language might have:
 
 > -   `<k>` will contain the initial parsed program
 > -   `<env>` contains bindings of variable names to store locations
-> -   `<store>` conaints bindings of store locations to integers
+> -   `<store>` contains bindings of store locations to integers
 
 K Specifications: Transition Rules
 ----------------------------------
@@ -434,10 +434,38 @@ wasm 1.0 reference interpreter
 ```
 
 
-Code unfold example
--------------------
+Code fold/unfold
+----------------
 
+```scheme
+(memory.size)      ;; Nullary -- push memory size (i32).
+(i64.extend_i32_u) ;; Unary   -- i32 ==> i64.
 ```
+
+. . .
+
+```scheme
+(local.get $tmp)   ;; Nullary -- push local variable $tmp (i32).
+(i64.load8_u)      ;; Unary   -- load 1 byte from argument address, push.
+```
+
+. . .
+
+```scheme
+(i64.add)          ;; Binary
+```
+
+. . .
+
+\vfill{}
+
+becomes
+
+. . .
+
+\vfill}
+
+```scheme
 (i64.add
     (i64.extend_i32_u (memory.size))
     (i64.load8_u      (local.get $tmp)))
@@ -445,15 +473,13 @@ Code unfold example
 
 \vfill{}
 
-becomes
+. . .
 
-\vfill{}
+Mix freely! Also OK:
 
-```
-(memory.size)      ;; Push memory size to the stack as i32.
-(i64.extend_i32_u) ;; i32 ==> i64.
-(local.get $tmp)   ;; Push the local variable $tmp (i32) to the stack.
-(i64.load8_u)      ;; Consume 1 operand, load 1 byte from that address, push.
+```scheme
+(i64.extend_i32_u (memory.size))
+(i64.load8_u      (local.get $tmp)))
 (i64.add)
 ```
 
@@ -472,12 +498,15 @@ Available at <https://github.com/WebAssembly/spec>.
 The execution model has a *store* ($\STORE$) and a *current frame* ($\FRAME$).
 
 \begin{alignat*}{5}
-store ::= \{ \quad & \FUNCS     & \quad & funcinst*    \\
-                   & \TABLES    & \quad & tableinst*   \\
-                   & \MEMS      & \quad & meminst*     \\
-                   & \GLOBALS   & \quad & globalinst* \quad \} \\
-frame ::= \{ \quad & \LOCALS  & \quad & val* \\
-                   & \MODULE  & \quad & moduleinst \quad \}
+&store      &::=~&\{ & \quad &\FUNCS    ~&\quad &funcinst^*         &     \\
+&           &    &   & \quad &\TABLES   ~&\quad &tableinst^*        &     \\
+&           &    &   & \quad &\MEMS     ~&\quad &meminst^*          &     \\
+&           &    &   & \quad &\GLOBALS  ~&\quad &globalinst^* \quad &\}   \\
+&frame      &::=~&\{ & \quad &\LOCALS   ~&\quad &val^*              &     \\
+&           &    &   & \quad &\MODULE   ~&\quad &moduleinst   \quad &\}   \\
+%&moduleinst~&::=~&\{~& \quad &\dots     ~&\quad &                   &     \\
+%&           &    &   & \quad &\MEMADDRS ~&\quad &memaddr^*          &     \\
+%&           &    &   & \quad &\dots     ~&\quad &                   &\}
 \end{alignat*}
 
 [^betterThanEVM]: Better than the [YellowPaper](https://github.com/ethereum/yellowpaper).
@@ -497,7 +526,7 @@ Execution description:
 <!-- 4. \diminish{Assert: due to validation, $\STORE.\MEMS[a]$ exists.} -->
 5. Let $mem$ be the memory instance $\STORE.\MEMS[a]$.
 6. Let $sz$ be the length of $mem.\DATA$ divided by the page size.
-7. Push the value $\ITHREETWO.\CONST~sz$ to the stack.
+7. Push the value $\ITHREETWO.\CONST sz$ to the stack.
 
 \vfill{}
 
@@ -506,7 +535,7 @@ Execution description:
 Semantic rule:
 
 $$
-\STORE; \FRAME; \MEMORY.\SIZE \stepto \STORE; \FRAME; (\ITHREETWO.\CONST~sz)
+\STORE; \FRAME; \MEMORY.\SIZE \stepto \STORE; \FRAME; (\ITHREETWO.\CONST sz)
 $$
 $$
 (\wif{|\STORE.\MEMS[\FRAME.\MODULE.\MEMADDRS[0]].\DATA| = sz * 64 Ki)}
