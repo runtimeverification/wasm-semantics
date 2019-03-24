@@ -20,14 +20,14 @@ from kninja import *
 
 proj = KProject(extdir = extdir)
 def build_wasm(backend, flags = ''):
-    return proj.definition( alias     = 'wasm-' + backend
-                          , backend   = backend
-                          , main      = 'test.md'
-                          , other     = [ 'wasm.md', 'data.md', 'kwasm-lemmas.md' ]
-                          , directory = proj.builddir('defn', backend)
-                          , runner_script = './kwasm'
-                          , flags     = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
-                                      + flags
+    return proj.definition( alias             = 'wasm-' + backend
+                          , backend           = backend
+                          , main              = 'test.md'
+                          , other             = [ 'wasm.md', 'data.md', 'kwasm-lemmas.md' ]
+                          , directory         = proj.builddir('defn', backend)
+                          , runner_script     = './kwasm'
+                          , flags             = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
+                                              + flags
                           )
 wasm_java = build_wasm(backend = 'java')
 wasm_ocaml = build_wasm(backend = 'ocaml', flags = '-O3 --non-strict')
