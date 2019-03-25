@@ -50,7 +50,6 @@ With Everett
 3.  Introduction to WebAssembly (Wasm)
 4.  Demo: implement a Wasm subset
 5.  (Proving things)
-<!-- 6.  Results: What did I do -->
 
 Background
 ==========
@@ -104,6 +103,25 @@ The KEVM
 
 - Verification made possible by KEVM [@hildenbrandt-saxena-zhu-rosu-k-evm], modelling the EVM.
 - The EVM is a stack machine with $\approx$ 120 opcodes.
+- Everett had begun work on a K specification of another low-level languge: Wasm.
+
+ewasm
+----
+
+**Rationale**
+
+How would ewasm be better than EVM?
+
+. . .
+
+- Speed
+- Size
+- Security
+- Write contracts in C/C++, go, or rust
+- Static analysis
+- Optional metering
+- Portability: ewasm contracts will be compatibile with any standard Wasm environment, including IoT and mobile devices
+
 
 (Brief) Introduction to K
 ==========================
@@ -136,6 +154,15 @@ K Tooling/Languages
 -   KIELE - 2018 [@kasampalis-guth-moore-rosu-johnson-k-iele]
 -   KLLVM <https://github.com/kframework/llvm-semantics>
 -   KX86-64 <https://github.com/kframework/X86-64-semantics>
+
+Parts of a K specification
+--------------------------
+
+A language spec in K consists of 3 things
+
+* Syntax
+* Configuration ("state")
+* Operational semantics as **rewrite rules**
 
 K Specifications: Syntax
 ------------------------
@@ -357,46 +384,108 @@ Example Execution (cont.)
     <store> 0 |-> 6    1 |-> 17 </store>
 ```
 
-WebAssembly
+Example Execution (cont.)
+-------------------------
+
+### Final configuration
+
+```k
+    <k>     return 17           </k>
+    <env>   a |-> 0    b |-> 1  </env>
+    <store> 0 |-> 6    1 |-> 17 </store>
+```
+
+(Brief) Introduction to WebAssembly
 ========
 
-ewasm
+Wasm: your new favorite compile target
 ----
 
-**Rationale**
-
-How would ewasm be better than EVM?
+- It's not web, and it's not assembly, just a great low-ish level language.
+  - Fast on hardware, but platform agnostic.
+  - Allows stream compiling.
+  - Efficient byte format, readable text format.
 
 . . .
 
-- Speed
-- Size
-- Security
-- Write contracts in C/C++, go, or rust
-- Static analysis
-- Optional metering
-- Portability: ewasm contracts will be compatibile with any standard Wasm environment, including IoT and mobile devices
+- Safety features
+  - Blocks, loops and breaks, but not arbitrary jumps.
+  - Allows static validation.
+  - No implicit casts.
 
-Code example
-------------
+. . .
 
-- It's not web, and it's not assembly.
-- All Wasm code is organized in modules.
-- Modules can have a memory, functions, and some other things.
-- Modules may export it's contents, e.g., functions, so that they can be called from other modules.
-- Wasm is stack-based ...
-- ... but the syntax allow "passing" arguments to functions in a "folded" syntax
+- Organized in modules *(example coming up)*.
+  - Can declare functions, allocate and modify their own linear memory, global variables etc.
+  - Cay export some of its contents.
+  - Can have `start` functions, which are run when the module is loaded.
+
+. . .
+
+- Wasm is stack-based, but the syntax allows S-expression "folding" *(example coming up)*.
+
+
+Code fold/unfold
+----------------
+
+```scheme
+(memory.size)      ;; Nullary -- push memory size (i32).
+(i64.extend_i32_u) ;; Unary   -- i32 ==> i64.
+```
+
+. . .
+
+```scheme
+(local.get $tmp)   ;; Nullary -- push local variable $tmp (i32).
+(i64.load8_u)      ;; Unary   -- load 1 byte from argument address, push.
+```
+
+. . .
+
+```scheme
+(i64.add)          ;; Binary
+```
+
+. . .
+
+\vfill{}
+
+becomes
+
+. . .
+
+\vfill{}
+
+```scheme
+(i64.add
+    (i64.extend_i32_u (memory.size))
+    (i64.load8_u      (local.get $tmp)))
+```
+
+\vfill{}
+
+. . .
+
+Mix freely! Also OK:
+
+```scheme
+(i64.extend_i32_u (memory.size))
+(i64.load8_u      (local.get $tmp)))
+(i64.add)
+```
+
+
 
 Code example (folded)
 ---------------------
  <!-- Actually, treating as scheme gives decent highlighting -->
 ```scheme
-(module 
+(module
     (memory 1)
     (func   ;; Function descriptors.
             (export "myGrowAndStoreFunction")
             (param $by i32) (param $put i64) ;; Identifiers: $by and $put.
-            (result i64) 
+            (result i64)
             (local $tmp i32)
 
         ;; Body of the function.
@@ -433,56 +522,6 @@ wasm 1.0 reference interpreter
 261 : i64
 ```
 
-
-Code fold/unfold
-----------------
-
-```scheme
-(memory.size)      ;; Nullary -- push memory size (i32).
-(i64.extend_i32_u) ;; Unary   -- i32 ==> i64.
-```
-
-. . .
-
-```scheme
-(local.get $tmp)   ;; Nullary -- push local variable $tmp (i32).
-(i64.load8_u)      ;; Unary   -- load 1 byte from argument address, push.
-```
-
-. . .
-
-```scheme
-(i64.add)          ;; Binary
-```
-
-. . .
-
-\vfill{}
-
-becomes
-
-. . .
-
-\vfill}
-
-```scheme
-(i64.add
-    (i64.extend_i32_u (memory.size))
-    (i64.load8_u      (local.get $tmp)))
-```
-
-\vfill{}
-
-. . .
-
-Mix freely! Also OK:
-
-```scheme
-(i64.extend_i32_u (memory.size))
-(i64.load8_u      (local.get $tmp)))
-(i64.add)
-```
-
 Wasm Specification
 ------------------
 
@@ -491,46 +530,10 @@ Available at <https://github.com/WebAssembly/spec>.
 -   Fairly unambiguous[^betterThanEVM].
 -   Well written with procedural description of execution accompanied by small-step semantic rules.
 
-\vfill{}
-
-. . .
-
-The execution model has a *store* ($\STORE$) and a *current frame* ($\FRAME$).
-
-\begin{alignat*}{5}
-&store      &::=~&\{ & \quad &\FUNCS    ~&\quad &funcinst^*         &     \\
-&           &    &   & \quad &\TABLES   ~&\quad &tableinst^*        &     \\
-&           &    &   & \quad &\MEMS     ~&\quad &meminst^*          &     \\
-&           &    &   & \quad &\GLOBALS  ~&\quad &globalinst^* \quad &\}   \\
-&frame      &::=~&\{ & \quad &\LOCALS   ~&\quad &val^*              &     \\
-&           &    &   & \quad &\MODULE   ~&\quad &moduleinst   \quad &\}   \\
-%&moduleinst~&::=~&\{~& \quad &\dots     ~&\quad &                   &     \\
-%&           &    &   & \quad &\MEMADDRS ~&\quad &memaddr^*          &     \\
-%&           &    &   & \quad &\dots     ~&\quad &                   &\}
-\end{alignat*}
-
 [^betterThanEVM]: Better than the [YellowPaper](https://github.com/ethereum/yellowpaper).
 
 Wasm Specification
 ------------------
-
-**Example rule:** `(memory.size)`
-
-. . .
-
-Execution description:
-
-1. Let $\FRAME$ be the current frame.
-<!-- 2. \diminish{Assert: due to validation, $\FRAME.\MODULE.\MEMADDRS[0]$ exists.} -->
-3. Let $a$ be the memory address $\FRAME.\MODULE.\MEMADDRS[0]$.[^memIdxZero]
-<!-- 4. \diminish{Assert: due to validation, $\STORE.\MEMS[a]$ exists.} -->
-5. Let $mem$ be the memory instance $\STORE.\MEMS[a]$.
-6. Let $sz$ be the length of $mem.\DATA$ divided by the page size.
-7. Push the value $\ITHREETWO.\CONST sz$ to the stack.
-
-\vfill{}
-
-. . .
 
 Semantic rule:
 
@@ -540,6 +543,41 @@ $$
 $$
 (\wif{|\STORE.\MEMS[\FRAME.\MODULE.\MEMADDRS[0]].\DATA| = sz * 64 Ki)}
 $$
+
+. . .
+
+*store* ($\STORE$) and a *current frame* ($\FRAME$):
+
+\begin{alignat*}{5}
+%&store      &::=~&\{ & \quad &\FUNCS    ~&\quad &funcinst^*         &     \\
+&store      &::=~&\{ & \quad &\dots     ~&\quad &                   &     \\
+%&           &    &   & \quad &\TABLES   ~&\quad &tableinst^*        &     \\
+&           &    &   & \quad &\MEMS     ~&\quad &meminst^*          &     \\
+&           &    &   & \quad &\dots     ~&\quad &                   &\}   \\
+%&           &    &   & \quad &\GLOBALS  ~&\quad &globalinst^* \quad &\}   \\
+&frame      &::=~&\{ & \quad &\LOCALS   ~&\quad &val^*              &     \\
+&           &    &   & \quad &\MODULE   ~&\quad &moduleinst   \quad &\}   \\
+&moduleinst~&::=~&\{~& \quad &\dots     ~&\quad &                   &     \\
+&           &    &   & \quad &\MEMADDRS ~&\quad &memaddr^*          &     \\
+&           &    &   & \quad &\dots     ~&\quad &                   &\}
+\end{alignat*}
+
+Wasm Specification (cont.)
+--------------------------
+
+**Example rule:** `(memory.size)`
+
+. . .
+
+Execution description:
+
+1. Let $\FRAME$ be the current frame.
+2. \diminish{Assert: due to validation, $\FRAME.\MODULE.\MEMADDRS[0]$ exists.}
+3. Let $a$ be the memory address $\FRAME.\MODULE.\MEMADDRS[0]$.[^memIdxZero]
+4. \diminish{Assert: due to validation, $\STORE.\MEMS[a]$ exists.}
+5. Let $mem$ be the memory instance $\STORE.\MEMS[a]$.
+6. Let $sz$ be the length of $mem.\DATA$ divided by the page size.
+7. Push the value $\ITHREETWO.\CONST sz$ to the stack.
 
 [^memIdxZero]: Every module in Wasm has a single memory for now, so we always implicitly work on `memaddrs[0]`.
 
@@ -559,6 +597,22 @@ $$
 }
 $$
 
+\vfill{}
+
+\begin{alignat*}{5}
+%&store      &::=~&\{ & \quad &\FUNCS    ~&\quad &funcinst^*         &     \\
+&store      &::=~&\{ & \quad &\dots     ~&\quad &                   &     \\
+%&           &    &   & \quad &\TABLES   ~&\quad &tableinst^*        &     \\
+&           &    &   & \quad &\MEMS     ~&\quad &meminst^*          &     \\
+&           &    &   & \quad &\dots     ~&\quad &                   &\}   \\
+%&           &    &   & \quad &\GLOBALS  ~&\quad &globalinst^* \quad &\}   \\
+&frame      &::=~&\{ & \quad &\LOCALS   ~&\quad &val^*              &     \\
+&           &    &   & \quad &\MODULE   ~&\quad &moduleinst   \quad &\}   \\
+&moduleinst~&::=~&\{~& \quad &\dots     ~&\quad &                   &     \\
+&           &    &   & \quad &\MEMADDRS ~&\quad &memaddr^*          &     \\
+&           &    &   & \quad &\dots     ~&\quad &                   &\}
+\end{alignat*}
+
 `(memory.grow)`
 ---------------
 
@@ -571,6 +625,36 @@ $$
 \STORE; \FRAME ; &(\ITHREETWO.\CONST n)~(\MEMORY.\GROW) \stepto \STORE ; \FRAME ; (\ITHREETWO.\CONST {-1} ) \\
 \end{align*}
 
+
+Future Directions
+=================
+
+Finish KWasm
+------------
+
+The semantics are fairly early-stage.
+
+### In progress
+
+-   Memories.
+
+### To be done
+
+-   Everything floating point.
+-   Tables.
+-   Modules.
+
+KeWasm
+------
+
+-   eWasm adds gas metering to Wasm, but otherwise leaves the semantics alone.
+
+\vfill{}
+
+. . .
+
+-   KEVM currently has many verified smart contracts at <https://github.com/runtimeverification/verified-smart-contracts>.
+-   We similarly would like to build a repository of verified code using KeWasm.
 
 Conclusion/Questions?
 =====================
@@ -597,88 +681,6 @@ SCRATCH
 
 KWasm Design
 ============
-
-Wasm Specification
-------------------
-
-Available at <https://github.com/WebAssembly/spec>.
-
--   Fairly unambiguous[^betterThanEVM].
--   Well written with procedural description of execution accompanied by small-step semantic rules.
-
-\vfill{}
-
-. . .
-
-Example rule:
-
-1. Let $L$ be the label whose arity is 0 and whose continuation is the start of the loop.
-2. `Enter` the block $\instr^\ast$ with label $L$.
-
-\vfill{}
-
-. . .
-
-$$
-    \LOOP~[t^?]~\instr^\ast~\END
-    \quad \stepto \quad
-    \LABEL_0\{\LOOP~[t^?]~\instr^\ast~\END\}~\instr^\ast~\END
-$$
-
-[^betterThanEVM]: Better than the [YellowPaper](https://github.com/ethereum/yellowpaper).
-
-Translation to K
-----------------
-
-### Wasm Spec
-
-\vspace{-1em}
-$$
-    \LOOP~[t^?]~\instr^\ast~\END
-    \quad \stepto \quad
-    \LABEL_0\{\LOOP~[t^?]~\instr^\ast~\END\}~\instr^\ast~\END
-$$
-
-. . .
-
-### In K
-
-```k
-    syntax Instr ::= "loop" Type Instrs "end"
- // -----------------------------------------
-    rule <k> loop TYPE IS end
-          => IS
-          ~> label [ .ValTypes ] {
-                loop TYPE IS end
-             } STACK
-          ...
-         </k>
-         <stack> STACK </stack>
-```
-
-Design Difference: 1 or 2 Stacks?
----------------------------------
-
-. . .
-
-### Wasm Specification
-
-One stack mixing values and instructions.
-
--   Confusing control-flow semantics (with `label`s).
--   Use meta-level context operator to describe semantics of `br`.
--   Section 4.4.5 of the Wasm spec.
-
-\vfill{}
-
-. . .
-
-### KWasm
-
-Uses two stacks, values in `<stack>` cell and instructions in `<k>` cell.
-
--   Can access both cells simultaneously, without backtracking/remembering one stack.
--   Cleaner semantics, no meta-level context operator needed.
 
 Design Choice: Incremental Semantics
 ------------------------------------
@@ -764,45 +766,8 @@ Running a Program
 </generatedTop>
 ```
 
-Demo Time!
-----------
-
--   KLab debugging demo!!
-
-Future Directions
-=================
-
-Finish KWasm
-------------
-
-The semantics are fairly early-stage.
-
-### In progress
-
--   Memories.
-
-### To be done
-
--   Everything floating point.
--   Tables.
--   Modules.
-
-KeWasm
-------
-
--   eWasm adds gas metering to Wasm, but otherwise leaves the semantics alone.
-
-\vfill{}
-
-. . .
-
--   KEVM currently has many verified smart contracts at <https://github.com/runtimeverification/verified-smart-contracts>.
--   We similarly would like to build a repository of verified code using KeWasm.
-
 Conclusion/Questions?
 =====================
 
 
 -->
-
-
