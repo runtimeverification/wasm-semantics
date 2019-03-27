@@ -189,4 +189,45 @@ references:
   keyword: Coherence, Rewriting, Symbolic execution, Variants
   DOI: 10.1007/978-3-319-99840-4_10
   ISBN: '9783319998398'
+
+
+- id: rossberg-web-up-to-speed
+  type: article-journal
+  author:
+  - family: Rossberg
+    given: Andreas
+  - family: Titzer
+    given: Ben L.
+  - family: Haas
+    given: Andreas
+  - family: Schuff
+    given: Derek L.
+  - family: Gohman
+    given: Dan
+  - family: Wagner
+    given: Luke
+  - family: Zakai
+    given: Alon
+  - family: Bastien
+    given: J. F.
+  - family: Holman
+    given: Michael
+  issued:
+  - year: 2018
+  title: Bringing the web up to speed with webassembly.
+  container-title: Communications of the ACM
+  page: 107 - 115
+  volume: '61'
+  issue: '12'
+  abstract: This article discusses the implementation of the low-level computer programming
+    language for software known as WebAssembly. The authors comment on the use of
+    WebAssembly in advanced web applications, including three-dimensional visualization,
+    audio and video software, and gaming. The benefits of WebAssembly include its
+    ability to function independent of the computer hardware and operating system
+    on which it runs.
+  keyword: PROGRAMMING languages, ASSEMBLY languages (Electronic computers), COMPUTER
+    operating systems, COMPUTER software, THREE-dimensional imaging, WEB-based user
+    interfaces
+  ISSN: '00010782'
+
 ...
