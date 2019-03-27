@@ -75,6 +75,7 @@ module WASM
            <memSize> SZ </memSize>
            ...
          </memInst>
+    rule <k> ( memory.size ) => ( i32.const -1 ) ... </k>
 
     syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")"
  // --------------------------------------------------------------------
