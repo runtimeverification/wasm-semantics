@@ -152,3 +152,6 @@ reports: media/201903-report-chalmers.pdf
 media/%.pdf: media/%.md media/citations.md
 	cat $^ | pandoc --from markdown-latex_macros --to $(TO_FORMAT) --filter pandoc-citeproc --output $@
 
+media-clean:
+	rm media/*.pdf
+
