@@ -45,11 +45,6 @@ This talk was recoreded, and is available in full at <https://www.youtube.com/wa
 Overview
 --------
 
-<!--
-Morning everyone
-With Everett
--->
-
 1.  Background
 2.  Introduction to K
 3.  Introduction to WebAssembly (Wasm)
@@ -483,7 +478,7 @@ Mix freely! Also OK:
 
 Code example (folded)
 ---------------------
- <!-- Actually, treating as scheme gives decent highlighting -->
+
 ```scheme
 (module
     (memory 1)
