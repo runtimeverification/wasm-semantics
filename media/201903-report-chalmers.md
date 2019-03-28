@@ -254,7 +254,7 @@ Note that, for this rule to apply, the right-hand side must be an integer litera
 
 ### Example Execution ###
 
-To show how to run the \K semantics, we take the program from before and supply an initial configuration. 
+To show how to run the \K semantics, we take the program from before and supply an initial configuration.
 
 ```imp
     a := 3 * 2;
@@ -454,7 +454,7 @@ declaring a memory and two functions that modify memory.
     (memory 1)
     ;; The function $init will get run when the module is loaded.
     (start $init)
-    (func $init 
+    (func $init
         ;; Put 4 bytes of 1's at the start of the memory.
         (i32.store (i32.const 0) (i32.const -1))
     )
@@ -471,12 +471,12 @@ declaring a memory and two functions that modify memory.
         ;; Set this variable to the first address
         ;; in the last page of memory.
         (local.set $tmp
-            (i32.mul 
+            (i32.mul
                 (i32.sub (memory.size) (i32.const 1))
                 (i32.const 65536)))
         ;; Store a value in little-endian form at the location $tmp.
         (i64.store (local.get $tmp) (local.get $put))
-        ;; Add the 
+        ;; Add the
         (i64.add
             (i64.extend_i32_u (local.get $tmp))
             (i64.load8_u      (local.get $tmp)))
@@ -629,7 +629,7 @@ Recall the *store*, *meminst*, *frame* and *modulinst* parts of the runtime stru
 &           &    &   & \quad &\MEMS     ~&\quad &meminst^*          &     \\
 &           &    &   & \quad &\dots     ~&\quad &                   &\}   \\
 %&           &    &   & \quad &\GLOBALS  ~&\quad &globalinst^* \quad &\}   \\
-&meminst    &::=~&\{ & \quad &\DATA     ~&\quad &vec(byte)          &     \\ 
+&meminst    &::=~&\{ & \quad &\DATA     ~&\quad &vec(byte)          &     \\
 &           &    &   & \quad &\MAX      ~&\quad &u32^?              &\}   \\
 &frame      &::=~&\{ & \quad &\LOCALS   ~&\quad &val^*              &     \\
 &           &    &   & \quad &\MODULE   ~&\quad &moduleinst   \quad &\}   \\
@@ -675,7 +675,7 @@ In \K
 This is the full definition of the `(memory.grow)` operation:
 
 ```k
-    syntax Instr ::= "(" "memory.grow"       ")" 
+    syntax Instr ::= "(" "memory.grow"       ")"
                    | "(" "memory.grow" Instr ")"
                    | "grow" Int
  // ---------------------------------------------------------
@@ -719,7 +719,7 @@ this syntax when writing a program for KWasm.
 The third and fourth rule implement the semantic rules from the Wasm
 specification somewhat faithfully. There is a check made with the help of a
 function, `#growthAllowed`, that checks that we don't violate the size
-conditions. 
+conditions.
 
 A deviation from the official specification is that we store the size of memory
 explicitly. The spec, read literally, asks an implementation to allocate full
@@ -746,4 +746,3 @@ so without changing the semantics of an actual Wasm program.
 \newpage
 References
 ==========
-
