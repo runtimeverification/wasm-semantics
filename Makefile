@@ -11,9 +11,10 @@ tangler:=$(pandoc_tangle_submodule)/tangle.lua
 LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
-.PHONY: deps ocaml-deps \
-        defn defn-ocaml defn-haskell \
-        build build-ocaml build-haskell \
+.PHONY: all clean \
+        deps ocaml-deps haskell-deps \
+        defn defn-ocaml defn-java defn-haskell \
+        build build-ocaml defn-haskell build-haskell \
         test test-execution test-simple test-proof \
         media
 
@@ -96,15 +97,13 @@ $(ocaml_kompiled): $(ocaml_defn)
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                 \
-	    $(k_bin)/kompile --backend java                      \
+	$(k_bin)/kompile --backend java                          \
 	    --directory $(java_dir) -I $(java_dir)               \
 	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                 \
-	    $(k_bin)/kompile --backend haskell                   \
+	$(k_bin)/kompile --backend haskell                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)         \
 	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
@@ -140,8 +139,8 @@ test-proof: $(proof_tests:=.prove)
 # Presentation
 # ------------
 
-media: media/201803-ethcc/presentation.pdf
+media: media/201803-ethcc.pdf \
+       media/201903-edcon.pdf
 
-media/%/presentation.pdf: media/%/presentation.md
-	cd media/$* \
-		&& pandoc --from markdown --to beamer --output presentation.pdf presentation.md
+media/%.pdf: media/%.md media/citations.md
+	cat $^ | pandoc --from markdown-latex_macros --to beamer --filter pandoc-citeproc --output $@
