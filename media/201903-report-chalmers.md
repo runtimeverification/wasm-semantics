@@ -215,29 +215,17 @@ Equivalently, we can apply the rewrite in place:
 
 To avoid the trouble of explicitly mentioning the entire contents of the cell,
 there is syntacit sugar that lets us write a rule like this is with ellipses,
-which mean "and something else after `~>`".<!--[^associative]-->
+which mean "and something else after `~>`".
 
 ```k
 <k> STMT1 => NEW ... </k>
 ```
 
- <!-- TODO: Check if I understand this correctly -->
-
-[^associative]: In fact, the syntacitc sugar with the ellipses work for any
-    **associative** operator.
-
-Finally, when the configuration contains a Map<!--[^assoc-comm]-->, we may look up a key-value pair with the key `X` using the following syntax:
+Finally, when the configuration contains a Map, we may look up a key-value pair with the key `X` using the following syntax:
 
 ```k
 <cell> ... X |-> SX ... </env>
 ```
-
- <!-- TODO: Check if I understand this correctly -->
-
-[^assoc-comm]: A map is defined as key-value pairs with an
-    associative-commutative operator between them. When the operator is **both
-    commutative and associative**, we can match on any part of the cell in this
-    manner, not just the head.
 
 ### Variable lookup ###
 
