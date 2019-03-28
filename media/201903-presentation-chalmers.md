@@ -37,6 +37,11 @@ header-includes:
 -   \newcommand{\diminish}[1]{\begin{footnotesize}#1\end{footnotesize}}
 ---
 
+Video
+-----
+
+This talk was recoreded, and is available in full at <https://www.youtube.com/watch?v=V6tOYuneMqo>
+
 Overview
 --------
 

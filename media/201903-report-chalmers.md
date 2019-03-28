@@ -5,7 +5,9 @@ author:
 abstract:
   WebAssembly is a low-ish-level language designed to run efficiently on all modern platforms. The Ethereum blockchain currently runs on its own virtual machine (the EVM) but is expected to move to use WebAssembly in the future. The \K framework definition of the EVM has become the *de facto* standard for verifying properties of smart contracts, most notably the Dai coin contracts, currently handling over 100 million USD of value. Since we want to verify Ethereum contracts compiled to WebAssembly -- as well as other WebAssembly programs -- we need to have a \K formalization of WebAssembly. That is what I've been working on.
 
-  I will introduce WebAssembly, how to define languages in \K, and how we have been translating the official WebAssembly specification into \K.
+  I will introduce WebAssembly, how to define languages in \K, and how we have been translating the official WebAssembly specification into \K.\newline
+
+  \indent This report is based on a talk, available in full at \newline <https://www.youtube.com/watch?v=V6tOYuneMqo> \newline
 date: \today
 institute:
 -   Chalmers University of Technology
