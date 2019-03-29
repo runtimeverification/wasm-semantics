@@ -17,7 +17,7 @@ pipeline {
       steps {
         ansiColor('xterm') {
           sh '''
-            ./build wasm-java wasm-ocaml wasm-haskell
+            ./build --opamroot ~/.opam wasm-java wasm-ocaml wasm-haskell
           '''
         }
       }
@@ -28,7 +28,7 @@ pipeline {
           sh '''
             nprocs=$(nproc)
             [ "$nprocs" -gt '4' ] && nprocs=4
-            ./build -v test-exec-ocaml -j"$nprocs"
+            ./build --opamroot ~/.opam -v test-exec-ocaml -j"$nprocs"
           '''
         }
       }
@@ -39,7 +39,7 @@ pipeline {
           sh '''
             nprocs=$(nproc)
             [ "$nprocs" -gt '4' ] && nprocs=4
-            ./build -v test-exec-java -j"$nprocs"
+            ./build --opamroot ~/.opam -v test-exec-java -j"$nprocs"
           '''
         }
       }
@@ -50,7 +50,7 @@ pipeline {
           sh '''
             nprocs=$(nproc)
             [ "$nprocs" -gt '4' ] && nprocs=4
-            ./build -v test-proofs-java -j"$nprocs"
+            ./build --opamroot ~/.opam -v test-proofs-java -j"$nprocs"
           '''
         }
       }
