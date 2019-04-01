@@ -192,13 +192,45 @@ language.
 A transition rule takes the form
 
 ```k
-<cellA> X => Y </cellA>
-<cellB> Z => W </cellB>
-etc.
+rule <cellA> X => Y </cellA>
+     <cellB> Z => W </cellB>
 ```
 
 where the arrow represents a rewrite: the value to the left is rewritten to the
-value on the right. The above rule says that "if `<cellA>` contains `X` and `<cellB>` contains `Z`, change the contents of `<cellA>` to `Y` and the contents of `<cellB>` to `W`."
+value on the right. The above rule says that "if `<cellA>` contains `X` and
+`<cellB>` contains `Z`, change the contents of `<cellA>` to `Y` and the contents
+of `<cellB>` to `W`." A rule is an atomic transition, so both cells are
+rewritten simultaneously. The rewrite arrows are given inside each cell to make
+the rules easier to read and write.
+
+Another feature of the rules is that they only need to mention the parts of the
+configuration they match on. If the configuration contains a cell `<cellUnused>`
+whose contents we do not want to rewrite, and that we do not want to extract any
+information from, it does not have to be mentioned in the rule. Actually,
+mentioning unsused cells in a rule is bad practice and makes the configuration
+less modular: if we at some point were to remove `<cellUnused>` from the
+configuration we would have to also edit rules in which it is not used in any
+meaningful way.
+
+Perhaps equally convenient, but less intuitive, is that you can leave out
+surrounding cells when writing rules. The rewrite
+
+```k
+rule <cellNesting>
+       <cellInside> X => Y </cellInside>
+     </cellNesting>
+```
+
+can be equivalently written as
+
+```k
+rule <cellInside> X => Y </cellInside>
+```
+
+This freedom is convenient, since configuration cell can contain many
+nestings, but it also increases modularity, as it allows us to nest the cell
+`<cellInside>` with more or less context, without having to edit rules for which
+the context is irrelevant.
 
 ### Syntactic sugar for matching parts of a cell ###
 
