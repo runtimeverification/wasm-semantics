@@ -68,6 +68,23 @@ Finally, you can install repository specific dependencies and build the semantic
 
 To only build specific backends, you can do `./build wasm-java`, `./build wasm-ocaml`, or `./build wasm-haskell`.
 
+### Media and documents
+
+The `media/` directory contains presentations and reports about about KWasm.
+The documents are named with an approximate date of presentation/submission, what type of document it is, and a brief contextual name, e.g., name of conference where it was held.
+
+[GhostScript](https://www.ghostscript.com/) is a dependency for building documents of type `report`.
+
+```sh
+sudo apt install ghostscript
+```
+
+To build all documents in the media file:
+
+```sh
+make media
+```
+
 This Repository
 ---------------
 

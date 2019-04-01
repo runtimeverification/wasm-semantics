@@ -50,7 +50,7 @@ Build each tool *once*, and apply it to every language, eg:
 The Vision: Language Independence
 ---------------------------------
 
-![K Tooling Overview](media/k-overview.png)
+![K Tooling Overview](media/img/k-overview.png)
 
 Current Semantics
 -----------------
