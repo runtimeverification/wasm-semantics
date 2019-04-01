@@ -42,7 +42,7 @@ header-includes:
 ---
 
 [^supervised]: supervised by Magnus Myreen. Parts of the report, especially the
-    description of \K, is due to Everett Hildenbrandt \normalsize
+    description of \K, is due to Everett Hildenbrandt. \normalsize
 
 \newpage
 Background
@@ -63,18 +63,23 @@ verifying smart contracts is the \K framework[^kframework].
 [^dapphub]: <https://dapphub.com/>
 [^kframework]: <http://www.kframework.org/index.php/Main_Page>
 
-The current state-of-the-art method of verifying Ethereum smart contracts goes something as follows:
+The current state-of-the-art method of verifying Ethereum smart contracts goes
+something as follows:
 
 1. Contracts are compiled to Ethereum virtual machine (EVM) bytecode.
 2. Some property or invariant is specified as a rewrite rule.
-3. \K tries to construct a proof (using the SMT solver Z3) that every possible execution path eventually rewrites to the correct thing
-4. The tool KLab (by DappHub) offers an interactive view of execution paths, great for seeing where and why the prover failed.
+3. \K tries to construct a proof (using the SMT solver Z3) that every possible
+   execution path eventually rewrites to the correct thing
+4. The tool KLab (by DappHub) offers an interactive view of execution paths,
+   great for seeing where and why the prover failed.
 
 The reason \K can be used for verifying smart contracts is that there is a full
 formalization of the Ethereum Virtual Machine (EVM) in \K, called KEVM
 [@hildenbrandt-saxena-zhu-rosu-k-evm]. The EVM is a stack machine of
 approximately 120 opcodes, many of which are very similar to eachother. The EVM
-is currently the only virtual machine available to run Ethereum contracts. However, an ongoing project in the Ethereum community is trying to migrate to "ewasm"[^ewasm]: an Ethereum virtual machine built on top of WebAssembly.
+is currently the only virtual machine available to run Ethereum contracts.
+However, an ongoing project in the Ethereum community is trying to migrate to
+"ewasm"[^ewasm]: an Ethereum virtual machine built on top of WebAssembly.
 
 [^ewasm]: <https://github.com/ewasm/design>
 
@@ -86,15 +91,16 @@ There are several reasons listed in the design documents:
 - Write contracts in C/C++, go, or rust
 - Static analysis
 - Optional metering
-- Portability: ewasm contracts will be compatibile with any standard Wasm environment, including IoT and mobile devices
+- Portability: ewasm contracts will be compatibile with any standard Wasm
+  environment, including IoT and mobile devices
 
 Seeing how Ethereum might migrate to ewasm in the future, there is reason to
 start looking into formalizing ewasm in \K. Since ewasm mostly extends
 WebAssembly (and only alters WebAssembly slightly to allow for gas metering),
 the first step to a formalization of ewasm in \K is a formalization of
-WebAssembly. As it turns out, the main author of []KEVM, Everett Hildenbrandt, has
-been working on a prototype semantics for WebAssembly. Development was put on
-hold due to other projects, so I reached out to Everett and asked if I could
+WebAssembly. As it turns out, the main author of []KEVM, Everett Hildenbrandt,
+has been working on a prototype semantics for WebAssembly. Development was put
+on hold due to other projects, so I reached out to Everett and asked if I could
 pick up the baton, which he happily let me do. Since January 2019, I have been
 adding more of the WebAssembly semantics to the project, with help and guidance
 from Everett.
@@ -136,7 +142,8 @@ A language specification in \K consists of 3 things:
 
 ## \K Specifications: Syntax ##
 
-The concrete syntax is built using EBNF style. As a running example, we use a small, imperative language.
+The concrete syntax is built using EBNF style. As a running example, we use a
+small, imperative language.
 
 ```k
     syntax Exp ::= Int | Id | "(" Exp ")" [bracket]
@@ -178,7 +185,9 @@ part of the execution state, and can be reduced or extended as part of rewrites.
 
 ## \K Specifications: Transition Rules ##
 
-The actual operational semantics of a \K program is written as rewrite rules. For example, we might define the following semantic rules for our imperative language.
+The actual operational semantics of a \K program is written as rewrite rules.
+For example, we might define the following semantic rules for our imperative
+language.
 
 A transition rule takes the form
 

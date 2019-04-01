@@ -16,7 +16,7 @@ export LUA_PATH
         defn defn-ocaml defn-java defn-haskell \
         build build-ocaml defn-haskell build-haskell \
         test test-execution test-simple test-proof \
-        media
+        media presentations reports
 
 all: build
 
