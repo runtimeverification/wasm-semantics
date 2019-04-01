@@ -484,8 +484,8 @@ Modules
 All Wasm code is organized in modules, much like some languages organize all
 code into classes. A module may declare functions, allocate and modify their own
 linear memory, maintain module-global variables, etc. All these assets are
-internal to the module by default, but the module mayexplicitly export them with
-a name, which allows other modules to import, and treat as their own, the
+internal to the module by default, but the module may explicitly export them
+with a name, which allows other modules to import, and treat as their own, the
 assests of other modules.
 
 The following is a simple module showcasing some of the functionality of Wasm by
@@ -721,8 +721,11 @@ This is the full definition of the `(memory.grow)` operation:
     syntax Instr ::= "(" "memory.grow"       ")"
                    | "(" "memory.grow" Instr ")"
                    | "grow" Int
- // ---------------------------------------------------------
-    rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
+ // --------------------------------------------
+    rule <k>
+           ( memory.grow I:Instr ) =>
+           I ~> ( memory.grow ) ...
+         </k>
     rule <k> ( memory.grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
@@ -743,7 +746,9 @@ This is the full definition of the `(memory.grow)` operation:
          </memInst>
 
     rule <k> grow N => < i32 > -1 </k>
-          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+          <deterministicMemoryGrowth>
+            false
+          </deterministicMemoryGrowth>
 
     syntax Bool ::= #growthAllowed(Int, MemBound) [function]
  // --------------------------------------------------------
