@@ -265,11 +265,54 @@ which mean "and something else after `~>`".
 <k> STMT1 => NEW ... </k>
 ```
 
-Finally, when the configuration contains a Map, we may look up a key-value pair with the key `X` using the following syntax:
+Finally, when the configuration contains a Map, we may look up a key-value pair
+with the key `X` using the following syntax:
+
+```k
+<cell> MAP_LEFT X |-> SX MAP_RIGHT </env>
+```
+
+meaning there is a bunch of map entries to the left, and a bunch of map entries
+to the right. `Map`s in \K are defined as either the empty map, `.Map`, the map
+of a single entry `X |-> SX`, or the concatenation of two `Maps`, i.e. `syntax
+Map ::= Map Map`, the concatenation operator just being a single space in this
+case.
+
+Since the map concatenation is commutative and associative, we can match on any
+part of the map, wheras when the operator is just associative, like `~>`, it is
+only possible to match on the leftmost operand.
+
+We can write map lookup in a nicer, sugared form:
 
 ```k
 <cell> ... X |-> SX ... </env>
 ```
+
+Rewrites on a `Map` take the form
+
+`Map` rewrites take the following forms.
+
+Adding entries:
+
+```k
+<cell> MAP_LEFT (.Map => X |-> SX) MAP_RIGHT </env>
+// or
+<cell> ... (.Map => X |-> SX) ... </env>
+```
+
+Changing values:
+
+```k
+<cell> MAP_LEFT X |-> (SX => SX') MAP_RIGHT </env>
+// or
+<cell> ... X |-> (SX => SX') ... </env>
+```
+
+There are other, more idiomatic syntaxes for doing lookups, additions, updates
+and deletions, but this syntax is the closest to the underlying definition of
+`Map`. The interested reader may see the
+[`domains.k`](https://github.com/kframework/k/blob/master/k-distribution/include/builtin/domains.k)
+that follows with the K framework.
 
 ### Variable lookup ###
 
