@@ -280,7 +280,10 @@ case.
 
 Since the map concatenation is commutative and associative, we can match on any
 part of the map, wheras when the operator is just associative, like `~>`, it is
-only possible to match on the leftmost operand.
+only possible to match on the leftmost operand[^assoc-comm].
+
+[^assoc-comm]: The annotations `assoc` and `comm` marks opeartions associative
+    and commutative.
 
 We can write map lookup in a nicer, sugared form:
 
