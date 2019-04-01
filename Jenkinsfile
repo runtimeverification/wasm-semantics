@@ -2,6 +2,7 @@ pipeline {
   agent {
     label 'docker'
   }
+  options { skipDefaultCheckout() }
   stages {
     stage("Init title") {
       when { changeRequest() }
@@ -21,6 +22,7 @@ pipeline {
         stage('Build') {
           steps {
             ansiColor('xterm') {
+              checkout scm
               sh '''
                 make deps -B
                 make build -B -j4
@@ -73,6 +75,7 @@ pipeline {
         stage('Build') {
           steps {
             ansiColor('xterm') {
+              checkout scm
               sh '''
                 ./build --opamroot ~/.opam wasm-java wasm-ocaml wasm-haskell
               '''
