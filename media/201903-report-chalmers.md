@@ -242,7 +242,8 @@ sequencing operator, `~>`, so the `<k>` cell may look something like
 ```
 
 A rewrite in the `<k>` cell which only cares about the first of these statements
-and replaces it by `NEW` (which could be anything) may then look something like the following:
+and replaces it by `NEW` (which could be anything) may then look something like
+the following, inside a `rule` declaration:
 
 ```k
 <k> (STMT1 ~> THE_OTHER_STATEMENTS)
@@ -293,11 +294,13 @@ assignment.
          <store> ... SX |-> (V => I) ... </store>
 ```
 
-Note that, for this rule to apply, the right-hand side must be an integer literal, i.e., a fully evaluated expression.
+Note that, for this rule to apply, the right-hand side must be an integer
+literal, i.e., a fully evaluated expression.
 
 ### Example Execution ###
 
-To show how to run the \K semantics, we take the program from before and supply an initial configuration.
+To show how to run the \K semantics, we take the program from before and supply
+an initial configuration.
 
 ```imp
     a := 3 * 2;
@@ -305,7 +308,10 @@ To show how to run the \K semantics, we take the program from before and supply 
     return b
 ```
 
-The configuration already has the variables and store locations initialized. In a more realistic example of an imperative language, we would need to write syntax and rules for how to declare and allocate variables, but for this example, it suffices to assume that the configuration looks as follows.
+The configuration already has the variables and store locations initialized. In
+a more realistic example of an imperative language, we would need to write
+syntax and rules for how to declare and allocate variables, but for this
+example, it suffices to assume that the configuration looks as follows.
 
 ```k
     <k>     a := 3 * 2 ; b := 2 * a + 5 ; return b </k>
@@ -342,7 +348,8 @@ and applies the rule, giving the next configuration:
     <store> 0 |-> 6    1 |-> 0 </store>
 ```
 
-Again, some other rules apply and \K works its magic, until it gets to this configuration:
+Again, some other rules apply and \K works its magic, until it gets to this
+configuration:
 
 ```k
     <k>     a ~> b := 2 * [] + 5 ; return b </k>
@@ -356,7 +363,8 @@ arithmetic, it needed to get the value of `a`. So \K "heated" `a` and put it
 first at the top of the stack, leaving a "hole" in the expression where the
 result should be plugged back in.
 
-Now, with a solitary identifier at the head of the `<k>` cell, the following rule applies ...
+Now, with a solitary identifier at the head of the `<k>` cell, the following
+rule applies ...
 
 ```k
     rule <k> X:Id => V ... </k>
@@ -404,20 +412,24 @@ After those steps, our assigment rule matches again ...
     <store> 0 |-> 6    1 |-> 17 </store>
 ```
 
-We take the final configuration to be the result of executing the above program. If we wanted, we could of course define a further rule that deals with return statements.
+We take the final configuration to be the result of executing the above program.
+If we wanted, we could of course define a further rule that deals with return
+statements.
 
-In principle, \K executes programs by taking an initial configuration and producing a resulting configuration, i.e., the configuration we are left with when no more rules can be applied. In practice, we often start with an empty configuration, containing only the very mininal initial values, and end when the `<k>` cell is completely empty.
-
+In principle, \K executes programs by taking an initial configuration and
+producing a resulting configuration, i.e., the configuration we are left with
+when no more rules can be applied. In practice, we often start with an empty
+configuration, containing only the very mininal initial values, and end when the
+`<k>` cell is completely empty.
 
 -------
 
-\newpage
-Brief introduction to WebAssembly
+\newpage Brief introduction to WebAssembly
 ========
 
-WebAssembly[@rossberg-web-up-to-speed], commonly known as "Wasm", is a low-ish level language that is
-neither web-specific, nor really an assembly language in the normal sense. Some
-of the boasted features are
+WebAssembly[@rossberg-web-up-to-speed], commonly known as "Wasm", is a low-ish
+level language that is neither web-specific, nor really an assembly language in
+the normal sense. Some of the boasted features are
 
 - Fast on modern hardware architectures, but platform agnostic.
 - Allows stream compiling.
@@ -461,7 +473,8 @@ Wasm allows us to write the exact same piece of code in the following way.
 
 Note how each $n$-ary operation is followed by $n$ (folded) instructions.
 
-We can also mix freely between folded and unfolded syntax. The following is yet another equivalent way to write the code above:
+We can also mix freely between folded and unfolded syntax. The following is yet
+another equivalent way to write the code above:
 
 ```scheme
 (i64.extend_i32_u (memory.size))
@@ -469,7 +482,8 @@ We can also mix freely between folded and unfolded syntax. The following is yet 
 (i64.add)
 ```
 
-We are not allowed, however, to fold paritally, i.e., giving the arguemnts to `add` in this way:
+We are not allowed, however, to fold paritally, i.e., giving the arguemnts to
+`add` in this way:
 
 ```scheme
 (i64.load8_u      (local.get $tmp)))
@@ -527,7 +541,8 @@ declaring a memory and two functions that modify memory.
 ) ;; End module.
 ```
 
-We can load this module into a reference interpreter[^ref-interpreter] and invoke the exported function a few times:
+We can load this module into a reference interpreter[^ref-interpreter] and
+invoke the exported function a few times:
 
 [^ref-interpreter]: <https://github.com/WebAssembly/spec/tree/master/interpreter>
 
@@ -553,15 +568,18 @@ execute every operation, as well as a rewrite-based small-step semantic rules.
 For example, the `(memory.size)` operation has the following execution specification:
 
 1. Let $\FRAME$ be the current frame.
-2. \diminish{Assert: due to validation, $\FRAME.\MODULE.\MEMADDRS[0]$ exists.}[^validation]
+2. \diminish{Assert: due to validation, $\FRAME.\MODULE.\MEMADDRS[0]$
+   exists.}[^validation]
 3. Let $a$ be the memory address $\FRAME.\MODULE.\MEMADDRS[0]$.[^memIdxZero]
 4. \diminish{Assert: due to validation, $\STORE.\MEMS[a]$ exists.}
 5. Let $mem$ be the memory instance $\STORE.\MEMS[a]$.
 6. Let $sz$ be the length of $mem.\DATA$ divided by the page size.
 7. Push the value $\ITHREETWO.\CONST sz$ to the stack.
 
-[^validation]: Validation happens before execution. In KWasm, we always assume that code we execute has been validated.
-[^memIdxZero]: Every module in Wasm has a single memory for now, so we always implicitly work on `memaddrs[0]`.
+[^validation]: Validation happens before execution. In KWasm, we always assume
+    that code we execute has been validated.
+[^memIdxZero]: Every module in Wasm has a single memory for now, so we always
+    implicitly work on `memaddrs[0]`.
 
 The semantic rewrite rule is as follows.
 
@@ -663,7 +681,8 @@ with the few cases of non-determinism in WebAssembly.
 
 ### The specification ###
 
-Recall the *store*, *meminst*, *frame* and *modulinst* parts of the runtime structure:
+Recall the *store*, *meminst*, *frame* and *modulinst* parts of the runtime
+structure:
 
 \begin{alignat*}{5}
 %&store      &::=~&\{ & \quad &\FUNCS    ~&\quad &funcinst^*         &     \\
@@ -704,7 +723,8 @@ growmem(meminst, n)\quad =\quad &\MEMINST \with \DATA = \MEMINST.\DATA~(\texttt{
 &\land (\MEMINST.\MAX = \epsilon \lor len \leq \MEMINST.\MAX)})
 \end{align*}
 
-The $\with$ keyword indicates modifying a single field of a structure, in this case the $\DATA$ field of a $\MEMINST$.
+The $\with$ keyword indicates modifying a single field of a structure, in this
+case the $\DATA$ field of a $\MEMINST$.
 
 The `(memory.grow)` operation should thus either succeed with the old size of the
 memory pushed to the stack, or fail by pushing a `-1` to the stack. Since the
