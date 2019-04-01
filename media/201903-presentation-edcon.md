@@ -31,7 +31,7 @@ Overview
 K Vision
 --------
 
-![K Overview](media/k-overview.png)
+![K Overview](media/img/k-overview.png)
 
 K Tooling/Languages
 -------------------
