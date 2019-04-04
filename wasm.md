@@ -843,7 +843,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> ( memory.grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
-    rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else -1 #fi ... </k>
+    rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR  </memAddr>
@@ -852,8 +852,8 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
            ...
          </memInst>
 
-    rule <k> grow N => < i32 > -1 </k>
-          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+    rule <k> grow N => < i32 > #unsigned(i32, -1) </k>
+         <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
 
     syntax Bool ::= #growthAllowed(Int, MemBound) [function]
  // --------------------------------------------------------
