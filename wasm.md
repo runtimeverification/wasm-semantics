@@ -6,7 +6,6 @@ require "data.k"
 
 module WASM
     imports WASM-DATA
-    imports BYTES
 ```
 
 Configuration
@@ -700,9 +699,6 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          </mems>
 
     syntax MemId ::= Identifier | Int
-
-    syntax Offset ::= "(" "offset" Instr ")"
-                   | Instr
 ```
 
 The assorted store operations take an address of type `i32` and a value.
@@ -761,6 +757,7 @@ The value is fethced from the "effective address", which is the address given on
                    | IValType "." LoadOp Int
                    | "load" "{" IValType Int Int Signedness"}"
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
+    syntax Signedness ::= "Signed" | "Unsigned"
  // -------------------------------------------
     rule <k> ( ITYPE . LOPM:LoadOpM I:Instr ) => I ~> ( ITYPE . LOPM ) ... </k>
 
@@ -890,8 +887,8 @@ Incidentally, the page size is 2^16 bytes.
 
 ```k
     syntax Instr ::= Data
-    syntax Data ::= "(" "data" MemId Offset Strings ")"
-                  | "(" "data"       Offset Strings ")"
+    syntax Data ::= "(" "data" MemId DataOffset Strings ")"
+                  | "(" "data"       DataOffset Strings ")"
                   |     "data" "{" String "}"
  // ---------------------------------------------------
     // The MemId must always resolve to 0, due to validation, so we discard it.
@@ -903,21 +900,29 @@ Incidentally, the page size is 2^16 bytes.
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
-           <mdata>   DATA => DATA [ OFFSET := Bytes2Int(String2Bytes(STRING), LE, Unsigned)] </mdata> // TODO
+           <mdata>   DATA
+                  => #clearRange(DATA, OFFSET, OFFSET +Int #lengthDataString(STRING) -Int 1) [ OFFSET := #string2int(STRING)]
+           </mdata>
            ...
          </memInst>
 
-    syntax Int ::= #lengthData    ( Data    ) [function]
-                 | #lengthDataAux ( Strings ) [function]
-                 | Int "/ceilInt" Int         [function]
- // ----------------------------------------------------
-    rule #lengthData((data  _:MemId _ SS)) => #lengthDataAux(SS)
-    rule #lengthData((data          _ SS)) => #lengthDataAux(SS)
-    rule #lengthData( data {          SS}) => #lengthDataAux(SS)
-
-    rule #lengthDataAux(SS) => lengthBytes(String2Bytes(#flatten(SS))) /ceilInt #pageSize()
+    syntax Int ::= #lengthData       ( Data    ) [function]
+                 | #lengthDataString ( String  ) [function]
+                 | Int "/ceilInt" Int            [function]
+ // -------------------------------------------------------
+    rule #lengthData((data  _:MemId _ SS)) => #stringLength(#flatten(SS))
+    rule #lengthData((data          _ SS)) => #stringLength(#flatten(SS)) 
+    rule #lengthData( data {          SS}) => #stringLength(#flatten(SS))
 
     rule I1 /ceilInt I2 => (I1 /Int I2) +Int #if I1 modInt I2 ==Int 0 #then 0 #else 1 #fi
+```
+
+The `data` instruction takes an offset, which is an instruction.
+This is not optional.
+
+```k
+    syntax DataOffset ::= "(" "offset" Instr ")"
+                        | Instr
 ```
 
 Module Declaration

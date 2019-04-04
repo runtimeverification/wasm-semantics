@@ -218,7 +218,7 @@ Operator `_++_` implements an append operator for sort `Stack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
 ```
 
-(TODO: Remove) Strings
+Strings
 -------
 
 Sometimes, data can be specified as a string, or even several consequtive strings, which should then be treated as a single string.
@@ -232,29 +232,24 @@ The `Strings` type and `#flatten` function help with this.
     rule #flatten(A:String BC:Strings) => A +String #flatten(BC)
 ```
 
-Datastrings
-------------
+Strings can be given to initialize memory.
+In that case, we need to calculate the sequence of bytes represented by the characters.
+Each character is interpreted as its UTF-8 byte sequence, except for a single `\` followed by two hexadecimal characters, which is then interpreted as a hexadecimal representation of a byte.
+`\` can also be used to escape special characters, represent tabs, etc., in which case their UTF-8 byte representation is used, e.g., `\t` represents the byte value 9.
 
-TODO: Replace Strings with DataStrings
-
-```k
-    //syntax DataString ::= r"[\\\"](([^\"\\\\])|([\\\\][x][0-9a-fA-F]{2}))*[\\\"]" [token]
-    syntax DataString ::= r"[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|([\\\\][x][0-9a-fA-F]{2})|([\\\\][u][0-9a-fA-F]{4})|([\\\\][U][0-9a-fA-F]{8}))*[\\\"]"      [token]
-    syntax DataStrings ::= List{DataString, ""}
-    syntax Int ::= #fromDataString(DataString)
- // ------------------------------------------
-```
-
-Hexadecimals
-------------
-
-Some data, such as memory offsets, can be specified in hexadecimal form.
+Finally, `\u{ ... }` where the bracket contents is some hexadecimal number, is meant to encode UTF-8 characters outside of the range of a single byte.
+Since we only care about the byte value, we unpack the hexadecimal inside.
 
 ```k
-    syntax HexNum ::= "0x" String
-    syntax Int    ::= #hexToInt ( HexNum ) [function]
- // -------------------------------------------------
-    rule #hexToInt(0x H) => String2Base(H, 16) requires H =/=String ""
+    syntax Ints ::= List{Int, ""}
+    syntax Ints ::= #string2bytes ( String ) [function]
+    syntax Int  ::= #stringLength ( String ) [function]
+    syntax Int  ::= #string2int   ( String ) [function]
+    syntax Int  ::= #length       ( Ints   ) [function] // TODO: Using `size` breaks. Use this implementation for now.
+ // ----------------------------------------
+    rule #stringLength(S) => #length(#string2bytes(S))
+    rule #length(.Ints) => 0
+    rule #length(_ IS)  => 1 +Int #length(IS)
 ```
 
 Byte Map
