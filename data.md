@@ -230,13 +230,13 @@ The maps store integers, but maintains the invariant that each stored integer is
     syntax Map ::= Map "[" Int ":=" Int "]" [function]
  // --------------------------------------------------
     rule BM [ IDX := 0  ] => BM
-    rule BM [ IDX := VAL] =>
-        // Don't store 0 bytes.
-        #if VAL modInt 256 =/=Int 0
-          #then BM [IDX <- VAL modInt 256 ]
-          #else BM [IDX <- undef          ]
-        #fi [ IDX +Int 1 := VAL /Int 256 ]
-      requires VAL >Int 0
+    rule BM [ IDX := VAL] => BM [IDX <- VAL modInt 256 ] [ IDX +Int 1 := VAL /Int 256 ]
+      requires VAL modInt 256 =/=Int 0
+       andBool VAL >Int 0
+    // Don't store 0 bytes.
+    rule BM [ IDX := VAL] => BM [IDX <- undef          ] [ IDX +Int 1 := VAL /Int 256 ]
+      requires VAL modInt 256 ==Int 0
+       andBool VAL >Int 0
 ```
 
 `#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
