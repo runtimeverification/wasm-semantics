@@ -24,7 +24,7 @@
       </memAddrs>
     </moduleInst>
   </curFrame>
-  <store>
+  <mainStore>
     <funcs>
       .Map
     </funcs>
@@ -34,5 +34,5 @@
     <mems>
       .Map
     </mems>
-  </store>
+  </mainStore>
 </generatedTop>

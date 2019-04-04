@@ -24,7 +24,7 @@ Configuration
           <memAddrs> .Map  </memAddrs>
         </moduleInst>
       </curFrame>
-      <store>
+      <mainStore>
         <funcs>
           <funcDef multiplicity="*" type="Map">
             <fname>  .FunctionName  </fname>
@@ -40,9 +40,10 @@ Configuration
             <memAddr> 0         </memAddr>
             <mmax>    .MemBound </mmax>
             <msize>   0         </msize>
+            <mdata>   .Map      </mdata>
           </memInst>
         </mems>
-      </store>
+      </mainStore>
 ```
 
 ### Assumptions and invariants
@@ -52,6 +53,9 @@ As an invariant, however, for any integer `< iNN > I:Int` on the stack, `I` is b
 That way, unsigned instructions can make use of `I` directly, whereas signed instructions may need `#signed(iNN, I)`.
 
 The highest address in a memory instance divided by the `#pageSize()` constant (defined below) may not exceed the value in the `<max>` cell, if present.
+
+Since memory data is bytes, all integers in the `Map` in the `<mdata>` cell are bounded to be between 1 and 255, inclusive.
+All places in the data with no entry are considered zero bytes.
 
 Instructions
 ------------
@@ -658,7 +662,7 @@ When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<memAddrs>` cell is an array with at most one value, at index 0.
 
-**TODO**: There are many more valid ways to instantiate memory. Allow specifying just max or neither min or max, folded syntax, identifier, inline instantiation, and inline export and import.
+**TODO**: Allow instantiation with data, and with an identifier and inline export and import.
 
 ```k
     syntax Instr ::= "(" "memory"                  ")"
@@ -685,10 +689,131 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
                <memAddr> NEXT </memAddr>
                <mmax>    MAX  </mmax>
                <msize>   MIN  </msize>
+               <mdata>   .Map </mdata>
              </memInst>
            )
            ...
          </mems>
+```
+
+The assorted store operations take an address of type `i32` and a value.
+The `storeX` operations first wrap the the value to be stored to the bit wdith `X`.
+The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
+
+```k
+    syntax Instr ::= "(" IValType "." StoreOpM Instr Instr ")" | "(" IValType  "." StoreOpM ")"
+ //                | "(" FValType "." StoreOpM Instr Instr ")" | "(" FValType  "." StoreOpM ")"
+                   | IValType "." StoreOp Int Int
+ //                | FValType "." StoreOp Int Float
+                   | "store" "{" Int Int Number "}"
+    syntax StoreOpM ::= StoreOp | StoreOp MemArg
+ // --------------------------------------------
+    rule <k> ( ITYPE . SOPM:StoreOpM I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOPM ) ... </k>
+
+    rule <k> ( ITYPE . SOP:StoreOp               ) => ITYPE . SOP  IDX                          VAL ... </k>
+         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+    rule <k> ( ITYPE . SOP:StoreOp MEMARG:MemArg ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
+         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+
+    rule <k> store { WIDTH EA VAL } => . ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH -Int 1) [EA := VAL ] </mdata>
+           ...
+         </memInst>
+         requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
+
+    rule <k> store { WIDTH  EA  _ } => trap ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           ...
+         </memInst>
+         requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
+
+    syntax StoreOp ::= "store" | "store8" | "store16" | "store32"
+ // -------------------------------------------------------------
+    rule <k> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL            } ... </k>
+    rule <k> _     . store8  EA VAL => store { 8                EA #wrap(8,  VAL) } ... </k>
+    rule <k> _     . store16 EA VAL => store { 16               EA #wrap(16, VAL) } ... </k>
+    rule <k> i64   . store32 EA VAL => store { 32               EA #wrap(32, VAL) } ... </k>
+```
+
+The assorted load operations take an address of type `i32`.
+The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
+The value is fethced from the "effective address", which is the address given on the stack plus offset.
+
+```k
+    syntax Instr ::= "(" IValType  "." LoadOpM Instr ")" | "(" IValType  "." LoadOpM ")"
+ //                | "(" FValType  "." LoadOpM Instr ")" | "(" FValType  "." LoadOpM ")"
+                   | IValType "." LoadOp Int
+                   | "load" "{" IValType Int Int Signedness"}"
+    syntax LoadOpM ::= LoadOp | LoadOp MemArg
+    syntax Signedness ::= "Signed" | "Unsigned"
+ // -------------------------------------------
+    rule <k> ( ITYPE . LOPM:LoadOpM I:Instr ) => I ~> ( ITYPE . LOPM ) ... </k>
+
+    rule <k> ( ITYPE . LOP:LoadOp              ) => ITYPE . LOP  IDX                          ... </k>
+         <stack> < i32 > IDX : STACK => STACK </stack>
+    rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
+         <stack> < i32 > IDX : STACK => STACK </stack>
+
+    rule <k> load { ITYPE WIDTH EA SIGN }
+          => < ITYPE > #if SIGN ==K Signed
+                           #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH /Int 8))
+                           #else #range(DATA, EA, WIDTH /Int 8)
+                       #fi
+         ...
+         </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           <mdata>   DATA </mdata>
+           ...
+         </memInst>
+      requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
+
+    rule <k> load { _ WIDTH EA _ } => trap ... </k>
+         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memInst>
+           <memAddr> ADDR </memAddr>
+           <msize>   SIZE </msize>
+           ...
+         </memInst>
+      requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
+
+    syntax LoadOp ::= "load"
+                    | "load8_u" | "load16_u" | "load32_u"
+                    | "load8_s" | "load16_s" | "load32_s"
+ // -----------------------------------------------------
+    rule <k> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </k>
+    rule <k> ITYPE . load8_u  EA:Int => load { ITYPE 8                EA Unsigned } ... </k>
+    rule <k> ITYPE . load16_u EA:Int => load { ITYPE 16               EA Unsigned } ... </k>
+    rule <k> i64   . load32_u EA:Int => load { i64   32               EA Unsigned } ... </k>
+    rule <k> ITYPE . load8_s  EA:Int => load { ITYPE 8                EA Signed   } ... </k>
+    rule <k> ITYPE . load16_s EA:Int => load { ITYPE 16               EA Signed   } ... </k>
+    rule <k> i64   . load32_s EA:Int => load { i64   32               EA Signed   } ... </k>
+```
+
+`MemArg`s can optionally be passed to `load` and `store` operations.
+The `offset` parameter is added to the the address given on the stack, resulting in the "effective address" to store to or load from.
+The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
+
+```k
+    syntax MemArg ::= Offset | Align | Offset Align
+    syntax Offset ::= "offset" "=" Int
+    syntax Align  ::= "align"  "=" Int
+ // ----------------------------------
+
+    syntax Int ::= #getOffset ( MemArg ) [function]
+ // -----------------------------------------------
+    rule #getOffset(           _:Align) => 0
+    rule #getOffset(offset= OS        ) => OS
+    rule #getOffset(offset= OS _:Align) => OS
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
@@ -718,7 +843,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> ( memory.grow ) => grow N ... </k>
          <stack> < i32 > N : STACK => STACK </stack>
 
-    rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else -1 #fi ... </k>
+    rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR  </memAddr>
@@ -727,8 +852,8 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
            ...
          </memInst>
 
-    rule <k> grow N => < i32 > -1 </k>
-          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+    rule <k> grow N => < i32 > #unsigned(i32, -1) </k>
+         <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
 
     syntax Bool ::= #growthAllowed(Int, MemBound) [function]
  // --------------------------------------------------------

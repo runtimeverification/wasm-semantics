@@ -83,10 +83,13 @@ We can append two `ValTypes`s with the `_+_` operator.
 The `#width` function returns the bit-width of a given `IValType`.
 
 ```k
-    syntax Int ::= #width ( IValType ) [function]
- // ---------------------------------------------
+    syntax Int ::= #width    ( IValType ) [function]
+    syntax Int ::= #numBytes ( IValType ) [function]
+ // ------------------------------------------------
     rule #width(i32) => 32
     rule #width(i64) => 64
+
+    rule #numBytes(ITYPE) => #width(ITYPE) /Int 8
 ```
 
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
@@ -133,27 +136,40 @@ We also add `undefined` as a value, which makes many partial functions in the se
 ### Value Operations
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
+The `#wrap` function wraps an integer to a given bit width.
 
 ```k
     syntax IVal ::= #chop ( IVal ) [function]
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
+
+    syntax Int  ::= #wrap(Int, Int) [function]
+ // ------------------------------------------
+    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
 ```
 
 ### Signed Interpretation
 
 Functions `#signed` and `#unsigned` allow for easier operation on twos-complement numbers.
 These functions assume that the argument integer is in the valid range of signed and unsigned values of the respective type, so they will not correctly map arbitrary integers into the corret range.
+Some operations extend integers from 1, 2, or 4 bytes, so a special function with a bit width argument helps with the conversion.
 
 ```k
-    syntax Int ::= #signed   ( IValType , Int ) [function]
-                 | #unsigned ( IValType , Int ) [function]
- // ------------------------------------------------------
+    syntax Int ::= #signed      ( IValType , Int ) [function]
+                 | #unsigned    ( IValType , Int ) [function]
+                 | #signedWidth ( Int      , Int ) [function]
+ // ---------------------------------------------------------
     rule #signed(ITYPE, N) => N                  requires 0            <=Int N andBool N <Int #pow1(ITYPE)
     rule #signed(ITYPE, N) => N -Int #pow(ITYPE) requires #pow1(ITYPE) <=Int N andBool N <Int #pow (ITYPE)
 
     rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
     rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
+
+    rule #signedWidth(8,  N) => N            requires 0     <=Int N andBool N <Int 128
+    rule #signedWidth(8,  N) => N -Int 256   requires 128   <=Int N andBool N <Int 256
+    rule #signedWidth(16, N) => N            requires 0     <=Int N andBool N <Int 32768
+    rule #signedWidth(16, N) => N -Int 65536 requires 32768 <=Int N andBool N <Int 65536
+    rule #signedWidth(32, N) => #signed(i32, N)
 ```
 
 ### Boolean Interpretation
@@ -200,5 +216,61 @@ Operator `_++_` implements an append operator for sort `Stack`.
 
     rule #drop(.ValTypes,   STACK)                       => STACK
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
+```
+
+Byte Map
+--------
+
+Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
+To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
+The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
+`BM [ N := I ]` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
+
+```k
+    syntax Map ::= Map "[" Int ":=" Int "]" [function]
+ // --------------------------------------------------
+    rule BM [ IDX := 0  ] => BM
+    rule BM [ IDX := VAL] => BM [IDX <- VAL modInt 256 ] [ IDX +Int 1 := VAL /Int 256 ]
+      requires VAL modInt 256 =/=Int 0
+       andBool VAL >Int 0
+    // Don't store 0 bytes.
+    rule BM [ IDX := VAL] => BM [IDX <- undef          ] [ IDX +Int 1 := VAL /Int 256 ]
+      requires VAL modInt 256 ==Int 0
+       andBool VAL >Int 0
+```
+
+`#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
+The function interprets the range of bytes as little-endian.
+
+```k
+    syntax Int ::= #range ( Map , Int , Int ) [function]
+ // ----------------------------------------------------
+    rule #range(BM:Map, START, WIDTH) => 0
+      requires WIDTH ==Int 0
+    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
+      requires WIDTH >Int 0 [concrete]
+```
+
+`#lookup` looks up a key in a map, defaulting to 0 if the map does not contain the key.
+
+```k
+    syntax Int ::= #lookup ( Map , Int ) [function]
+ // -----------------------------------------------
+    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
+    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
+```
+
+`#clearRange(MAP, START, END)` removes all entries from the map from `START` to `END`, inclusive.
+
+```k
+    syntax Map ::= #clearRange(Map, Int, Int) [function]
+ // ----------------------------------------------------
+    rule #clearRange(M, START, END) => M
+      requires START >=Int END
+    rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END)
+      requires START <Int  END
+```
+
+```k
 endmodule
 ```
