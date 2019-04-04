@@ -21,6 +21,8 @@ test_logs="$build_dir/logs"
 test_log="$test_logs/tests.log"
 mkdir -p "$test_logs"
 
+klab_dir="$build_dir/klab"
+
 # Utilities
 # ---------
 
@@ -51,6 +53,26 @@ run_proof() {
 
     export K_OPTS=-Xmx8G
     kprove --directory "$backend_dir" -m KWASM-LEMMAS "$proof_file" "$@"
+}
+
+run_klab() {
+    local run_mode run_file
+
+    run_mode="$1" ; shift
+    run_file="$1" ; shift
+
+    $0 "$run_mode" --backend java "$run_file" \
+        --state-log --state-log-path "$klab_dir/data" --state-log-id klab-statelog \
+        --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
+        --output-flatten "_Map_ #And" \
+        --output-tokenize "listInstr <_>_ i32_WASM-DATA i64_WASM-DATA _:__WASM-DATA" \
+        --no-alpha-renaming --restore-original-names --no-sort-collections \
+        --output json \
+        "$@" \
+        >/dev/null || true
+
+    export KLAB_OUT="$klab_dir"
+    klab debug klab-statelog
 }
 
 run_test() {
@@ -85,7 +107,8 @@ cd "$(dirname $0)"
 run_command="$1" ; shift
 
 backend="ocaml"
-[[ ! "$run_command" == 'prove' ]] || backend='java'
+[[ ! "$run_command" == prove ]] || backend='java'
+[[ ! "$run_command" =~ klab* ]] || backend='java'
 if [[ $# -gt 0 ]] && [[ $1 == '--backend' ]]; then
     backend="$2"
     shift 2
@@ -96,20 +119,25 @@ backend_dir="$defn_dir/$backend"
 case "$run_command-$backend" in
 
     # Running
-    run-@(ocaml|java|haskell)  ) run_krun  "$@" ;;
-    prove-@(java|haskell)      ) run_proof "$@" ;;
-    test-@(ocaml|java|haskell) ) run_test  "$@" ;;
+    run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
+    prove-@(java|haskell)      ) run_proof                       "$@" ;;
+    test-@(ocaml|java|haskell) ) run_test                        "$@" ;;
+    klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
 
     *) echo "
     usage: $0 (run|test) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
            $0 prove      [--backend (java|haskell)]       <spec> <K args>*
+           $0 klab-(run|prove)                            <spec> <K args>*
 
        $0 run   : Run a single WebAssembly program
        $0 test  : Run a single WebAssembly program like it's a test
        $0 prove : Run a WebAssembly K proof
+       $0 klab-(run|prove) : Run or prove a spec and launch KLab on the execution graph.
 
        Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.
              <K args> are any arguments you want to pass to K when executing/proving.
+
+       KLab: Make sure that the 'klab/bin' directory is on your PATH to use this option.
 " ; exit ;;
 esac

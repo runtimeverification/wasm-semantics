@@ -11,11 +11,12 @@ tangler:=$(pandoc_tangle_submodule)/tangle.lua
 LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
 
-.PHONY: deps ocaml-deps \
-        defn defn-ocaml defn-haskell \
-        build build-ocaml build-haskell \
+.PHONY: all clean \
+        deps ocaml-deps haskell-deps \
+        defn defn-ocaml defn-java defn-haskell \
+        build build-ocaml defn-haskell build-haskell \
         test test-execution test-simple test-proof \
-        media
+        media presentations reports
 
 all: build
 
@@ -96,15 +97,13 @@ $(ocaml_kompiled): $(ocaml_defn)
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                 \
-	    $(k_bin)/kompile --backend java                      \
+	$(k_bin)/kompile --backend java                          \
 	    --directory $(java_dir) -I $(java_dir)               \
 	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                 \
-	    $(k_bin)/kompile --backend haskell                   \
+	$(k_bin)/kompile --backend haskell                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)         \
 	    --main-module WASM-TEST --syntax-module WASM-TEST $<
 
@@ -140,8 +139,19 @@ test-proof: $(proof_tests:=.prove)
 # Presentation
 # ------------
 
-media: media/201803-ethcc/presentation.pdf
+media: presentations reports
 
-media/%/presentation.pdf: media/%/presentation.md
-	cd media/$* \
-		&& pandoc --from markdown --to beamer --output presentation.pdf presentation.md
+presentations: TO_FORMAT=beamer
+presentations: media/201803-presentation-ethcc.pdf    \
+               media/201903-presentation-edcon.pdf    \
+               media/201903-presentation-chalmers.pdf
+
+reports: TO_FORMAT=latex
+reports: media/201903-report-chalmers.pdf
+
+media/%.pdf: media/%.md media/citations.md
+	cat $^ | pandoc --from markdown-latex_macros --to $(TO_FORMAT) --filter pandoc-citeproc --output $@
+
+media-clean:
+	rm media/*.pdf
+
