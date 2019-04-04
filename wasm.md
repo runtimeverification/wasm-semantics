@@ -761,11 +761,13 @@ The value is fethced from the "effective address", which is the address given on
     rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
          <stack> < i32 > IDX : STACK => STACK </stack>
 
-    rule <k> load { ITYPE WIDTH EA SIGN } =>
-      < ITYPE > #if SIGN ==K Signed
-                #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH /Int 8))
-                #else #range(DATA, EA, WIDTH /Int 8)
-                #fi ... </k>
+    rule <k> load { ITYPE WIDTH EA SIGN }
+          => < ITYPE > #if SIGN ==K Signed
+                           #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH /Int 8))
+                           #else #range(DATA, EA, WIDTH /Int 8)
+                       #fi
+         ...
+         </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <memAddr> ADDR </memAddr>
@@ -773,7 +775,7 @@ The value is fethced from the "effective address", which is the address given on
            <mdata>   DATA </mdata>
            ...
          </memInst>
-         requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
+      requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
@@ -782,7 +784,7 @@ The value is fethced from the "effective address", which is the address given on
            <msize>   SIZE </msize>
            ...
          </memInst>
-         requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
+      requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
 
     syntax LoadOp ::= "load"
                     | "load8_u" | "load16_u" | "load32_u"
