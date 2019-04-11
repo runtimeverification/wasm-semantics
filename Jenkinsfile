@@ -79,7 +79,7 @@ pipeline {
             ansiColor('xterm') {
               checkout scm
               sh '''
-                ./build --opamroot ~/.opam wasm-java wasm-ocaml wasm-haskell
+                ./build wasm-java wasm-ocaml wasm-haskell
               '''
             }
           }
@@ -90,7 +90,7 @@ pipeline {
               sh '''
                 nprocs=$(nproc)
                 [ "$nprocs" -gt '4' ] && nprocs=4
-                ./build --opamroot ~/.opam -v test-exec-ocaml -j"$nprocs"
+                ./build -v test-exec-ocaml -j"$nprocs"
               '''
             }
           }
@@ -101,7 +101,7 @@ pipeline {
               sh '''
                 nprocs=$(nproc)
                 [ "$nprocs" -gt '4' ] && nprocs=4
-                ./build --opamroot ~/.opam -v test-exec-java -j"$nprocs"
+                ./build -v test-exec-java -j"$nprocs"
               '''
             }
           }
@@ -112,7 +112,7 @@ pipeline {
               sh '''
                 nprocs=$(nproc)
                 [ "$nprocs" -gt '4' ] && nprocs=4
-                ./build --opamroot ~/.opam -v test-proofs-java -j"$nprocs"
+                ./build -v test-proofs-java -j"$nprocs"
               '''
             }
           }
