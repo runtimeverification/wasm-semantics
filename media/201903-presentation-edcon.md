@@ -1,6 +1,5 @@
 ---
-title: 'Intro to K and KWasm'
-subtitle: 'What is KWasm?'
+title: 'Intro to K, KEVM, and KWasm'
 author:
 -   Everett Hildenbrandt
 -   Rikard Hjort
@@ -22,11 +21,13 @@ Overview
 --------
 
 1.  Introduction to K
-2.  KWasm: Current State
+2.  KEVM
+2.  KWasm
+2.  Reachability Logic Prover
 4.  Future Directions
 
-(Brief) Introduction to K/KEVM
-==============================
+(Brief) Introduction to K
+=========================
 
 K Vision
 --------
@@ -55,6 +56,13 @@ K Tooling/Languages
 -   KIELE - 2018 [@kasampalis-guth-moore-rosu-johnson-k-iele]
 -   KLLVM <https://github.com/kframework/llvm-semantics>
 -   KX86-64 <https://github.com/kframework/X86-64-semantics>
+
+K Specification: The Components
+-------------------------------
+
+-   **Syntax** of your language (term algebra of programs).
+-   **Configuration** of your language (term algebra of program states).
+-   **Rules** describing small-step operational semantics of your language.
 
 K Specifications: Syntax
 ------------------------
@@ -181,100 +189,22 @@ Example Execution (cont.)
     <store> 0 |-> 6    1 |-> 0 </store>
 ```
 
-Example Execution (cont.)
--------------------------
+KEVM
+====
 
-### Variable lookup
+What is KEVM?
+-------------
 
-```k
-    rule <k> X:Id => V ... </k>
-         <env>   ...  X |-> SX ... </env>
-         <store> ... SX |-> V  ... </store>
-```
+-   Implementation of EVM in K.
+-   Passes all of the VMTests and the BlockchainTests/GeneralStateTests.
+-   Derived interpreter nearly as performant as cpp-ethereum.
+-   The Jello Paper is derived from KEVM <https://jellopaper.org>.
 
-### Next Configuration
+. . .
 
-```k
-    <k>     a ~> b := 2 * [] + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
-```
-
-Example Execution (cont.)
--------------------------
-
-### Variable lookup
-
-```k
-    rule <k> X:Id => V ... </k>
-         <env>   ...  X |-> SX ... </env>
-         <store> ... SX |-> V  ... </store>
-```
-
-### Next Configuration
-
-```k
-    <k>     6 ~> b := 2 * [] + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
-```
-
-Example Execution (cont.)
--------------------------
-
-### Variable lookup
-
-```k
-    rule <k> X:Id => V ... </k>
-         <env>   ...  X |-> SX ... </env>
-         <store> ... SX |-> V  ... </store>
-```
-
-### Next Configuration
-
-```k
-    <k>          b := 2 * 6 + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
-```
-
-Example Execution (cont.)
--------------------------
-
-### Variable assignment
-
-```k
-    rule <k> X := I:Int => . ... </k>
-         <env>   ...  X |-> SX       ... </env>
-         <store> ... SX |-> (V => I) ... </store>
-```
-
-### Next Configuration
-
-```k
-    <k>     b := 17 ~> return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
-```
-
-Example Execution (cont.)
--------------------------
-
-### Variable assignment
-
-```k
-    rule <k> X := I:Int => . ... </k>
-         <env>   ...  X |-> SX       ... </env>
-         <store> ... SX |-> (V => I) ... </store>
-```
-
-### Next Configuration
-
-```k
-    <k>                return b </k>
-    <env>   a |-> 0    b |-> 1  </env>
-    <store> 0 |-> 6    1 |-> 17 </store>
-```
+-   Used for commercial verification by Runtime Verification, Inc.
+-   Used by DappHub to verify the MKR SCD and MCD core contracts.
+-   Check out repo of verified smart contracts at <https://github.com/runtimeverification/verified-smart-contracts>.
 
 KWasm Design
 ============
@@ -380,87 +310,8 @@ For example, KWasm will happily execute the following fragment (without an enclo
     (i32.add)
 ```
 
-Using KWasm (Psuedo-Demo)
-=========================
-
-Getting/Building
-----------------
-
-Clone the repository:
-
-```sh
-git clone 'https://github.com/kframework/wasm-semantics'
-cd wasm-semantics
-```
-
-Build the dependencies, then the KWasm semantics:
-
-```sh
-make deps
-make build
-```
-
-`kwasm` Script
---------------
-
-The file `./kwasm` is the main runner for KWasm.
-
-### Running `./kwasm help`
-
-```sh
-usage: ./kwasm (run|test) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
-       ./kwasm prove      [--backend (java|haskell)]       <spec> <K args>*
-       ./kwasm klab-(run|prove)                            <spec> <K args>*
-
-    ./kwasm run   : Run a single WebAssembly program
-    ./kwasm test  : Run a single WebAssembly program like it's a test
-    ./kwasm prove : Run a WebAssembly K proof
-
-    Note: <pgm> is a path to a file containing a WebAssembly program.
-          <spec> is a K specification to be proved.
-          <K args> are any arguments you want to pass to K when executing/proving.
-```
-
-Running a Program
------------------
-
-### Wasm Program `pgm1.wast`
-
-```wasm
-(i32.const 4)
-(i32.const 5)
-(i32.add)
-```
-
-### Result of `./kwasm run pgm1.wast`
-
-```k
-<generatedTop>
-  <k>
-    .
-  </k>
-  <stack>
-    < i32 > 9 : .Stack
-  </stack>
-</generatedTop>
-```
-
-Demo Time!
-----------
-
--   KLab debugging demo!!
-
-Future Directions
-=================
-
-Finish KWasm
-------------
-
-The semantics are fairly early-stage.
-
-### In progress
-
--   Memories.
+Future Steps for KWasm
+----------------------
 
 ### To be done
 
@@ -468,17 +319,44 @@ The semantics are fairly early-stage.
 -   Tables.
 -   Modules.
 
-KeWasm
-------
+### KeWasm
 
 -   eWasm adds gas metering to Wasm, but otherwise leaves the semantics alone.
 
-\vfill{}
+Reachability Logic Prover
+=========================
 
-. . .
+Inference System
+----------------
 
--   KEVM currently has many verified smart contracts at <https://github.com/runtimeverification/verified-smart-contracts>.
--   We similarly would like to build a repository of verified code using KeWasm.
+![Reachability Logic Inference System](media/img/reachability-logic-inference-system.png)
+
+-   Sound and relatively complete.
+-   Interesting rules are Circularity/Transitivity, allows coinductive reasoning.
+
+Tool
+----
+
+-   K Reachability Logic prover accepts proof claims in same format as operational semantics axioms[@stefanescu-park-yuwen-li-rosu-reachability-prover].
+-   On success will print `#True`, on failure will print symbolic counterexample end-states.
+-   Added instrumentation allows KLab to provide more useful interface to K Prover <https://github.com/dapphub/klab>.
+-   Proof search is fully automated, only write the theorem (specification), no manual control over how to discharge it.
+
+Example KWasm Proof
+-------------------
+
+Non-overflowing addition operation:
+
+```k
+    rule <k> ( ITYPE:IValType . const X:Int ) ( ITYPE . const Y:Int ) ( ITYPE . add ) => . ... </k>
+         <stack> S:Stack => < ITYPE > (X +Int Y) : S </stack>
+      requires 0 <=Int X andBool 0 <=Int Y
+       andBool (X +Int Y) <Int #pow(ITYPE)
+```
+
+-   Program which adds two symbolic numbers `X` and `Y`.
+-   Don't care about bitwidth (`ITYPE` can be either `i32` or `i64`).
+-   Add pre-condition that overflow doesn't happen: `(X +Int Y) <Int #pow(ITYPE)`.
 
 Conclusion/Questions?
 =====================
