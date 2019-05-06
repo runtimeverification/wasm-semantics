@@ -10,3 +10,6 @@
 	path = .build/pandoc-tangle
 	url = https://github.com/ehildenb/pandoc-tangle
 	ignore = untracked
+[submodule ".build/kninja"]
+	path = .build/kninja
+	url = https://github.com/nishantjr/kninja
