@@ -135,7 +135,17 @@ test-simple: $(simple_tests:=.test)
 
 ### Conformance Tests
 
-conformance_tests:=$(wildcard tests/wasm-tests/test/core/*.wast)
+bad_conformance_tests:=comments skip-stack-guard-page f64 f64_cmp f32_cmp  \
+                       call if int_literals field custom f64_bitwise stack \
+                       fac endianness func store br f32 binary names       \
+                       encoding i32 id unreachable const invalid token     \
+                       float_misc right i64 loop module address align      \
+                       module func_ptrs linking select labels type block   \
+                       load exports nop f32_bitwise float_exprs imports    \
+                       local_set br_table return call_indirect memory_trap \
+                       globals memory data float_literals
+
+conformance_tests:=$(filter-out $(patsubst %, tests/wasm-tests/test/core/%.wast, $(bad_conformance_tests)), $(wildcard tests/wasm-tests/test/core/*.wast))
 
 parse-conformance: $(conformance_tests:=.parse)
 
