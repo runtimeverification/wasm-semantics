@@ -186,16 +186,16 @@ These operators convert constant elements at the top of the stack to another typ
 The target type is before the `.`, and the source type is after the `_`.
 
 ```k
-    syntax Instr ::= "(" IValType "." ConvOp ")" | "(" IValType "." ConvOp Instr ")" | IValType "." ConvOp Int
- // ----------------------------------------------------------------------------------------------------------
-    rule <k> ( ITYPE . CONVOP:ConvOp I:Instr ) => I ~> ( ITYPE . CONVOP ) ... </k>
+    syntax Instr ::= "(" ValType "." ConvOp ")" | "(" ValType "." ConvOp Instr ")" | ValType "." ConvOp Int
+ // -------------------------------------------------------------------------------------------------------
+    rule <k> ( TYPE . CONVOP:ConvOp I:Instr ) => I ~> ( TYPE . CONVOP ) ... </k>
 
-    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1  ... </k>
+    rule <k> ( TYPE . CONVOP:ConvOp ) => TYPE . CONVOP C1  ... </k>
          <stack> < SRCTYPE > C1 : STACK => STACK </stack>
       requires #convSourceType(CONVOP) ==K SRCTYPE
 
-    syntax IValType ::= #convSourceType ( ConvOp ) [function]
- // ---------------------------------------------------------
+    syntax ValType ::= #convSourceType ( ConvOp ) [function]
+ // --------------------------------------------------------
 ```
 
 Numeric Operators
@@ -365,6 +365,16 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
     rule #convSourceType(extend_i32_s) => i32
 ```
 
+**TODO**: Unimplemented.
+
+```k
+    syntax ConvOp ::= "extend_i32_s" | "promote_f32" | "demote_f64"
+                    | "trunc_f32_u"     | "trunc_f64_u"     | "trunc_f32_s"     | "trunc_f64_s"
+                    | "convert_i64_u"   | "convert_i32_u"   | "convert_i64_s"   | "convert_i32_s"
+                    | "reinterpret_i32" | "reinterpret_i64" | "reinterpret_f32" | "reinterpret_f64"
+ // -----------------------------------------------------------------------------------------------
+```
+
 Stack Operations
 ----------------
 
@@ -506,10 +516,10 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax Instr ::= "(" "local.get" Int ")"
-                   | "(" "local.set" Int ")"
-                   | "(" "local.tee" Int ")"
- // ----------------------------------------
+    syntax Instr ::= "(" "local.get" VarIdentifier ")"
+                   | "(" "local.set" VarIdentifier ")"
+                   | "(" "local.tee" VarIdentifier ")"
+ // --------------------------------------------------
     rule <k> ( local.get INDEX ) => . ... </k>
          <stack> STACK => VALUE : STACK </stack>
          <locals> ... INDEX |-> VALUE ... </locals>
@@ -551,14 +561,21 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax FunctionName ::= ".FunctionName" | Int | Identifier
- // ----------------------------------------------------------
+    syntax FunctionName ::= ".FunctionName" | Int | Identifier | String
+ // -------------------------------------------------------------------
 
     syntax TypeKeyWord ::= "param" | "result" | "local"
  // ---------------------------------------------------
 
+    syntax NamedValType ::= VarIdentifier ValType
+ // ---------------------------------------------
+
+    syntax NamedValTypes ::= List{NamedValType, ""}
+ // -----------------------------------------------
+
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
+                       | TypeKeyWord NamedValTypes
                        | "export" FunctionName
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
@@ -625,8 +642,13 @@ Unlike labels, only one frame can be "broken" through at a time.
          <stack> STACK => #take(TRANGE, STACK) ++ STACK' </stack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "invoke" FunctionName
+    syntax Instr ::= "(" "invoke" FunctionName Instrs ")"
+                   | "invoke" FunctionName
  // --------------------------------------
+
+// **TODO**: Make regression out of error message that parsing this rule makes.
+//    rule <k> ( invoke FNAME:FunctionName IS:Instrs ) => IS ~> invoke FNAME ... </k>
+
     rule <k> invoke FNAME
           => init_locals #take(TDOMAIN, STACK) ++ #zero(TLOCALS)
           ~> INSTRS

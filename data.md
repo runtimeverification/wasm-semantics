@@ -33,6 +33,9 @@ As defined in the WebAssembly spec, the syntax of identifiers is as follows.
 ```k
     syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
+
+    syntax VarIdentifier ::= Identifier | Int
+ // -----------------------------------------
 ```
 
 WebAssembly Types
@@ -114,6 +117,33 @@ WebAssembly values are either integers or floating-point numbers, of 32- or 64-b
 ```k
     syntax Number ::= Int | Float
  // -----------------------------
+```
+
+**TODO**: This needs to actually be parsed and added to the `Int` and `Float` sorts, and be added to the prelude.
+
+```k
+    syntax Int ::= r"0x[0-9a-f]*" [token]
+ // -------------------------------------
+
+    syntax Float ::= "inf" | "-inf" | "nan" | "-nan" | Int
+                   | r"0x[0-9]\\.[0-9]*p-?[0-9]*" [token]
+                   | Float ":" Int // for cases like nan:0x20000
+ // -----------------------------------------------------
+```
+
+**TODO**: Figure out why the following definition produces such a bad error message.
+
+```
+    syntax Int ::= IntHex | #parseIntHex ( IntHex )
+    syntax IntHex ::= r"0x[0-9a-f]*" [token]
+ // ----------------------------------------
+    rule IH:IntHex => #parseIntHex(IH) [macro] // sort-increasing macro??
+
+    syntax Float ::= "inf" | "-inf" | "nan" | "-nan"
+                   | FloatExt | #parseFloatExt ( FloatExt )
+    syntax FloatExt ::= r"0x[0-9]\\.[0-9]*p-?[0-9]*" [token]
+ // --------------------------------------------------------
+    rule FE:FloatExt => #parseFloatExt(FE) [macro] // sort-increasing macro???
 ```
 
 Proper values are numbers annotated with their types.
