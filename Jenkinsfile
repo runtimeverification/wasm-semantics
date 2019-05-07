@@ -76,7 +76,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              ./build -v test-exec-ocaml -j"$nprocs"
+              ./build -v test-simple-ocaml -j"$nprocs"
             '''
           }
         }
@@ -85,7 +85,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              ./build -v test-exec-java -j"$nprocs"
+              ./build -v test-simple-java -j"$nprocs"
             '''
           }
         }
