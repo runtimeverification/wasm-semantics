@@ -39,38 +39,31 @@ wasm_haskell = build_wasm(backend = 'haskell')
 concrete_backend = wasm_ocaml
 symbolic_backend = wasm_java
 
-def simple_tests(defn, backend):
-    simple = defn.tests( glob = 'tests/simple/*.wast'
-                       , alias = 'test-simple-' + backend
-                       , expected = 'tests/success-' + backend + '.out'
-                       , default = False
-                       )
-    return exec
+def test_exec(name, glob, defn, backend):
+    defn.tests( glob = glob
+              , alias = 'test-' + name + '-' + backend
+              , expected = 'tests/success-' + backend + '.out'
+              , default = False
+              )
 
-def conformance_tests(defn, backend):
-    conformance = defn.tests( glob = 'tests/wasm-tests/test/core/*.wast'
-                            , alias = 'test-conformance-' + backend
-                            , expected = 'tests/success-' + backend + '.out'
-                            , default = False
-                            )
-    return exec
+def test_proof(name, glob, defn, backend):
+    defn.proofs( glob = glob
+               , alias = 'test-' + name + '-' + backend
+               , default = False
+               )
 
-def proof_tests(defn, backend):
-    return defn.proofs( glob = 'tests/proofs/*-spec.k'
-                      , alias = 'test-proofs-' + backend
-                      , default = False
-                      )
+test_exec('simple',      'tests/simple/*.wast',               wasm_java,  'java')
+test_exec('simple',      'tests/simple/*.wast',               wasm_ocaml, 'ocaml')
+test_exec('conformance', 'tests/wasm-tests/test/core/*.wast', wasm_ocaml, 'ocaml')
 
-simple_tests(wasm_java, 'java')
-simple_tests(wasm_ocaml, 'ocaml')
-conformance_tests(wasm_ocaml, 'ocaml')
-proof_tests(wasm_java, 'java')
-proof_tests(wasm_haskell, 'haskell')
+test_proof('prove', 'tests/proofs/*-spec.k', wasm_java,    'java')
+test_proof('prove', 'tests/proofs/*-spec.k', wasm_haskell, 'haskell')
 
-proj.alias(name = 'test-exec',   targets = 'test-exec-java')
-proj.alias(name = 'test-simple', targets = 'test-simple-java')
+proj.alias(name = 'test-exec',        targets = 'test-exec-java')
+proj.alias(name = 'test-simple',      targets = 'test-simple-java')
 proj.alias(name = 'test-conformance', targets = 'test-conformance-ocaml')
-proj.alias(name = 'test-proofs', targets = 'test-proofs-java')
+proj.alias(name = 'test-proofs',      targets = 'test-proofs-java')
+
 proj.default(['test-exec', 'test-simple', 'test-proofs'])
 
 # Main
