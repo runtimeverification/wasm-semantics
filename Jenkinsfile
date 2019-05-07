@@ -35,7 +35,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              make TEST_CONCRETE_BACKEND=ocaml test-execution -j"$nprocs"
+              make TEST_CONCRETE_BACKEND=ocaml test-exec -j"$nprocs"
             '''
           }
         }
@@ -44,7 +44,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              make TEST_CONCRETE_BACKEND=java test-execution -j"$nprocs"
+              make TEST_CONCRETE_BACKEND=java test-exec -j"$nprocs"
             '''
           }
         }
@@ -53,7 +53,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              make test-proof -j"$nprocs"
+              make test-prove -j"$nprocs"
             '''
           }
         }
@@ -94,7 +94,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              ./build -v test-proofs-java -j"$nprocs"
+              ./build -v test-prove-java -j"$nprocs"
             '''
           }
         }

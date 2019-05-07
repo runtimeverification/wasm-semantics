@@ -127,7 +127,7 @@ test: test-execution test-proof
 
 ### Execution Tests
 
-test-execution: test-simple
+test-exec: test-simple
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
@@ -143,7 +143,7 @@ parse-conformance: $(conformance_tests:=.parse)
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
-test-proof: $(proof_tests:=.prove)
+test-prove: $(proof_tests:=.prove)
 
 # Presentation
 # ------------
