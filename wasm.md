@@ -607,9 +607,9 @@ The `*_local` instructions are defined here.
 
 ```k
     syntax Instr ::= "init_global" Int Val
-                   | "(" "global.get" Int ")"
-                   | "(" "global.set" Int ")"
- // -----------------------------------------
+                   | "(" "global.get" VarIdentifier ")"
+                   | "(" "global.set" VarIdentifier ")"
+ // ---------------------------------------------------
     rule <k> init_global INDEX VALUE => . ... </k>
          <globals> GLOBALS => GLOBALS [ INDEX <- VALUE ] </globals>
 
@@ -765,11 +765,11 @@ Unlike labels, only one frame can be "broken" through at a time.
            ...
          </funcDef>
 
-    syntax Instr ::= "return"
- // -------------------------
-    rule <k> return ~> (IS:Instrs => .)  ... </k>
-    rule <k> return ~> (L:Label   => .)  ... </k>
-    rule <k> (return => .) ~> FR:Frame ... </k>
+    syntax Instr ::= "(" "return" ")"
+ // ---------------------------------
+    rule <k> ( return ) ~> (IS:Instrs => .) ... </k>
+    rule <k> ( return ) ~> (L:Label   => .) ... </k>
+    rule <k> (( return ) => .) ~> FR:Frame  ... </k>
 ```
 
 **TODO**: Unimplemented.
@@ -789,7 +789,7 @@ Unlike labels, only one frame can be "broken" through at a time.
 
     syntax Instr ::= "(" "return" Instr ")"
  // ---------------------------------------
-    rule <k> ( return INSTR ) => INSTR ~> return ... </k>
+    rule <k> ( return INSTR ) => INSTR ~> ( return ) ... </k>
 ```
 
 Memory
