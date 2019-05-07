@@ -462,6 +462,18 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
          <stack> < TYPE > VAL : STACK => STACK </stack>
 ```
 
+**TODO**: Unimplemented.
+
+```k
+    syntax Instr ::= "(" "br"    Int Instr       ")"
+                   | "(" "br_if" Int Instr       ")"
+                   | "(" "br_if" Int Instr Instr ")"
+                   | "(" "br_table" Int Int     Instr Instr ")"
+                   | "(" "br_table" Int Int Int Instr       ")"
+                   | "(" "br_table" Int Int Int Instr Instr ")"
+ // -----------------------------------------------------------
+```
+
 Finally, we have the conditional and loop instructions.
 
 ```k
@@ -486,6 +498,19 @@ Finally, we have the conditional and loop instructions.
 
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } STACK ... </k>
          <stack> STACK => .Stack </stack>
+```
+
+**TODO**: Unimplemented.
+
+```k
+    syntax Instr ::= "(" "if"          Instrs "(" "then" Instrs ")" ")"
+                   | "(" "if"          Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                   | "(" "if" FuncDecl Instrs "(" "then" Instrs ")" ")"
+                   | "(" "if" FuncDecl Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+ // -----------------------------------------------------------------------------------------
+
+    syntax Instr ::= "(" "loop" Instrs ")"
+ // --------------------------------------
 ```
 
 Memory Operators
@@ -533,6 +558,15 @@ The `*_local` instructions are defined here.
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 ```
 
+**TODO**: Unimplemented.
+
+```k
+    syntax Instr ::= "(" "local.get" VarIdentifier Instr ")"
+                   | "(" "local.set" VarIdentifier Instr ")"
+                   | "(" "local.tee" VarIdentifier Instr ")"
+ // --------------------------------------------------------
+```
+
 ### Globals
 
 ```k
@@ -552,8 +586,31 @@ The `*_local` instructions are defined here.
          <globals> ... INDEX |-> (_ => VALUE) ... </globals>
 ```
 
+**TODO**: Unimplemented.
+
+```k
+    syntax TypeKeyWord ::= "mut"
+ // ----------------------------
+
+    syntax Instr ::= "(" "global" VarIdentifier FuncDecl Instr ")"
+ // --------------------------------------------------------------
+
+    syntax Instr ::= "(" "global.get" VarIdentifier Instr ")"
+                   | "(" "global.set" VarIdentifier Instr ")"
+ // ---------------------------------------------------------
+```
+
 Function Declaration and Invocation
 -----------------------------------
+
+### Type Declaration
+
+**TODO**: Inimplemented. Token "type" causes problems?
+
+```k
+ //   syntax Instr ::= "(" "type" VarIdentifier Instr ")"
+ // ---------------------------------------------------
+```
 
 ### Function Declaration
 
@@ -642,13 +699,8 @@ Unlike labels, only one frame can be "broken" through at a time.
          <stack> STACK => #take(TRANGE, STACK) ++ STACK' </stack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "(" "invoke" FunctionName Instrs ")"
-                   | "invoke" FunctionName
+    syntax Instr ::= "invoke" FunctionName
  // --------------------------------------
-
-// **TODO**: Make regression out of error message that parsing this rule makes.
-//    rule <k> ( invoke FNAME:FunctionName IS:Instrs ) => IS ~> invoke FNAME ... </k>
-
     rule <k> invoke FNAME
           => init_locals #take(TDOMAIN, STACK) ++ #zero(TLOCALS)
           ~> INSTRS
@@ -675,6 +727,22 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> return ~> (IS:Instrs => .)  ... </k>
     rule <k> return ~> (L:Label   => .)  ... </k>
     rule <k> (return => .) ~> FR:Frame ... </k>
+```
+
+**TODO**: Unimplemented.
+**TODO**: Make regression out of error message that adding this `invoke` rule makes.
+
+```k
+    syntax Instr ::= "(" "call" VarIdentifier Instrs ")"
+ // ----------------------------------------------------
+
+    syntax Instr ::= "(" "invoke" FunctionName Instrs ")"
+ // -----------------------------------------------------
+//    rule <k> ( invoke FNAME:FunctionName IS:Instrs ) => IS ~> invoke FNAME ... </k>
+
+    syntax Instr ::= "(" "return" Instr ")"
+ // ---------------------------------------
+    rule <k> ( return INSTR ) => INSTR ~> return ... </k>
 ```
 
 Memory
@@ -900,11 +968,20 @@ Incidentally, the page size is 2^16 bytes.
     rule #pageSize()      => 65536
 ```
 
+Tables
+------
+
+**TODO**: Unimplemented.
+
+```k
+    syntax Instr ::= "(" "table" "funcref" "(" "elem" VarIdentifier ")" ")"
+ // -----------------------------------------------------------------------
+```
+
 Module Declaration
 ------------------
 
-Currently, we support a single module.
-The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
+**TODO**: Unimplemented.
 
 ```k
     syntax Instr ::= "(" "module" Instrs ")"

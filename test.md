@@ -143,7 +143,8 @@ The Wasm Core test-suite uses more Wasm-like assertions.
 **TODO**: Unimplemented.
 
 ```k
-    syntax Instr ::= "(" "assert_return"                Instr Instr  ")"
+    syntax Instr ::= "(" "assert_return"                Instr        ")"
+                   | "(" "assert_return"                Instr Instr  ")"
                    | "(" "assert_invalid"               Instr String ")"
                    | "(" "assert_trap"                  Instr String ")"
                    | "(" "assert_return_arithmetic_nan" Instr        ")"
