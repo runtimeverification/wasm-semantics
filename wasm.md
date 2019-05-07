@@ -663,15 +663,8 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax TypeKeyWord ::= "param" | "result" | "local"
  // ---------------------------------------------------
 
-    syntax NamedValType ::= VarIdentifier ValType
- // ---------------------------------------------
-
-    syntax NamedValTypes ::= List{NamedValType, ""}
- // -----------------------------------------------
-
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | TypeKeyWord NamedValTypes
                        | "export" FunctionName
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
@@ -728,10 +721,25 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 **TODO**: Unimplemented.
 
 ```k
-    syntax Instr ::= "(" "export" FunctionName              Instr ")"
-                   | "(" "import" FunctionName FunctionName       ")"
-                   | "(" "import" FunctionName FunctionName Instr ")"
- // -----------------------------------------------------------------
+
+    syntax NamedValType ::= VarIdentifier ValType
+ // ---------------------------------------------
+
+    syntax NamedValTypes ::= List{NamedValType, ""}
+ // -----------------------------------------------
+
+    syntax FuncDecl ::= TypeKeyWord NamedValTypes
+ // ---------------------------------------------
+
+    syntax Instr ::= "(" "export" FunctionName              Instr        ")"
+                   | "(" "import" FunctionName FunctionName              ")"
+                   | "(" "import" FunctionName FunctionName FunctionName ")"
+                   | "(" "import" FunctionName FunctionName Instr        ")"
+ // ------------------------------------------------------------------------
+
+ //   syntax Instr ::=  "(" "func" FunctionName Instrs FuncDecl ")"
+    syntax Instr ::=  "(" "func" FunctionName Instrs "(" "param" IValType ")" ")"
+ // -----------------------------------------------------------------------------
 ```
 
 ### Function Invocation/Return
@@ -1025,8 +1033,8 @@ Incidentally, the page size is 2^16 bytes.
 **TODO**: Unimplemented.
 
 ```k
-    syntax HexString ::= r"[\\\"](\\\\[0-9a-f][0-9a-f])*[\\\"]" [token]
- // -------------------------------------------------------------------
+    syntax HexString ::= r"[\\\"](\\\\?[0-9a-fA-F])*[\\\"]" [token]
+ // ---------------------------------------------------------------
 
     syntax Instr ::= "(" "memory" "(" "data" HexString ")" ")"
  // ----------------------------------------------------------
@@ -1058,6 +1066,9 @@ Module Declaration
 **TODO**: Unimplemented.
 
 ```k
+    syntax Instr ::= "(" "start" VarIdentifier ")"
+ // ----------------------------------------------
+
     syntax Instr ::= "(" "module"               Instrs ")"
                    | "(" "module" VarIdentifier Instrs ")"
  // ------------------------------------------------------
