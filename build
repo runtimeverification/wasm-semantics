@@ -39,15 +39,20 @@ wasm_haskell = build_wasm(backend = 'haskell')
 concrete_backend = wasm_ocaml
 symbolic_backend = wasm_java
 
-def exec_tests(defn, backend):
+def simple_tests(defn, backend):
     simple = defn.tests( glob = 'tests/simple/*.wast'
                        , alias = 'test-simple-' + backend
                        , expected = 'tests/success-' + backend + '.out'
                        , default = False
                        )
-    exec = proj.alias( name = 'test-exec-' + backend
-                     , targets = simple
-                     )
+    return exec
+
+def conformance_tests(defn, backend):
+    conformance = defn.tests( glob = 'tests/wasm-tests/test/core/*.wast'
+                            , alias = 'test-conformance-' + backend
+                            , expected = 'tests/success-' + backend + '.out'
+                            , default = False
+                            )
     return exec
 
 def proof_tests(defn, backend):
@@ -56,13 +61,15 @@ def proof_tests(defn, backend):
                       , default = False
                       )
 
-exec_tests(wasm_java, 'java')
-exec_tests(wasm_ocaml, 'ocaml')
+simple_tests(wasm_java, 'java')
+simple_tests(wasm_ocaml, 'ocaml')
+conformance_tests(wasm_ocaml, 'ocaml')
 proof_tests(wasm_java, 'java')
 proof_tests(wasm_haskell, 'haskell')
 
 proj.alias(name = 'test-exec',   targets = 'test-exec-java')
 proj.alias(name = 'test-simple', targets = 'test-simple-java')
+proj.alias(name = 'test-conformance', targets = 'test-conformance-ocaml')
 proj.alias(name = 'test-proofs', targets = 'test-proofs-java')
 proj.default(['test-exec', 'test-simple', 'test-proofs'])
 
