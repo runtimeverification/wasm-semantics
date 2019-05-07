@@ -148,6 +148,7 @@ The Wasm Core test-suite uses more Wasm-like assertions.
                    | "(" "assert_invalid"               Instr String ")"
                    | "(" "assert_exhaustion"            Instr String ")"
                    | "(" "assert_trap"                  Instr String ")"
+                   | "(" "assert_unlinkable"            Instr String ")"
                    | "(" "assert_return_arithmetic_nan" Instr        ")"
                    | "(" "assert_return_canonical_nan"  Instr        ")"
                    | "(" "assert_return_arithmetic_nan" Instr        ")"

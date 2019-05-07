@@ -629,8 +629,10 @@ The `*_local` instructions are defined here.
     syntax TypeKeyWord ::= "mut"
  // ----------------------------
 
-    syntax Instr ::= "(" "global" VarIdentifier FuncDecl Instr ")"
- // --------------------------------------------------------------
+    syntax Instr ::= "(" "global" VarIdentifier FuncDecl Instr         ")"
+                   | "(" "global"                        Instr ValType ")"
+                   | "(" "global" VarIdentifier          Instr ValType ")"
+ // ----------------------------------------------------------------------
 
     syntax Instr ::= "(" "global.get" VarIdentifier Instr ")"
                    | "(" "global.set" VarIdentifier Instr ")"
@@ -726,8 +728,10 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 **TODO**: Unimplemented.
 
 ```k
-    syntax Instr ::= "(" "export" FunctionName Instr ")"
- // ----------------------------------------------------
+    syntax Instr ::= "(" "export" FunctionName              Instr ")"
+                   | "(" "import" FunctionName FunctionName       ")"
+                   | "(" "import" FunctionName FunctionName Instr ")"
+ // -----------------------------------------------------------------
 ```
 
 ### Function Invocation/Return
@@ -784,8 +788,9 @@ Unlike labels, only one frame can be "broken" through at a time.
  //   syntax Instr ::= "(" "call_indirect" "(" "type" VarIdentifier ")" Instrs ")"
  // ----------------------------------------------------------------------------
 
-    syntax Instr ::= "(" "invoke" FunctionName Instrs ")"
- // -----------------------------------------------------
+    syntax Instr ::= "(" "invoke" FunctionName  Instrs ")"
+                   | "(" "invoke" VarIdentifier String ")"
+ // ------------------------------------------------------
 //    rule <k> ( invoke FNAME:FunctionName IS:Instrs ) => IS ~> invoke FNAME ... </k>
 
     syntax Instr ::= "(" "return" Instr ")"
@@ -1033,8 +1038,18 @@ Tables
 **TODO**: Unimplemented.
 
 ```k
-    syntax Instr ::= "(" "table" "funcref" "(" "elem" VarIdentifier ")" ")"
- // -----------------------------------------------------------------------
+    syntax Instr ::= "(" "offset" Instrs ")"
+ // ----------------------------------------
+
+    syntax Instr ::= "(" "elem"               Instr VarIdentifiers ")"
+                   | "(" "elem" VarIdentifier Instr VarIdentifiers ")"
+ // ------------------------------------------------------------------
+
+    syntax TableIdentifier ::= "[a-zA-Z0-9]*" [token]
+ // -------------------------------------------------
+
+    syntax Instr ::= "(" "table" VarIdentifiers TableIdentifier Instrs ")"
+ // ----------------------------------------------------------------------
 ```
 
 Module Declaration
@@ -1043,9 +1058,13 @@ Module Declaration
 **TODO**: Unimplemented.
 
 ```k
-    syntax Instr ::= "(" "module" Instrs ")"
- // ----------------------------------------
+    syntax Instr ::= "(" "module"               Instrs ")"
+                   | "(" "module" VarIdentifier Instrs ")"
+ // ------------------------------------------------------
     rule <k> ( module INSTRS ) => INSTRS ... </k>
+
+    syntax Instr ::= "(" "register" FunctionName VarIdentifier ")"
+ // --------------------------------------------------------------
 ```
 
 ```k
