@@ -486,13 +486,13 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax Instr ::= "(" "br" Int ")"
- // ---------------------------------
+    syntax Instr ::= "(" "br" Int ")" [prefer]
+ // ------------------------------------------
     rule <k> ( br N ) ~> (IS:Instrs => .) ... </k>
     rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
 
-    syntax Instr ::= "(" "br_if" Int ")"
- // ------------------------------------
+    syntax Instr ::= "(" "br_if" Int ")" [prefer]
+ // ---------------------------------------------
     rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
          <stack> < TYPE > VAL : STACK => STACK </stack>
 ```
