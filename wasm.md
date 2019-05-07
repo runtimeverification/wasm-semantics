@@ -773,11 +773,15 @@ Unlike labels, only one frame can be "broken" through at a time.
 ```
 
 **TODO**: Unimplemented.
+**TODO**: Figure out why the "type" token is not liked by K.
 **TODO**: Make regression out of error message that adding this `invoke` rule makes.
 
 ```k
     syntax Instr ::= "(" "call" VarIdentifier Instrs ")"
  // ----------------------------------------------------
+
+ //   syntax Instr ::= "(" "call_indirect" "(" "type" VarIdentifier ")" Instrs ")"
+ // ----------------------------------------------------------------------------
 
     syntax Instr ::= "(" "invoke" FunctionName Instrs ")"
  // -----------------------------------------------------
