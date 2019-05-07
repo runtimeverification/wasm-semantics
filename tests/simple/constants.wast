@@ -49,10 +49,29 @@
 (f64.const 1.63176601e-302)
 #assertTopStack < f64 > 1.63176601e-302 "f64 scientific 3"
 
-;; Below examples do not work with current float parser
-;; (f64.const 0x1.da21c460a6f44p+52)
-;; (f64.const 0x1.60859d2e7714ap-321)
-;; (f64.const 0x1.e63f1b7b660e1p-302)
+(f64.const 0x0p+0)
+#assertTopStack < f64 > 0x0p+0 "f64 tricky 1"
+
+(f64.const -0x0p+0)
+#assertTopStack < f64 > -0x0p+0 "f64 tricky 2"
+
+(f64.const -0x0p-0)
+#assertTopStack < f64 > -0x0p-0 "f64 tricky 3"
+
+(f64.const -0x0.0000000000001p-1022)
+#assertTopStack < f64 > -0x0.0000000000001p-1022 "f64 tricky 4"
+
+(f64.const -0x1.921fb54442d18p+2)
+#assertTopStack < f64 > -0x1.921fb54442d18p+2 "f64 tricky 5"
+
+(f64.const 0x1.da21c460a6f44p+52)
+#assertTopStack < f64 > 0x1.da21c460a6f44p+52 "f64 tricky 6"
+
+(f64.const 0x1.60859d2e7714ap-321)
+#assertTopStack < f64 > 0x1.60859d2e7714ap-321 "f64 tricky 7"
+
+(f64.const 0x1.e63f1b7b660e1p-302)
+#assertTopStack < f64 > 0x1.e63f1b7b660e1p-302 "f64 tricky 8"
 
 ;; Helper conversions
 ;; ------------------
