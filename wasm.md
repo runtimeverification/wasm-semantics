@@ -262,11 +262,11 @@ Note that we do not need to call `#chop` on the results here.
 **TODO**: Unimplemented
 
 ```k
-    syntax FUnOp ::= "neg"
- // ----------------------
+    syntax FUnOp ::= "neg" | "load"
+ // -------------------------------
 
-    syntax FBinOp ::= "add"
- // -----------------------
+    syntax FBinOp ::= "add" | "store"
+ // ---------------------------------
 ```
 
 ### Predicates
@@ -473,6 +473,13 @@ It simply executes the block then records a label with an empty continuation.
          <stack> STACK => .Stack </stack>
 ```
 
+**TODO**: Unimplemented.
+
+```k
+    syntax Instr ::= "(" "block" VarIdentifier FuncDecls Instrs ")"
+ // ---------------------------------------------------------------
+```
+
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
 Upon reaching it, the label itself is executed.
 
@@ -493,12 +500,13 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 **TODO**: Unimplemented.
 
 ```k
-    syntax Instr ::= "(" "br"    Int Instrs ")"
-                   | "(" "br_if" Int Instrs ")"
-                   | "(" "br_table" Int         Instrs ")"
-                   | "(" "br_table" Int Int     Instrs ")"
-                   | "(" "br_table" Int Int Int Instrs ")"
- // ------------------------------------------------------
+    syntax VarIdentifiers ::= List{VarIdentifier, ""}
+ // -------------------------------------------------
+
+    syntax Instr ::= "(" "br"    VarIdentifier Instrs ")"
+                   | "(" "br_if" VarIdentifier Instrs ")"
+                   | "(" "br_table" VarIdentifiers Instrs ")"
+ // ---------------------------------------------------------
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -712,6 +720,13 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
       => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
+```
+
+**TODO**: Unimplemented.
+
+```k
+    syntax Instr ::= "(" "export" FunctionName Instr ")"
+ // ----------------------------------------------------
 ```
 
 ### Function Invocation/Return
@@ -983,6 +998,7 @@ Memories can optionally have a max size which the memory may not grow beyond.
 
 ```k
     syntax MemBound ::= Int | ".MemBound"
+ // -------------------------------------
 ```
 
 However, the absolute max allowed size if 2^16 pages.
@@ -994,6 +1010,16 @@ Incidentally, the page size is 2^16 bytes.
  // ------------------------------------------
     rule #maxMemorySize() => 65536
     rule #pageSize()      => 65536
+```
+
+**TODO**: Unimplemented.
+
+```k
+    syntax HexString ::= r"[\\\"](\\\\[0-9a-f][0-9a-f])*[\\\"]" [token]
+ // -------------------------------------------------------------------
+
+    syntax Instr ::= "(" "memory" "(" "data" HexString ")" ")"
+ // ----------------------------------------------------------
 ```
 
 Tables
