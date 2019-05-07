@@ -112,16 +112,24 @@ A `UnOp` operator always produces a result of the same type as its operand.
 
 ```k
     syntax UnOp ::= IUnOp
- //               | FUnOp
  // ---------------------
 
     syntax Instr ::= "(" IValType "." IUnOp ")" | "(" IValType "." IUnOp Instr ")" | IValType "." IUnOp Int
- //                | "(" FValType "." FUnOp ")" | "(" FValType "." FUnOp Instr ")" | FValType "." FUnOp Float
  // ---------------------------------------------------------------------------------------------------------
     rule <k> ( ITYPE . UOP:IUnOp I:Instr ) => I ~> ( ITYPE . UOP ) ... </k>
 
     rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP C1 ... </k>
          <stack> < ITYPE > C1 : STACK => STACK </stack>
+```
+
+**TODO**: Unimplemented.
+
+```k
+    syntax UnOp ::= FUnOp
+ // ---------------------
+
+    syntax Instr ::= "(" FValType "." FUnOp ")" | "(" FValType "." FUnOp Instr ")" | FValType "." FUnOp Float
+ // ---------------------------------------------------------------------------------------------------------
 ```
 
 ### Binary Operators
@@ -131,16 +139,24 @@ A `BinOp` operator always produces a result of the same type as its operands.
 
 ```k
     syntax BinOp ::= IBinOp
- //                | FBinOp
  // -----------------------
 
     syntax Instr ::= "(" IValType "." IBinOp ")" | "(" IValType "." IBinOp Instr Instr ")" | IValType "." IBinOp Int   Int
- //                | "(" FValType "." FBinOp ")" | "(" FValType "." FBinOp Instr Instr ")" | FValType "." FBinOp Float Float
  // ------------------------------------------------------------------------------------------------------------------------
     rule <k> ( ITYPE . BOP:IBinOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . BOP ) ... </k>
 
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
          <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
+```
+
+**TODO**: Unimplemented.
+
+```k
+    syntax BinOp ::= FBinOp
+ // -----------------------
+
+    syntax Instr ::= "(" FValType "." FBinOp ")" | "(" FValType "." FBinOp Instr Instr ")" | FValType "." FBinOp Float Float
+ // ------------------------------------------------------------------------------------------------------------------------
 ```
 
 ### Test Operations
@@ -239,6 +255,18 @@ Note that we do not need to call `#chop` on the results here.
              #fi
          ...
          </k>
+```
+
+### Floating Point Arithmetic
+
+**TODO**: Unimplemented
+
+```k
+    syntax FUnOp ::= "neg"
+ // ----------------------
+
+    syntax FBinOp ::= "add"
+ // -----------------------
 ```
 
 ### Predicates
@@ -407,9 +435,9 @@ Structured Control Flow
 `nop` does nothing.
 
 ```k
-    syntax Instr ::= "nop"
- // ----------------------
-    rule <k> nop => . ... </k>
+    syntax Instr ::= "(" "nop" ")"
+ // ------------------------------
+    rule <k> ( nop ) => . ... </k>
 ```
 
 `unreachable` causes an immediate `trap`.
@@ -465,13 +493,12 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 **TODO**: Unimplemented.
 
 ```k
-    syntax Instr ::= "(" "br"    Int Instr       ")"
-                   | "(" "br_if" Int Instr       ")"
-                   | "(" "br_if" Int Instr Instr ")"
-                   | "(" "br_table" Int Int     Instr Instr ")"
-                   | "(" "br_table" Int Int Int Instr       ")"
-                   | "(" "br_table" Int Int Int Instr Instr ")"
- // -----------------------------------------------------------
+    syntax Instr ::= "(" "br"    Int Instrs ")"
+                   | "(" "br_if" Int Instrs ")"
+                   | "(" "br_table" Int         Instrs ")"
+                   | "(" "br_table" Int Int     Instrs ")"
+                   | "(" "br_table" Int Int Int Instrs ")"
+ // ------------------------------------------------------
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -509,8 +536,9 @@ Finally, we have the conditional and loop instructions.
                    | "(" "if" FuncDecl Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
  // -----------------------------------------------------------------------------------------
 
-    syntax Instr ::= "(" "loop" Instrs ")"
- // --------------------------------------
+    syntax Instr ::= "(" "loop" Instrs          ")"
+                   | "(" "loop" FuncDecl Instrs ")"
+ // -----------------------------------------------
 ```
 
 Memory Operators
