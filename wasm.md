@@ -262,11 +262,11 @@ Note that we do not need to call `#chop` on the results here.
 **TODO**: Unimplemented
 
 ```k
-    syntax FUnOp ::= "neg" | "load"
- // -------------------------------
+    syntax FUnOp ::= "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest" | "load"
+ // ---------------------------------------------------------------------------------
 
-    syntax FBinOp ::= "add" | "store"
- // ---------------------------------
+    syntax FBinOp ::= "add" | "sub" | "mul" | "div" | "min" | "max" | "store"
+ // -------------------------------------------------------------------------
 ```
 
 ### Predicates
