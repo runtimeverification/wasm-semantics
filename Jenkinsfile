@@ -1,9 +1,11 @@
 pipeline {
   agent {
-    label 'docker'
+    dockerfile {
+      additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+      reuseNode true
+    }
   }
   options {
-    skipDefaultCheckout()
     ansiColor('xterm')
   }
   stages {
@@ -15,23 +17,14 @@ pipeline {
         }
       }
     }
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
     stage('Makefile-based') {
-      agent {
-        dockerfile {
-          additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
-          reuseNode true
-        }
-      }
       stages {
         stage('Build') {
           steps {
             checkout scm
             sh '''
+              git clean -dffx
+              make clean
               make deps -B
               make build -B -j4
             '''
@@ -67,17 +60,13 @@ pipeline {
       }
     }
     stage('KNinja-based') {
-      agent {
-        dockerfile {
-          additionalBuildArgs '--build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
-          reuseNode true
-        }
-      }
       stages {
         stage('Build') {
           steps {
             checkout scm
             sh '''
+              git clean -dffx
+              ./build clean
               ./build wasm-java wasm-ocaml wasm-haskell
             '''
           }
