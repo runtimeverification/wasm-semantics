@@ -220,14 +220,17 @@ An `*UnOp` operator always produces a result of the same type as its operand.
 
 ```k
     syntax PlainInstr ::= IValType "." IUnOp
- //                     | FValType "." FUnOp
+                        | FValType "." FUnOp
  // ----------------------------------------
 
     syntax Instr ::= IValType "." IUnOp Int
- //                | FValType "." FUnOp Float
+                   | IValType "." IUnOp Float
  // -----------------------------------------
     rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> FTYPE . UOP:FUnOp => ITYPE . UOP C1 ... </k>
+         <valstack> < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Binary Operators
@@ -237,14 +240,17 @@ A `*BinOp` operator always produces a result of the same type as its operands.
 
 ```k
     syntax PlainInstr ::= IValType "." IBinOp
- //                     | FValType "." FBinOp
+                        | FValType "." FBinOp
  // -----------------------------------------
 
     syntax Instr ::= IValType "." IBinOp Int   Int
- //                | FValType "." FBinOp Float Float
+                   | FValType "." FBinOp Float Float
  // ------------------------------------------------
     rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> FTYPE . BOP:FBinOp => FTYPE . BOP C1 C2 ... </k>
+         <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Test Operations
@@ -346,6 +352,18 @@ Note that we do not need to call `#chop` on the results here.
       requires I2 =/=Int 0
 
     rule <k> ITYPE . rem_s I1 I2 => undefined ... </k> requires I2 ==Int 0
+```
+
+### Floating Point Arithmetic
+
+**TODO**: Unimplemented
+
+```k
+    syntax FUnOp ::= "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest" | "load"
+ // ---------------------------------------------------------------------------------
+
+    syntax FBinOp ::= "add" | "sub" | "mul" | "div" | "min" | "max" | "store"
+ // -------------------------------------------------------------------------
 ```
 
 ### Predicates
