@@ -60,11 +60,11 @@ test_conformance_java  = test_exec('conformance', 'tests/wasm-tests/test/core/*.
 test_conformance_ocaml = test_exec('conformance', 'tests/wasm-tests/test/core/*.wast', wasm_ocaml, 'ocaml')
 test_conformance       = proj.alias(name = 'test-conformance', targets = test_conformance_ocaml)
 
-test_proof_java    = test_proof('tests/proofs/*-spec.k', wasm_java,    'java')
-test_proof_haskell = test_proof('tests/proofs/*-spec.k', wasm_haskell, 'haskell')
-test_proof         = proj.alias(name = 'test-proof', targets = test_proof_java)
+test_prove_java    = test_proof('tests/proofs/*-spec.k', wasm_java,    'java')
+test_prove_haskell = test_proof('tests/proofs/*-spec.k', wasm_haskell, 'haskell')
+test_prove         = proj.alias(name = 'test-prove', targets = test_prove_java)
 
-proj.default([test_simple_java, test_simple_ocaml, test_proof_java])
+proj.default([test_simple_java, test_simple_ocaml, test_prove_java])
 
 # Main
 # ====
