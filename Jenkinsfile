@@ -2,14 +2,22 @@ pipeline {
   agent {
     label 'docker'
   }
-  options { skipDefaultCheckout() }
+  options {
+    skipDefaultCheckout()
+    ansiColor('xterm')
+  }
   stages {
-    stage("Init title") {
+    stage('Init title') {
       when { changeRequest() }
       steps {
         script {
           currentBuild.displayName = "PR ${env.CHANGE_ID}: ${env.CHANGE_TITLE}"
         }
+      }
+    }
+    stage('Checkout') {
+      steps {
+        checkout scm
       }
     }
     stage('Makefile-based') {
@@ -22,46 +30,38 @@ pipeline {
       stages {
         stage('Build') {
           steps {
-            ansiColor('xterm') {
-              checkout scm
-              sh '''
-                make deps -B
-                make build -B -j4
-              '''
-            }
+            checkout scm
+            sh '''
+              make deps -B
+              make build -B -j4
+            '''
           }
         }
         stage('Exec OCaml') {
           steps {
-            ansiColor('xterm') {
-              sh '''
-                nprocs=$(nproc)
-                [ "$nprocs" -gt '4' ] && nprocs=4
-                make TEST_CONCRETE_BACKEND=ocaml test-execution -j"$nprocs"
-              '''
-            }
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make TEST_CONCRETE_BACKEND=ocaml test-execution -j"$nprocs"
+            '''
           }
         }
         stage('Exec Java') {
           steps {
-            ansiColor('xterm') {
-              sh '''
-                nprocs=$(nproc)
-                [ "$nprocs" -gt '4' ] && nprocs=4
-                make TEST_CONCRETE_BACKEND=java test-execution -j"$nprocs"
-              '''
-            }
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make TEST_CONCRETE_BACKEND=java test-execution -j"$nprocs"
+            '''
           }
         }
         stage('Proofs Java') {
           steps {
-            ansiColor('xterm') {
-              sh '''
-                nprocs=$(nproc)
-                [ "$nprocs" -gt '4' ] && nprocs=4
-                make test-proof -j"$nprocs"
-              '''
-            }
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make test-proof -j"$nprocs"
+            '''
           }
         }
       }
@@ -76,45 +76,37 @@ pipeline {
       stages {
         stage('Build') {
           steps {
-            ansiColor('xterm') {
-              checkout scm
-              sh '''
-                ./build wasm-java wasm-ocaml wasm-haskell
-              '''
-            }
+            checkout scm
+            sh '''
+              ./build wasm-java wasm-ocaml wasm-haskell
+            '''
           }
         }
         stage('Exec OCaml') {
           steps {
-            ansiColor('xterm') {
-              sh '''
-                nprocs=$(nproc)
-                [ "$nprocs" -gt '4' ] && nprocs=4
-                ./build -v test-exec-ocaml -j"$nprocs"
-              '''
-            }
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              ./build -v test-exec-ocaml -j"$nprocs"
+            '''
           }
         }
         stage('Exec Java') {
           steps {
-            ansiColor('xterm') {
-              sh '''
-                nprocs=$(nproc)
-                [ "$nprocs" -gt '4' ] && nprocs=4
-                ./build -v test-exec-java -j"$nprocs"
-              '''
-            }
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              ./build -v test-exec-java -j"$nprocs"
+            '''
           }
         }
         stage('Proofs Java') {
           steps {
-            ansiColor('xterm') {
-              sh '''
-                nprocs=$(nproc)
-                [ "$nprocs" -gt '4' ] && nprocs=4
-                ./build -v test-proofs-java -j"$nprocs"
-              '''
-            }
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              ./build -v test-proofs-java -j"$nprocs"
+            '''
           }
         }
       }
