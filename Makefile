@@ -117,6 +117,9 @@ TEST=./kwasm
 tests/%.test: tests/%
 	 $(TEST) test --backend $(TEST_CONCRETE_BACKEND) $<
 
+tests/%.parse: tests/%
+	 $(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $<
+
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $<
 
@@ -124,17 +127,23 @@ test: test-execution test-proof
 
 ### Execution Tests
 
-test-execution: test-simple
+test-exec: test-simple
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
 test-simple: $(simple_tests:=.test)
 
+### Conformance Tests
+
+conformance_tests:=$(wildcard tests/wasm-tests/test/core/*.wast)
+
+parse-conformance: $(conformance_tests:=.parse)
+
 ### Proof Tests
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
-test-proof: $(proof_tests:=.prove)
+test-prove: $(proof_tests:=.prove)
 
 # Presentation
 # ------------
