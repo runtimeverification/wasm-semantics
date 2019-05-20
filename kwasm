@@ -1,151 +1,27 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-set -euo pipefail
-shopt -s extglob
+extdir = '.build'
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), extdir))
+from kninja.runner import *
 
-kwasm_script="$0"
-while [[ -h "$kwasm_script" ]]; do
-    kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
-    kwasm_script="$(readlink "$kwasm_script")"
-    [[ "$kwasm_script" != /* ]] && kwasm_script="$kwasm_dir/$kwasm_script"
-done
-kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
+proj = KProject(extdir = extdir)
+wasm_java    = KDefinition( proj, alias = 'wasm-java',    backend = 'java',    directory = proj.builddir('defn/java'),    kprove_flags = '-m KWASM-LEMMAS')
+wasm_ocaml   = KDefinition( proj, alias = 'wasm-ocaml',   backend = 'ocaml',   directory = proj.builddir('defn/ocaml'),   kprove_flags = '-m KWASM-LEMMAS')
+wasm_llvm    = KDefinition( proj, alias = 'wasm-llvm',    backend = 'llvm',    directory = proj.builddir('defn/llvm'),    kprove_flags = '-m KWASM-LEMMAS')
+wasm_haskell = KDefinition( proj, alias = 'wasm-haskell', backend = 'haskell', directory = proj.builddir('defn/haskell'), kprove_flags = '-m KWASM-LEMMAS')
+KRunner(proj).main()
 
-build_dir="$kwasm_dir/.build"
-release_dir="$build_dir/k/k-distribution/target/release/k"
-defn_dir="$build_dir/defn"
-
-export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
-
-test_logs="$build_dir/logs"
-test_log="$test_logs/tests.log"
-mkdir -p "$test_logs"
-
-klab_dir="$build_dir/klab"
-
-# Utilities
-# ---------
-
-progress() { echo "== $@" >&2 ; }
-die()      { echo -e "FATAL:" "$@" >&2 ; exit 1 ; }
-
-pretty_diff() {
-    git --no-pager diff --no-index "$@"
-}
-
-# Runners
-# -------
-
-run_krun() {
-    local run_file
-
-    run_file="$1" ; shift
-
-    export K_OPTS=-Xss500m
-    krun --directory "$backend_dir" "$run_file" "$@"
-}
-
-run_kast() {
-    local run_file
-
-    run_file="$1" ; shift
-
-    export K_OPTS=-Xss500m
-    kast --directory "$backend_dir" "$run_file" "$@"
-}
-
-run_proof() {
-    local proof_file
-
-    proof_file="$1" ; shift
-    [[ -f "$proof_file" ]] || die "$proof_file does not exist"
-
-    export K_OPTS=-Xmx8G
-    kprove --directory "$backend_dir" -m KWASM-LEMMAS "$proof_file" "$@"
-}
-
-run_klab() {
-    local run_mode run_file
-
-    run_mode="$1" ; shift
-    run_file="$1" ; shift
-
-    $0 "$run_mode" --backend java "$run_file" \
-        --state-log --state-log-path "$klab_dir/data" --state-log-id klab-statelog \
-        --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
-        --output-flatten "_Map_ #And" \
-        --output-tokenize "listInstr <_>_ i32_WASM-DATA i64_WASM-DATA _:__WASM-DATA" \
-        --no-alpha-renaming --restore-original-names --no-sort-collections \
-        --boundary-cells "k" \
-        --output json \
-        "$@" \
-        >/dev/null || true
-
-    export KLAB_OUT="$klab_dir"
-    # klab often runs out of stack space when running long-running KEVM programs
-    # klab debug klab-statelog
-    node --stack-size=$KLAB_NODE_STACK_SIZE $(dirname $(which klab))/../libexec/klab-debug klab-statelog
-}
-
-run_test() {
-    local test_file expected_file output_file
-
-    test_file="$1" ; shift
-
-    test_log_name="$test_logs/$test_file"
-    mkdir -p "$(dirname "$test_log_name")"
-
-    output_file="$test_log_name.out"
-
-    if [[ -f "$test_file.out" ]]; then
-        expected_file="$test_file.out"
-    else
-        expected_file="tests/success-$backend.out"
-    fi
-
-    [[ -f "$expected_file" ]] \
-        || die "Expected output file '$expected_file' does not exist..."
-
-    run_krun "$test_file" > "$output_file" || true
-    pretty_diff "$expected_file" "$output_file"
-}
-
-# Main
-# ----
-
-cd "$(dirname $0)"
-
-# main functionality
-run_command="$1" ; shift
-
-backend="ocaml"
-[[ ! "$run_command" == prove ]] || backend='java'
-[[ ! "$run_command" =~ klab* ]] || backend='java'
-if [[ $# -gt 0 ]] && [[ $1 == '--backend' ]]; then
-    backend="$2"
-    shift 2
-fi
-backend_dir="$defn_dir/$backend"
-[[ ! "$backend" == "ocaml" ]] || eval $(opam config env)
-
-case "$run_command-$backend" in
-
-    # Running
-    run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
-    kast-@(ocaml|java)         ) run_kast                        "$@" ;;
-    prove-@(java|haskell)      ) run_proof                       "$@" ;;
-    test-@(ocaml|java|haskell) ) run_test                        "$@" ;;
-    klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
-
-    *) echo "
-    usage: $0 (run|test)       [--backend (ocaml|java|haskell)] <pgm>  <K args>*
-           $0 kast             [--backend (ocaml|java)]         <pgm>  <K args>*
-           $0 prove            [--backend (java|haskell)]       <spec> <K args>*
-           $0 klab-(run|prove)                                  <spec> <K args>*
+"""
+    usage: $0 run   [--definition (wasm-ocaml|wasm-java|wasm-haskell)] <pgm>  <K args>*
+           $0 kast  [--definition (wasm-ocaml|wasm-java)]              <pgm>  <K args>*
+           $0 prove [--definition (wasm-java|wasm-haskell)]            <spec> <K args>*
+           $0 klab-run                                                 <pgm>  <K args>*
+           $0 klab-prove                                               <spec> <K args>*
 
        $0 run   : Run a single WebAssembly program
        $0 kast  : Parse a single WebAssembly program
-       $0 test  : Run a single WebAssembly program like it's a test
        $0 prove : Run a WebAssembly K proof
        $0 klab-(run|prove) : Run or prove a spec and launch KLab on the execution graph.
 
@@ -154,5 +30,4 @@ case "$run_command-$backend" in
              <K args> are any arguments you want to pass to K when executing/proving.
 
        KLab: Make sure that the 'klab/bin' directory is on your PATH to use this option.
-" ; exit ;;
-esac
+"""
