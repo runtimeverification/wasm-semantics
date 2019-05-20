@@ -115,13 +115,15 @@ TEST_SYMBOLIC_BACKEND=java
 TEST=./kwasm
 
 tests/%.test: tests/%
-	 $(TEST) test --backend $(TEST_CONCRETE_BACKEND) $<
+# TODO: KNinja based runners do not support `test` subcommand
+#	 $(TEST) test --definition wasm-$(TEST_CONCRETE_BACKEND) $<
+	 $(TEST) run --definition wasm-$(TEST_CONCRETE_BACKEND) $<
 
 tests/%.parse: tests/%
-	 $(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $<
+	 $(TEST) kast --definition wasm-$(TEST_CONCRETE_BACKEND) $<
 
 tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $<
+	$(TEST) prove --definition wasm-$(TEST_SYMBOLIC_BACKEND) $<
 
 test: test-execution test-proof
 
