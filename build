@@ -52,9 +52,10 @@ def test_proof(glob, defn, backend):
                       , default = False
                       )
 
-test_simple_java  = test_exec('simple', 'tests/simple/*.wast', wasm_java,  'java')
-test_simple_ocaml = test_exec('simple', 'tests/simple/*.wast', wasm_ocaml, 'ocaml')
-test_simple       = proj.alias(name = 'test-simple',      targets = [test_simple_ocaml, test_simple_java])
+test_simple_java    = test_exec('simple', 'tests/simple/*.wast', wasm_java,    'java')
+test_simple_ocaml   = test_exec('simple', 'tests/simple/*.wast', wasm_ocaml,   'ocaml')
+test_simple_haskell = test_exec('simple', 'tests/simple/*.wast', wasm_haskell, 'haskell')
+test_simple         = proj.alias(name = 'test-simple', targets = [test_simple_ocaml, test_simple_java])
 
 test_conformance_java  = test_exec('conformance', 'tests/wasm-tests/test/core/*.wast', wasm_java,  'java')
 test_conformance_ocaml = test_exec('conformance', 'tests/wasm-tests/test/core/*.wast', wasm_ocaml, 'ocaml')
