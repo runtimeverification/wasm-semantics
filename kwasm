@@ -77,7 +77,6 @@ run_klab() {
         --output-flatten "_Map_ #And" \
         --output-tokenize "listInstr <_>_ i32_WASM-DATA i64_WASM-DATA _:__WASM-DATA" \
         --no-alpha-renaming --restore-original-names --no-sort-collections \
-        --boundary-cells "k" \
         --output json \
         "$@" \
         >/dev/null || true
