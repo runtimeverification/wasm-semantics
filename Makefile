@@ -127,7 +127,7 @@ test: test-execution test-proof
 
 ### Execution Tests
 
-test-exec: test-simple
+test-execution: test-simple
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
