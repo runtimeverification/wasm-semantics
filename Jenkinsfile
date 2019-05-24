@@ -35,7 +35,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              make TEST_CONCRETE_BACKEND=ocaml test-exec -j"$nprocs"
+              make TEST_CONCRETE_BACKEND=ocaml test-execution -j"$nprocs"
             '''
           }
         }
@@ -44,7 +44,7 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              make TEST_CONCRETE_BACKEND=java test-exec -j"$nprocs"
+              make TEST_CONCRETE_BACKEND=java test-execution -j"$nprocs"
             '''
           }
         }
