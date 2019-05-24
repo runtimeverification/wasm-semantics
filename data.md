@@ -190,11 +190,10 @@ WebAssembly is a stack-machine, so here we provide the stack to operate over.
 Operator `_++_` implements an append operator for sort `Stack`.
 
 ```k
-    syntax StackItem ::= Val
-    syntax Stack     ::= ".Stack"
-                       | StackItem ":" Stack
-                       | Stack "++" Stack    [function]
- // ---------------------------------------------------
+    syntax Stack ::= ".Stack"
+                   | Val ":" Stack
+                   | Stack "++" Stack [function]
+ // --------------------------------------------
     rule .Stack       ++ STACK' => STACK'
     rule (SI : STACK) ++ STACK' => SI : (STACK ++ STACK')
 ```
