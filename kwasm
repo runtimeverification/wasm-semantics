@@ -22,6 +22,7 @@ test_log="$test_logs/tests.log"
 mkdir -p "$test_logs"
 
 klab_dir="$build_dir/klab"
+klab_node_stack_size="${KLAB_NODE_STACK_SIZE:-30000}"
 
 # Utilities
 # ---------
@@ -76,7 +77,6 @@ run_klab() {
         --output-flatten "_Map_ #And" \
         --output-tokenize "listInstr <_>_ i32_WASM-DATA i64_WASM-DATA _:__WASM-DATA" \
         --no-alpha-renaming --restore-original-names --no-sort-collections \
-        --boundary-cells "k" \
         --output json \
         "$@" \
         >/dev/null || true
@@ -84,7 +84,7 @@ run_klab() {
     export KLAB_OUT="$klab_dir"
     # klab often runs out of stack space when running long-running KEVM programs
     # klab debug klab-statelog
-    node --stack-size=$KLAB_NODE_STACK_SIZE $(dirname $(which klab))/../libexec/klab-debug klab-statelog
+    node --stack-size="$klab_node_stack_size" $(dirname $(which klab))/../libexec/klab-debug klab-statelog
 }
 
 run_test() {
