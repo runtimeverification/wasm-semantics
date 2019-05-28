@@ -15,7 +15,7 @@ export LUA_PATH
         deps ocaml-deps haskell-deps \
         defn defn-ocaml defn-java defn-haskell \
         build build-ocaml defn-haskell build-haskell \
-        test test-execution test-simple test-proof \
+        test test-execution test-simple test-prove \
         media presentations reports
 
 all: build
@@ -123,7 +123,7 @@ tests/%.parse: tests/%
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $<
 
-test: test-execution test-proof
+test: test-execution test-prove
 
 ### Execution Tests
 

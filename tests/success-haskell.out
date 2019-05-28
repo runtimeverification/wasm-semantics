@@ -9,13 +9,13 @@
     .Stack
   </stack>
   <curFrame>
-    <addrs>
-      .Map
-    </addrs>
     <locals>
       .Map
     </locals>
     <moduleInst>
+      <funcAddrs>
+        .Map
+      </funcAddrs>
       <globals>
         .Map
       </globals>

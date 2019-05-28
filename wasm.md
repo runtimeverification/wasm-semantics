@@ -17,11 +17,11 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <stack> .Stack </stack>
       <curFrame>
-        <addrs>  .Map </addrs>
         <locals> .Map </locals>
         <moduleInst>
-          <globals>  .Map  </globals>
-          <memAddrs> .Map  </memAddrs>
+          <funcAddrs> .Map </funcAddrs>
+          <globals>   .Map </globals>
+          <memAddrs>  .Map </memAddrs>
         </moduleInst>
       </curFrame>
       <mainStore>
@@ -635,8 +635,11 @@ Unlike labels, only one frame can be "broken" through at a time.
           </k>
          <stack>  STACK => .Stack </stack>
          <curFrame>
-           <addrs> _ => ADDRS </addrs>
            <locals> LOCAL => .Map </locals>
+           <moduleInst>
+             <funcAddrs> _ => ADDRS </funcAddrs>
+             ...
+           </moduleInst>
            ...
          </curFrame>
          <funcDef>
