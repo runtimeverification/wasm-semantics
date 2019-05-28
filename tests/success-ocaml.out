@@ -16,12 +16,12 @@
       <funcAddrs>
         .Map
       </funcAddrs>
-      <globals>
-        .Map
-      </globals>
       <memAddrs>
         .Map
       </memAddrs>
+      <globalAddrs>
+        .Map
+      </globalAddrs>
     </moduleInst>
   </curFrame>
   <mainStore>
@@ -34,5 +34,8 @@
     <mems>
       .MemInstCellMap
     </mems>
+    <globals>
+      .GlobalInstCellMap
+    </globals>
   </mainStore>
 </generatedTop>

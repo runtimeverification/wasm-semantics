@@ -104,6 +104,13 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i64) => 18446744073709551616
 ```
 
+### Type Mutability
+
+```k
+    syntax Mut ::= ".Mut" | "const" | "var"
+ // ---------------------------------------
+```
+
 Values
 ------
 

@@ -19,8 +19,8 @@ init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .Stack
 
 ;; Test globals
 
-init_global 0 < i32 > 0
-init_global 1 < i32 > 0
+init_global 0 0
+init_global 1 1
 
 (i32.const 43)
 (global.set 0)
