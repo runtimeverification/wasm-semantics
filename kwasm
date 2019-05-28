@@ -22,6 +22,7 @@ test_log="$test_logs/tests.log"
 mkdir -p "$test_logs"
 
 klab_dir="$build_dir/klab"
+klab_node_stack_size="${KLAB_NODE_STACK_SIZE:-30000}"
 
 # Utilities
 # ---------
@@ -43,6 +44,15 @@ run_krun() {
 
     export K_OPTS=-Xss500m
     krun --directory "$backend_dir" "$run_file" "$@"
+}
+
+run_kast() {
+    local run_file
+
+    run_file="$1" ; shift
+
+    export K_OPTS=-Xss500m
+    kast --directory "$backend_dir" "$run_file" "$@"
 }
 
 run_proof() {
@@ -72,7 +82,9 @@ run_klab() {
         >/dev/null || true
 
     export KLAB_OUT="$klab_dir"
-    klab debug klab-statelog
+    # klab often runs out of stack space when running long-running KEVM programs
+    # klab debug klab-statelog
+    node --stack-size="$klab_node_stack_size" $(dirname $(which klab))/../libexec/klab-debug klab-statelog
 }
 
 run_test() {
@@ -120,16 +132,19 @@ case "$run_command-$backend" in
 
     # Running
     run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
+    kast-@(ocaml|java)         ) run_kast                        "$@" ;;
     prove-@(java|haskell)      ) run_proof                       "$@" ;;
     test-@(ocaml|java|haskell) ) run_test                        "$@" ;;
     klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
 
     *) echo "
-    usage: $0 (run|test) [--backend (ocaml|java|haskell)] <pgm>  <K args>*
-           $0 prove      [--backend (java|haskell)]       <spec> <K args>*
-           $0 klab-(run|prove)                            <spec> <K args>*
+    usage: $0 (run|test)       [--backend (ocaml|java|haskell)] <pgm>  <K args>*
+           $0 kast             [--backend (ocaml|java)]         <pgm>  <K args>*
+           $0 prove            [--backend (java|haskell)]       <spec> <K args>*
+           $0 klab-(run|prove)                                  <spec> <K args>*
 
        $0 run   : Run a single WebAssembly program
+       $0 kast  : Parse a single WebAssembly program
        $0 test  : Run a single WebAssembly program like it's a test
        $0 prove : Run a WebAssembly K proof
        $0 klab-(run|prove) : Run or prove a spec and launch KLab on the execution graph.

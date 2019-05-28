@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+
+import os
+import subprocess
+import sys
+
+# Bootstrapping
+# =============
+
+# Make sure the KNinja repo is available.
+#
+subprocess.check_call(['git', 'submodule', 'update', '--init', '--recursive'])
+extdir = '.build'
+sys.path.append(os.path.join(os.path.dirname(__file__), extdir))
+
+from kninja import *
+
+# Build
+# =====
+
+proj = KProject(extdir = extdir)
+def build_wasm(backend, flags = ''):
+    return proj.definition( alias             = 'wasm-' + backend
+                          , backend           = backend
+                          , main              = 'test.md'
+                          , other             = [ 'wasm.md', 'data.md', 'kwasm-lemmas.md' ]
+                          , directory         = proj.builddir('defn', backend)
+                          , runner_script     = './kwasm'
+                          , flags             = '--main-module WASM-TEST --syntax-module WASM-TEST ' \
+                                              + flags
+                          )
+wasm_java = build_wasm(backend = 'java')
+wasm_ocaml = build_wasm(backend = 'ocaml', flags = '-O3 --non-strict')
+wasm_haskell = build_wasm(backend = 'haskell')
+
+# Testing
+# =======
+
+concrete_backend = wasm_ocaml
+symbolic_backend = wasm_java
+
+def test_exec(name, glob, defn, backend):
+    return defn.tests( glob = glob
+                     , alias = 'test-' + name + '-' + backend
+                     , expected = 'tests/success-' + backend + '.out'
+                     , default = False
+                     )
+
+def test_proof(glob, defn, backend):
+    return defn.proofs( glob = glob
+                      , alias = 'test-prove-' + backend
+                      , default = False
+                      )
+
+test_simple_java  = test_exec('simple', 'tests/simple/*.wast', wasm_java,  'java')
+test_simple_ocaml = test_exec('simple', 'tests/simple/*.wast', wasm_ocaml, 'ocaml')
+test_simple       = proj.alias(name = 'test-simple',      targets = [test_simple_ocaml, test_simple_java])
+
+test_conformance_java  = test_exec('conformance', 'tests/wasm-tests/test/core/*.wast', wasm_java,  'java')
+test_conformance_ocaml = test_exec('conformance', 'tests/wasm-tests/test/core/*.wast', wasm_ocaml, 'ocaml')
+test_conformance       = proj.alias(name = 'test-conformance', targets = test_conformance_ocaml)
+
+test_prove_java    = test_proof('tests/proofs/*-spec.k', wasm_java,    'java')
+test_prove_haskell = test_proof('tests/proofs/*-spec.k', wasm_haskell, 'haskell')
+test_prove         = proj.alias(name = 'test-prove', targets = test_prove_java)
+
+proj.default([test_simple_java, test_simple_ocaml, test_prove_java])
+
+# Main
+# ====
+
+proj.main()
