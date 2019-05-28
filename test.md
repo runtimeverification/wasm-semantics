@@ -10,27 +10,6 @@ module WASM-TEST
     imports WASM
 ```
 
-Helper Functions
-----------------
-
-`init_global` is a helper function that helps us to declare a new global variable.
-
-```k
-    syntax Instr ::= "init_global" Int Int
- // --------------------------------------
-    rule <k> init_global INDEX GADDR => . ... </k>
-         <globalAddrs> GADDRS => GADDRS [ INDEX <- GADDR ] </globalAddrs>
-         <globals>
-           ( .Bag =>
-             <globalInst>
-               <gAddr> GADDR </gAddr>
-               ...
-             </globalInst>
-           )
-           ...
-         </globals>
-```
-
 Assertions
 ----------
 
@@ -99,6 +78,24 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
                ...
              </globalInst>
           => .Bag
+           )
+           ...
+         </globals>
+```
+
+`init_global` is a helper function that helps us to declare a new global variable.
+
+```k
+    syntax Instr ::= "init_global" Int Int
+ // --------------------------------------
+    rule <k> init_global INDEX GADDR => . ... </k>
+         <globalAddrs> GADDRS => GADDRS [ INDEX <- GADDR ] </globalAddrs>
+         <globals>
+           ( .Bag =>
+             <globalInst>
+               <gAddr> GADDR </gAddr>
+               ...
+             </globalInst>
            )
            ...
          </globals>
