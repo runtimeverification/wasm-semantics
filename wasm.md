@@ -535,6 +535,7 @@ The `*_local` instructions are defined here.
 ```k
     syntax Instr ::= "(" "global.get" Int ")"
                    | "(" "global.set" Int ")"
+                   | "(" "global.set" Int Instr ")"
  // -----------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
          <stack> STACK => VALUE : STACK </stack>
@@ -553,6 +554,8 @@ The `*_local` instructions are defined here.
            <gValue> _ => VALUE </gValue>
            ...
          </globalInst>
+
+    rule <k> ( global.set INDEX INSTR ) => INSTR ~> ( global.set INDEX ) ... </k>
 ```
 
 Function Declaration and Invocation

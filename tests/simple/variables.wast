@@ -40,4 +40,4 @@ init_global 1 1
 (global.set 1 (i32.const 99))
 
 #assertGlobal 1 < i32 > 99 "set_global folded"
-#assertGlobal 1 < i32 > 77 "set_global folded 2"
+#assertGlobal 0 < i32 > 77 "set_global folded 2"
