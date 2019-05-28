@@ -19,9 +19,9 @@ Configuration
       <curFrame>
         <locals> .Map </locals>
         <moduleInst>
-          <funcAddrs> .Map </funcAddrs>
-          <globals>   .Map </globals>
-          <memAddrs>  .Map </memAddrs>
+          <funcAddrs>   .Map </funcAddrs>
+          <memAddrs>    .Map </memAddrs>
+          <globalAddrs> .Map </globalAddrs>
         </moduleInst>
       </curFrame>
       <mainStore>
@@ -43,6 +43,13 @@ Configuration
             <mdata>   .Map      </mdata>
           </memInst>
         </mems>
+        <globals>
+          <globalInst multiplicity="*" type="Map">
+            <gAddr>  0         </gAddr>
+            <gValue> undefined </gValue>
+            <gMut>   .Mut      </gMut>
+          </globalInst>
+        </globals>
       </mainStore>
 ```
 
@@ -526,20 +533,29 @@ The `*_local` instructions are defined here.
 ### Globals
 
 ```k
-    syntax Instr ::= "init_global" Int Val
-                   | "(" "global.get" Int ")"
-                   | "(" "global.set" Int ")"
- // -----------------------------------------
-    rule <k> init_global INDEX VALUE => . ... </k>
-         <globals> GLOBALS => GLOBALS [ INDEX <- VALUE ] </globals>
-
+    syntax Instr ::= "(" "global.get" Int       ")"
+                   | "(" "global.set" Int       ")"
+                   | "(" "global.set" Int Instr ")"
+ // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
          <stack> STACK => VALUE : STACK </stack>
-         <globals> ... INDEX |-> VALUE ... </globals>
+         <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+         <globalInst>
+           <gAddr>  GADDR </gAddr>
+           <gValue> VALUE </gValue>
+           ...
+         </globalInst>
 
     rule <k> ( global.set INDEX ) => . ... </k>
          <stack> VALUE : STACK => STACK </stack>
-         <globals> ... INDEX |-> (_ => VALUE) ... </globals>
+         <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+         <globalInst>
+           <gAddr>  GADDR      </gAddr>
+           <gValue> _ => VALUE </gValue>
+           ...
+         </globalInst>
+
+    rule <k> ( global.set INDEX INSTR ) => INSTR ~> ( global.set INDEX ) ... </k>
 ```
 
 Function Declaration and Invocation
