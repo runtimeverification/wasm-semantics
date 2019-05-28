@@ -8,6 +8,7 @@ require "wasm.k"
 
 module WASM-TEST
     imports WASM
+    import WASM-STRING
 ```
 
 Assertions

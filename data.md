@@ -221,15 +221,13 @@ Operator `_++_` implements an append operator for sort `Stack`.
 Strings
 -------
 
-Sometimes, data can be specified as a string, or even several consequtive strings, which should then be treated as a single string.
-The `Strings` type and `#flatten` function help with this.
+Memory initializatin data can be specified as a string, or even several consequtive strings.
 
 ```k
-    syntax Strings ::= List{String, ""}
-    syntax String  ::= #flatten ( Strings ) [function]
+    syntax DataString
+    syntax DataStrings ::= List{DataString, ""}
+    syntax String  ::= #dataStrings2String ( DataStrings ) [function, hook(STRING.token2string)]
  // --------------------------------------------------
-    rule #flatten(.Strings) => ""
-    rule #flatten(A:String BC:Strings) => A +String #flatten(BC)
 ```
 
 Strings can be given to initialize memory.
@@ -241,13 +239,16 @@ Finally, `\u{ ... }` where the bracket contents is some hexadecimal number, is m
 Since we only care about the byte value, we unpack the hexadecimal inside.
 
 ```k
+    syntax Strings ::= List{String, ""}
     syntax Ints ::= List{Int, ""}
-    syntax Ints ::= #string2bytes ( String ) [function]
-    syntax Int  ::= #stringLength ( String ) [function]
-    syntax Int  ::= #string2int   ( String ) [function]
-    syntax Int  ::= #length       ( Ints   ) [function] // TODO: Using `size` breaks. Use this implementation for now.
+    syntax Ints ::= #strings2bytes     ( String      ) [function]
+    syntax Ints ::= #dataStrings2bytes ( DataStrings ) [function]
+    syntax Int  ::= #dataStringsLength ( DataStrings ) [function]
+    syntax Int  ::= #dataStrings2int   ( DataStrings ) [function]
+    syntax Int  ::= #length            ( Ints        ) [function] // TODO: Using `size` breaks. Use this implementation for now.
  // ----------------------------------------
-    rule #stringLength(S) => #length(#string2bytes(S))
+    rule #dataStrings2bytes(DS) => #strings2bytes(#dataStrings2String(DS))
+    rule #dataStringsLength(DS) => #length(#dataStrings2bytes(DS))
     rule #length(.Ints) => 0
     rule #length(_ IS)  => 1 +Int #length(IS)
 ```
@@ -306,5 +307,13 @@ The function interprets the range of bytes as little-endian.
 ```
 
 ```k
+endmodule
+```
+
+```k
+module WASM-STRING
+
+    syntax DataString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token,avoid]
+
 endmodule
 ```

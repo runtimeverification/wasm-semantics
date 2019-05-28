@@ -887,13 +887,13 @@ Incidentally, the page size is 2^16 bytes.
 
 ```k
     syntax Instr ::= Data
-    syntax Data ::= "(" "data" MemId DataOffset Strings ")"
-                  | "(" "data"       DataOffset Strings ")"
-                  |     "data" "{" String "}"
- // ---------------------------------------------------
+    syntax Data ::= "(" "data" MemId DataOffset DataStrings ")"
+                  | "(" "data"       DataOffset DataStrings ")"
+                  |     "data" "{" DataStrings "}"
+ // -------------------------------------------------------
     // The MemId must always resolve to 0, due to validation, so we discard it.
     rule <k> ( data _   OFFSET STRINGS ) => ( data   OFFSET STRINGS ) ... </k>
-    rule <k> ( data     OFFSET STRINGS ) =>  OFFSET ~> data { #flatten(STRINGS) } ... </k>
+    rule <k> ( data     OFFSET STRINGS ) =>  OFFSET ~> data { STRINGS } ... </k>
 
     rule <k> data { STRING } => . ... </k>
          <stack> < i32 > OFFSET : STACK => STACK </stack>
@@ -901,18 +901,18 @@ Incidentally, the page size is 2^16 bytes.
          <memInst>
            <memAddr> ADDR </memAddr>
            <mdata>   DATA
-                  => #clearRange(DATA, OFFSET, OFFSET +Int #lengthDataString(STRING) -Int 1) [ OFFSET := #string2int(STRING)]
+                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING) -Int 1) [ OFFSET := #dataStrings2int(STRING)]
            </mdata>
            ...
          </memInst>
 
-    syntax Int ::= #lengthData       ( Data    ) [function]
-                 | #lengthDataString ( String  ) [function]
-                 | Int "/ceilInt" Int            [function]
+    syntax Int ::= #lengthData       ( Data        ) [function]
+                 | #lengthDataString ( DataString  ) [function]
+                 | Int "/ceilInt" Int                [function]
  // -------------------------------------------------------
-    rule #lengthData((data  _:MemId _ SS)) => #stringLength(#flatten(SS))
-    rule #lengthData((data          _ SS)) => #stringLength(#flatten(SS)) 
-    rule #lengthData( data {          SS}) => #stringLength(#flatten(SS))
+    rule #lengthData((data  _:MemId _ SS)) => #dataStringsLength(SS)
+    rule #lengthData((data          _ SS)) => #dataStringsLength(SS) 
+    rule #lengthData( data {          SS}) => #dataStringsLength(SS)
 
     rule I1 /ceilInt I2 => (I1 /Int I2) +Int #if I1 modInt I2 ==Int 0 #then 0 #else 1 #fi
 ```
