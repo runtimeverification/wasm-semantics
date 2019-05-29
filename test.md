@@ -44,10 +44,10 @@ This asserts that a `trap` was just thrown.
 These functions make assertions about the state of the `<valstack>` cell.
 
 ```k
-    syntax Assertion ::= "#assertTopStack"        Val   String
-                       | "#assertTopStackExactly" Val   String
+    syntax Assertion ::= "#assertTopStack"        Val      String
+                       | "#assertTopStackExactly" Val      String
                        | "#assertStack"           ValStack String
- // ----------------------------------------------------------
+ // -------------------------------------------------------------
     rule <k> #assertTopStack S                      _ => . ... </k> <valstack> S              : VALSTACK => VALSTACK </valstack>
     rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL' : VALSTACK => VALSTACK </valstack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'

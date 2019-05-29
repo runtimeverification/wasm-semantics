@@ -200,7 +200,7 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     syntax ValStack ::= ".ValStack"
                    | Val      ":"  ValStack
                    | ValStack "++" ValStack [function]
- // --------------------------------------------
+ // --------------------------------------------------
     rule .ValStack       ++ VALSTACK' => VALSTACK'
     rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')
 ```
@@ -213,7 +213,7 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     syntax ValStack ::= #zero ( ValTypes )         [function]
                    | #take ( ValTypes , ValStack ) [function]
                    | #drop ( ValTypes , ValStack ) [function]
- // ------------------------------------------------------
+ // ---------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 

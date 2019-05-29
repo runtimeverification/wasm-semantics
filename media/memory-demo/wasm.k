@@ -5,7 +5,7 @@ module WASM
 
   configuration
     <k color="green"> $PGM:Instrs </k>
-    <valstack color="red"> .ValStack </valstack>
+    <stack color="red"> .Stack </stack>
     // TODO: Extend the configuration to have a current frame and and a store.
 
 
@@ -16,7 +16,7 @@ module WASM
     rule <k> .Instrs => . </k>
     rule <k> I IS:Instrs => I ~> IS ... </k>
 
-    syntax ValStack ::= ".ValStack" | StackItem ":" ValStack
+    syntax Stack ::= ".Stack" | StackItem ":" Stack
     syntax StackItem ::= "<" IType ">" Int
  // --------------------------------------
 
@@ -35,7 +35,7 @@ module WASM
     syntax Instr ::= "(" IType "." "const" Int ")"
  // ----------------------------------------------
     rule <k> ( ITYPE . const I ) => . ... </k>
-         <valstack> S => < ITYPE > #chop(ITYPE, I) : S </valstack>
+         <stack> S => < ITYPE > #chop(ITYPE, I) : S </stack>
 
  // Memory instructions.
 

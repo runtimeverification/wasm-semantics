@@ -373,7 +373,7 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
 ```
 
 ValStack Operations
-----------------
+-------------------
 
 Operator `drop` removes a single item from the `<valstack>`.
 The `select` operator picks one of the second or third stack values based on the first.
@@ -426,7 +426,7 @@ It simply executes the block then records a label with an empty continuation.
 
 ```k
     syntax Label ::= "label" VecType "{" Instrs "}" ValStack
- // -----------------------------------------------------
+ // --------------------------------------------------------
     rule <k> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
@@ -496,7 +496,7 @@ The various `init_local` variants assist in setting up the `locals` cell.
     syntax Instr ::=  "init_local"  Int Val
                    |  "init_locals"     ValStack
                    | "#init_locals" Int ValStack
- // -----------------------------------------
+ // --------------------------------------------
     rule <k> init_local INDEX VALUE => . ... </k>
          <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
 
@@ -636,7 +636,7 @@ Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
     syntax Frame ::= "frame" ValTypes ValStack Map
- // -------------------------------------------
+ // ----------------------------------------------
     rule <k> frame TRANGE VALSTACK' LOCAL' => . ... </k>
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
