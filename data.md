@@ -217,7 +217,7 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(.ValTypes,   _)                           => .ValStack
+    rule #take(.ValTypes,   _)                              => .ValStack
     rule #take(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
 
     rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
