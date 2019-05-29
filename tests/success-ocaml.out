@@ -5,9 +5,9 @@
   <deterministicMemoryGrowth>
     true
   </deterministicMemoryGrowth>
-  <stack>
-    .Stack
-  </stack>
+  <valstack>
+    .ValStack
+  </valstack>
   <curFrame>
     <locals>
       .Map

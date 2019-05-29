@@ -15,7 +15,7 @@
 ( memory 0 10 )
 (memory.grow (i32.const 10))
 (memory.size)
-#assertStack <i32> 10 : < i32 > 0 : .Stack "memory grow"
+#assertStack <i32> 10 : < i32 > 0 : .ValStack "memory grow"
 (memory.grow (i32.const 1))
 #assertTopStack <i32> -1 "memory grow"
 #assertEmptyMemory 10 10 "memory grown"
@@ -28,10 +28,10 @@
 ( memory )
 (memory.grow (i32.const #maxMemorySize()))
 (memory.size)
-#assertStack <i32> #maxMemorySize() : < i32 > 0 : .Stack "memory grow unbounded"
+#assertStack <i32> #maxMemorySize() : < i32 > 0 : .ValStack "memory grow unbounded"
 (memory.grow (i32.const 1))
 (memory.size)
-#assertStack <i32> #maxMemorySize() : < i32 > -1 : .Stack "memory grow unbounded"
+#assertStack <i32> #maxMemorySize() : < i32 > -1 : .ValStack "memory grow unbounded"
 #assertEmptyMemory #maxMemorySize() .MemBound "memory grown unbounded"
 
 ;; Store and load

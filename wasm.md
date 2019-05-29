@@ -15,7 +15,7 @@ Configuration
     configuration
       <k> $PGM:Instrs </k>
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
-      <stack> .Stack </stack>
+      <valstack> .ValStack </valstack>
       <curFrame>
         <locals> .Map </locals>
         <moduleInst>
@@ -81,15 +81,15 @@ WebAssembly instructions are space-separated lists of instructions.
 
 ### Traps
 
-When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<stack>` cell).
+When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<valstack>` cell).
 If the value is the special `undefined`, then `trap` is generated instead.
 
 ```k
     syntax Instr ::= "trap"
  // -----------------------
     rule <k> undefined => trap ... </k>
-    rule <k> V:Val     => .    ... </k>
-         <stack> STACK => V : STACK </stack>
+    rule <k>        V:Val    => .        ... </k>
+         <valstack> VALSTACK => V : VALSTACK </valstack>
       requires V =/=K undefined
 ```
 
@@ -114,7 +114,7 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 
 ### Unary Operators
 
-When a unary operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+When a unary operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
 A `UnOp` operator always produces a result of the same type as its operand.
 
 ```k
@@ -128,12 +128,12 @@ A `UnOp` operator always produces a result of the same type as its operand.
     rule <k> ( ITYPE . UOP:IUnOp I:Instr ) => I ~> ( ITYPE . UOP ) ... </k>
 
     rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP C1 ... </k>
-         <stack> < ITYPE > C1 : STACK => STACK </stack>
+         <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Binary Operators
 
-When a binary operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+When a binary operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 A `BinOp` operator always produces a result of the same type as its operands.
 
 ```k
@@ -147,12 +147,12 @@ A `BinOp` operator always produces a result of the same type as its operands.
     rule <k> ( ITYPE . BOP:IBinOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . BOP ) ... </k>
 
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
-         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
+         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Test Operations
 
-When a test operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+When a test operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
 Test operations consume one operand and produce a bool, which is an `i32` value.
 
 ```k
@@ -161,12 +161,12 @@ Test operations consume one operand and produce a bool, which is an `i32` value.
     rule <k> ( ITYPE . TOP:ITestOp I:Instr ) => I ~> ( ITYPE . TOP ) ... </k>
 
     rule <k> ( ITYPE . TOP:ITestOp ) => ITYPE . TOP C1 ... </k>
-         <stack> < ITYPE > C1 : STACK => STACK </stack>
+         <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Comparison Operations
 
-When a comparison operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+When a comparison operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 Comparisons consume two operands and produce a bool, which is an `i32` value.
 
 
@@ -181,7 +181,7 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
     rule <k> ( ITYPE . ROP:IRelOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . ROP ) ... </k>
 
     rule <k> ( ITYPE . ROP:IRelOp ) => ITYPE . ROP C1 C2 ... </k>
-         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK  </stack>
+         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK  </valstack>
 ```
 
 ### Conversion Operations
@@ -198,7 +198,7 @@ The target type is before the `.`, and the source type is after the `_`.
     rule <k> ( ITYPE . CONVOP:ConvOp I:Instr ) => I ~> ( ITYPE . CONVOP ) ... </k>
 
     rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1  ... </k>
-         <stack> < SRCTYPE > C1 : STACK => STACK </stack>
+         <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
       requires #convSourceType(CONVOP) ==K SRCTYPE
 
     syntax IValType ::= #convSourceType ( ConvOp ) [function]
@@ -372,10 +372,10 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
     rule #convSourceType(extend_i32_s) => i32
 ```
 
-Stack Operations
+ValStack Operations
 ----------------
 
-Operator `drop` removes a single item from the `<stack>`.
+Operator `drop` removes a single item from the `<valstack>`.
 The `select` operator picks one of the second or third stack values based on the first.
 
 ```k
@@ -385,7 +385,7 @@ The `select` operator picks one of the second or third stack values based on the
     rule <k> ( drop I ) => I ~> ( drop ) ... </k>
 
     rule <k> ( drop ) => . ... </k>
-         <stack> _ : STACK => STACK </stack>
+         <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     syntax Instr ::= "(" "select" Instr Instr Instr ")"
                    | "(" "select"                   ")"
@@ -393,9 +393,9 @@ The `select` operator picks one of the second or third stack values based on the
     rule <k> ( select B1 B2 C ) => B1 ~> B2 ~> C ~> ( select ) ... </k>
 
     rule <k> ( select ) => . ... </k>
-         <stack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : STACK
-              => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : STACK
-         </stack>
+         <valstack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
+              => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
+         </valstack>
 ```
 
 Structured Control Flow
@@ -425,10 +425,10 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax Label ::= "label" VecType "{" Instrs "}" Stack
+    syntax Label ::= "label" VecType "{" Instrs "}" ValStack
  // -----------------------------------------------------
-    rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
-         <stack> STACK => #take(TYPES, STACK) ++ STACK' </stack>
+    rule <k> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax Instr ::= "(" "block" FuncDecls Instrs ")"
                    | "block" VecType Instrs "end"
@@ -438,8 +438,8 @@ It simply executes the block then records a label with an empty continuation.
          ...
          </k>
 
-    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } STACK ... </k>
-         <stack> STACK => .Stack </stack>
+    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -456,7 +456,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     syntax Instr ::= "(" "br_if" Int ")"
  // ------------------------------------
     rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
-         <stack> < TYPE > VAL : STACK => STACK </stack>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -471,18 +471,18 @@ Finally, we have the conditional and loop instructions.
 
     rule <k> ( if VTYPE IS else IS' end )
           => #if VAL =/=Int 0 #then IS #else IS' #fi
-          ~> label VTYPE { .Instrs } STACK
+          ~> label VTYPE { .Instrs } VALSTACK
          ...
          </k>
-         <stack> < i32 > VAL : STACK => .Stack </stack>
+         <valstack> < i32 > VAL : VALSTACK => .ValStack </valstack>
 
     syntax Instr ::= "loop" VecType Instrs "end"
                    | "(" "loop" VecType Instrs ")"
  // ----------------------------------------------
     rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
 
-    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } STACK ... </k>
-         <stack> STACK => .Stack </stack>
+    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
 ```
 
 Memory Operators
@@ -494,18 +494,18 @@ The various `init_local` variants assist in setting up the `locals` cell.
 
 ```k
     syntax Instr ::=  "init_local"  Int Val
-                   |  "init_locals"     Stack
-                   | "#init_locals" Int Stack
+                   |  "init_locals"     ValStack
+                   | "#init_locals" Int ValStack
  // -----------------------------------------
     rule <k> init_local INDEX VALUE => . ... </k>
          <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
 
     rule <k> init_locals VALUES => #init_locals 0 VALUES ... </k>
 
-    rule <k> #init_locals _ .Stack => . ... </k>
-    rule <k> #init_locals N (VALUE : STACK)
+    rule <k> #init_locals _ .ValStack => . ... </k>
+    rule <k> #init_locals N (VALUE : VALSTACK)
           => init_local N VALUE
-          ~> #init_locals (N +Int 1) STACK
+          ~> #init_locals (N +Int 1) VALSTACK
           ...
           </k>
 ```
@@ -518,15 +518,15 @@ The `*_local` instructions are defined here.
                    | "(" "local.tee" Int ")"
  // ----------------------------------------
     rule <k> ( local.get INDEX ) => . ... </k>
-         <stack> STACK => VALUE : STACK </stack>
+         <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> VALUE ... </locals>
 
     rule <k> ( local.set INDEX ) => . ... </k>
-         <stack> VALUE : STACK => STACK </stack>
+         <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 
     rule <k> ( local.tee INDEX ) => . ... </k>
-         <stack> VALUE : STACK </stack>
+         <valstack> VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 ```
 
@@ -538,7 +538,7 @@ The `*_local` instructions are defined here.
                    | "(" "global.set" Int Instr ")"
  // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
-         <stack> STACK => VALUE : STACK </stack>
+         <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
          <globalInst>
            <gAddr>  GADDR </gAddr>
@@ -547,7 +547,7 @@ The `*_local` instructions are defined here.
          </globalInst>
 
     rule <k> ( global.set INDEX ) => . ... </k>
-         <stack> VALUE : STACK => STACK </stack>
+         <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
          <globalInst>
            <gAddr>  GADDR      </gAddr>
@@ -635,21 +635,21 @@ Similar to labels, they sit on the instruction stack (the `<k>` cell), and `retu
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" ValTypes Stack Map
+    syntax Frame ::= "frame" ValTypes ValStack Map
  // -------------------------------------------
-    rule <k> frame TRANGE STACK' LOCAL' => . ... </k>
-         <stack> STACK => #take(TRANGE, STACK) ++ STACK' </stack>
+    rule <k> frame TRANGE VALSTACK' LOCAL' => . ... </k>
+         <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
 
     syntax Instr ::= "invoke" FunctionName
  // --------------------------------------
     rule <k> invoke FNAME
-          => init_locals #take(TDOMAIN, STACK) ++ #zero(TLOCALS)
+          => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
-          ~> frame TRANGE #drop(TDOMAIN, STACK) LOCAL
+          ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
           ...
           </k>
-         <stack>  STACK => .Stack </stack>
+         <valstack>  VALSTACK => .ValStack </valstack>
          <curFrame>
            <locals> LOCAL => .Map </locals>
            <moduleInst>
@@ -730,9 +730,9 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> ( ITYPE . SOPM:StoreOpM I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOPM ) ... </k>
 
     rule <k> ( ITYPE . SOP:StoreOp               ) => ITYPE . SOP  IDX                          VAL ... </k>
-         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+         <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
     rule <k> ( ITYPE . SOP:StoreOp MEMARG:MemArg ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
-         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+         <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
@@ -776,9 +776,9 @@ The value is fethced from the "effective address", which is the address given on
     rule <k> ( ITYPE . LOPM:LoadOpM I:Instr ) => I ~> ( ITYPE . LOPM ) ... </k>
 
     rule <k> ( ITYPE . LOP:LoadOp              ) => ITYPE . LOP  IDX                          ... </k>
-         <stack> < i32 > IDX : STACK => STACK </stack>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
     rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
-         <stack> < i32 > IDX : STACK => STACK </stack>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> load { ITYPE WIDTH EA SIGN }
           => < ITYPE > #if SIGN ==K Signed
@@ -860,7 +860,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
  // ---------------------------------------------------------------------------------
     rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
     rule <k> ( memory.grow ) => grow N ... </k>
-         <stack> < i32 > N : STACK => STACK </stack>
+         <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>

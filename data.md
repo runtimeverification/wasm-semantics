@@ -194,15 +194,15 @@ Data Structures
 ---------------
 
 WebAssembly is a stack-machine, so here we provide the stack to operate over.
-Operator `_++_` implements an append operator for sort `Stack`.
+Operator `_++_` implements an append operator for sort `ValStack`.
 
 ```k
-    syntax Stack ::= ".Stack"
-                   | Val ":" Stack
-                   | Stack "++" Stack [function]
+    syntax ValStack ::= ".ValStack"
+                   | Val      ":"  ValStack
+                   | ValStack "++" ValStack [function]
  // --------------------------------------------
-    rule .Stack       ++ STACK' => STACK'
-    rule (SI : STACK) ++ STACK' => SI : (STACK ++ STACK')
+    rule .ValStack       ++ VALSTACK' => VALSTACK'
+    rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')
 ```
 
 `#zero` will create a specified stack of zero values in a given type.
@@ -210,18 +210,18 @@ Operator `_++_` implements an append operator for sort `Stack`.
 `#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
 
 ```k
-    syntax Stack ::= #zero ( ValTypes )         [function]
-                   | #take ( ValTypes , Stack ) [function]
-                   | #drop ( ValTypes , Stack ) [function]
+    syntax ValStack ::= #zero ( ValTypes )         [function]
+                   | #take ( ValTypes , ValStack ) [function]
+                   | #drop ( ValTypes , ValStack ) [function]
  // ------------------------------------------------------
-    rule #zero(.ValTypes)             => .Stack
+    rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(.ValTypes,   _)                           => .Stack
-    rule #take(TYPE VTYPES, < TYPE > VAL:Number : STACK) => < TYPE > VAL : #take(VTYPES, STACK)
+    rule #take(.ValTypes,   _)                           => .ValStack
+    rule #take(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
 
-    rule #drop(.ValTypes,   STACK)                       => STACK
-    rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
+    rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
+    rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 ```
 
 Byte Map
