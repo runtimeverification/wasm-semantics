@@ -39,23 +39,23 @@ This asserts that a `trap` was just thrown.
     rule <k> trap ~> #assertTrap _ => . ... </k>
 ```
 
-### Stack Assertions
+### ValStack Assertions
 
-These functions make assertions about the state of the `<stack>` cell.
+These functions make assertions about the state of the `<valstack>` cell.
 
 ```k
-    syntax Assertion ::= "#assertTopStack"        Val   String
-                       | "#assertTopStackExactly" Val   String
-                       | "#assertStack"           Stack String
- // ----------------------------------------------------------
-    rule <k> #assertTopStack S                      _ => . ... </k> <stack> S              : STACK => STACK </stack>
-    rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <stack> < ITYPE > VAL' : STACK => STACK </stack>
+    syntax Assertion ::= "#assertTopStack"        Val      String
+                       | "#assertTopStackExactly" Val      String
+                       | "#assertStack"           ValStack String
+ // -------------------------------------------------------------
+    rule <k> #assertTopStack S                      _ => . ... </k> <valstack> S              : VALSTACK => VALSTACK </valstack>
+    rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL' : VALSTACK => VALSTACK </valstack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'
 
-    rule <k> #assertTopStackExactly < ITYPE:IValType > VAL _ => . ... </k> <stack> < ITYPE > VAL : STACK => STACK </stack>
+    rule <k> #assertTopStackExactly < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL : VALSTACK => VALSTACK </valstack>
 
-    rule <k> #assertStack .Stack      _   => .                                               ... </k>
-    rule <k> #assertStack (S : STACK) STR => #assertTopStack S STR ~> #assertStack STACK STR ... </k>
+    rule <k> #assertStack .ValStack      _   => .                                               ... </k>
+    rule <k> #assertStack (S : VALSTACK) STR => #assertTopStack S STR ~> #assertStack VALSTACK STR ... </k>
 ```
 
 ### Variables Assertions

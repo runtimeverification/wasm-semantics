@@ -1,6 +1,6 @@
 ;; Test locals
 
-init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .Stack
+init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .ValStack
 
 (i32.const 43)
 (local.set 0)
