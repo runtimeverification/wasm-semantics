@@ -25,6 +25,7 @@ Configuration
         </moduleInst>
       </curFrame>
       <mainStore>
+        <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
           <funcDef multiplicity="*" type="Map">
             <fAddr>  0              </fAddr>
@@ -591,10 +592,12 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          </k>
 
     rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
+         <funcAddrs> ADDRS => ADDRS [ FNAME <- NEXT ] </funcAddrs>
+         <nextFuncAddr> NEXT => NEXT +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  FNAME  </fAddr>
+               <fAddr>  NEXT   </fAddr>
                <fCode>  INSTRS </fCode>
                <fType>  FTYPE  </fType>
                <fLocal> LTYPE  </fLocal>
@@ -640,7 +643,7 @@ Unlike labels, only one frame can be "broken" through at a time.
 
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
-    rule <k> ( invoke FNAME )
+    rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
           ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
@@ -649,18 +652,13 @@ Unlike labels, only one frame can be "broken" through at a time.
          <valstack>  VALSTACK => .ValStack </valstack>
          <curFrame>
            <locals> LOCAL => .Map </locals>
-           <moduleInst>
-             <funcAddrs> _ => ADDRS </funcAddrs>
-             ...
-           </moduleInst>
            ...
          </curFrame>
          <funcDef>
-           <fAddr>  FNAME                     </fAddr>
+           <fAddr>  FADDR                     </fAddr>
            <fCode>  INSTRS                    </fCode>
            <fType>  [ TDOMAIN ] -> [ TRANGE ] </fType>
            <fLocal> [ TLOCALS ]               </fLocal>
-           <fAddrs> ADDRS                     </fAddrs>
            ...
          </funcDef>
 

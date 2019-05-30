@@ -109,9 +109,11 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
     syntax Assertion ::= "#assertFunction" Index FuncType VecType String
  // --------------------------------------------------------------------
     rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
+         <funcAddrs> ... (FNAME |-> FADDR) => .Map ... </funcAddrs>
+         <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
-               <fAddr>  FNAME </fAddr>
+               <fAddr>  FADDR </fAddr>
                <fType>  FTYPE </fType>
                <fLocal> LTYPE </fLocal>
                ...
