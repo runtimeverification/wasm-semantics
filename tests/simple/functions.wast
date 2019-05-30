@@ -10,7 +10,7 @@ func 0 :: [ i32 i32 ] -> [ i32 ]
 
 (i32.const 7)
 (i32.const 8)
-invoke 0
+(invoke 0)
 #assertTopStack < i32 > 15 "invoke function 0"
 #assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "invoke function 0 exists"
 
@@ -47,7 +47,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 (i32.const 7)
 (i32.const 8)
-invoke 0
+(invoke 0)
 #assertTopStack < i32 > 15 "invoke function 0 no return"
 #assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "invoke function 0 exists no return"
 
@@ -67,7 +67,7 @@ invoke 0
 (i64.const 100)
 (i64.const 43)
 (i64.const 22)
-invoke 1
+(invoke 1)
 #assertTopStack < i64 > 35 "invoke function 1"
 #assertFunction 1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "invoke function 1 exists"
 
@@ -81,7 +81,7 @@ invoke 1
 (i64.const 7)
 (i64.const 8)
 (i32.const 5)
-invoke 1
+(invoke 1)
 #assertTopStack < i32 > 5 "out of order type declaration"
 #assertFunction 1 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 
@@ -94,7 +94,7 @@ invoke 1
 
 (i64.const 7)
 (i64.const 8)
-invoke 1
+(invoke 1)
 #assertTopStack < i64 > 8 "empty type declaration"
 #assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
 
@@ -107,7 +107,7 @@ invoke 1
 
 (i64.const 7)
 (i64.const 8)
-invoke 1
+(invoke 1)
 #assertTopStack < i64 > 8 "empty type declaration + parens"
 #assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations + parens"
 

@@ -641,9 +641,9 @@ Unlike labels, only one frame can be "broken" through at a time.
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "invoke" FunctionName
- // --------------------------------------
-    rule <k> invoke FNAME
+    syntax Instr ::= "(" "invoke" FunctionName ")"
+ // ----------------------------------------------
+    rule <k> ( invoke FNAME )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
           ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL

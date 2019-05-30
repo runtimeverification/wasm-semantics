@@ -24,17 +24,17 @@
 
 (i32.const 3)
 (i32.const 5)
-invoke $add
+(invoke $add)
 #assertTopStack < i32 > 8 "add in module correctly"
 
 (i32.const 3)
 (i32.const 5)
-invoke $mul
+(invoke $mul)
 #assertTopStack < i32 > 15 "mul in module correctly"
 
 (i32.const 3)
 (i32.const 5)
-invoke $xor
+(invoke $xor)
 #assertTopStack < i32 > 6 "xor in module correctly"
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
@@ -58,9 +58,9 @@ invoke $xor
         [ i32 i32 ] {
         (local.get 0)
         (local.get 2)
-        invoke $f1
+        (invoke $f1)
         (local.get 1)
-        invoke $f1
+        (invoke $f1)
         (local.get 0)
         (i32.mul)
         return
@@ -69,10 +69,10 @@ invoke $xor
 
 (i32.const 3)
 (i32.const 5)
-invoke $f1
+(invoke $f1)
 (i32.const 5)
 (i32.const 8)
-invoke $f2
+(invoke $f2)
 #assertTopStack < i32 > 77000 "nested method call"
 #assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
 #assertFunction $f1 [ i32 i32     ] -> [ i32 ] [ i32     ] "inner calling method"
