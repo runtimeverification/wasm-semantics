@@ -5,7 +5,7 @@ func 0 :: [ i32 i32 ] -> [ i32 ]
     (local.get 0)
     (local.get 1)
     (i32.add)
-    return
+    (return)
 }
 
 (i32.const 7)
@@ -21,7 +21,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
     (local.get 0)
     (local.get 1)
     (i32.add)
-    return
+    (return)
 }
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
@@ -32,7 +32,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
     (local.get 0)
     (local.get 1)
     (i32.add)
-    return
+    (return)
 )
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "exported function name add"
@@ -61,7 +61,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
       (i64.sub)
     (local.set 3)
     (local.get 3)
-    return
+    (return)
 )
 
 (i64.const 100)
@@ -75,7 +75,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 (func 1 local i32 result i32 param i32 i64 param i64
     (local.get 0)
-    return
+    (return)
 )
 
 (i64.const 7)
@@ -89,7 +89,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 (func 1 local param i64 i64 result local result i64 param
     (local.get 0)
-    return
+    (return)
 )
 
 (i64.const 7)
@@ -102,7 +102,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 (func 1 (local) (param i64 i64) (result) (local) (result i64) (param)
     (local.get 0)
-    return
+    (return)
 )
 
 (i64.const 7)
@@ -123,7 +123,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (local.get 0)
         (local.get 1)
         (i32.add)
-        return
+        (return)
     }
 
     func $mul :: [ i32 i32 ] -> [ i32 ]
@@ -131,7 +131,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (local.get 0)
         (local.get 1)
         (i32.mul)
-        return
+        (return)
     }
 
     (func (export $xor) (param i32 i32) (result i32)
@@ -170,7 +170,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (local.get 0)
         (local.get 2)
         (i32.mul)
-        return
+        (return)
     }
 
     func $f2 :: [ i32 i32 i32 ] -> [ i32 ]
@@ -182,7 +182,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (invoke $f1)
         (local.get 0)
         (i32.mul)
-        return
+        (return)
     }
 )
 
@@ -203,7 +203,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (local.get 0)
         (local.get 1)
         (i32.add)
-        return
+        (return)
     )
 )
 

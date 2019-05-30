@@ -667,11 +667,11 @@ Unlike labels, only one frame can be "broken" through at a time.
            ...
          </funcDef>
 
-    syntax Instr ::= "return"
- // -------------------------
-    rule <k> return ~> (IS:Instrs => .)  ... </k>
-    rule <k> return ~> (L:Label   => .)  ... </k>
-    rule <k> (return => .) ~> FR:Frame ... </k>
+    syntax Instr ::= "(" "return" ")"
+ // ---------------------------------
+    rule <k> (return) ~> (IS:Instrs => .)  ... </k>
+    rule <k> (return) ~> (L:Label   => .)  ... </k>
+    rule <k> ((return) => .) ~> FR:Frame ... </k>
 ```
 
 Memory
