@@ -567,22 +567,19 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax FunctionName ::= ".FunctionName" | Int | Identifier
- // ----------------------------------------------------------
-
     syntax TypeKeyWord ::= "param" | "result" | "local"
  // ---------------------------------------------------
 
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "export" FunctionName
+                       | "export" Index
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
 
     syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
-                   | "(" "func" FunctionName FuncDecls Instrs ")"
-                   | "func" FunctionName "::" FuncType VecType "{" Instrs "}"
- // -------------------------------------------------------------------------
+                   | "(" "func" Index FuncDecls Instrs ")"
+                   | "func" Index "::" FuncType VecType "{" Instrs "}"
+ // ------------------------------------------------------------------
     rule <k> ( func FDECLS INSTRS )
           => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
@@ -607,8 +604,8 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
            ...
          </funcs>
 
-    syntax FunctionName ::= gatherExportedName ( FuncDecls ) [function]
- // -------------------------------------------------------------------
+    syntax Index ::= gatherExportedName ( FuncDecls ) [function]
+ // ------------------------------------------------------------
     rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
     rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
 
@@ -641,8 +638,8 @@ Unlike labels, only one frame can be "broken" through at a time.
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "(" "invoke" FunctionName ")"
- // ----------------------------------------------
+    syntax Instr ::= "(" "invoke" Int ")"
+ // -------------------------------------
     rule <k> ( invoke FNAME )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
