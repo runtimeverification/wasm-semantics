@@ -111,9 +111,9 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
     rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
          <funcs>
            ( <funcDef>
-               <fname>  FNAME </fname>
-               <ftype>  FTYPE </ftype>
-               <flocal> LTYPE </flocal>
+               <fAddr>  FNAME </fAddr>
+               <fType>  FTYPE </fType>
+               <fLocal> LTYPE </fLocal>
                ...
              </funcDef>
           => .Bag

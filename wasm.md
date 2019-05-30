@@ -27,11 +27,11 @@ Configuration
       <mainStore>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fname>  .FunctionName  </fname>
-            <fcode>  .Instrs:Instrs </fcode>
-            <ftype>  .Type          </ftype>
-            <flocal> .Type          </flocal>
-            <faddrs> .Map           </faddrs>
+            <fAddr>  0              </fAddr>
+            <fCode>  .Instrs:Instrs </fCode>
+            <fType>  .Type          </fType>
+            <fLocal> .Type          </fLocal>
+            <fAddrs> .Map           </fAddrs>
           </funcDef>
         </funcs>
         <nextMemAddr> 0 </nextMemAddr>
@@ -597,10 +597,10 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          <funcs>
            ( .Bag
           => <funcDef>
-               <fname>  FNAME  </fname>
-               <fcode>  INSTRS </fcode>
-               <ftype>  FTYPE  </ftype>
-               <flocal> LTYPE  </flocal>
+               <fAddr>  FNAME  </fAddr>
+               <fCode>  INSTRS </fCode>
+               <fType>  FTYPE  </fType>
+               <fLocal> LTYPE  </fLocal>
                ...
              </funcDef>
            )
@@ -659,11 +659,11 @@ Unlike labels, only one frame can be "broken" through at a time.
            ...
          </curFrame>
          <funcDef>
-           <fname>  FNAME                     </fname>
-           <fcode>  INSTRS                    </fcode>
-           <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
-           <flocal> [ TLOCALS ]               </flocal>
-           <faddrs> ADDRS                     </faddrs>
+           <fAddr>  FNAME                     </fAddr>
+           <fCode>  INSTRS                    </fCode>
+           <fType>  [ TDOMAIN ] -> [ TRANGE ] </fType>
+           <fLocal> [ TLOCALS ]               </fLocal>
+           <fAddrs> ADDRS                     </fAddrs>
            ...
          </funcDef>
 
