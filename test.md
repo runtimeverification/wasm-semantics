@@ -122,13 +122,41 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
          </funcs>
 ```
 
+### Table Assertions
+
+This asserts related operation about tables.
+
+```k
+    syntax Assertion ::= "#assertEmptyTable"    Int MaxBound String
+                       | "#assertEmptyTableAux" Int Int MaxBound String
+ // --------------------------------------------------------------------
+    rule <k> #assertEmptyTable SIZE MAX MSG => #assertEmptyTableAux (NEXT -Int 1) SIZE MAX MSG ... </k>
+         <nextTabAddr> NEXT </nextTabAddr>
+
+    rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
+         <tabAddrs> (0 |-> ADDR) => .Map </tabAddrs>
+         <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
+         <tabs>
+           ( <tabInst>
+               <tabAddr> ADDR  </tabAddr>
+               <tmax>    MAX   </tmax>
+               <tsize>   SIZE  </tsize>
+               <tdata>   .Map  </tdata>
+               ...
+             </tabInst>
+          => .Bag
+           )
+           ...
+         </tabs>
+```
+
 ### Memory Assertions
 
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertEmptyMemory"    Int MemBound String
-                       | "#assertEmptyMemoryAux" Int Int MemBound String
+    syntax Assertion ::= "#assertEmptyMemory"    Int MaxBound String
+                       | "#assertEmptyMemoryAux" Int Int MaxBound String
  // --------------------------------------------------------------------
     rule <k> #assertEmptyMemory SIZE MAX MSG => #assertEmptyMemoryAux (NEXT -Int 1) SIZE MAX MSG ... </k>
          <nextMemAddr> NEXT </nextMemAddr>
