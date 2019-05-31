@@ -140,7 +140,7 @@ This asserts related operation about tables.
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
            ( <tabInst>
-               <tabAddr> ADDR  </tabAddr>
+               <tAddr>   ADDR  </tAddr>
                <tmax>    MAX   </tmax>
                <tsize>   SIZE  </tsize>
                <tdata>   .Map  </tdata>
@@ -168,7 +168,7 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>
-               <memAddr> ADDR  </memAddr>
+               <mAddr>   ADDR  </mAddr>
                <mmax>    MAX   </mmax>
                <msize>   SIZE  </msize>
                <mdata>   .Map  </mdata>
@@ -185,7 +185,7 @@ This checks that the last allocated memory has the given size and max value.
          <memAddrs> 0 |-> ADDR </memAddrs>
          <mems>
            <memInst>
-             <memAddr> ADDR </memAddr>
+             <mAddr> ADDR </mAddr>
              <mdata> ...  KEY |-> VAL => .Map ... </mdata>
                ...
            </memInst>

@@ -39,7 +39,7 @@ Configuration
         <nextTabAddr> 0 </nextTabAddr>
         <tabs>
           <tabInst multiplicity="*" type="Map">
-            <tabAddr> 0         </tabAddr>
+            <tAddr>   0         </tAddr>
             <tmax>    .MaxBound </tmax>
             <tsize>   0         </tsize>
             <tdata>   .Map      </tdata>
@@ -48,7 +48,7 @@ Configuration
         <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <memAddr> 0         </memAddr>
+            <mAddr>   0         </mAddr>
             <mmax>    .MaxBound </mmax>
             <msize>   0         </msize>
             <mdata>   .Map      </mdata>
@@ -724,7 +724,7 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
          <tabs>
            ( .Bag
           => <tabInst>
-               <tabAddr> NEXT </tabAddr>
+               <tAddr>   NEXT </tAddr>
                <tmax>    MAX  </tmax>
                <tsize>   MIN  </tsize>
                <tdata>   .Map </tdata>
@@ -765,7 +765,7 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          <mems>
            ( .Bag
           => <memInst>
-               <memAddr> NEXT </memAddr>
+               <mAddr>   NEXT </mAddr>
                <mmax>    MAX  </mmax>
                <msize>   MIN  </msize>
                <mdata>   .Map </mdata>
@@ -797,7 +797,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> store { WIDTH EA VAL } => . ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH -Int 1) [EA := VAL ] </mdata>
            ...
@@ -807,7 +807,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -849,7 +849,7 @@ The value is fethced from the "effective address", which is the address given on
          </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            <mdata>   DATA </mdata>
            ...
@@ -859,7 +859,7 @@ The value is fethced from the "effective address", which is the address given on
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -903,7 +903,7 @@ The `size` operation returns the size of the memory, measured in pages.
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -925,7 +925,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR  </memAddr>
+           <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>
            <msize>   SIZE => #if #growthAllowed(SIZE +Int N, MAX) #then SIZE +Int N #else SIZE #fi </msize>
            ...
