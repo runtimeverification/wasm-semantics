@@ -669,6 +669,17 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> ((return) => .) ~> FR:Frame ... </k>
 ```
 
+### Function Call
+
+`call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
+
+```k
+    syntax Instr ::= "(" "call" Index ")"
+ // -------------------------------------
+    rule <k> ( call FUNCIDX ) => ( invoke FADDR ) ... </k>
+         <funcAddrs> ... FUNCIDX |-> FADDR ... </funcAddrs>
+```
+
 Memory
 ------
 
