@@ -709,7 +709,7 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
                    | "(" "table"     Int          ")" // Size only
                    | "(" "table"     Int Int      ")" // Min and max.
                    |     "table" "{" Int MaxBound "}"
- // --------------------------------------------------
+ // -------------------------------------------------
     rule <k> ( table                 ) => table { 0   .MaxBound } ... </k>
     rule <k> ( table MIN:Int         ) => table { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
