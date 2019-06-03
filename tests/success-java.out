@@ -25,6 +25,9 @@
     </moduleInst>
   </curFrame>
   <mainStore>
+    <nextFuncAddr>
+      0
+    </nextFuncAddr>
     <funcs>
       .Map
     </funcs>
