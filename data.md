@@ -33,6 +33,9 @@ As defined in the WebAssembly spec, the syntax of identifiers is as follows.
 ```k
     syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
+    
+    syntax Index ::= Int | Identifier
+ // ---------------------------------
 ```
 
 WebAssembly Types

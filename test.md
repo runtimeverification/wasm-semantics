@@ -106,14 +106,16 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Assertion ::= "#assertFunction" FunctionName FuncType VecType String
- // ---------------------------------------------------------------------------
+    syntax Assertion ::= "#assertFunction" Index FuncType VecType String
+ // --------------------------------------------------------------------
     rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
+         <funcAddrs> ... (FNAME |-> FADDR) => .Map ... </funcAddrs>
+         <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
-               <fname>  FNAME </fname>
-               <ftype>  FTYPE </ftype>
-               <flocal> LTYPE </flocal>
+               <fAddr>  FADDR </fAddr>
+               <fType>  FTYPE </fType>
+               <fLocal> LTYPE </fLocal>
                ...
              </funcDef>
           => .Bag
