@@ -31,6 +31,12 @@
     <funcs>
       .FuncDefCellMap
     </funcs>
+    <nextTabAddr>
+      0
+    </nextTabAddr>
+    <tabs>
+      .TabInstCellMap
+    </tabs>
     <nextMemAddr>
       0
     </nextMemAddr>

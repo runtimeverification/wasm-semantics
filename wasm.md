@@ -11,6 +11,8 @@ module WASM
 Configuration
 -------------
 
+Note: Although according to the Webassembly specification, `Addresses` should be stored inside the cells of `<moduleInst>`, but for now we store `Index` for a easier implementation of calling a function by its identifier.
+
 ```k
     configuration
       <k> $PGM:Instrs </k>
@@ -20,6 +22,7 @@ Configuration
         <locals> .Map </locals>
         <moduleInst>
           <funcAddrs>   .Map </funcAddrs>
+          <tabAddrs>    .Map </tabAddrs>
           <memAddrs>    .Map </memAddrs>
           <globalAddrs> .Map </globalAddrs>
         </moduleInst>
@@ -35,11 +38,20 @@ Configuration
             <fAddrs> .Map           </fAddrs>
           </funcDef>
         </funcs>
+        <nextTabAddr> 0 </nextTabAddr>
+        <tabs>
+          <tabInst multiplicity="*" type="Map">
+            <tAddr>   0         </tAddr>
+            <tmax>    .MaxBound </tmax>
+            <tsize>   0         </tsize>
+            <tdata>   .Map      </tdata>
+          </tabInst>
+        </tabs>
         <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <memAddr> 0         </memAddr>
-            <mmax>    .MemBound </mmax>
+            <mAddr>   0         </mAddr>
+            <mmax>    .MaxBound </mmax>
             <msize>   0         </msize>
             <mdata>   .Map      </mdata>
           </memInst>
@@ -669,6 +681,61 @@ Unlike labels, only one frame can be "broken" through at a time.
     rule <k> ((return) => .) ~> FR:Frame ... </k>
 ```
 
+### Function Call
+
+`call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
+
+```k
+    syntax Instr ::= "(" "call" Index ")"
+ // -------------------------------------
+    rule <k> ( call FUNCIDX ) => ( invoke FADDR ) ... </k>
+         <funcAddrs> ... FUNCIDX |-> FADDR ... </funcAddrs>
+```
+
+Table
+-----
+
+When implementing a table, we need a `FuncElem` type to define the type of elements inside a `tableinst`.
+
+```k
+    syntax FuncElem ::= ".FuncElem" | Int
+ // -------------------------------------
+```
+
+The allocation of a new `tableinst`. Currently at most one table may be defined or imported in a single module.
+
+```k
+    syntax Instr ::= "(" "table"                  ")"
+                   | "(" "table"     Int          ")" // Size only
+                   | "(" "table"     Int Int      ")" // Min and max.
+                   |     "table" "{" Int MaxBound "}"
+ // -------------------------------------------------
+    rule <k> ( table                 ) => table { 0   .MaxBound } ... </k>
+    rule <k> ( table MIN:Int         ) => table { MIN .MaxBound } ... </k>
+      requires MIN <=Int #maxTableSize()
+    rule <k> ( table MIN:Int MAX:Int ) => table { MIN MAX       } ... </k>
+      requires MIN <=Int #maxTableSize()
+       andBool MAX <=Int #maxTableSize()
+
+    rule <k> table { _ _ } => trap ... </k>
+         <tabAddrs> MAP </tabAddrs> requires MAP =/=K .Map
+
+    rule <k> table { MIN MAX } => . ... </k>
+         <tabAddrs>    .Map => (0 |-> NEXT)  </tabAddrs>
+         <nextTabAddr> NEXT => NEXT +Int 1 </nextTabAddr>
+         <tabs>
+           ( .Bag
+          => <tabInst>
+               <tAddr>   NEXT </tAddr>
+               <tmax>    MAX  </tmax>
+               <tsize>   MIN  </tsize>
+               <tdata>   .Map </tdata>
+             </tabInst>
+           )
+           ...
+         </tabs>
+```
+
 Memory
 ------
 
@@ -682,10 +749,10 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
     syntax Instr ::= "(" "memory"                  ")"
                    | "(" "memory"     Int          ")" // Size only
                    | "(" "memory"     Int Int      ")" // Min and max.
-                   |     "memory" "{" Int MemBound "}"
+                   |     "memory" "{" Int MaxBound "}"
  // --------------------------------------------------
-    rule <k> ( memory                 ) => memory { 0   .MemBound } ... </k>
-    rule <k> ( memory MIN:Int         ) => memory { MIN .MemBound } ... </k>
+    rule <k> ( memory                 ) => memory { 0   .MaxBound } ... </k>
+    rule <k> ( memory MIN:Int         ) => memory { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
     rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
@@ -700,7 +767,7 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          <mems>
            ( .Bag
           => <memInst>
-               <memAddr> NEXT </memAddr>
+               <mAddr>   NEXT </mAddr>
                <mmax>    MAX  </mmax>
                <msize>   MIN  </msize>
                <mdata>   .Map </mdata>
@@ -732,7 +799,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> store { WIDTH EA VAL } => . ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH -Int 1) [EA := VAL ] </mdata>
            ...
@@ -742,7 +809,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -784,7 +851,7 @@ The value is fethced from the "effective address", which is the address given on
          </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            <mdata>   DATA </mdata>
            ...
@@ -794,7 +861,7 @@ The value is fethced from the "effective address", which is the address given on
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -838,7 +905,7 @@ The `size` operation returns the size of the memory, measured in pages.
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -860,7 +927,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
          <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
-           <memAddr> ADDR  </memAddr>
+           <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>
            <msize>   SIZE => #if #growthAllowed(SIZE +Int N, MAX) #then SIZE +Int N #else SIZE #fi </msize>
            ...
@@ -869,27 +936,30 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> grow N => < i32 > #unsigned(i32, -1) </k>
          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
 
-    syntax Bool ::= #growthAllowed(Int, MemBound) [function]
+    syntax Bool ::= #growthAllowed(Int, MaxBound) [function]
  // --------------------------------------------------------
-    rule #growthAllowed(SIZE, .MemBound) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MemBound) andBool SIZE <=Int I
+    rule #growthAllowed(SIZE, .MaxBound) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MaxBound) andBool SIZE <=Int I
 ```
 
 Memories can optionally have a max size which the memory may not grow beyond.
 
 ```k
-    syntax MemBound ::= Int | ".MemBound"
+    syntax MaxBound ::= Int | ".MaxBound"
 ```
 
 However, the absolute max allowed size if 2^16 pages.
 Incidentally, the page size is 2^16 bytes.
+The maximum of table size is 2^32 bytes.
 
 ```k
     syntax Int ::= #pageSize()      [function]
     syntax Int ::= #maxMemorySize() [function]
+    syntax Int ::= #maxTableSize()  [function]
  // ------------------------------------------
-    rule #maxMemorySize() => 65536
     rule #pageSize()      => 65536
+    rule #maxMemorySize() => 65536
+    rule #maxTableSize()  => 4294967296
 ```
 
 Module Declaration
