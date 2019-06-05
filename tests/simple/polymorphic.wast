@@ -63,3 +63,5 @@
 #assertTrap                "select strict in condition"
 #assertTopStack < i64 > -1 "select strict in condition"
 #assertTopStack < i64 >  1 "select strict in condition"
+
+#clearModules

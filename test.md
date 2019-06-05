@@ -155,7 +155,8 @@ This asserts related operation about tables.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <tabIndices> (0 |-> ADDR) => .Map </tabIndices>
+           <nextTabIdx> NEXT => NEXT -Int 1 </nextTabIdx>
+           <tabIndices> ... ( 0 |-> ADDR ) => .Map ... </tabIndices>
            ...
          </moduleInst>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
@@ -188,7 +189,8 @@ This checks that the last allocated memory has the given size and max value.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memIndices> (0 |-> ADDR) => .Map </memIndices>
+           <nextMemIdx> NEXT => NEXT -Int 1 </nextMemIdx>
+           <memIndices> ... ( 0 |-> ADDR ) => .Map ... </memIndices>
            ...
          </moduleInst>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
@@ -222,6 +224,31 @@ This checks that the last allocated memory has the given size and max value.
            </memInst>
            ...
          </mems>
+```
+
+Clear Module Instances
+----------
+
+The modules are cleaned all together after the test file is executed.
+
+```k
+    syntax Instr ::= "#clearModules"
+ // --------------------------
+    rule <k> #clearModules => . ... </k>
+         <modules>
+           <moduleInst>
+             <modAddr> _ => 0    </modAddr>
+             <funcIds> _ => .Map </funcIds>
+             <nextFuncIdx>   _ => 0 </nextFuncIdx>
+             <nextTabIdx>    _ => 0 </nextTabIdx>
+             <nextMemIdx>    _ => 0 </nextMemIdx>
+             <nextGlobalIdx> _ => 0 </nextGlobalIdx>
+             <funcIndices>   _ => .Map </funcIndices>
+             <tabIndices>    _ => .Map </tabIndices>
+             <memIndices>    _ => .Map </memIndices>
+             <globalIndices> _ => .Map </globalIndices>
+           </moduleInst>
+         </modules>
 ```
 
 ```k
