@@ -133,6 +133,20 @@ Function `#unsigned` is called on integers to allow programs to use negative num
     rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL        ... </k>
 ```
 
+### Text Format Conventions
+
+The text format allows the use of symbolic `identifiers` in place of `indices`.
+To resolve these `identifiers` into concrete `indices`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
+
+```k
+    syntax Int ::= #ICov  ( Map , TextFormatIdx ) [function]
+                 | #asInt ( KItem ) [function]
+ // -------------------------------------------------------
+    rule #asInt(I:Int) => I
+    rule #ICov(IDS:Map, I:Int) => I
+    rule #ICov(IDS:Map, ID:Identifier) => #asInt( IDS [ ID ] )
+```
+
 ### Unary Operators
 
 When a unary operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
