@@ -24,10 +24,15 @@ Configuration
         // <moduleInst multiplicity="*" type="Map">
         <moduleInst>
           <modAddr>     0    </modAddr>
-          <funcAddrs>   .Map </funcAddrs>
-          <tabAddrs>    .Map </tabAddrs>
-          <memAddrs>    .Map </memAddrs>
-          <globalAddrs> .Map </globalAddrs>
+          <funcIds> .Map </funcIds> //this is mapping from identifier to index
+          <nextFuncIdx>   0 </nextFuncIdx>
+          <nextTabIdx>    0 </nextTabIdx>
+          <nextMemIdx>    0 </nextMemIdx>
+          <nextGlobalIdx> 0 </nextGlobalIdx>
+          <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+          <tabIndices>    .Map </tabIndices>
+          <memIndices>    .Map </memIndices>
+          <globalIndices> .Map </globalIndices>
         </moduleInst>
       </modules>
       <mainStore>
@@ -558,7 +563,7 @@ The `*_local` instructions are defined here.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globalInst>
@@ -572,7 +577,7 @@ The `*_local` instructions are defined here.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globalInst>
@@ -598,13 +603,13 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "export" Index
+                       | "export" Identifier
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
 
     syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
-                   | "(" "func" Index FuncDecls Instrs ")"
-                   | "func" Index "::" FuncType VecType "{" Instrs "}"
+                   | "(" "func" Identifier FuncDecls Instrs ")"
+                   | "func" Identifier "::" FuncType VecType "{" Instrs "}"
  // ------------------------------------------------------------------
     rule <k> ( func FDECLS INSTRS )
           => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
@@ -620,24 +625,26 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <funcAddrs> ADDRS => ADDRS [ FNAME <- NEXT ] </funcAddrs>
+           <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+           <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+           <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
            ...
          </moduleInst>
-         <nextFuncAddr> NEXT => NEXT +Int 1 </nextFuncAddr>
+         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  NEXT   </fAddr>
-               <fCode>  INSTRS </fCode>
-               <fType>  FTYPE  </fType>
-               <fLocal> LTYPE  </fLocal>
+               <fAddr>  NEXTADDR </fAddr>
+               <fCode>  INSTRS   </fCode>
+               <fType>  FTYPE    </fType>
+               <fLocal> LTYPE    </fLocal>
                ...
              </funcDef>
            )
            ...
          </funcs>
 
-    syntax Index ::= gatherExportedName ( FuncDecls ) [function]
+    syntax Identifier ::= gatherExportedName ( FuncDecls ) [function]
  // ------------------------------------------------------------
     rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
     rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
@@ -701,16 +708,18 @@ Unlike labels, only one frame can be "broken" through at a time.
 
 ### Function Call
 
-`call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
+`call funcidx` and `call_indirect typeidx` are 2 control instructions that
+invokes a function in the current frame.
 
 ```k
-    syntax Instr ::= "(" "call" Index ")"
- // -------------------------------------
-    rule <k> ( call FUNCIDX ) => ( invoke FADDR ) ... </k>
+    syntax Instr ::= "(" "call" TextFormatIdx ")"
+ // -----------------------------------------------
+    rule <k> ( call TFIDX ) => ( invoke FADDR ) ... </k>
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <funcAddrs> ... FUNCIDX |-> FADDR ... </funcAddrs>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ICov(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
 ```
@@ -744,7 +753,7 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <tabAddrs> MAP </tabAddrs>
+           <tabIndices> MAP </tabIndices>
            ...
          </moduleInst> requires MAP =/=K .Map
 
@@ -752,14 +761,15 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <tabAddrs> .Map => (0 |-> NEXT) </tabAddrs>
+           <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
+           <tabIndices> .Map => (NEXTIDX |-> NEXTADDR) </tabIndices>
            ...
          </moduleInst>
-         <nextTabAddr> NEXT => NEXT +Int 1 </nextTabAddr>
+         <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
           => <tabInst>
-               <tAddr>   NEXT </tAddr>
+               <tAddr>   NEXTADDR </tAddr>
                <tmax>    MAX  </tmax>
                <tsize>   MIN  </tsize>
                <tdata>   .Map </tdata>
@@ -795,7 +805,7 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> MAP </memAddrs>
+           <memIndices> MAP </memIndices>
            ...
          </moduleInst> requires MAP =/=K .Map
 
@@ -803,14 +813,15 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> .Map => (0 |-> NEXT) </memAddrs>
+           <nextMemIdx> NEXTIDX => NEXTIDX +Int 1 </nextMemIdx>
+           <memIndices> .Map => (NEXTIDX |-> NEXTADDR) </memIndices>
            ...
          </moduleInst>
-         <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
+         <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
           => <memInst>
-               <mAddr>   NEXT </mAddr>
+               <mAddr>   NEXTADDR </mAddr>
                <mmax>    MAX  </mmax>
                <msize>   MIN  </msize>
                <mdata>   .Map </mdata>
@@ -843,7 +854,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
          <memInst>
@@ -858,7 +869,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
          <memInst>
@@ -905,7 +916,7 @@ The value is fethced from the "effective address", which is the address given on
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
          <memInst>
@@ -920,7 +931,7 @@ The value is fethced from the "effective address", which is the address given on
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
          <memInst>
@@ -969,7 +980,7 @@ The `size` operation returns the size of the memory, measured in pages.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
          <memInst>
@@ -996,7 +1007,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
          <memInst>

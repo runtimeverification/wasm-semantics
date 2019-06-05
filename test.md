@@ -73,7 +73,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <globalAddrs> ... (INDEX |-> GADDR => .Map) ... </globalAddrs>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globals>
@@ -97,7 +97,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <globalAddrs> GADDRS => GADDRS [ INDEX <- GADDR ] </globalAddrs>
+           <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
            ...
          </moduleInst>
          <globals>
@@ -116,13 +116,14 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Assertion ::= "#assertFunction" Index FuncType VecType String
+    syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
  // --------------------------------------------------------------------
-    rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
+    rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <funcAddrs> ... (FNAME |-> FADDR) => .Map ... </funcAddrs>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ICov(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
          <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
@@ -154,7 +155,7 @@ This asserts related operation about tables.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <tabAddrs> (0 |-> ADDR) => .Map </tabAddrs>
+           <tabIndices> (0 |-> ADDR) => .Map </tabIndices>
            ...
          </moduleInst>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
@@ -187,7 +188,7 @@ This checks that the last allocated memory has the given size and max value.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> (0 |-> ADDR) => .Map </memAddrs>
+           <memIndices> (0 |-> ADDR) => .Map </memIndices>
            ...
          </moduleInst>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
@@ -210,7 +211,7 @@ This checks that the last allocated memory has the given size and max value.
          <curModAddr> M </curModAddr>
          <moduleInst>
            <modAddr> M </modAddr>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
          <mems>
