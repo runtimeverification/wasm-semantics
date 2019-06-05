@@ -70,7 +70,12 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
-         <globalAddrs> ... (INDEX |-> GADDR => .Map) ... </globalAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <globalAddrs> ... (INDEX |-> GADDR => .Map) ... </globalAddrs>
+           ...
+         </moduleInst>
          <globals>
            ( <globalInst>
                <gAddr>  GADDR </gAddr>
@@ -89,7 +94,12 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
     syntax Instr ::= "init_global" Int Int
  // --------------------------------------
     rule <k> init_global INDEX GADDR => . ... </k>
-         <globalAddrs> GADDRS => GADDRS [ INDEX <- GADDR ] </globalAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <globalAddrs> GADDRS => GADDRS [ INDEX <- GADDR ] </globalAddrs>
+           ...
+         </moduleInst>
          <globals>
            ( .Bag =>
              <globalInst>
@@ -109,7 +119,12 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
     syntax Assertion ::= "#assertFunction" Index FuncType VecType String
  // --------------------------------------------------------------------
     rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
-         <funcAddrs> ... (FNAME |-> FADDR) => .Map ... </funcAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <funcAddrs> ... (FNAME |-> FADDR) => .Map ... </funcAddrs>
+           ...
+         </moduleInst>
          <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
@@ -136,7 +151,12 @@ This asserts related operation about tables.
          <nextTabAddr> NEXT </nextTabAddr>
 
     rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
-         <tabAddrs> (0 |-> ADDR) => .Map </tabAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <tabAddrs> (0 |-> ADDR) => .Map </tabAddrs>
+           ...
+         </moduleInst>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
            ( <tabInst>
@@ -164,7 +184,12 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <memAddrs> (0 |-> ADDR) => .Map </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> (0 |-> ADDR) => .Map </memAddrs>
+           ...
+         </moduleInst>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>
@@ -182,7 +207,12 @@ This checks that the last allocated memory has the given size and max value.
     syntax Assertion ::= "#assertMemoryData" "(" Int "," Int ")" String
  // -------------------------------------------------------------------
     rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <mems>
            <memInst>
              <mAddr> ADDR </mAddr>

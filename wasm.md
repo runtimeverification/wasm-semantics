@@ -19,23 +19,28 @@ Note: Although according to the Webassembly specification, `Addresses` should be
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals> .Map </locals>
+        <locals>     .Map </locals>
+        <curModAddr> 0    </curModAddr>
+      </curFrame>
+      <modules>
+        // <moduleInst multiplicity="*" type="Map">
         <moduleInst>
+          <modAddr>     0    </modAddr>
           <funcAddrs>   .Map </funcAddrs>
           <tabAddrs>    .Map </tabAddrs>
           <memAddrs>    .Map </memAddrs>
           <globalAddrs> .Map </globalAddrs>
         </moduleInst>
-      </curFrame>
+      </modules>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fAddr>  0              </fAddr>
-            <fCode>  .Instrs:Instrs </fCode>
-            <fType>  .Type          </fType>
-            <fLocal> .Type          </fLocal>
-            <fAddrs> .Map           </fAddrs>
+            <fAddr>    0              </fAddr>
+            <fCode>    .Instrs:Instrs </fCode>
+            <fType>    .Type          </fType>
+            <fLocal>   .Type          </fLocal>
+            <fModInst> 0              </fModInst>
           </funcDef>
         </funcs>
         <nextTabAddr> 0 </nextTabAddr>
@@ -552,7 +557,12 @@ The `*_local` instructions are defined here.
  // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+           ...
+         </moduleInst>
          <globalInst>
            <gAddr>  GADDR </gAddr>
            <gValue> VALUE </gValue>
@@ -561,7 +571,12 @@ The `*_local` instructions are defined here.
 
     rule <k> ( global.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+           ...
+         </moduleInst>
          <globalInst>
            <gAddr>  GADDR      </gAddr>
            <gValue> _ => VALUE </gValue>
@@ -604,7 +619,12 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          </k>
 
     rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
-         <funcAddrs> ADDRS => ADDRS [ FNAME <- NEXT ] </funcAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <funcAddrs> ADDRS => ADDRS [ FNAME <- NEXT ] </funcAddrs>
+           ...
+         </moduleInst>
          <nextFuncAddr> NEXT => NEXT +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
@@ -689,7 +709,12 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Instr ::= "(" "call" Index ")"
  // -------------------------------------
     rule <k> ( call FUNCIDX ) => ( invoke FADDR ) ... </k>
-         <funcAddrs> ... FUNCIDX |-> FADDR ... </funcAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <funcAddrs> ... FUNCIDX |-> FADDR ... </funcAddrs>
+           ...
+         </moduleInst>
 ```
 
 Table
@@ -718,10 +743,20 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
        andBool MAX <=Int #maxTableSize()
 
     rule <k> table { _ _ } => trap ... </k>
-         <tabAddrs> MAP </tabAddrs> requires MAP =/=K .Map
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <tabAddrs> MAP </tabAddrs>
+           ...
+         </moduleInst> requires MAP =/=K .Map
 
     rule <k> table { MIN MAX } => . ... </k>
-         <tabAddrs>    .Map => (0 |-> NEXT)  </tabAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <tabAddrs> .Map => (0 |-> NEXT) </tabAddrs>
+           ...
+         </moduleInst>
          <nextTabAddr> NEXT => NEXT +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
@@ -759,10 +794,20 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
        andBool MAX <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
-         <memAddrs> MAP </memAddrs> requires MAP =/=K .Map
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> MAP </memAddrs>
+           ...
+         </moduleInst> requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <memAddrs>    .Map => (0 |-> NEXT)  </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> .Map => (0 |-> NEXT) </memAddrs>
+           ...
+         </moduleInst>
          <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
@@ -797,7 +842,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -807,7 +857,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -849,7 +904,12 @@ The value is fethced from the "effective address", which is the address given on
                        #fi
          ...
          </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -859,7 +919,12 @@ The value is fethced from the "effective address", which is the address given on
       requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -903,7 +968,12 @@ The `size` operation returns the size of the memory, measured in pages.
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -925,7 +995,12 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModAddr> M </curModAddr>
+         <moduleInst>
+           <modAddr> M </modAddr>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>

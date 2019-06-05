@@ -12,10 +12,21 @@
     <locals>
       .Map
     </locals>
+    <curModAddr>
+      0
+    </curModAddr>
+  </curFrame>
+  <modules>
     <moduleInst>
+      <modAddr>
+        0
+      </modAddr>
       <funcAddrs>
         .Map
       </funcAddrs>
+      <tabAddrs>
+        .Map
+      </tabAddrs>
       <memAddrs>
         .Map
       </memAddrs>
@@ -23,7 +34,7 @@
         .Map
       </globalAddrs>
     </moduleInst>
-  </curFrame>
+  </modules>
   <mainStore>
     <nextFuncAddr>
       0
