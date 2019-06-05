@@ -11,8 +11,6 @@ module WASM
 Configuration
 -------------
 
-Note: Although according to the Webassembly specification, `Addresses` should be stored inside the cells of `<moduleInst>`, but for now we store `Index` for a easier implementation of calling a function by its identifier.
-
 ```k
     configuration
       <k> $PGM:Instrs </k>
