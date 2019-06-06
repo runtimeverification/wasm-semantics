@@ -15,7 +15,7 @@ export LUA_PATH
         deps ocaml-deps haskell-deps \
         defn defn-ocaml defn-java defn-haskell \
         build build-ocaml defn-haskell build-haskell \
-        test test-execution test-simple test-prove \
+        test test-execution test-simple test-prove test-klab-prove \
         media presentations reports
 
 all: build
@@ -160,6 +160,10 @@ parse-conformance: $(conformance_tests:=.parse)
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
 test-prove: $(proof_tests:=.prove)
+
+### KLab interactive
+
+test-klab-prove: $(proof_tests:=.klab-prove)
 
 # Presentation
 # ------------
