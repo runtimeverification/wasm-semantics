@@ -722,8 +722,7 @@ Unlike labels, only one frame can be "broken" through at a time.
 
 ### Function Call
 
-`call funcidx` and `call_indirect typeidx` are 2 control instructions that
-invokes a function in the current frame.
+`call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
 
 ```k
     syntax Instr ::= "(" "call" TextFormatIdx ")"
