@@ -624,7 +624,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
                    | "(" "func" Identifier FuncDecls Instrs ")"
                    | "func" Identifier "::" FuncType VecType "{" Instrs "}"
- // ------------------------------------------------------------------
+ // -----------------------------------------------------------------------
     rule <k> ( func FDECLS INSTRS )
           => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
@@ -659,7 +659,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          </funcs>
 
     syntax Identifier ::= gatherExportedName ( FuncDecls ) [function]
- // ------------------------------------------------------------
+ // -----------------------------------------------------------------
     rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
     rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
 
@@ -726,7 +726,7 @@ Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
     syntax Instr ::= "(" "call" TextFormatIdx ")"
- // -----------------------------------------------
+ // ---------------------------------------------
     rule <k> ( call TFIDX ) => ( invoke FADDR ) ... </k>
          <curModAddr> M </curModAddr>
          <moduleInst>

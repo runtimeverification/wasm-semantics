@@ -117,7 +117,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 
 ```k
     syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
- // --------------------------------------------------------------------
+ // ----------------------------------------------------------------------------
     rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
          <curModAddr> M </curModAddr>
          <moduleInst>
@@ -147,7 +147,7 @@ This asserts related operation about tables.
 ```k
     syntax Assertion ::= "#assertEmptyTable"    Int MaxBound String
                        | "#assertEmptyTableAux" Int Int MaxBound String
- // --------------------------------------------------------------------
+ // -------------------------------------------------------------------
     rule <k> #assertEmptyTable SIZE MAX MSG => #assertEmptyTableAux (NEXT -Int 1) SIZE MAX MSG ... </k>
          <nextTabAddr> NEXT </nextTabAddr>
 
@@ -233,7 +233,7 @@ The modules are cleaned all together after the test file is executed.
 
 ```k
     syntax Instr ::= "#clearModules"
- // --------------------------
+ // --------------------------------
     rule <k> #clearModules => . ... </k>
          <modules>
            <moduleInst>
