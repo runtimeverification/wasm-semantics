@@ -2,15 +2,11 @@
 title: 'Semantics of WebAssembly in the K framework'
 subtitle: 'What is KWasm?'
 author:
--   Rikard Hjort \tiny supervised by Magnus Myreen \normalsize
+-   Rikard Hjort
 -   Everett Hildenbrandt
-abstract:
-  WebAssembly is a low-ish-level language designed to run efficiently on all modern platforms. The Ethereum blockchain currently runs on its own virtual machine (the EVM) but is expected to move to use WebAssembly in the future. The K framework definition of the EVM has become the de facto standard for verifying properties of smart contracts, most notably the Dai coin contracts, currently handling over 100 million USD of value. Since we want to verify Ethereum contracts compiled to WebAssembly -- as well as other WebAssembly programs -- we need to have a K formalization of WebAssembly. That is what I've been working on.
-
-  I will be giving a hands-on talk on WebAssembly, how to define languages in K, and how we have been translating the official WebAssembly specification into K."
-date: March 25, 2019
+-   Qianyang Peng
+date: June 8, 2019
 institute:
--   Chalmers University of Technology
 -   Runtime Verification, Inc.
 theme: metropolis
 fontsize: 8pt
@@ -37,94 +33,63 @@ header-includes:
 -   \newcommand{\diminish}[1]{\begin{footnotesize}#1\end{footnotesize}}
 ---
 
-Video
------
-
-This talk was recoreded, and is available in full at <https://www.youtube.com/watch?v=V6tOYuneMqo>
-
 Overview
 --------
 
-1.  Background
-2.  Introduction to K
-3.  Introduction to WebAssembly (Wasm)
-4.  Demo: implement a Wasm subset
-5.  (Proving things)
+1. KWasm: Intro and roadmap
+2. Introduction to K & KEVM
+3. Deepdive: What the semantics look like
+4. Demo: Proving things
 
-Background
-==========
 
-Smart contracts and formal methods
-------------
+KWasm: Intro and roadmap
+========================
 
-![](media/img/ethereum.png){ width=65%}
+KWasm
+-----
 
-- Blockchain technology, **smart contracts** in particular, caught my interest.
-- Public, immutable code handling lots of money? Great area of application for formal methods!
+> * KWasm is the project name for specifying Wasm in K.
+> * K is a framework for creating **runnable specifications** programming languages.
+> * K uses rewrite based semantics, just like those Wasm is defined with [@rossberg-web-up-to-speed].
+> * The goal is to use the runnable spec to **formally verify** aspects of blockchain runtimes and smart contracts.
+> * There is already a specification of the EVM, called KEVM [@hildenbrandt-saxena-zhu-rosu-k-evm], which we use for formal verification. \newline ![](media/img/kevm-paper.png)
 
-Existing projects
--------
+Status
+------
 
-![](media/img/maker.png){ width=20% align=center style="margin-bottom:40px"}
-
-- Contacted friends at MakerDAO.
-- They have verified the core contracts of their "stablecoin", Dai.
+![](media/img/github-top-screenshot.png)
 
 . . .
 
-![](media/img/dapphub.png){ width=40% align=center style="margin-bottom:40px"}
+* Bulk of the semantics are done.
+* Tables and indirect calls in progress.
+* Big todos:
+  - Defining and instantiating several modules.
+  - More permissive parser.
+  - Add floating point numbers (not top priority).
 
-- The verification was largely done by a related organization, DappHub ...
+Design
+------
 
-. . .
-
-![](media/img/k.png){ height=15% hspace=30px } &nbsp;&nbsp;&nbsp;
-![](media/img/RV-logo-blue.eps){ height=15% hspace=30px } &nbsp;&nbsp;&nbsp;
-<!-- ![](media/img/rv.png){ height=15%} -->
-
-- ... using the K framework.
-
-<!--
-
-Verifying Ethereum contracts
----------
-
-1. Contracts are compiled to Ethereum virtual machine (EVM) bytecode.
-2. Some property or invariant is specified as a rewrite rule.
-3. K tries to construct a proof (using the SMT solver Z3) that every possible execution path eventually rewrites to the correct thing
-4. The tool KLab (by DappHub) offers an interactive view of execution paths, great for seeing where and why the prover failed.
-
--->
-
-The KEVM
---------
-
-![](media/img/kevm-paper.png)
-
-- Verification made possible by KEVM [@hildenbrandt-saxena-zhu-rosu-k-evm], modelling the EVM.
-- The EVM is a stack machine with $\approx$ 120 opcodes.
-- Everett had begun work on a K specification of another low-level languge: Wasm.
-
-ewasm
-----
-
-**Rationale**
-
-How would ewasm be better than EVM?
-
-. . .
-
-- Speed
-- Size
-- Security
-- Write contracts in C/C++, go, or rust
-- Static analysis
-- Optional metering
-- Portability: ewasm contracts will be compatibile with any standard Wasm environment, including IoT and mobile devices
+* A very faithful translation of Wasm spec (K and Wasm both use rewrite semantics). Some differences:
+  - Two stacks: one for operands, one for instructions and control flow.
+  - We are *more permissive*; allow running instructions directly:
+\newline `(i32.add (i32.const 1337) (i32.const 42))` is a full program.
+* Execution focused, we assume validation is done beforehand.
 
 
-(Brief) Introduction to K
-==========================
+Goals
+-----
+
+- "Make KEVM for Ethereum 2.0".
+- Create eWasm semantics, KeWasm, by importing and embedding KWasm.
+- We would like to build a repository of verified code using KeWasm.
+There is such a repository for KEVM: <https://github.com/runtimeverification/verified-smart-contracts>.
+
+![](media/img/github-verified-contracts-screenshot.png)
+
+Introduction to K
+=================
 
 The Vision: Language Independence
 ---------------------------------
@@ -141,6 +106,7 @@ K Tooling/Languages
 -   Interpreter
 -   Debugger
 -   Reachability Logic Prover [@stefanescu-park-yuwen-li-rosu-reachability-prover]
+-   ...
 
 . . .
 
@@ -150,10 +116,11 @@ K Tooling/Languages
 -   C11 - 2015 [@hathhorn-ellison-rosu-k-c]
 -   KJS - 2015 [@park-stefanescu-rosu-k-js]
 -   KEVM - 2018 [@hildenbrandt-saxena-zhu-rosu-k-evm]
--   P4K - 2018 [@kheradmand-rosu-k-p4]
--   KIELE - 2018 [@kasampalis-guth-moore-rosu-johnson-k-iele]
 -   KLLVM <https://github.com/kframework/llvm-semantics>
 -   KX86-64 <https://github.com/kframework/X86-64-semantics>
+- In progress:
+   - Solidity <https://github.com/kframework/solidity-semantics>
+   - Rust
 
 Parts of a K specification
 --------------------------
@@ -164,48 +131,58 @@ A language spec in K consists of 3 things
 * Configuration ("state")
 * Operational semantics as **rewrite rules**
 
+. . .
+
+Demo: Building a small Wasm subset.
+
 K Specifications: Syntax
 ------------------------
 
 Concrete syntax built using EBNF style:
 
 ```k
-    syntax Exp ::= Int | Id | "(" Exp ")" [bracket]
-                 | Exp "*" Exp
-                 > Exp "+" Exp // looser binding
-
-    syntax Stmt ::= Id ":=" Exp
-                  | Stmt ";" Stmt
-                  | "return" Exp
+    syntax IType  ::= "i32" | "i64"
+    syntax Instr  ::= "(" IType "." "const" Int ")"
+    syntax Instr  ::= "(" IValType "." IBinOp ")"    // Concrete syntax
+                    | IValType "." IBinOp Int Int    // Abstract syntax
+    syntax Instr  ::= "(" "local.get" ")" | "(" "local.set" ")"
+    syntax IBinOp ::= "div_u"
+    syntax Instrs ::= List{Instr, ""} // Builtin helper for cons lists.
 ```
+
+Note: we generally don't differentiate between abstract and concrete syntax.
 
 . . .
 
 This would allow correctly parsing programs like:
 
-```imp
-    a := 3 * 2;
-    b := 2 * a + 5;
-    return b
+```scheme
+    (local.get 1)
+    (local.get 0)
+    (i32.div_u)
+    (local.set 0)
 ```
 
 K Specifications: Configuration
 -------------------------------
 
 Tell K about the structure of your execution state.
-For example, a simple imperative language might have:
 
 ```k
-    configuration <k>     $PGM:Program </k>
-                  <env>   .Map         </env>
-                  <store> .Map         </store>
+    configuration <k>        $PGM:Instrs </k>
+                  <valstack> .ValStack   </valstack>
+                  <locals>   .Map        </locals>
 ```
 
 . . .
 
-> -   `<k>` will contain the initial parsed program
-> -   `<env>` contains bindings of variable names to store locations
-> -   `<store>` contains bindings of store locations to integers
+> - `<k>` will contain the initial parsed program.
+> - `<valstack>` operand stack of `Val` items.
+> - `<locals>` a mapping `Int -> Val`
+
+```k
+    syntax Val ::= "<" IValType ">" Int
+```
 
 K Specifications: Transition Rules
 ----------------------------------
@@ -214,313 +191,376 @@ Using the above grammar and configuration:
 
 . . .
 
-### Variable lookup
+### Push to ValStack
 
 ```k
-    rule <k> X:Id => V ... </k>
-         <env>   ...  X |-> SX ... </env>
-         <store> ... SX |-> V  ... </store>
+    rule <k> ( ITYPE . const I ) => #chop(< ITYPE > I) ... </k>
 ```
 
 . . .
 
-### Variable assignment
+> - `=>` is the rewrite arrow.
+> - Words in all caps are variables.
+> - `...` matches the rest of the cell. In `<k>` we match the front of the cell, in `<valstack>` we match the whole cell.
+> - We don't need to mention the cells we don't use or modify.
+
+\vfill{}
+
+. . .
 
 ```k
-    rule <k> X := I:Int => . ... </k>
-         <env>   ...  X |-> SX       ... </env>
-         <store> ... SX |-> (V => I) ... </store>
+    rule <k> V:Val => . ... </k>
+         <valstack> VALSTACK => V : VALSTACK </valstack>
 ```
+
+. . .
+
+> - `.` is like $\epsilon$, so rewriting to `.` is erasing.
+> - We can rewrite several cells at once.
+
+K Specifications: Transition Rules
+----------------------------------
+
+Helper functions:
+
+```k
+    syntax IVal ::= #chop ( IVal ) [function]
+ // -----------------------------------------
+    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
+    rule <k>        V:Val    => .        ... </k>
+         <valstack> VALSTACK => V : VALSTACK </valstack>
+
+    syntax Int ::= #pow  ( IValType ) [function]
+ // --------------------------------------------
+    rule #pow (i32) => 4294967296
+```
+
+. . .
+
+> - The `[function]` annotation means the rule applies regardless of context.
+
+K Specifications: Transition Rules
+----------------------------------
+
+### Binary operators
+
+```k
+    rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
+         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> ITYPE . div_u I1 I2 => 
+         #if I2 =/=Int 0
+           #then < ITYPE > (I1 /Int I2)
+           #else undefined
+           #fi ... </k>
+```
+
+- `#if ... #then ... #else ... #fi` is built-in.
+
+. . .
+
+- `requires` specifies side conditions.
+- We can define funcitons such as `#binop`, that apply everywhere (no need to mention context).
+
+K Specifications: Transition Rules
+----------------------------------
+
+More complex examples: locals
+
+. . .
+
+### Get local variable
+
+```k
+    rule <k> ( local.get INDEX ) => . ... </k>
+         <valstack> VALSTACK => VALUE : VALSTACK </valstack>
+         <locals> ... INDEX |-> VALUE ... </locals>
+```
+
+. . .
+
+- `<locals>` is a `Map` (builtin data structure), which is an associative-commutative pair of values. We can put `...` on both sides indictating we are matching *somewhere* in the `Map`.
+
+. . .
+
+### Set local variable
+
+```k
+    rule <k> ( local.set INDEX ) => . ... </k>
+         <valstack> VALUE : VALSTACK => VALSTACK </valstack>
+         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
+```
+
+. . .
+
+- `_` is a wildcard (matches any value).
+- We can use parentheses to isolate the part of a term we are rewriting, like updating the value part of a map entry.
 
 Example Execution
 -----------------
 
 ### Program
 
-```imp
-    a := 3 * 2;
-    b := 2 * a + 5;
-    return b
+```scheme
+    (local.get 1)
+    (local.get 0)
+    (i32.add)
+    (i32.const 3)
+    (i32.div_u)
+    (local.set 0)
 ```
 
 ### Initial Configuration
 
 ```k
-    <k>     a := 3 * 2 ; b := 2 * a + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 0    1 |-> 0 </store>
+    <k> (local.get 1) ~>
+        (local.get 0) (i32.add) (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
 ```
+
 
 Example Execution (cont.)
 -------------------------
 
-### Variable assignment
+### Initial Configuration
 
 ```k
-    rule <k> X := I:Int => . ... </k>
-         <env>   ...  X |-> SX       ... </env>
-         <store> ... SX |-> (V => I) ... </store>
+    <k> (local.get 1)      ~>
+        (local.get 0) (i32.add) (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> .ValStack                       </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
 ```
+
+. . .
+
+### Rule
+
+```k
+    rule <k> (local.get N) => . ... </k>
+         <valstack> STACK => V : STACK  </valstack>
+         <locals> ... N |-> V ... </locals>
+```
+
+Example Execution (cont.)
+-------------------------
 
 ### Next Configuration
 
 ```k
-    <k>     a := 6 ~> b := 2 * a + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 0    1 |-> 0 </store>
+    <k> (local.get 1) => . ~>
+        (local.get 0) (i32.add) (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> .ValStack => <i32> 5 : .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
+```
+
+
+### Rule
+
+```k
+    rule <k> (local.get N) => . ... </k>
+         <valstack> STACK => V : STACK  </valstack>
+         <locals> ... N |-> V ... </locals>
 ```
 
 Example Execution (cont.)
 -------------------------
-
-### Variable assignment
-
-```k
-    rule <k> X := I:Int => . ... </k>
-         <env>   ...  X |-> SX       ... </env>
-         <store> ... SX |-> (V => I) ... </store>
-```
 
 ### Next Configuration
 
 ```k
-    <k>               b := 2 * a + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
+    <k> 
+        (local.get 0) (i32.add) (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack>         <i32> 5 : .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
+```
+
+
+### Rule
+
+```k
+    rule <k> (local.get N) => . ... </k>
+         <valstack> STACK => V : STACK  </valstack>
+         <locals> ... N |-> V ... </locals>
 ```
 
 Example Execution (cont.)
 -------------------------
 
-### Variable lookup
+Same for next instruction.
+
+### Configuration
 
 ```k
-    rule <k> X:Id => V ... </k>
-         <env>   ...  X |-> SX ... </env>
-         <store> ... SX |-> V  ... </store>
+    <k> (local.get 0)      ~>
+        (i32.add) (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> <i32> 5 : .ValStack                      </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
 ```
+
+Example Execution (cont.)
+-------------------------
+
+Same for next instruction.
+
+### Configuration
+
+```k
+    <k> (local.get 0) => . ~>
+        (i32.add) (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> <i32> 5 : .ValStack => <i32> 2 : <i32> 5 : .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
+```
+
+Example Execution (cont.)
+-------------------------
 
 ### Next Configuration
 
 ```k
-    <k>     a ~> b := 2 * [] + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
+    <k>
+        (i32.add) (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack>                        <i32> 2 : <i32> 5 : .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
 ```
 
 Example Execution (cont.)
 -------------------------
 
-### Variable lookup
+### Configuration
 
 ```k
-    rule <k> X:Id => V ... </k>
-         <env>   ...  X |-> SX ... </env>
-         <store> ... SX |-> V  ... </store>
+    <k> (i32.add) => i32.const #binop(add, <i32> 2, <i32> 5)     ~>
+        (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> <i32> 2 : <i32> 5 : .ValStack              </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
 ```
 
-### Next Configuration
+. . .
+
+### Rule
 
 ```k
-    <k>     6 ~> b := 2 * [] + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
+    rule <k> (ITYPE . B:BinOp) => <ITYPE> #binop(B, I1, I2) ... </k> 
+         <valstack> <ITYPE, I1> : <ITYPE, I2> : STACK => STACK </valstack>
 ```
 
 Example Execution (cont.)
 -------------------------
 
-### Variable lookup
+### Configuration
 
 ```k
-    rule <k> X:Id => V ... </k>
-         <env>   ...  X |-> SX ... </env>
-         <store> ... SX |-> V  ... </store>
+    <k> (i32.add) => i32.const #binop(add, 5, 2) ~>
+        (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> <i32> 2 : <i32> 5 : .ValStack => .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> 5 </locals>
 ```
 
-### Next Configuration
+### Rule
 
 ```k
-    <k>          b := 2 * 6 + 5 ; return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
+    rule <k> (ITYPE . B:BinOp) => ITYPE . const #binop(B, I1, I2) ... </k> 
+         <valstack> <ITYPE, I2> : <ITYPE, I1> : STACK => STACK </valstack>
 ```
 
 Example Execution (cont.)
 -------------------------
 
-### Variable assignment
+### Configuration
 
 ```k
-    rule <k> X := I:Int => . ... </k>
-         <env>   ...  X |-> SX       ... </env>
-         <store> ... SX |-> (V => I) ... </store>
+    <k>              i32.const #binop(add, 5, 2) ~>
+        (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> <i32> 2 : <i32> 5 : .ValStack => .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> <i32> 5 </locals>
 ```
 
-### Next Configuration
+### Rule
 
 ```k
-    <k>     b := 17 ~> return b </k>
-    <env>   a |-> 0    b |-> 1 </env>
-    <store> 0 |-> 6    1 |-> 0 </store>
+    rule <k> (ITYPE . B:BinOp) => (ITYPE . const #binop(B, I1, I2)) ... </k> 
+         <valstack> <ITYPE, I2> : <ITYPE, I1> : STACK => STACK </valstack>
 ```
 
 Example Execution (cont.)
 -------------------------
 
-### Variable assignment
+### Configuration
 
 ```k
-    rule <k> X := I:Int => . ... </k>
-         <env>   ...  X |-> SX       ... </env>
-         <store> ... SX |-> (V => I) ... </store>
+    <k> (i32.const #binop(add, 5, 2)) ~>
+        (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> <i32> 5 </locals>
 ```
 
-### Next Configuration
+. . .
+
+### Rule
 
 ```k
-    <k>                return b </k>
-    <env>   a |-> 0    b |-> 1  </env>
-    <store> 0 |-> 6    1 |-> 17 </store>
+    rule #binop(add, I1, I2) => I1 +Int I2
 ```
 
 Example Execution (cont.)
 -------------------------
 
-### Final configuration
+### Configuration
 
 ```k
-    <k>     return 17           </k>
-    <env>   a |-> 0    b |-> 1  </env>
-    <store> 0 |-> 6    1 |-> 17 </store>
+    <k> (i32.const (5 +Int 2) ~>
+        (i32.const 3) (i32.div_u) (local.set 0)
+    </k>
+    <valstack> .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> <i32> 5 </locals>
 ```
 
-(Brief) Introduction to WebAssembly
-========
+### Rule
 
-Wasm: your new favorite compile target
-----
-
-- It's not web, and it's not assembly, just a great low-ish level language.
-  - Fast on hardware, but platform agnostic.
-  - Allows stream compiling.
-  - Efficient byte format, readable text format.
-
-. . .
-
-- Safety features
-  - Blocks, loops and breaks, but not arbitrary jumps.
-  - Allows static validation.
-  - No implicit casts.
-
-. . .
-
-- Organized in modules *(example coming up)*.
-  - Can declare functions, allocate and modify their own linear memory, global variables etc.
-  - Cay export some of its contents.
-  - Can have `start` functions, which are run when the module is loaded.
-
-. . .
-
-- Wasm is stack-based, but the syntax allows S-expression "folding" *(example coming up)*.
-
-
-Code fold/unfold
-----------------
-
-```scheme
-(memory.size)      ;; Nullary -- push memory size (i32).
-(i64.extend_i32_u) ;; Unary   -- i32 ==> i64.
+```k
+    rule #binop(add, I1, I2) => I1 +Int I2
 ```
 
-. . .
+Example Execution (cont.)
+-------------------------
 
-```scheme
-(local.get $tmp)   ;; Nullary -- push local variable $tmp (i32).
-(i64.load8_u)      ;; Unary   -- load 1 byte from argument address, push.
+Fast forward a bit ...
+
+### Configuration
+
+```k
+    <k> (local.set 0) </k>
+    <valstack> <i32> 2 : .ValStack </valstack>
+    <locals> 0 |-> <i32> 2    1 |-> <i32> <i32> 5 </locals>
 ```
 
-. . .
+### Rule
 
-```scheme
-(i64.add)          ;; Binary
-```
-
-. . .
-
-\vfill{}
-
-becomes
-
-. . .
-
-\vfill{}
-
-```scheme
-(i64.add
-    (i64.extend_i32_u (memory.size))
-    (i64.load8_u      (local.get $tmp)))
-```
-
-\vfill{}
-
-. . .
-
-Mix freely! Also OK:
-
-```scheme
-(i64.extend_i32_u (memory.size))
-(i64.load8_u      (local.get $tmp)))
-(i64.add)
+```k
+    rule #binop(add, I1, I2) => I1 +Int I2
 ```
 
 
 
-Code example (folded)
----------------------
 
-```scheme
-(module
-    (memory 1)
-    (func   ;; Function descriptors.
-            (export "myGrowAndStoreFunction")
-            (param $by i32) (param $put i64) ;; Identifiers: $by and $put.
-            (result i64)
-            (local $tmp i32)
+# TODO
 
-        ;; Body of the function.
-        (local.set $tmp
-            (i32.mul (memory.grow (local.get $by)) (i32.const 65536)))
-        (i64.store (local.get $tmp) (local.get $put))
-        (i64.add
-            (i64.extend_i32_u (memory.size))
-            (i64.load8_u      (local.get $tmp)))
-    ) ;; End func.
-) ;; End module.
-```
 
-Running the example
--------------------
-```
-$ ./wasm -i myProgram.wast -
-wasm 1.0 reference interpreter
-> (invoke "myGrowAndStoreFunction" (i32.const 2) (i64.const 0))
-3 : i64
-```
 
-. . .
-
-```
-> (invoke "myGrowAndStoreFunction" (i32.const 2) (i64.const 0))
-5 : i64
-```
-
-. . .
-
-```
-> (invoke "myGrowAndStoreFunction" (i32.const 1) (i64.const -1))
-261 : i64
-```
+KWasm repo
+==============
 
 Wasm Specification
 ------------------
@@ -625,36 +665,18 @@ $$
 \STORE; \FRAME ; &(\ITHREETWO.\CONST n)~(\MEMORY.\GROW) \stepto \STORE ; \FRAME ; (\ITHREETWO.\CONST {-1} ) \\
 \end{align*}
 
+Proving
+=======
 
-Future Directions
-=================
+Verifying Ethereum contracts
+----------------------------
 
-Finish KWasm
-------------
+1. Contracts are compiled to Ethereum virtual machine (EVM) bytecode.
+2. Some property or invariant is specified as a rewrite rule.
+3. K tries to construct a proof (using the SMT solver Z3) that every possible execution path eventually rewrites to the correct thing
+4. The tool KLab (by DappHub) offers an interactive view of execution paths, great for seeing where and why the prover failed.
 
-The semantics are fairly early-stage.
 
-### In progress
-
--   Memories.
-
-### To be done
-
--   Everything floating point.
--   Tables.
--   Modules.
-
-KeWasm
-------
-
--   eWasm adds gas metering to Wasm, but otherwise leaves the semantics alone.
-
-\vfill{}
-
-. . .
-
--   KEVM currently has many verified smart contracts at <https://github.com/runtimeverification/verified-smart-contracts>.
--   We similarly would like to build a repository of verified code using KeWasm.
 
 Conclusion/Questions?
 =====================
