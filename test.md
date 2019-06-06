@@ -227,7 +227,7 @@ This checks that the last allocated memory has the given size and max value.
 ```
 
 Clear Module Instances
-----------
+----------------------
 
 The modules are cleaned all together after the test file is executed.
 
