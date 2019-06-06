@@ -70,12 +70,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
-           ...
-         </moduleInst>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
          <globals>
            ( <globalInst>
                <gAddr>  GADDR </gAddr>
@@ -94,12 +89,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
     syntax Instr ::= "init_global" Int Int
  // --------------------------------------
     rule <k> init_global INDEX GADDR => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
-           ...
-         </moduleInst>
+         <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
          <globals>
            ( .Bag =>
              <globalInst>
@@ -119,13 +109,8 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
     syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
  // ----------------------------------------------------------------------------
     rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <funcIds> IDS </funcIds>
-           <funcIndices> ... #ICov(IDS , TFIDX) |-> FADDR ... </funcIndices>
-           ...
-         </moduleInst>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContectLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
          <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
@@ -152,13 +137,8 @@ This asserts related operation about tables.
          <nextTabAddr> NEXT </nextTabAddr>
 
     rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <nextTabIdx> NEXT => NEXT -Int 1 </nextTabIdx>
-           <tabIndices> ... ( 0 |-> ADDR ) => .Map ... </tabIndices>
-           ...
-         </moduleInst>
+         <nextTabIdx> NEXT => NEXT -Int 1 </nextTabIdx>
+         <tabIndices> ... ( 0 |-> ADDR ) => .Map ... </tabIndices>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
            ( <tabInst>
@@ -186,13 +166,8 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <nextMemIdx> NEXT => NEXT -Int 1 </nextMemIdx>
-           <memIndices> ... ( 0 |-> ADDR ) => .Map ... </memIndices>
-           ...
-         </moduleInst>
+         <nextMemIdx> NEXT => NEXT -Int 1 </nextMemIdx>
+         <memIndices> ... ( 0 |-> ADDR ) => .Map ... </memIndices>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>
@@ -210,12 +185,7 @@ This checks that the last allocated memory has the given size and max value.
     syntax Assertion ::= "#assertMemoryData" "(" Int "," Int ")" String
  // -------------------------------------------------------------------
     rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> 0 |-> ADDR </memIndices>
-           ...
-         </moduleInst>
+         <memIndices> 0 |-> ADDR </memIndices>
          <mems>
            <memInst>
              <mAddr> ADDR </mAddr>
@@ -235,20 +205,17 @@ The modules are cleaned all together after the test file is executed.
     syntax Instr ::= "#clearModules"
  // --------------------------------
     rule <k> #clearModules => . ... </k>
-         <modules>
-           <moduleInst>
-             <modAddr> _ => 0    </modAddr>
-             <funcIds> _ => .Map </funcIds>
-             <nextFuncIdx>   _ => 0 </nextFuncIdx>
-             <nextTabIdx>    _ => 0 </nextTabIdx>
-             <nextMemIdx>    _ => 0 </nextMemIdx>
-             <nextGlobalIdx> _ => 0 </nextGlobalIdx>
-             <funcIndices>   _ => .Map </funcIndices>
-             <tabIndices>    _ => .Map </tabIndices>
-             <memIndices>    _ => .Map </memIndices>
-             <globalIndices> _ => .Map </globalIndices>
-           </moduleInst>
-         </modules>
+         <moduleInst>
+           <funcIds> _ => .Map </funcIds>
+           <nextFuncIdx>   _ => 0 </nextFuncIdx>
+           <nextTabIdx>    _ => 0 </nextTabIdx>
+           <nextMemIdx>    _ => 0 </nextMemIdx>
+           <nextGlobalIdx> _ => 0 </nextGlobalIdx>
+           <funcIndices>   _ => .Map </funcIndices>
+           <tabIndices>    _ => .Map </tabIndices>
+           <memIndices>    _ => .Map </memIndices>
+           <globalIndices> _ => .Map </globalIndices>
+         </moduleInst>
 ```
 
 ```k

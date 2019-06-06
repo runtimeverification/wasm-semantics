@@ -18,23 +18,18 @@ Configuration
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals>     .Map </locals>
-        <curModAddr> 0    </curModAddr>
       </curFrame>
-      <modules>
-        // <moduleInst multiplicity="*" type="Map">
-        <moduleInst>
-          <modAddr>     0    </modAddr>
-          <funcIds> .Map </funcIds> //this is mapping from identifier to index
-          <nextFuncIdx>   0 </nextFuncIdx>
-          <nextTabIdx>    0 </nextTabIdx>
-          <nextMemIdx>    0 </nextMemIdx>
-          <nextGlobalIdx> 0 </nextGlobalIdx>
-          <funcIndices>   .Map </funcIndices> //this is mapping from index to address
-          <tabIndices>    .Map </tabIndices>
-          <memIndices>    .Map </memIndices>
-          <globalIndices> .Map </globalIndices>
-        </moduleInst>
-      </modules>
+      <moduleInst>
+        <funcIds> .Map </funcIds> //this is mapping from identifier to index
+        <nextFuncIdx>   0 </nextFuncIdx>
+        <nextTabIdx>    0 </nextTabIdx>
+        <nextMemIdx>    0 </nextMemIdx>
+        <nextGlobalIdx> 0 </nextGlobalIdx>
+        <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+        <tabIndices>    .Map </tabIndices>
+        <memIndices>    .Map </memIndices>
+        <globalIndices> .Map </globalIndices>
+      </moduleInst>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
@@ -139,12 +134,12 @@ The text format allows the use of symbolic `identifiers` in place of `indices`.
 To resolve these `identifiers` into concrete `indices`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
 
 ```k
-    syntax Int ::= #ICov  ( Map , TextFormatIdx ) [function]
+    syntax Int ::= #ContectLookup  ( Map , TextFormatIdx ) [function]
                  | #asInt ( KItem ) [function]
  // -------------------------------------------------------
     rule #asInt(I:Int) => I
-    rule #ICov(IDS:Map, I:Int) => I
-    rule #ICov(IDS:Map, ID:Identifier) => #asInt( IDS [ ID ] )
+    rule #ContectLookup(IDS:Map, I:Int) => I
+    rule #ContectLookup(IDS:Map, ID:Identifier) => #asInt( IDS [ ID ] )
 ```
 
 ### Unary Operators
@@ -574,12 +569,7 @@ The `*_local` instructions are defined here.
  // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
-           ...
-         </moduleInst>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
          <globalInst>
            <gAddr>  GADDR </gAddr>
            <gValue> VALUE </gValue>
@@ -588,12 +578,7 @@ The `*_local` instructions are defined here.
 
     rule <k> ( global.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
-           ...
-         </moduleInst>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
          <globalInst>
            <gAddr>  GADDR      </gAddr>
            <gValue> _ => VALUE </gValue>
@@ -636,14 +621,9 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          </k>
 
     rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
-           <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-           <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
-           ...
-         </moduleInst>
+         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
@@ -728,13 +708,8 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Instr ::= "(" "call" TextFormatIdx ")"
  // ---------------------------------------------
     rule <k> ( call TFIDX ) => ( invoke FADDR ) ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <funcIds> IDS </funcIds>
-           <funcIndices> ... #ICov(IDS , TFIDX) |-> FADDR ... </funcIndices>
-           ...
-         </moduleInst>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContectLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
 Table
@@ -763,21 +738,11 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
        andBool MAX <=Int #maxTableSize()
 
     rule <k> table { _ _ } => trap ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <tabIndices> MAP </tabIndices>
-           ...
-         </moduleInst> requires MAP =/=K .Map
+         <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
 
     rule <k> table { MIN MAX } => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
-           <tabIndices> .Map => (NEXTIDX |-> NEXTADDR) </tabIndices>
-           ...
-         </moduleInst>
+         <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
+         <tabIndices> .Map => (NEXTIDX |-> NEXTADDR) </tabIndices>
          <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
@@ -815,21 +780,11 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
        andBool MAX <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> MAP </memIndices>
-           ...
-         </moduleInst> requires MAP =/=K .Map
+         <memIndices> MAP </memIndices> requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <nextMemIdx> NEXTIDX => NEXTIDX +Int 1 </nextMemIdx>
-           <memIndices> .Map => (NEXTIDX |-> NEXTADDR) </memIndices>
-           ...
-         </moduleInst>
+         <nextMemIdx> NEXTIDX => NEXTIDX +Int 1 </nextMemIdx>
+         <memIndices> .Map => (NEXTIDX |-> NEXTADDR) </memIndices>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
@@ -864,12 +819,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> 0 |-> ADDR </memIndices>
-           ...
-         </moduleInst>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -879,12 +829,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> 0 |-> ADDR </memIndices>
-           ...
-         </moduleInst>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -926,12 +871,7 @@ The value is fethced from the "effective address", which is the address given on
                        #fi
          ...
          </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> 0 |-> ADDR </memIndices>
-           ...
-         </moduleInst>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -941,12 +881,7 @@ The value is fethced from the "effective address", which is the address given on
       requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> 0 |-> ADDR </memIndices>
-           ...
-         </moduleInst>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -990,12 +925,7 @@ The `size` operation returns the size of the memory, measured in pages.
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> 0 |-> ADDR </memIndices>
-           ...
-         </moduleInst>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1017,12 +947,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
-         <curModAddr> M </curModAddr>
-         <moduleInst>
-           <modAddr> M </modAddr>
-           <memIndices> 0 |-> ADDR </memIndices>
-           ...
-         </moduleInst>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>
