@@ -89,7 +89,7 @@ WebAssembly instructions are space-separated lists of instructions.
  // -----------------------------------------------------
     rule          <k> .Instrs           => .       ... </k>
     rule          <k> I:Instr .Instrs   => I       ... </k>
-    rule [step] : <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .List
+    rule [step] : <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .Instrs
 ```
 
 ### Traps
@@ -468,7 +468,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 
     syntax Instr ::= "(" "br_if" Int ")"
  // ------------------------------------
-    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
+    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else nop #fi ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
 
