@@ -144,7 +144,7 @@ run_file="$curdir/$1" ; shift
 case "$run_command-$backend" in
     run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
     kast-@(ocaml|java)         ) run_kast                        "$@" ;;
-    prove-@(java|haskell)      ) run_proof                       "$@" ;;
+    prove-@(java|haskell)      ) run_prove                       "$@" ;;
     klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
     klab-view-java             ) view_klab                       "$@" ;;
     *) $0 help ; fatal "Unknown command on backend: $run_command $backend" ;;
