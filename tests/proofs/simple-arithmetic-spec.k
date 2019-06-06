@@ -26,6 +26,7 @@ module SIMPLE-ARITHMETIC-SPEC
        andBool (X +Int Y) <Int #pow(ITYPE)
       [trusted]
 
+/*
     rule <k> block [ .ValTypes ]
                  ( loop [ .ValTypes ]
                      (local.get 0)
@@ -48,7 +49,8 @@ module SIMPLE-ARITHMETIC-SPEC
            1 |-> < i32 > (0 => 55)
          </locals>
 
-/*
+*/
+
     rule <k> block [ .ValTypes ]
                  ( loop [ .ValTypes ]
                      (local.get 0)
@@ -71,5 +73,32 @@ module SIMPLE-ARITHMETIC-SPEC
            0 |-> < i32 > (N => 0)
            1 |-> < i32 > (0 => ((N *Int (N +Int 1)) /Int 2))
          </locals>
-         */
+         requires N >=Int 0
+          andBool #inUnsignedRange(i32, N *Int (N +Int 1) /Int 2)
+          // andBool N <=Int 92681 // The largest i32 that won't overflow.
+
+    rule <k> block [ .ValTypes ]
+                 ( loop [ .ValTypes ]
+                     (local.get 0)
+                     (local.get 1)
+                     (i32.add)
+                     (local.set 1)
+                     (local.get 0)
+                     (i32.const 1)
+                     (i32.sub)
+                     (local.tee 0)
+                     (i32.eqz)
+                     (br_if 1)
+                     (br 0)
+                 )
+             end
+          =>  .
+          ...
+         </k>
+         <locals>
+           0 |-> < i32 > (I => 0)
+           1 |-> < i32 > (S => S +Int ((I *Int (I +Int 1)) /Int 2))
+         </locals>
+         requires I >=Int 0
+          andBool #inUnsignedRange(i32, S + (I *Int * (I +Int 1) /Int 2))
 endmodule
