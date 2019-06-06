@@ -94,19 +94,6 @@ view_klab() {
     node --stack-size=$KLAB_NODE_STACK_SIZE $(dirname $(which klab))/../libexec/klab-debug "$klab_log"
 }
 
-    if [[ -f "$test_file.out" ]]; then
-        expected_file="$test_file.out"
-    else
-        expected_file="tests/success-$backend.out"
-    fi
-
-    [[ -f "$expected_file" ]] \
-        || die "Expected output file '$expected_file' does not exist..."
-
-    run_krun "$test_file" > "$output_file" || true
-    pretty_diff "$expected_file" "$output_file"
-}
-
 # Main
 # ----
 
@@ -123,7 +110,6 @@ if [[ "$run_command" == 'help' ]]; then
 
        $0 run   : Run a single WebAssembly program
        $0 kast  : Parse a single WebAssembly program and output it in supported format
-       $0 test  : Run a single WebAssembly program like it's a test
        $0 prove : Run a WebAssembly K proof
        $0 klab-(run|prove) : Run or prove a spec and dump StateLogs which KLab can read
        $0 klab-view : Launch KLab on the StateLog associated with the given program/spec.
@@ -159,7 +145,6 @@ case "$run_command-$backend" in
     run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
     kast-@(ocaml|java)         ) run_kast                        "$@" ;;
     prove-@(java|haskell)      ) run_proof                       "$@" ;;
-    test-@(ocaml|java|haskell) ) run_test                        "$@" ;;
     klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
     klab-view-java             ) view_klab                       "$@" ;;
     *) $0 help ; fatal "Unknown command on backend: $run_command $backend" ;;

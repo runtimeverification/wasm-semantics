@@ -110,20 +110,36 @@ $(haskell_kompiled): $(haskell_defn)
 # Testing
 # -------
 
-TEST_CONCRETE_BACKEND=ocaml
-TEST_SYMBOLIC_BACKEND=java
-TEST=./kwasm
+TEST_CONCRETE_BACKEND:=ocaml
+TEST_SYMBOLIC_BACKEND:=java
+TEST:=./kwasm
+KPROVE_MODULE:=KWASM-LEMMAS
+CHECK:=git --no-pager diff --no-index --ignore-all-space
 
-tests/%.test: tests/%
-	 $(TEST) test --backend $(TEST_CONCRETE_BACKEND) $<
-
-tests/%.parse: tests/%
-	 $(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $<
-
-tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $<
+tests/%/make.timestamp:
+	@echo "== submodule: $@"
+	git submodule update --init -- tests/$*
+	touch $@
 
 test: test-execution test-prove
+
+# Generic Test Harnesses
+
+tests/%.run: tests/%
+	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out \
+	    || $(CHECK) tests/templates/output-success-$(TEST_CONCRETE_BACKEND).json tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
+
+tests/%.parse: tests/%
+	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
+	$(CHECK) $@-expected $@-out
+	rm -rf $@-out
+
+tests/%.prove: tests/%
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+
+tests/%.klab-prove: tests/%
+	$(TEST) klab-prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
 
 ### Execution Tests
 
@@ -131,7 +147,7 @@ test-execution: test-simple
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
-test-simple: $(simple_tests:=.test)
+test-simple: $(simple_tests:=.run)
 
 ### Conformance Tests
 
