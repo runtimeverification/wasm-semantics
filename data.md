@@ -33,7 +33,13 @@ As defined in the WebAssembly spec, the syntax of identifiers is as follows.
 ```k
     syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
+```
 
+### Text Format Indices
+
+Indices in the text format could be either an `address` or an `identifier.
+
+```k
     syntax TextFormatIdx ::= Int | Identifier
  // -----------------------------------------
 ```
@@ -278,6 +284,19 @@ The function interprets the range of bytes as little-endian.
       requires START >=Int END
     rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END)
       requires START <Int  END
+```
+
+External Values
+---------------
+
+An `external value` is the runtime representation of an entity that can be `imported` or `exported`. It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
+
+```k
+    syntax Externval ::= "func"   TextFormatIdx
+                       | "table"  TextFormatIdx
+                       | "mem"    TextFormatIdx
+                       | "global" TextFormatIdx
+ // -------------------------------------------
 ```
 
 ```k
