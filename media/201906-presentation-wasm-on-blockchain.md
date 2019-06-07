@@ -11,6 +11,9 @@ institute:
 theme: metropolis
 fontsize: 8pt
 header-includes:
+-   \usepackage{color}
+-   \usepackage{fancyvrb}
+-   \fvset{commandchars=\\\{\}}
 -   \newcommand{\instr}{instr}
 -   \newcommand{\STORE}{\textit{S}}
 -   \newcommand{\FRAME}{\textit{F}}
@@ -32,6 +35,7 @@ header-includes:
 -   \newcommand{\wif}[1]{\text{if}~#1}
 -   \newcommand{\diminish}[1]{\begin{footnotesize}#1\end{footnotesize}}
 ---
+
 
 Overview
 --------
@@ -193,9 +197,9 @@ Using the above grammar and configuration:
 
 ### Push to ValStack
 
-```k
-    rule <k> ( ITYPE . const I ) => #chop(< ITYPE > I) ... </k>
-```
+\begin{Verbatim}[]
+    rule <k> ( ITYPE . const I ) \textcolor{blue}{=>} #chop(< ITYPE > I) \textcolor{blue}{...} </k>
+\end{Verbatim}
 
 . . .
 
@@ -208,10 +212,10 @@ Using the above grammar and configuration:
 
 . . .
 
-```k
-    rule <k> V:Val => . ... </k>
+\begin{Verbatim}[]
+    rule <k> \textcolor{blue}{V:Val => \textbf{.}} ... </k>
          <valstack> VALSTACK => V : VALSTACK </valstack>
-```
+\end{Verbatim}
 
 . . .
 
@@ -223,17 +227,17 @@ K Specifications: Transition Rules
 
 Helper functions:
 
-```k
-    syntax IVal ::= #chop ( IVal ) [function]
+\begin{Verbatim}[]
+    syntax IVal ::= #chop ( IVal ) \textcolor{blue}{[function]}
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
     rule <k>        V:Val    => .        ... </k>
          <valstack> VALSTACK => V : VALSTACK </valstack>
 
-    syntax Int ::= #pow  ( IValType ) [function]
- // --------------------------------------------
+   syntax Int ::= #pow  ( IValType ) \textcolor{blue}{[function]}
+ // -------------------------------------------
     rule #pow (i32) => 4294967296
-```
+\end{Verbatim}
 
 . . .
 
@@ -244,23 +248,18 @@ K Specifications: Transition Rules
 
 ### Binary operators
 
-```k
+\begin{Verbatim}[]
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 
     rule <k> ITYPE . div_u I1 I2 => 
-         #if I2 =/=Int 0
-           #then < ITYPE > (I1 /Int I2)
-           #else undefined
-           #fi ... </k>
-```
+         \textcolor{blue}{#if} I2 =/=Int 0
+           \textcolor{blue}{#then} < ITYPE > (I1 /Int I2)
+           \textcolor{blue}{#else} undefined
+           \textcolor{blue}{#fi} ... </k>
+\end{Verbatim}
 
 - `#if ... #then ... #else ... #fi` is built-in.
-
-. . .
-
-- `requires` specifies side conditions.
-- We can define funcitons such as `#binop`, that apply everywhere (no need to mention context).
 
 K Specifications: Transition Rules
 ----------------------------------
@@ -285,17 +284,26 @@ More complex examples: locals
 
 ### Set local variable
 
-```k
+\begin{Verbatim}[]
     rule <k> ( local.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
-```
+         <locals> ... INDEX |-> \textcolor{blue}{(_ => VALUE)} ... </locals>
+\end{Verbatim}
 
 . . .
 
 - `_` is a wildcard (matches any value).
 - We can use parentheses to isolate the part of a term we are rewriting, like updating the value part of a map entry.
 
+
+## Example execution
+
+We can run `kwasm klab-run` on our example program.
+
+
+<!--- To the terminal! -->
+
+<!---
 Example Execution
 -----------------
 
@@ -557,6 +565,7 @@ Fast forward a bit ...
 
 # TODO
 
+---->
 
 
 KWasm repo
