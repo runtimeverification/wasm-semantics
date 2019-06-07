@@ -215,6 +215,7 @@ The modules are cleaned all together after the test file is executed.
            <tabIndices>    _ => .Map </tabIndices>
            <memIndices>    _ => .Map </memIndices>
            <globalIndices> _ => .Map </globalIndices>
+           <exports>       _ => .Map </exports>
          </moduleInst>
 ```
 

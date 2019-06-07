@@ -41,6 +41,9 @@
     <globalIndices>
       .Map
     </globalIndices>
+    <exports>
+      .Map
+    </exports>
   </moduleInst>
   <mainStore>
     <nextFuncAddr>

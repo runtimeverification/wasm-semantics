@@ -29,6 +29,7 @@ Configuration
         <tabIndices>    .Map </tabIndices>
         <memIndices>    .Map </memIndices>
         <globalIndices> .Map </globalIndices>
+        <exports>       .Map </exports>
       </moduleInst>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
@@ -670,8 +671,9 @@ Unlike labels, only one frame can be "broken" through at a time.
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "(" "invoke" Int ")"
- // -------------------------------------
+    syntax Instr ::= "(" "invoke" Int    ")"
+                   | "(" "invoke" String ")"
+ // ----------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
@@ -690,6 +692,8 @@ Unlike labels, only one frame can be "broken" through at a time.
            <fLocal> [ TLOCALS ]               </fLocal>
            ...
          </funcDef>
+    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
+         <exports> ... ENAME |-> TFIDX ... </exports>
 
     syntax Instr ::= "(" "return" ")"
  // ---------------------------------
@@ -705,9 +709,20 @@ Unlike labels, only one frame can be "broken" through at a time.
 ```k
     syntax Instr ::= "(" "call" TextFormatIdx ")"
  // ---------------------------------------------
-    rule <k> ( call TFIDX ) => ( invoke FADDR ) ... </k>
+    rule <k> ( call TFIDX ) => ( invoke FADDR:Int ) ... </k>
          <funcIds> IDS </funcIds>
          <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+```
+
+### Function Export
+
+Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
+
+```k
+    syntax Instr ::= "(" "export" String "(" Externval ")" ")"
+ // ----------------------------------------------------------
+    rule <k> ( export ENAME ( func TFIDX ) ) => . ... </k>
+         <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
 ```
 
 Table
