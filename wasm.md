@@ -486,10 +486,10 @@ Finally, we have the conditional and loop instructions.
     rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if [ .ValTypes ] IS else IS' end ) ... </k>
 
     rule <k> ( if VTYPE IS else IS' end ) => IS  ~> label VTYPE { .Instrs } VALSTACK ... </k>
-         <valstack> < i32 > VAL : VALSTACK => .ValStack </valstack>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
     rule <k> ( if VTYPE IS else IS' end ) => IS' ~> label VTYPE { .Instrs } VALSTACK ... </k>
-         <valstack> < i32 > VAL : VALSTACK => .ValStack </valstack>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
 
     syntax Instr ::= "loop" VecType Instrs "end"
