@@ -286,19 +286,6 @@ The function interprets the range of bytes as little-endian.
       requires START <Int  END
 ```
 
-External Values
----------------
-
-An `external value` is the runtime representation of an entity that can be `imported` or `exported`. It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
-
-```k
-    syntax Externval ::= "func"   TextFormatIdx
-                       | "table"  TextFormatIdx
-                       | "mem"    TextFormatIdx
-                       | "global" TextFormatIdx
- // -------------------------------------------
-```
-
 ```k
 endmodule
 ```
