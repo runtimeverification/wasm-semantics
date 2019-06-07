@@ -18,6 +18,8 @@ header-includes:
 -   \newcommand{\STORE}{\textit{S}}
 -   \newcommand{\FRAME}{\textit{F}}
 -   \newcommand{\CONST}{\texttt{const~}}
+-   \newcommand{\LOCALGET}{\texttt{local.get~}}
+-   \newcommand{\LOCALSET}{\texttt{local.set~}}
 -   \newcommand{\DATA}{\texttt{data}}
 -   \newcommand{\FUNCS}{\texttt{funcs}}
 -   \newcommand{\GLOBALS}{\texttt{globals}}
@@ -264,25 +266,37 @@ K Specifications: Transition Rules
 K Specifications: Transition Rules
 ----------------------------------
 
-More complex examples: locals
+### Get local variable
+
+$$
+\FRAME ; (\LOCALGET x) \stepto \FRAME ; val
+\qquad (\wif \FRAME.\LOCALS[x] = val)
+$$
 
 . . .
 
-### Get local variable
-
-```k
+\begin{Verbatim}[]
     rule <k> ( local.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... INDEX |-> VALUE ... </locals>
-```
+         <locals> ... \textcolor{blue}{INDEX |-> VALUE} ... </locals>
+\end{Verbatim}
 
 . . .
 
 - `<locals>` is a `Map` (builtin data structure), which is an associative-commutative pair of values. We can put `...` on both sides indictating we are matching *somewhere* in the `Map`.
 
-. . .
+
+K Specifications: Transition Rules
+----------------------------------
 
 ### Set local variable
+
+$$
+\FRAME ; (\LOCALSET x) \stepto \FRAME' ; \epsilon
+\qquad (\wif \FRAME' = \FRAME \with \LOCALS[x] = val)
+$$
+
+. . .
 
 \begin{Verbatim}[]
     rule <k> ( local.set INDEX ) => . ... </k>
@@ -309,7 +323,14 @@ We can run `kwasm klab-run` on our example program.
     (local.set 0)
 ```
 
+with intial configuration
 
+```k
+  <locals>
+    0 |-> <i32> 5
+    1 |-> <i32> 4
+  </locals>
+```
 
 # TODO
 
