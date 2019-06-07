@@ -92,7 +92,7 @@ WebAssembly instructions are space-separated lists of instructions.
  // -----------------------------------------------------
     rule          <k> .Instrs           => .       ... </k>
     rule          <k> I:Instr .Instrs   => I       ... </k>
-    rule [step] : <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .List
+    rule [step] : <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .Instrs
 ```
 
 ### Traps
