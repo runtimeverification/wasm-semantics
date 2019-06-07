@@ -601,26 +601,58 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "export" Identifier
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
 
-    syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
-                   | "(" "func" Identifier FuncDecls Instrs ")"
-                   | "func" Identifier "::" FuncType VecType "{" Instrs "}"
- // -----------------------------------------------------------------------
-    rule <k> ( func FDECLS INSTRS )
-          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
+
+    syntax FuncAbbr ::= "(" "export" String ")" FuncAbbr // `import`, if exists, should always be the last one. So should add subsort `| "(" "import" Identifier ")"` in the future.
+                      | "(" "export" String ")"
+    syntax Instr ::= #handleExports ( FuncAbbr )
+ // --------------------------------------------
+    rule <k> #handleExports ( ( export ENAME ) FABBR:FuncAbbr )
+          => ( export ENAME ( func NEXTIDX ) )
+          ~> #handleExports( FABBR )
+          ...
+         </k>
+         <nextFuncIdx> NEXTIDX </nextFuncIdx>
+    rule <k> #handleExports ( ( export ENAME ) )
+          => ( export ENAME ( func NEXTIDX ) )
+          ...
+         </k>
+         <nextFuncIdx> NEXTIDX </nextFuncIdx>
+
+    syntax Instr ::= "(" "func"                     FuncDecls Instrs ")"
+                   | "(" "func"            FuncAbbr FuncDecls Instrs ")"
+                   | "(" "func" Identifier          FuncDecls Instrs ")"
+                   | "(" "func" Identifier FuncAbbr FuncDecls Instrs ")"
+                   | "func"               FuncType VecType "{" Instrs "}"
+                   | "func" Identifier "::" FuncType VecType "{" Instrs "}" // this function is only used in some legacy test cases.
+ // --------------------------------------------------------------------------------------------------------------------------------
+    rule <k> ( func FDECLS:FuncDecls INSTRS:Instrs )
+          => func gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
 
-    rule <k> ( func FNAME FDECLS INSTRS )
-          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
+    rule <k> ( func FABBR:FuncAbbr FDECLS:FuncDecls INSTRS:Instrs )
+          => #handleExports( FABBR ) ~> ( func FDECLS INSTRS )
          ...
          </k>
 
-    rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
+    rule <k> ( func FNAME:Identifier FDECLS:FuncDecls INSTRS:Instrs )
+          => ( func FDECLS INSTRS )
+         ...
+         </k>
          <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX </nextFuncIdx>
+
+    rule <k> ( func FNAME:Identifier FABBR:FuncAbbr FDECLS:FuncDecls INSTRS:Instrs )
+          => ( func FABBR FDECLS INSTRS )
+         ...
+         </k>
+         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX </nextFuncIdx>
+
+    rule <k> func FTYPE LTYPE { INSTRS } => . ... </k>
          <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
          <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
@@ -637,10 +669,12 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
            ...
          </funcs>
 
-    syntax Identifier ::= gatherExportedName ( FuncDecls ) [function]
- // -----------------------------------------------------------------
-    rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
-    rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
+    rule <k> func FNAME :: FTYPE LTYPE { INSTRS }
+          => func FTYPE LTYPE { INSTRS }
+         ...
+         </k>
+         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX </nextFuncIdx>
 
     syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
  // -----------------------------------------------------------

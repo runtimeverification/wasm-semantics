@@ -26,17 +26,6 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 
-;; Exported name add function
-
-(func export $add param i32 i32 result i32
-    (local.get 0)
-    (local.get 1)
-    (i32.add)
-    (return)
-)
-
-#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "exported function name add"
-
 ;; Remove return statement
 
 (func $0 param i32 i32 result i32
@@ -134,7 +123,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (return)
     }
 
-    (func (export $xor) (param i32 i32) (result i32)
+    (func $xor (export "xor") (param i32 i32) (result i32)
         (local.get 0)
         (local.get 1)
         (i32.xor)
