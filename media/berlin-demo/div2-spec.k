@@ -17,5 +17,5 @@ module DIV2-SPEC
            </locals>
            requires #inUnsignedRange(i32, X)
             andBool #inUnsignedRange(i32, Y)
-           ensures X' <=Int X
+           ensures X' <Int X
 endmodule
