@@ -110,24 +110,18 @@ Run the file `tests/simple/arithmetic.wast`:
 ./kwasm run tests/simple/arithmetic.wast
 ```
 
-Run the same file as a test:
-
-```sh
-./kwasm test tests/simple/arithmetic.wast
-```
-
-To run proofs, you can similarly use `./kwasm`.
+To run proofs, you can similarly use `./kwasm`, but most specify the module to use for proving.
 For example, to prove the specification `tests/proofs/simple-arithmetic-spec.k`:
 
 ```sh
-./kwasm prove tests/proofs/simple-arithmetic-spec.k
+./kwasm prove tests/proofs/simple-arithmetic-spec.k -m KWASM-LEMMAS
 ```
 
 You can optionally override the default backend using the `--backend BACKEND` flag:
 
 ```sh
 ./kwasm run   --backend java    tests/simple/arithmetic.wast
-./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k
+./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k -m KWASM-LEMMAS
 ```
 
 Testing
