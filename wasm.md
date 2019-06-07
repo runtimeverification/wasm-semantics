@@ -137,9 +137,8 @@ To resolve these `identifiers` into concrete `indices`, some grammar production 
     syntax Int ::= #ContextLookup  ( Map , TextFormatIdx ) [function]
                  | #asInt ( KItem ) [function]
  // -----------------------------------------------------------------
-    rule #asInt(I:Int) => I
     rule #ContextLookup(IDS:Map, I:Int) => I
-    rule #ContextLookup(IDS:Map, ID:Identifier) => #asInt( IDS [ ID ] )
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int 
 ```
 
 ### Unary Operators
@@ -748,9 +747,9 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
            ( .Bag
           => <tabInst>
                <tAddr>   NEXTADDR </tAddr>
-               <tmax>    MAX  </tmax>
-               <tsize>   MIN  </tsize>
-               <tdata>   .Map </tdata>
+               <tmax>    MAX      </tmax>
+               <tsize>   MIN      </tsize>
+               <tdata>   .Map     </tdata>
              </tabInst>
            )
            ...
@@ -790,9 +789,9 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
            ( .Bag
           => <memInst>
                <mAddr>   NEXTADDR </mAddr>
-               <mmax>    MAX  </mmax>
-               <msize>   MIN  </msize>
-               <mdata>   .Map </mdata>
+               <mmax>    MAX      </mmax>
+               <msize>   MIN      </msize>
+               <mdata>   .Map     </mdata>
              </memInst>
            )
            ...
