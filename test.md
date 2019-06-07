@@ -110,7 +110,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
  // ----------------------------------------------------------------------------
     rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
          <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContectLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
          <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>

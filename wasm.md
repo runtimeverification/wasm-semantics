@@ -134,12 +134,12 @@ The text format allows the use of symbolic `identifiers` in place of `indices`.
 To resolve these `identifiers` into concrete `indices`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
 
 ```k
-    syntax Int ::= #ContectLookup  ( Map , TextFormatIdx ) [function]
+    syntax Int ::= #ContextLookup  ( Map , TextFormatIdx ) [function]
                  | #asInt ( KItem ) [function]
- // -------------------------------------------------------
+ // -----------------------------------------------------------------
     rule #asInt(I:Int) => I
-    rule #ContectLookup(IDS:Map, I:Int) => I
-    rule #ContectLookup(IDS:Map, ID:Identifier) => #asInt( IDS [ ID ] )
+    rule #ContextLookup(IDS:Map, I:Int) => I
+    rule #ContextLookup(IDS:Map, ID:Identifier) => #asInt( IDS [ ID ] )
 ```
 
 ### Unary Operators
@@ -709,7 +709,7 @@ Unlike labels, only one frame can be "broken" through at a time.
  // ---------------------------------------------
     rule <k> ( call TFIDX ) => ( invoke FADDR ) ... </k>
          <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContectLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
 Table
