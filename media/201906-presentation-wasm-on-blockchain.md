@@ -327,8 +327,8 @@ with intial configuration
 
 ```k
   <locals>
-    0 |-> <i32> 5
-    1 |-> <i32> 4
+    0 |-> <i32> 4
+    1 |-> <i32> 24
   </locals>
 ```
 
