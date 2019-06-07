@@ -110,7 +110,7 @@ Run the file `tests/simple/arithmetic.wast`:
 ./kwasm run tests/simple/arithmetic.wast
 ```
 
-To run proofs, you can similarly use `./kwasm`, but most specify the module to use for proving.
+To run proofs, you can similarly use `./kwasm`, but must specify the module to use for proving.
 For example, to prove the specification `tests/proofs/simple-arithmetic-spec.k`:
 
 ```sh
