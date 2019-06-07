@@ -19,3 +19,5 @@ should be ignored
 (i32.(;comment in the middle;)const 6)
 (i32.add)
 #assertTopStack < i32 > 3 "dummy test 2"
+
+#clearModules

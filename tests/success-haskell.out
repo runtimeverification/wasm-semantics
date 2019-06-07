@@ -12,18 +12,36 @@
     <locals>
       .Map
     </locals>
-    <moduleInst>
-      <funcAddrs>
-        .Map
-      </funcAddrs>
-      <memAddrs>
-        .Map
-      </memAddrs>
-      <globalAddrs>
-        .Map
-      </globalAddrs>
-    </moduleInst>
   </curFrame>
+  <moduleInst>
+    <funcIds>
+      .Map
+    </funcIds>
+    <nextFuncIdx>
+      0
+    </nextFuncIdx>
+    <nextTabIdx>
+      0
+    </nextTabIdx>
+    <nextMemIdx>
+      0
+    </nextMemIdx>
+    <nextGlobalIdx>
+      0
+    </nextGlobalIdx>
+    <funcIndices>
+      .Map
+    </funcIndices>
+    <tabIndices>
+      .Map
+    </tabIndices>
+    <memIndices>
+      .Map
+    </memIndices>
+    <globalIndices>
+      .Map
+    </globalIndices>
+  </moduleInst>
   <mainStore>
     <nextFuncAddr>
       0

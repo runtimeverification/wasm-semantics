@@ -70,7 +70,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
-         <globalAddrs> ... (INDEX |-> GADDR => .Map) ... </globalAddrs>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
          <globals>
            ( <globalInst>
                <gAddr>  GADDR </gAddr>
@@ -89,7 +89,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
     syntax Instr ::= "init_global" Int Int
  // --------------------------------------
     rule <k> init_global INDEX GADDR => . ... </k>
-         <globalAddrs> GADDRS => GADDRS [ INDEX <- GADDR ] </globalAddrs>
+         <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
          <globals>
            ( .Bag =>
              <globalInst>
@@ -106,10 +106,11 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Assertion ::= "#assertFunction" Index FuncType VecType String
- // --------------------------------------------------------------------
-    rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
-         <funcAddrs> ... (FNAME |-> FADDR) => .Map ... </funcAddrs>
+    syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
+ // ----------------------------------------------------------------------------
+    rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
          <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
@@ -131,12 +132,13 @@ This asserts related operation about tables.
 ```k
     syntax Assertion ::= "#assertEmptyTable"    Int MaxBound String
                        | "#assertEmptyTableAux" Int Int MaxBound String
- // --------------------------------------------------------------------
+ // -------------------------------------------------------------------
     rule <k> #assertEmptyTable SIZE MAX MSG => #assertEmptyTableAux (NEXT -Int 1) SIZE MAX MSG ... </k>
          <nextTabAddr> NEXT </nextTabAddr>
 
     rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
-         <tabAddrs> (0 |-> ADDR) => .Map </tabAddrs>
+         <nextTabIdx> NEXT => NEXT -Int 1 </nextTabIdx>
+         <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
            ( <tabInst>
@@ -164,7 +166,8 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <memAddrs> (0 |-> ADDR) => .Map </memAddrs>
+         <nextMemIdx> NEXT => NEXT -Int 1 </nextMemIdx>
+         <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>
@@ -182,7 +185,7 @@ This checks that the last allocated memory has the given size and max value.
     syntax Assertion ::= "#assertMemoryData" "(" Int "," Int ")" String
  // -------------------------------------------------------------------
     rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <mems>
            <memInst>
              <mAddr> ADDR </mAddr>
@@ -191,6 +194,28 @@ This checks that the last allocated memory has the given size and max value.
            </memInst>
            ...
          </mems>
+```
+
+Clear Module Instances
+----------------------
+
+The modules are cleaned all together after the test file is executed.
+
+```k
+    syntax Instr ::= "#clearModules"
+ // --------------------------------
+    rule <k> #clearModules => . ... </k>
+         <moduleInst>
+           <funcIds> _ => .Map </funcIds>
+           <nextFuncIdx>   _ => 0 </nextFuncIdx>
+           <nextTabIdx>    _ => 0 </nextTabIdx>
+           <nextMemIdx>    _ => 0 </nextMemIdx>
+           <nextGlobalIdx> _ => 0 </nextGlobalIdx>
+           <funcIndices>   _ => .Map </funcIndices>
+           <tabIndices>    _ => .Map </tabIndices>
+           <memIndices>    _ => .Map </memIndices>
+           <globalIndices> _ => .Map </globalIndices>
+         </moduleInst>
 ```
 
 ```k
