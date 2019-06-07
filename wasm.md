@@ -239,7 +239,8 @@ Note that we do not need to call `#chop` on the results here.
 ```k
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule <k> ITYPE . div_u I1 I2 => #if I2 =/=Int 0 #then < ITYPE > (I1 /Int I2) #else undefined #fi ... </k>
+    rule <k> ITYPE . div_u I1 I2 => < ITYPE > (I1 /Int I2)  ... </k> requires I2 =/=Int 0
+    rule <k> ITYPE . div_u I1 I2 => undefined ... </k>               requires I2 ==Int  0
     rule <k> ITYPE . rem_u I1 I2 => #if I2 =/=Int 0 #then < ITYPE > (I1 %Int I2) #else undefined #fi ... </k>
 
     syntax IBinOp ::= "div_s" | "rem_s"
@@ -527,17 +528,19 @@ The `*_local` instructions are defined here.
 
 ```k
     syntax Instr ::= "(" "local.get" Int ")"
-                   | "(" "local.set" Int ")"
-                   | "(" "local.tee" Int ")"
+                   | "(" "local.set" Int ")" | "(" "local.set" Int Instr ")"
+                   | "(" "local.tee" Int ")" | "(" "local.tee" Int Instr ")"
  // ----------------------------------------
     rule <k> ( local.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> VALUE ... </locals>
 
+    rule <k> ( local.set INDEX I) => I ~> ( local.set INDEX ) ... </k>
     rule <k> ( local.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 
+    rule <k> ( local.tee INDEX I) => I ~> ( local.tee INDEX ) ... </k>
     rule <k> ( local.tee INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
