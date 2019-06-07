@@ -138,7 +138,7 @@ This asserts related operation about tables.
 
     rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
          <nextTabIdx> NEXT => NEXT -Int 1 </nextTabIdx>
-         <tabIndices> ... ( 0 |-> ADDR ) => .Map ... </tabIndices>
+         <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
            ( <tabInst>
@@ -167,7 +167,7 @@ This checks that the last allocated memory has the given size and max value.
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
          <nextMemIdx> NEXT => NEXT -Int 1 </nextMemIdx>
-         <memIndices> ... ( 0 |-> ADDR ) => .Map ... </memIndices>
+         <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>

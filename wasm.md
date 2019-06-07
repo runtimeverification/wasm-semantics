@@ -134,11 +134,10 @@ The text format allows the use of symbolic `identifiers` in place of `indices`.
 To resolve these `identifiers` into concrete `indices`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
 
 ```k
-    syntax Int ::= #ContextLookup  ( Map , TextFormatIdx ) [function]
-                 | #asInt ( KItem ) [function]
- // -----------------------------------------------------------------
+    syntax Int ::= #ContextLookup ( Map , TextFormatIdx ) [function]
+ // ----------------------------------------------------------------
     rule #ContextLookup(IDS:Map, I:Int) => I
-    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int 
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
 ```
 
 ### Unary Operators
