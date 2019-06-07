@@ -47,6 +47,9 @@ Overview
 3. Deepdive: What the semantics look like
 4. Demo: Proving things
 
+. . .
+
+Please ask questions as we go.
 
 KWasm: Intro and roadmap
 ========================
@@ -55,7 +58,7 @@ KWasm
 -----
 
 > * KWasm is the project name for specifying Wasm in K.
-> * K is a framework for creating **runnable specifications** programming languages.
+> * K is a framework for creating **runnable specifications** of programming languages.
 > * K uses rewrite based semantics, just like those Wasm is defined with [@rossberg-web-up-to-speed].
 > * The goal is to use the runnable spec to **formally verify** aspects of blockchain runtimes and smart contracts.
 > * There is already a specification of the EVM, called KEVM [@hildenbrandt-saxena-zhu-rosu-k-evm], which we use for formal verification. \newline ![](media/img/kevm-paper.png)
@@ -65,14 +68,14 @@ Status
 
 ![](media/img/github-top-screenshot.png)
 
-. . .
-
 * Bulk of the semantics are done.
 * Tables and indirect calls in progress.
-* Big todos:
-  - Defining and instantiating several modules.
-  - More permissive parser.
-  - Add floating point numbers (not top priority).
+
+A few big todos:
+
+- Defining and instantiating several modules.
+- Parsing more textual versions of commands (syntactic sugar).
+- Add floating point numbers (not top priority).
 
 Design
 ------
@@ -80,9 +83,8 @@ Design
 * A very faithful translation of Wasm spec (K and Wasm both use rewrite semantics). Some differences:
   - Two stacks: one for operands, one for instructions and control flow.
   - We are *more permissive*; allow running instructions directly:
-\newline `(i32.add (i32.const 1337) (i32.const 42))` is a full program.
+\newline `(i32.add (i32.const 1337) (i32.const 42))` is a full KWasm program.
 * Execution focused, we assume validation is done beforehand.
-
 
 Goals
 -----
@@ -90,9 +92,9 @@ Goals
 - "Make KEVM for Ethereum 2.0".
 - Create eWasm semantics, KeWasm, by importing and embedding KWasm.
 - We would like to build a repository of verified code using KeWasm.
-There is such a repository for KEVM: <https://github.com/runtimeverification/verified-smart-contracts>.
+There is such a repository for KEVM:
 
-![](media/img/github-verified-contracts-screenshot.png)
+[![](media/img/github-verified-contracts-screenshot.png)](https://github.com/runtimeverification/verified-smart-contracts)
 
 Introduction to K
 =================
@@ -124,7 +126,7 @@ K Tooling/Languages
 -   KEVM - 2018 [@hildenbrandt-saxena-zhu-rosu-k-evm]
 -   KLLVM <https://github.com/kframework/llvm-semantics>
 -   KX86-64 <https://github.com/kframework/X86-64-semantics>
-- In progress:
+- In progress (external groups):
    - Solidity <https://github.com/kframework/solidity-semantics>
    - Rust
 
@@ -137,10 +139,6 @@ A language spec in K consists of 3 things
 * Configuration ("state")
 * Operational semantics as **rewrite rules**
 
-. . .
-
-Demo: Building a small Wasm subset.
-
 K Specifications: Syntax
 ------------------------
 
@@ -149,14 +147,14 @@ Concrete syntax built using EBNF style:
 ```k
     syntax IType  ::= "i32" | "i64"
     syntax Instr  ::= "(" IType "." "const" Int ")"
+    syntax Instr  ::= "(" "local.get" Int ")" | "(" "local.set" Int ")"
     syntax Instr  ::= "(" IValType "." IBinOp ")"    // Concrete syntax
                     | IValType "." IBinOp Int Int    // Abstract syntax
-    syntax Instr  ::= "(" "local.get" ")" | "(" "local.set" ")"
     syntax IBinOp ::= "div_u"
     syntax Instrs ::= List{Instr, ""} // Builtin helper for cons lists.
 ```
 
-Note: we generally don't differentiate between abstract and concrete syntax.
+Note: we tend to mix abstract and concrete syntax.
 
 . . .
 
@@ -186,6 +184,8 @@ Tell K about the structure of your execution state.
 > - `<valstack>` operand stack of `Val` items.
 > - `<locals>` a mapping `Int -> Val`
 
+. . .
+
 ```k
     syntax Val ::= "<" IValType ">" Int
 ```
@@ -207,7 +207,7 @@ Using the above grammar and configuration:
 
 > - `=>` is the rewrite arrow.
 > - Words in all caps are variables.
-> - `...` matches the rest of the cell. In `<k>` we match the front of the cell, in `<valstack>` we match the whole cell.
+> - We match on and rewrite the front of the cell contents, and `...` matches the rest of the cell.
 > - We don't need to mention the cells we don't use or modify.
 
 \vfill{}
@@ -216,25 +216,24 @@ Using the above grammar and configuration:
 
 \begin{Verbatim}[]
     rule <k> \textcolor{blue}{V:Val => \textbf{.}} ... </k>
-         <valstack> VALSTACK => V : VALSTACK </valstack>
+         <valstack> \textcolor{blue}{VALSTACK => V : VALSTACK} </valstack>
 \end{Verbatim}
 
 . . .
 
 > - `.` is like $\epsilon$, so rewriting to `.` is erasing.
 > - We can rewrite several cells at once.
+> - In `<valstack>`, we match on the entire cell
 
 K Specifications: Transition Rules
 ----------------------------------
 
-Helper functions:
+### Helper functions:
 
 \begin{Verbatim}[]
     syntax IVal ::= #chop ( IVal ) \textcolor{blue}{[function]}
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
-    rule <k>        V:Val    => .        ... </k>
-         <valstack> VALSTACK => V : VALSTACK </valstack>
 
    syntax Int ::= #pow  ( IValType ) \textcolor{blue}{[function]}
  // -------------------------------------------
@@ -242,6 +241,8 @@ Helper functions:
 \end{Verbatim}
 
 . . .
+
+\vspace{1em}
 
 > - The `[function]` annotation means the rule applies regardless of context.
 
@@ -252,16 +253,20 @@ K Specifications: Transition Rules
 
 \begin{Verbatim}[]
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
-         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+         <valstack>
+           < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK
+         </valstack>
 
-    rule <k> ITYPE . div_u I1 I2 => 
-         \textcolor{blue}{#if} I2 =/=Int 0
-           \textcolor{blue}{#then} < ITYPE > (I1 /Int I2)
-           \textcolor{blue}{#else} undefined
-           \textcolor{blue}{#fi} ... </k>
+    rule <k> ITYPE . div_u I1 I2 => < ITYPE > (I1 /Int I2)  ... </k>
+      \textcolor{blue}{requires I2 =/=Int 0}
+    rule <k> ITYPE . div_u I1 I2 => undefined ... </k>
+      \textcolor{blue}{requires I2  ==Int 0}
 \end{Verbatim}
 
-- `#if ... #then ... #else ... #fi` is built-in.
+\vspace{1em}
+
+- `requires` specifies side conditions.
+- We often use K operators specialized by type, e.g. `==Int`
 
 K Specifications: Transition Rules
 ----------------------------------
@@ -315,12 +320,10 @@ $$
 We can run `kwasm klab-run` on our example program.
 
 ```scheme
-    (local.get 1)
-    (local.get 0)
-    (i32.add)
-    (i32.const 3)
-    (i32.div_u)
-    (local.set 0)
+  (local.get 1)
+  (local.get 0)
+  (i32.div_u)
+  (local.set 0)
 ```
 
 with intial configuration
@@ -333,21 +336,23 @@ with intial configuration
 ```
 
 
-# TODO
-
 
 Proving
 =======
 
-Verifying Ethereum contracts
+Verifying Wasm programs
 ----------------------------
 
-1. Contracts are compiled to Ethereum virtual machine (EVM) bytecode.
-2. Some property or invariant is specified as a rewrite rule.
-3. K tries to construct a proof (using the SMT solver Z3) that every possible execution path eventually rewrites to the correct thing
+1. The KWasm semantics generates a parser and a deductive program verifier.
+2. A verification claim is written like a rewrite rule. `rule A => B` should be read as "`A` will eventually always evaluate to `B`".
+3. The automatic prover tries to construct a proof (with the help of Z3 to check constraint satisfiability) that every possible execution path starting in `A` eventually rewrites to `B`.
 4. The tool KLab (by DappHub) offers an interactive view of execution paths, great for seeing where and why the prover failed.
 
+. . .
 
+\vfill
+
+\center\huge DEMO!
 
 Conclusion/Questions?
 =====================
@@ -358,3 +363,4 @@ References
 -   Thanks for listening!
 
 \tiny
+
