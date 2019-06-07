@@ -57,6 +57,15 @@ pipeline {
             '''
           }
         }
+        stage('KLab Proofs Java') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make test-klab-prove -j"$nprocs"
+            '''
+          }
+        }
       }
     }
     stage('KNinja-based') {

@@ -50,6 +50,7 @@ def test_proof(glob, defn, backend):
     return defn.proofs( glob = glob
                       , alias = 'test-prove-' + backend
                       , default = False
+                      , flags = '--def-module KWASM-LEMMAS'
                       )
 
 test_simple_java  = test_exec('simple', 'tests/simple/*.wast', wasm_java,  'java')
