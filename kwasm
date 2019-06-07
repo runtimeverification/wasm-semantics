@@ -101,8 +101,8 @@ run_command="$1" ; shift
 
 if [[ "$run_command" == 'help' ]]; then
     echo "
-    usage: $0 (run|test)       [--backend (ocaml|java|haskell)] <pgm>  <K args>*
-           $0 kast             [--backend (ocaml|java)]         <pgm>  <K args>*
+    usage: $0 run              [--backend (ocaml|java|haskell)] <pgm>  <K args>*
+           $0 kast             [--backend (ocaml|java)]         <pgm>  <output format> <K args>*
            $0 prove            [--backend (java|haskell)]       <spec> <K args>* -m <def_module>
            $0 klab-run                                          <pgm>  <K arg>*
            $0 klab-prove                                        <spec> <K arg>* -m <def_module>
@@ -114,13 +114,11 @@ if [[ "$run_command" == 'help' ]]; then
        $0 klab-(run|prove) : Run or prove a spec and dump StateLogs which KLab can read
        $0 klab-view : Launch KLab on the StateLog associated with the given program/spec.
 
-           $0 klab-(run|prove) : Run program or prove spec and dump StateLogs which KLab can read
-
        Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.
              <K args> are any arguments you want to pass to K when executing/proving.
              <output format> is the format for Kast to output the term in.
-             <def_module> is the module to take as axioms when doing verification.
+             <def_module> is the module to take as axioms for verification.
 
        KLab: Make sure that the 'klab/bin' directory is on your PATH to use this option.
 "
