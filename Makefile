@@ -15,7 +15,7 @@ export LUA_PATH
         deps ocaml-deps haskell-deps \
         defn defn-ocaml defn-java defn-haskell \
         build build-ocaml defn-haskell build-haskell \
-        test test-execution test-simple test-prove test-klab-prove \
+        test test-execution test-simple test-prove \
         media presentations reports
 
 all: build
@@ -110,36 +110,20 @@ $(haskell_kompiled): $(haskell_defn)
 # Testing
 # -------
 
-TEST_CONCRETE_BACKEND:=ocaml
-TEST_SYMBOLIC_BACKEND:=java
-TEST:=./kwasm
-KPROVE_MODULE:=KWASM-LEMMAS
-CHECK:=git --no-pager diff --no-index --ignore-all-space
+TEST_CONCRETE_BACKEND=ocaml
+TEST_SYMBOLIC_BACKEND=java
+TEST=./kwasm
 
-tests/%/make.timestamp:
-	@echo "== submodule: $@"
-	git submodule update --init -- tests/$*
-	touch $@
-
-test: test-execution test-prove
-
-# Generic Test Harnesses
-
-tests/%.run: tests/%
-	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
-	$(CHECK) tests/success-$(TEST_CONCRETE_BACKEND).out tests/$*.$(TEST_CONCRETE_BACKEND)-out
-	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
+tests/%.test: tests/%
+	 $(TEST) test --backend $(TEST_CONCRETE_BACKEND) $<
 
 tests/%.parse: tests/%
-	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
-	$(CHECK) $@-expected $@-out
-	rm -rf $@-out
+	 $(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $<
 
 tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $<
 
-tests/%.klab-prove: tests/%
-	$(TEST) klab-prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+test: test-execution test-prove
 
 ### Execution Tests
 
@@ -147,7 +131,7 @@ test-execution: test-simple
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
-test-simple: $(simple_tests:=.run)
+test-simple: $(simple_tests:=.test)
 
 ### Conformance Tests
 
@@ -160,10 +144,6 @@ parse-conformance: $(conformance_tests:=.parse)
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
 test-prove: $(proof_tests:=.prove)
-
-### KLab interactive
-
-test-klab-prove: $(proof_tests:=.klab-prove)
 
 # Presentation
 # ------------
