@@ -42,12 +42,14 @@ header-includes:
 Overview
 --------
 
-1. KWasm: Intro and roadmap
-2. Introduction to K & KEVM
-3. Deepdive: What the semantics look like
-4. Demo: Proving things
+> 1. KWasm: Intro and roadmap
+> 2. Introduction to K & KEVM
+> 3. Deepdive: What the semantics look like
+> 4. Demo: Proving things
 
 . . .
+
+\vspace{1em}
 
 Please ask questions as we go.
 
@@ -317,7 +319,7 @@ $$
 
 ## Example execution
 
-We can run `kwasm klab-run` on our example program.
+### We can use KLab to explore execution of our example program.
 
 ```scheme
   (local.get 1)
@@ -335,6 +337,11 @@ with intial configuration
   </locals>
 ```
 
+. . .
+
+\vfill
+
+\center\huge DEMO!
 
 
 Proving
@@ -343,10 +350,10 @@ Proving
 Verifying Wasm programs
 ----------------------------
 
-1. The KWasm semantics generates a parser and a deductive program verifier.
-2. A verification claim is written like a rewrite rule. `rule A => B` should be read as "`A` will eventually always evaluate to `B`".
-3. The automatic prover tries to construct a proof (with the help of Z3 to check constraint satisfiability) that every possible execution path starting in `A` eventually rewrites to `B`.
-4. The tool KLab (by DappHub) offers an interactive view of execution paths, great for seeing where and why the prover failed.
+> 1. From the KWasm semantics, K generates a parser and a deductive program verifier.
+> 2. A verification claim is written like a rewrite rule. `rule A => B` should be read as "`A` will eventually always evaluate to `B`".
+> 3. The automatic prover tries to construct a proof (with the help of Z3 to check constraint satisfiability) that every possible execution path starting in `A` eventually rewrites to `B`.
+> 4. KLab offers an interactive view of execution, both the successful and the failed paths.
 
 . . .
 
@@ -354,8 +361,14 @@ Verifying Wasm programs
 
 \center\huge DEMO!
 
+RV specializes in formal verification
+-------------------------------------
+
+If you're interested in verification of Wasm programs, talk to us!
+
 Conclusion/Questions?
 =====================
+
 
 References
 ----------
@@ -363,4 +376,3 @@ References
 -   Thanks for listening!
 
 \tiny
-
