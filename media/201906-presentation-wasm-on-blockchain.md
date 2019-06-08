@@ -90,8 +90,8 @@ Goals
 -----
 
 - "Make KEVM for Ethereum 2.0".
-- Create eWasm semantics, KeWasm, by importing and embedding KWasm.
-- We would like to build a repository of verified code using KeWasm.
+- Create Ewasm semantics, KEwasm, by importing and embedding KWasm.
+- We would like to build a repository of verified code using KEwasm.
 There is such a repository for KEVM:
 
 [![](media/img/github-verified-contracts-screenshot.png)](https://github.com/runtimeverification/verified-smart-contracts)
