@@ -1,6 +1,6 @@
 ---
-title: 'Semantics of WebAssembly in the K framework'
-subtitle: 'What is KWasm?'
+title: 'KWasm'
+subtitle: 'Semantics of WebAssembly in the K framework'
 author:
 -   Rikard Hjort
 -   Everett Hildenbrandt
@@ -147,20 +147,20 @@ K Specifications: Syntax
 Concrete syntax built using EBNF style:
 
 ```k
-    syntax IType  ::= "i32" | "i64"
-    syntax Instr  ::= "(" IType "." "const" Int ")"
-    syntax Instr  ::= "(" "local.get" Int ")" | "(" "local.set" Int ")"
-    syntax Instr  ::= "(" IValType "." IBinOp ")"    // Concrete syntax
-                    | IValType "." IBinOp Int Int    // Abstract syntax
-    syntax IBinOp ::= "div_u"
-    syntax Instrs ::= List{Instr, ""} // Builtin helper for cons lists.
+    syntax IValType ::= "i32" | "i64"
+    syntax Instr    ::= "(" IType "." "const" Int ")"
+    syntax Instr    ::= "(" "local.get" Int ")" | "(" "local.set" Int ")"
+    syntax Instr    ::= "(" IValType "." IBinOp ")"    // Concrete syntax
+                      | IValType "." IBinOp Int Int    // Abstract syntax
+    syntax IBinOp   ::= "div_u"
+    syntax Instrs   ::= List{Instr, ""} // Builtin helper for cons lists.
 ```
 
 Note: we tend to mix abstract and concrete syntax.
 
 . . .
 
-This would allow correctly parsing programs like:
+This would allow parsing a program like this:
 
 ```scheme
     (local.get 1)
@@ -225,7 +225,7 @@ Using the above grammar and configuration:
 
 > - `.` is like $\epsilon$, so rewriting to `.` is erasing.
 > - We can rewrite several cells at once.
-> - In `<valstack>`, we match on the entire cell
+> - In `<valstack>`, we match on the entire cell.
 
 K Specifications: Transition Rules
 ----------------------------------
@@ -233,8 +233,8 @@ K Specifications: Transition Rules
 ### Helper functions:
 
 \begin{Verbatim}[]
-    syntax IVal ::= #chop ( IVal ) \textcolor{blue}{[function]}
- // -----------------------------------------
+    syntax Val ::= #chop ( Val ) \textcolor{blue}{[function]}
+ // ----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
    syntax Int ::= #pow  ( IValType ) \textcolor{blue}{[function]}
@@ -277,7 +277,7 @@ K Specifications: Transition Rules
 
 $$
 \FRAME ; (\LOCALGET x) \stepto \FRAME ; val
-\qquad (\wif \FRAME.\LOCALS[x] = val)
+\qquad \textcolor{blue}{(\wif \FRAME.\LOCALS[x] = val)}
 $$
 
 . . .
@@ -300,7 +300,7 @@ K Specifications: Transition Rules
 
 $$
 \FRAME ; (\LOCALSET x) \stepto \FRAME' ; \epsilon
-\qquad (\wif \FRAME' = \FRAME \with \LOCALS[x] = val)
+\qquad (\wif \FRAME' = \FRAME \textcolor{blue}{\with \LOCALS[x] = val})
 $$
 
 . . .
@@ -343,6 +343,17 @@ with intial configuration
 
 \center\huge DEMO!
 
+Repo tour
+=========
+
+Repo layout
+---------
+
+* Literate programming style in markdown with K code blocks.
+* `wasm.md`: The main part of the semantics 
+* `data.md`: Some helper data structures.
+* `test.md`: Some useful assertion functions.
+* `kwasm-lemmas.md`: A trusted base for proving. 
 
 Proving
 =======
@@ -364,15 +375,20 @@ Verifying Wasm programs
 RV specializes in formal verification
 -------------------------------------
 
-If you're interested in verification of Wasm programs, talk to us!
+- If you're interested in verification of Wasm programs, talk to us!
+- [rikard.hjort@runtimeverification.com](rikard.hjort@runtimeverification.com)
+- https://riot.im/app/#/room/#k:matrix.org
 
 Conclusion/Questions?
 =====================
 
+Thanks!
+-------
+
+-   Thanks for listening!
 
 References
 ----------
 
--   Thanks for listening!
-
 \tiny
+
