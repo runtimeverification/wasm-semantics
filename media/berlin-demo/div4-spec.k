@@ -1,6 +1,6 @@
 requires "kwasm-lemmas.k"
 
-module DIV2-SPEC
+module DIV4-SPEC
     imports WASM
     imports KWASM-LEMMAS
 
@@ -8,7 +8,7 @@ module DIV2-SPEC
                 (then (local.set 0
                   (i32.div_u (local.get 0) (local.get 1))))
               (else
-
+                (br_if 0 (local.get 1)) // Will not branch, due to our constraints.
                 (local.set 0 (i32.const 0))))
              => .
            </k>
@@ -18,7 +18,7 @@ module DIV2-SPEC
            </locals>
            requires #inUnsignedRange(i32, X)
             andBool #inUnsignedRange(i32, Y)
-
+            andBool Y =/=Int 1
             andBool X =/=Int 0
            ensures X' <Int X
 endmodule

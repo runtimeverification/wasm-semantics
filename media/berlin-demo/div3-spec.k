@@ -8,7 +8,7 @@ module DIV3-SPEC
                 (then (local.set 0
                   (i32.div_u (local.get 0) (local.get 1))))
               (else
-                (br_if 0 (local.get 1)) // Will not branch, due to our constraints.
+
                 (local.set 0 (i32.const 0))))
              => .
            </k>
