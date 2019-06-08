@@ -469,7 +469,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 
     syntax Instr ::= "(" "br_if" Int ")" | "(" "br_if" Int Instr ")"
  // ------------------------------------
-    rule <k> ( br_if N I:Instr ) => I ~> ( br_if N ) </k>
+    rule <k> ( br_if N I:Instr ) => I ~> ( br_if N ) ... </k>
     rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else nop #fi ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
