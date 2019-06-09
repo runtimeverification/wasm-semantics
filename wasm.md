@@ -11,31 +11,34 @@ module WASM
 Configuration
 -------------
 
-Note: Although according to the Webassembly specification, `Addresses` should be stored inside the cells of `<moduleInst>`, but for now we store `Index` for a easier implementation of calling a function by its identifier.
-
 ```k
     configuration
       <k> $PGM:Instrs </k>
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals> .Map </locals>
-        <moduleInst>
-          <funcAddrs>   .Map </funcAddrs>
-          <tabAddrs>    .Map </tabAddrs>
-          <memAddrs>    .Map </memAddrs>
-          <globalAddrs> .Map </globalAddrs>
-        </moduleInst>
+        <locals>     .Map </locals>
       </curFrame>
+      <moduleInst>
+        <funcIds> .Map </funcIds> //this is mapping from identifier to index
+        <nextFuncIdx>   0 </nextFuncIdx>
+        <nextTabIdx>    0 </nextTabIdx>
+        <nextMemIdx>    0 </nextMemIdx>
+        <nextGlobalIdx> 0 </nextGlobalIdx>
+        <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+        <tabIndices>    .Map </tabIndices>
+        <memIndices>    .Map </memIndices>
+        <globalIndices> .Map </globalIndices>
+      </moduleInst>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fAddr>  0              </fAddr>
-            <fCode>  .Instrs:Instrs </fCode>
-            <fType>  .Type          </fType>
-            <fLocal> .Type          </fLocal>
-            <fAddrs> .Map           </fAddrs>
+            <fAddr>    0              </fAddr>
+            <fCode>    .Instrs:Instrs </fCode>
+            <fType>    .Type          </fType>
+            <fLocal>   .Type          </fLocal>
+            <fModInst> 0              </fModInst>
           </funcDef>
         </funcs>
         <nextTabAddr> 0 </nextTabAddr>
@@ -123,6 +126,18 @@ Function `#unsigned` is called on integers to allow programs to use negative num
  // ---------------------------------------------------
     rule <k> ( ITYPE:IValType . const VAL ) => #chop(< ITYPE > VAL) ... </k>
     rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL        ... </k>
+```
+
+### Text Format Conventions
+
+The text format allows the use of symbolic `identifiers` in place of `indices`.
+To resolve these `identifiers` into concrete `indices`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
+
+```k
+    syntax Int ::= #ContextLookup ( Map , TextFormatIdx ) [function]
+ // ----------------------------------------------------------------
+    rule #ContextLookup(IDS:Map, I:Int) => I
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
 ```
 
 ### Unary Operators
@@ -558,7 +573,7 @@ The `*_local` instructions are defined here.
  // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
          <globalInst>
            <gAddr>  GADDR </gAddr>
            <gValue> VALUE </gValue>
@@ -567,7 +582,7 @@ The `*_local` instructions are defined here.
 
     rule <k> ( global.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <globalAddrs> ... INDEX |-> GADDR ... </globalAddrs>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
          <globalInst>
            <gAddr>  GADDR      </gAddr>
            <gValue> _ => VALUE </gValue>
@@ -591,14 +606,14 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "export" Index
+                       | "export" Identifier
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
 
     syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
-                   | "(" "func" Index FuncDecls Instrs ")"
-                   | "func" Index "::" FuncType VecType "{" Instrs "}"
- // ------------------------------------------------------------------
+                   | "(" "func" Identifier FuncDecls Instrs ")"
+                   | "func" Identifier "::" FuncType VecType "{" Instrs "}"
+ // -----------------------------------------------------------------------
     rule <k> ( func FDECLS INSTRS )
           => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
@@ -610,23 +625,25 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          </k>
 
     rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
-         <funcAddrs> ADDRS => ADDRS [ FNAME <- NEXT ] </funcAddrs>
-         <nextFuncAddr> NEXT => NEXT +Int 1 </nextFuncAddr>
+         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  NEXT   </fAddr>
-               <fCode>  INSTRS </fCode>
-               <fType>  FTYPE  </fType>
-               <fLocal> LTYPE  </fLocal>
+               <fAddr>  NEXTADDR </fAddr>
+               <fCode>  INSTRS   </fCode>
+               <fType>  FTYPE    </fType>
+               <fLocal> LTYPE    </fLocal>
                ...
              </funcDef>
            )
            ...
          </funcs>
 
-    syntax Index ::= gatherExportedName ( FuncDecls ) [function]
- // ------------------------------------------------------------
+    syntax Identifier ::= gatherExportedName ( FuncDecls ) [function]
+ // -----------------------------------------------------------------
     rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
     rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
 
@@ -692,10 +709,11 @@ Unlike labels, only one frame can be "broken" through at a time.
 `call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
 
 ```k
-    syntax Instr ::= "(" "call" Index ")"
- // -------------------------------------
-    rule <k> ( call FUNCIDX ) => ( invoke FADDR ) ... </k>
-         <funcAddrs> ... FUNCIDX |-> FADDR ... </funcAddrs>
+    syntax Instr ::= "(" "call" TextFormatIdx ")"
+ // ---------------------------------------------
+    rule <k> ( call TFIDX ) => ( invoke FADDR ) ... </k>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
 Table
@@ -724,18 +742,19 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
        andBool MAX <=Int #maxTableSize()
 
     rule <k> table { _ _ } => trap ... </k>
-         <tabAddrs> MAP </tabAddrs> requires MAP =/=K .Map
+         <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
 
     rule <k> table { MIN MAX } => . ... </k>
-         <tabAddrs>    .Map => (0 |-> NEXT)  </tabAddrs>
-         <nextTabAddr> NEXT => NEXT +Int 1 </nextTabAddr>
+         <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
+         <tabIndices> .Map => (NEXTIDX |-> NEXTADDR) </tabIndices>
+         <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
           => <tabInst>
-               <tAddr>   NEXT </tAddr>
-               <tmax>    MAX  </tmax>
-               <tsize>   MIN  </tsize>
-               <tdata>   .Map </tdata>
+               <tAddr>   NEXTADDR </tAddr>
+               <tmax>    MAX      </tmax>
+               <tsize>   MIN      </tsize>
+               <tdata>   .Map     </tdata>
              </tabInst>
            )
            ...
@@ -765,18 +784,19 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
        andBool MAX <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
-         <memAddrs> MAP </memAddrs> requires MAP =/=K .Map
+         <memIndices> MAP </memIndices> requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <memAddrs>    .Map => (0 |-> NEXT)  </memAddrs>
-         <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
+         <nextMemIdx> NEXTIDX => NEXTIDX +Int 1 </nextMemIdx>
+         <memIndices> .Map => (NEXTIDX |-> NEXTADDR) </memIndices>
+         <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
           => <memInst>
-               <mAddr>   NEXT </mAddr>
-               <mmax>    MAX  </mmax>
-               <msize>   MIN  </msize>
-               <mdata>   .Map </mdata>
+               <mAddr>   NEXTADDR </mAddr>
+               <mmax>    MAX      </mmax>
+               <msize>   MIN      </msize>
+               <mdata>   .Map     </mdata>
              </memInst>
            )
            ...
@@ -803,7 +823,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -813,7 +833,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -855,7 +875,7 @@ The value is fethced from the "effective address", which is the address given on
                        #fi
          ...
          </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -865,7 +885,7 @@ The value is fethced from the "effective address", which is the address given on
       requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -909,7 +929,7 @@ The `size` operation returns the size of the memory, measured in pages.
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -931,7 +951,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>

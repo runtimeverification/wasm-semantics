@@ -1,6 +1,6 @@
 ;; Simple add function
 
-func 0 :: [ i32 i32 ] -> [ i32 ]
+func $0 :: [ i32 i32 ] -> [ i32 ]
     [ ] {
     (local.get 0)
     (local.get 1)
@@ -10,7 +10,7 @@ func 0 :: [ i32 i32 ] -> [ i32 ]
 
 (i32.const 7)
 (i32.const 8)
-(call 0)
+(call $0)
 #assertTopStack < i32 > 15 "call function 0"
 #assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists"
 
@@ -39,7 +39,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 ;; Remove return statement
 
-(func 0 param i32 i32 result i32
+(func $0 param i32 i32 result i32
     (local.get 0)
     (local.get 1)
     (i32.add)
@@ -47,13 +47,13 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 (i32.const 7)
 (i32.const 8)
-(call 0)
+(call $0)
 #assertTopStack < i32 > 15 "call function 0 no return"
-#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
+#assertFunction $0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
 
 ;; More complicated function with locals
 
-(func 1 param i64 i64 i64 result i64 local i64
+(func $1 param i64 i64 i64 result i64 local i64
         (local.get 2)
           (local.get 0)
           (local.get 1)
@@ -67,13 +67,13 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 (i64.const 100)
 (i64.const 43)
 (i64.const 22)
-(call 1)
+(call $1)
 #assertTopStack < i64 > 35 "call function 1"
-#assertFunction 1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
+#assertFunction $1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
 
 ;; Function with complicated declaration of types
 
-(func 1 local i32 result i32 param i32 i64 param i64
+(func $2 local i32 result i32 param i32 i64 param i64
     (local.get 0)
     (return)
 )
@@ -81,41 +81,41 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 (i64.const 7)
 (i64.const 8)
 (i32.const 5)
-(call 1)
+(call $2)
 #assertTopStack < i32 > 5 "out of order type declaration"
-#assertFunction 1 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
+#assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 
 ;; Function with empty declarations of types
 
-(func 1 local param i64 i64 result local result i64 param
+(func $1 local param i64 i64 result local result i64 param
     (local.get 0)
     (return)
 )
 
 (i64.const 7)
 (i64.const 8)
-(call 1)
+(call $1)
 #assertTopStack < i64 > 8 "empty type declaration"
-#assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
+#assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
 
 ;; Function with empty declarations of types, and bracketed in parentheses
 
-(func 1 (local) (param i64 i64) (result) (local) (result i64) (param)
+(func $1 (local) (param i64 i64) (result) (local) (result i64) (param)
     (local.get 0)
     (return)
 )
 
 (i64.const 7)
 (i64.const 8)
-(call 1)
+(call $1)
 #assertTopStack < i64 > 8 "empty type declaration + parens"
-#assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations + parens"
+#assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations + parens"
 
 ;; Function with just a name
 
-(func 3)
+(func $3)
 
-#assertFunction 3 [ ] -> [ ] [ ] "no domain/range or locals"
+#assertFunction $3 [ ] -> [ ] [ ] "no domain/range or locals"
 
 (module
     func $add :: [ i32 i32 ] -> [ i32 ]
@@ -209,3 +209,5 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 
 #assertFunction $dummy [         ] -> [     ] [ ] "$dummy function in module"
 #assertFunction $add   [ i32 i32 ] -> [ i32 ] [ ] "second function in module"
+
+#clearModules

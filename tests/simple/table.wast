@@ -6,3 +6,5 @@
 
 ( table 14 21 )
 #assertEmptyTable 14 21 "table initial 3"
+
+#clearModules
