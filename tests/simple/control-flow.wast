@@ -165,19 +165,16 @@ end
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
-block [ ]
-    loop [ ]
-        (local.get 0)
-        (local.get 1)
-        (i32.add)
-        (local.set 1)
-        (local.get 0)
-        (i32.const 1)
-        (i32.sub)
-        (local.tee 0)
-        (i32.eqz)
-        (br_if 1)
-    end
+loop [ ]
+    (local.get 0)
+    (local.get 1)
+    (i32.add)
+    (local.set 1)
+    (local.get 0)
+    (i32.const 1)
+    (i32.sub)
+    (local.tee 0)
+    (br_if 0)
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop"
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
@@ -195,6 +192,7 @@ block [ ]
         (local.tee 0)
         (i32.eqz)
         (br_if 1)
+        (br 0)
     )
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop concrete syntax"
