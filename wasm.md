@@ -590,11 +590,7 @@ The `*_local` instructions are defined here.
 Function Declaration and Invocation
 -----------------------------------
 
-### Function Declaration
-
-Function declarations can look quite different depending on which fields are ommitted and what the context is.
-Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
-`import`, if exists, should always be the last one to declare in `FuncAbbr`. When this is implemented in the future, the added subsort will be like `| "(" "import" Identifier ")"`.
+### Function Types Gathering
 
 ```k
     syntax TypeKeyWord ::= "param" | "result" | "local"
@@ -605,7 +601,29 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
 
+    syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
+ // -----------------------------------------------------------
+    rule gatherFuncType(FDECLS) => gatherTypes(param, FDECLS) -> gatherTypes(result, FDECLS)
 
+    syntax VecType ::=  gatherTypes ( TypeKeyWord , FuncDecls )            [function]
+                     | #gatherTypes ( TypeKeyWord , FuncDecls , ValTypes ) [function]
+ // ---------------------------------------------------------------------------------
+    rule gatherTypes(TKW, FDECLS) => #gatherTypes(TKW, FDECLS, .ValTypes)
+
+    rule #gatherTypes(TKW , .FuncDecls            , TYPES) => [ TYPES ]
+    rule #gatherTypes(TKW , FDECL:FuncDecl FDECLS , TYPES) => #gatherTypes(TKW, FDECLS, TYPES) [owise]
+
+    rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
+      => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
+```
+
+### Function Declaration
+
+Function declarations can look quite different depending on which fields are ommitted and what the context is.
+Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+`import`, if exists, should always be the last one to declare in `FuncAbbr`. When this is implemented in the future, the added subsort will be like `| "(" "import" Identifier ")"`.
+
+```k
     syntax FuncAbbr ::= "(" "export" String ")" FuncAbbr
                       | "(" "export" String ")"
     syntax Instr ::= #handleExports ( FuncAbbr )
@@ -668,21 +686,6 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
            )
            ...
          </funcs>
-
-    syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
- // -----------------------------------------------------------
-    rule gatherFuncType(FDECLS) => gatherTypes(param, FDECLS) -> gatherTypes(result, FDECLS)
-
-    syntax VecType ::=  gatherTypes ( TypeKeyWord , FuncDecls )            [function]
-                     | #gatherTypes ( TypeKeyWord , FuncDecls , ValTypes ) [function]
- // ---------------------------------------------------------------------------------
-    rule gatherTypes(TKW, FDECLS) => #gatherTypes(TKW, FDECLS, .ValTypes)
-
-    rule #gatherTypes(TKW , .FuncDecls            , TYPES) => [ TYPES ]
-    rule #gatherTypes(TKW , FDECL:FuncDecl FDECLS , TYPES) => #gatherTypes(TKW, FDECLS, TYPES) [owise]
-
-    rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
-      => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
 ```
 
 ### Function Invocation/Return
