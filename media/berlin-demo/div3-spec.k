@@ -4,6 +4,12 @@ module DIV3-SPEC
     imports WASM
     imports KWASM-LEMMAS
 
+// Prove a correct property of unsigned division:
+// If  X' = X / Y when Y =/= 0
+// and X' = 0 otherwise,
+// and X > 0,
+// and Y > 1,
+// then X' < X
     rule <k> (if (local.get 1)
                 (then (local.set 0
                   (i32.div_u (local.get 0) (local.get 1))))

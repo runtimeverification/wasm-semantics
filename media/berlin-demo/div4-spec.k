@@ -4,6 +4,16 @@ module DIV4-SPEC
     imports WASM
     imports KWASM-LEMMAS
 
+// Prove a correct property of unsigned division:
+// If  X' = X / Y when Y =/= 0
+// and X' = 0 otherwise,
+// and X > 0,
+// and Y > 1,
+// then X' < X
+
+// Has en extra neat demonstration, that the `br_if` will not cause a branch,
+// because we know the value of Y at that point.
+
     rule <k> (if (local.get 1)
                 (then (local.set 0
                   (i32.div_u (local.get 0) (local.get 1))))
