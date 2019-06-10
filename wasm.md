@@ -648,8 +648,8 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
                    | "(" "func"            FuncAbbr FuncDecls Instrs ")"
                    | "(" "func" Identifier          FuncDecls Instrs ")"
                    | "(" "func" Identifier FuncAbbr FuncDecls Instrs ")"
-                   | "func"               FuncType VecType "{" Instrs "}"
- // ---------------------------------------------------------------------
+                   | "func"                FuncType VecType "{" Instrs "}"
+ // ----------------------------------------------------------------------
     rule <k> ( func FDECLS:FuncDecls INSTRS:Instrs )
           => func gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
