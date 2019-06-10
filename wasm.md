@@ -617,11 +617,7 @@ Function Declaration and Invocation
       => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
 ```
 
-### Function Declaration
-
-Function declarations can look quite different depending on which fields are ommitted and what the context is.
-Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
-`import`, if exists, should always be the last one to declare in `FuncAbbr`. When this is implemented in the future, the added subsort will be like `| "(" "import" Identifier ")"`.
+### Function Export Definition
 
 ```k
     syntax FuncAbbr ::= "(" "export" String ")" FuncAbbr
@@ -639,7 +635,15 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
           ...
          </k>
          <nextFuncIdx> NEXTIDX </nextFuncIdx>
+```
 
+### Function Declaration
+
+Function declarations can look quite different depending on which fields are ommitted and what the context is.
+Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+`import`, if exists, should always be the last one to declare in `FuncAbbr`. When this is implemented in the future, the added subsort will be like `| "(" "import" Identifier ")"`.
+
+```k
     syntax Instr ::= "(" "func"                     FuncDecls Instrs ")"
                    | "(" "func"            FuncAbbr FuncDecls Instrs ")"
                    | "(" "func" Identifier          FuncDecls Instrs ")"
