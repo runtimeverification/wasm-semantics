@@ -1,12 +1,11 @@
 ;; Simple add function
 
-func $0 :: [ i32 i32 ] -> [ i32 ]
-    [ ] {
+(func $0 (param i32 i32 ) ( result i32 )
     (local.get 0)
     (local.get 1)
     (i32.add)
     (return)
-}
+)
 
 (i32.const 7)
 (i32.const 8)
@@ -16,13 +15,12 @@ func $0 :: [ i32 i32 ] -> [ i32 ]
 
 ;; String-named add function
 
-func $add :: [ i32 i32 ] -> [ i32 ]
-    [ ] {
+(func $add (param i32 i32 ) ( result i32 )
     (local.get 0)
     (local.get 1)
     (i32.add)
     (return)
-}
+)
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 
@@ -107,21 +105,23 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 #assertFunction $3 [ ] -> [ ] [ ] "no domain/range or locals"
 
 (module
-    func $add :: [ i32 i32 ] -> [ i32 ]
-        [ ] {
+    (func $add
+        (param i32 i32)
+        (result i32)
         (local.get 0)
         (local.get 1)
         (i32.add)
         (return)
-    }
+    )
 
-    func $mul :: [ i32 i32 ] -> [ i32 ]
-        [ ] {
+    (func $mul
+        (param i32 i32)
+        (result i32)
         (local.get 0)
         (local.get 1)
         (i32.mul)
         (return)
-    }
+    )
 
     (func $xor (export "xor") (param i32 i32) (result i32)
         (local.get 0)
@@ -150,8 +150,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
 #assertFunction $xor [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
 
 (module
-    func $f1 :: [ i32 i32 ] -> [ i32 ]
-        [ i32 ] {
+    (func $f1 (param i32 i32 ) (result i32) (local i32)
         (local.get 0)
         (local.get 1)
         (i32.add)
@@ -160,10 +159,9 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (local.get 2)
         (i32.mul)
         (return)
-    }
+    )
 
-    func $f2 :: [ i32 i32 i32 ] -> [ i32 ]
-        [ i32 i32 ] {
+    (func $f2 (param i32 i32 i32 ) (result i32) (local i32 i32)
         (local.get 0)
         (local.get 2)
         (call $f1)
@@ -172,7 +170,7 @@ func $add :: [ i32 i32 ] -> [ i32 ]
         (local.get 0)
         (i32.mul)
         (return)
-    }
+    )
 )
 
 (i32.const 3)

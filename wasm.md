@@ -627,8 +627,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
                    | "(" "func" Identifier          FuncDecls Instrs ")"
                    | "(" "func" Identifier FuncAbbr FuncDecls Instrs ")"
                    | "func"               FuncType VecType "{" Instrs "}"
-                   | "func" Identifier "::" FuncType VecType "{" Instrs "}" // this function is only used in some legacy test cases.
- // --------------------------------------------------------------------------------------------------------------------------------
+ // ---------------------------------------------------------------------
     rule <k> ( func FDECLS:FuncDecls INSTRS:Instrs )
           => func gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
@@ -669,13 +668,6 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
            )
            ...
          </funcs>
-
-    rule <k> func FNAME :: FTYPE LTYPE { INSTRS }
-          => func FTYPE LTYPE { INSTRS }
-         ...
-         </k>
-         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
-         <nextFuncIdx> NEXTIDX </nextFuncIdx>
 
     syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
  // -----------------------------------------------------------
