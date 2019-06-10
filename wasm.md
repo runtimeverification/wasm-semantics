@@ -594,6 +594,7 @@ Function Declaration and Invocation
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+`import`, if exists, should always be the last one to declare in `FuncAbbr`. When this is implemented in the future, the added subsort will be like `| "(" "import" Identifier ")"`.
 
 ```k
     syntax TypeKeyWord ::= "param" | "result" | "local"
@@ -605,7 +606,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
  // --------------------------------------------------------------
 
 
-    syntax FuncAbbr ::= "(" "export" String ")" FuncAbbr // `import`, if exists, should always be the last one. So should add subsort `| "(" "import" Identifier ")"` in the future.
+    syntax FuncAbbr ::= "(" "export" String ")" FuncAbbr
                       | "(" "export" String ")"
     syntax Instr ::= #handleExports ( FuncAbbr )
  // --------------------------------------------
