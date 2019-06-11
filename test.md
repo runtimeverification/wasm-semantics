@@ -225,8 +225,8 @@ Function Invocation
 We allow to `invoke` a function by its exported name in the test code.
 
 ```k
-    syntax Instr ::= | "(" "invoke" String ")"
- // ------------------------------------------
+    syntax Instr ::= "(" "invoke" String ")"
+ // ----------------------------------------
     rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
          <exports> ... ENAME |-> TFIDX ... </exports>
 ```
