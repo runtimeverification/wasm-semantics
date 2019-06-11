@@ -686,9 +686,8 @@ Unlike labels, only one frame can be "broken" through at a time.
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "(" "invoke" Int    ")"
-                   | "(" "invoke" String ")"
- // ----------------------------------------
+    syntax Instr ::= "(" "invoke" Int ")"
+ // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
@@ -707,8 +706,6 @@ Unlike labels, only one frame can be "broken" through at a time.
            <fLocal> [ TLOCALS ]               </fLocal>
            ...
          </funcDef>
-    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
-         <exports> ... ENAME |-> TFIDX ... </exports>
 
     syntax Instr ::= "(" "return" ")"
  // ---------------------------------
