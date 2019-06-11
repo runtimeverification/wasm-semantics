@@ -21,11 +21,14 @@ Configuration
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInst>
-        <funcIds> .Map </funcIds> //this is mapping from identifier to index
-        <nextFuncIdx>   0 </nextFuncIdx>
-        <nextTabIdx>    0 </nextTabIdx>
-        <nextMemIdx>    0 </nextMemIdx>
-        <nextGlobalIdx> 0 </nextGlobalIdx>
+        <typeIds>       .Map </typeIds>
+        <funcIds>       .Map </funcIds> //this is mapping from identifier to index
+        <nextTypeIdx>   0    </nextTypeIdx>
+        <nextFuncIdx>   0    </nextFuncIdx>
+        <nextTabIdx>    0    </nextTabIdx>
+        <nextMemIdx>    0    </nextMemIdx>
+        <nextGlobalIdx> 0    </nextGlobalIdx>
+        <types>         .Map </types>
         <funcIndices>   .Map </funcIndices> //this is mapping from index to address
         <tabIndices>    .Map </tabIndices>
         <memIndices>    .Map </memIndices>
