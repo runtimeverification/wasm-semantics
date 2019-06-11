@@ -34,6 +34,7 @@ module SIMPLE-ARITHMETIC-SPEC
                      (local.tee 0)
                      (i32.eqz)
                      (br_if 1)
+                     (br 0)
                  )
              end
           => .
