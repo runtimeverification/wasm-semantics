@@ -463,10 +463,10 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax Instr ::= "(" "block" FuncDecls Instrs ")"
+    syntax Instr ::= "(" "block" TypeDecls Instrs ")"
                    | "block" VecType Instrs "end"
- // ---------------------------------------------
-    rule <k> ( block FDECLS:FuncDecls INSTRS:Instrs )
+ // -------------------------------------------------
+    rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
          </k>
@@ -607,16 +607,28 @@ Types
 This defines helper functions that gathers function together.
 
 ```k
-    syntax VecType ::=  gatherTypes ( FuncKeyWord , FuncDecls )            [function]
-                     | #gatherTypes ( FuncKeyWord , FuncDecls , ValTypes ) [function]
+    syntax TypeKeyWord  ::= "param" | "result"
+ // ------------------------------------------
+
+    syntax TypeDecl      ::= "(" TypeDecl ")"     [bracket]
+                           | TypeKeyWord ValTypes
+    syntax TypeDecls     ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
+ // -------------------------------------------------------------------
+
+    syntax VecType ::=  gatherTypes ( TypeKeyWord , TypeDecls )            [function]
+                     | #gatherTypes ( TypeKeyWord , TypeDecls , ValTypes ) [function]
  // ---------------------------------------------------------------------------------
-    rule gatherTypes(TKW, FDECLS) => #gatherTypes(TKW, FDECLS, .ValTypes)
+    rule  gatherTypes(TKW , TDECLS) => #gatherTypes(TKW, TDECLS, .ValTypes)
 
-    rule #gatherTypes(TKW , .FuncDecls            , TYPES) => [ TYPES ]
-    rule #gatherTypes(TKW , FDECL:FuncDecl FDECLS , TYPES) => #gatherTypes(TKW, FDECLS, TYPES) [owise]
+    rule #gatherTypes(TKW , .TypeDecls            , TYPES) => [ TYPES ]
+    rule #gatherTypes(TKW , TDECL:TypeDecl TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) [owise]
 
-    rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
-      => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
+    rule #gatherTypes(TKW , TKW VTYPES' TDECLS , VTYPES)
+      => #gatherTypes(TKW ,             TDECLS , VTYPES + VTYPES')
+
+    syntax FuncType ::= #gatherFuncType ( List ) [function]
+ // -------------------------------------------------------
+    rule #gatherFuncType(TDECLS) => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
 ```
 
 ### Typeuse
@@ -626,36 +638,23 @@ It may optionally be augmented by explicit inlined parameter and result declarat
 A Typeuse should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
 
 ```k
-    syntax TypeKeyWord ::= "param" | "result"
-    syntax TypeDecl    ::= "(" TypeDecl ")"     [bracket]
-                         | TypeKeyWord ValTypes
-    syntax TypeDecls   ::= List{TypeDecl, ""} [klabel(listTypeDecl)]
-    syntax TypeUse     ::= "(" "type" TextFormatIdx ")"
+    syntax TypeUse     ::= TypeDecls
+                         | "(" "type" TextFormatIdx ")"           [prefer]
                          | "(" "type" TextFormatIdx ")" TypeDecls
-                         | TypeDecls
- // --------------------------------
+ // -------------------------------------------------------------
+
+    syntax FuncType    ::= asFuncType ( Map, Map, TypeUse ) [function]
+ // ------------------------------------------------------------------
+    rule asFuncType(TYPEIDS, TYPES, TDECLS)                  => #gatherFuncType(TDECLS)
+    rule asFuncType(TYPEIDS, TYPES, ( type TFIDX ))          => TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] :> FuncType
+    rule asFuncType(TYPEIDS, TYPES, ( type TFIDX ) TDECLS )) => TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] :> FuncType
+      requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K #gatherFuncType(TDECLS)
 ```
 
 ### Type Definition
 
 Function Declaration and Invocation
 -----------------------------------
-
-### Function Types Gathering
-
-```k
-    syntax FuncKeyWord ::= "param" | "result" | "local"
- // ---------------------------------------------------
-
-    syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
-                       | FuncKeyWord ValTypes
-    syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
- // --------------------------------------------------------------
-
-    syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
- // -----------------------------------------------------------
-    rule gatherFuncType(FDECLS) => gatherTypes(param, FDECLS) -> gatherTypes(result, FDECLS)
-```
 
 ### Function Export Definition
 
@@ -673,21 +672,23 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax Instr ::= "(" "func"            FuncExports FuncDecls Instrs ")"
-                   | "(" "func" Identifier FuncExports FuncDecls Instrs ")"
- // -----------------------------------------------------------------------
-    rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
-          => ( func #freshId(NEXTID) FEXPO FDECLS INSTRS ) ...
+    syntax Instr ::= "(" "func"            FuncExports TypeUse LocalDecls Instrs ")"
+                   | "(" "func" Identifier FuncExports TypeUse LocalDecls Instrs ")"
+ // --------------------------------------------------------------------------------
+    rule <k> ( func FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
+          => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS ) ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
-    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( export ENAME ( func FNAME ) )
-          ~> ( func FNAME FEXPO FDECLS INSTRS )
+          ~> ( func FNAME FEXPO TUSE LDECLS INSTRS )
           ...
          </k>
 
-    rule <k> ( func FNAME:Identifier .FuncExports FDECLS:FuncDecls INSTRS:Instrs ) => . ... </k>
+    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => . ... </k>
+         <typeIds> TYPEIDS </typeIds>
+         <types>   TYPES   </types>
          <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
          <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
          <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
@@ -695,10 +696,10 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  NEXTADDR                   </fAddr>
-               <fCode>  INSTRS                     </fCode>
-               <fType>  gatherFuncType(FDECLS)     </fType>
-               <fLocal> gatherTypes(local, FDECLS) </fLocal>
+               <fAddr>  NEXTADDR                                   </fAddr>
+               <fCode>  INSTRS                                     </fCode>
+               <fType>  asFuncType  ( TYPEIDS, TYPES, TUSE )       </fType>
+               <fLocal> asLocalType ( LDECLS )                     </fLocal>
                ...
              </funcDef>
            )
