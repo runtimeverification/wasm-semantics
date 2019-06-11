@@ -620,18 +620,14 @@ Function Declaration and Invocation
 ### Function Export Definition
 
 ```k
-    syntax FuncAbbr ::= "(" "export" String ")" FuncAbbr
-                      | "(" "export" String ")"
-    syntax Instr ::= #handleExports ( FuncAbbr )
- // --------------------------------------------
-    rule <k> #handleExports ( ( export ENAME ) FABBR:FuncAbbr )
+    syntax FuncExport  ::= "(" "export" String ")"
+    syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)] 
+    syntax Instr ::= #handleExports ( FuncExports )
+ // -----------------------------------------------
+    rule <k> #handleExports ( .FuncExports ) => . ... </k>
+    rule <k> #handleExports ( ( export ENAME ) FEXPO:FuncExports )
           => ( export ENAME ( func NEXTIDX ) )
-          ~> #handleExports( FABBR )
-          ...
-         </k>
-         <nextFuncIdx> NEXTIDX </nextFuncIdx>
-    rule <k> #handleExports ( ( export ENAME ) )
-          => ( export ENAME ( func NEXTIDX ) )
+          ~> #handleExports( FEXPO )
           ...
          </k>
          <nextFuncIdx> NEXTIDX </nextFuncIdx>
@@ -641,34 +637,20 @@ Function Declaration and Invocation
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
-`import`, if exists, should always be the last one to declare in `FuncAbbr`. When this is implemented in the future, the added subsort will be like `| "(" "import" Identifier ")"`.
 
 ```k
-    syntax Instr ::= "(" "func"                     FuncDecls Instrs ")"
-                   | "(" "func"            FuncAbbr FuncDecls Instrs ")"
-                   | "(" "func" Identifier          FuncDecls Instrs ")"
-                   | "(" "func" Identifier FuncAbbr FuncDecls Instrs ")"
-                   | "func"                FuncType VecType "{" Instrs "}"
- // ----------------------------------------------------------------------
-    rule <k> ( func FDECLS:FuncDecls INSTRS:Instrs )
-          => func gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
+    syntax Instr ::= "(" "func"            FuncExports FuncDecls Instrs ")"
+                   | "(" "func" Identifier FuncExports FuncDecls Instrs ")"
+                   | "func"                FuncType    VecType "{" Instrs "}"
+ // -------------------------------------------------------------------------
+
+    rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => #handleExports( FEXPO ) ~> func gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
          </k>
 
-    rule <k> ( func FABBR:FuncAbbr FDECLS:FuncDecls INSTRS:Instrs )
-          => #handleExports( FABBR ) ~> ( func FDECLS INSTRS )
-         ...
-         </k>
-
-    rule <k> ( func FNAME:Identifier FDECLS:FuncDecls INSTRS:Instrs )
-          => ( func FDECLS INSTRS )
-         ...
-         </k>
-         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
-         <nextFuncIdx> NEXTIDX </nextFuncIdx>
-
-    rule <k> ( func FNAME:Identifier FABBR:FuncAbbr FDECLS:FuncDecls INSTRS:Instrs )
-          => ( func FABBR FDECLS INSTRS )
+    rule <k> ( func FNAME:Identifier FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => ( func FEXPO FDECLS INSTRS )
          ...
          </k>
          <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
