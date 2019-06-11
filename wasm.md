@@ -487,8 +487,12 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 
     syntax Instr ::= "(" "br_if" Int ")"
  // ------------------------------------
-    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
+    rule <k> ( br_if N ) => ( br N ) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         requires VAL =/=Int 0
+    rule <k> ( br_if N ) => . ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         requires VAL  ==Int 0
 ```
 
 Finally, we have the conditional and loop instructions.
