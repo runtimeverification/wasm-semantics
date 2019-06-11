@@ -643,7 +643,6 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
                    | "(" "func" Identifier FuncExports FuncDecls   Instrs ")"
                    |     "func"            FuncType    VecType "{" Instrs "}"
  // -------------------------------------------------------------------------
-
     rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
           => #handleExports( FEXPO ) ~> func gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
          ...
