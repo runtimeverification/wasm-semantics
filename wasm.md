@@ -455,7 +455,7 @@ It simply executes the block then records a label with an empty continuation.
 ```k
     syntax Label ::= "label" VecType "{" Instrs "}" ValStack
  // --------------------------------------------------------
-    rule <k> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax Instr ::= "(" "block" FuncDecls Instrs ")"
@@ -479,12 +479,20 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     syntax Instr ::= "(" "br" Int ")"
  // ---------------------------------
     rule <k> ( br N ) ~> (IS:Instrs => .) ... </k>
-    rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
+    rule <k> ( br N ) ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+      requires N ==Int 0
+    rule <k> ( br N ) ~> L:Label => ( br N -Int 1 ) ... </k>
+      requires N >Int 0
 
     syntax Instr ::= "(" "br_if" Int ")"
  // ------------------------------------
-    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
+    rule <k> ( br_if N ) => ( br N ) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         requires VAL =/=Int 0
+    rule <k> ( br_if N ) => . ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         requires VAL  ==Int 0
 ```
 
 Finally, we have the conditional and loop instructions.
