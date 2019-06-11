@@ -639,9 +639,9 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax Instr ::= "(" "func"            FuncExports FuncDecls Instrs ")"
-                   | "(" "func" Identifier FuncExports FuncDecls Instrs ")"
-                   | "func"                FuncType    VecType "{" Instrs "}"
+    syntax Instr ::= "(" "func"            FuncExports FuncDecls   Instrs ")"
+                   | "(" "func" Identifier FuncExports FuncDecls   Instrs ")"
+                   |     "func"            FuncType    VecType "{" Instrs "}"
  // -------------------------------------------------------------------------
 
     rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
