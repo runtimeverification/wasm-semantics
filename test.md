@@ -207,11 +207,14 @@ The modules are cleaned all together after the test file is executed.
     rule <k> #clearModules => . ... </k>
          <nextFreshId> _ => 0 </nextFreshId>
          <moduleInst>
+           <typeIds> _ => .Map </typeIds>
            <funcIds> _ => .Map </funcIds>
+           <nextTypeIdx>   _ => 0 </nextTypeIdx>
            <nextFuncIdx>   _ => 0 </nextFuncIdx>
            <nextTabIdx>    _ => 0 </nextTabIdx>
            <nextMemIdx>    _ => 0 </nextMemIdx>
            <nextGlobalIdx> _ => 0 </nextGlobalIdx>
+           <types>         _ => .Map </types>
            <funcIndices>   _ => .Map </funcIndices>
            <tabIndices>    _ => .Map </tabIndices>
            <memIndices>    _ => .Map </memIndices>

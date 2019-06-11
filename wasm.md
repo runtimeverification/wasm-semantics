@@ -635,17 +635,17 @@ A Typeuse should start with `'(' 'type' x:typeidx ')'` followed by a group of in
 
 ```k
     syntax TypeUse     ::= TypeDecls
-                         | "(" "type" TextFormatIdx ")"           [prefer]
-                         | "(" "type" TextFormatIdx ")" TypeDecls
+                         | "(type" TextFormatIdx ")"           [prefer]
+                         | "(type" TextFormatIdx ")" TypeDecls
  // -------------------------------------------------------------
 
     syntax FuncType    ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                          | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
- // ------------------------------------------------------------------
+ // -----------------------------------------------------------------------------------------------
     rule asFuncType(TDECLS)                                  => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
     rule asFuncType(TYPEIDS, TYPES, TDECLS)                  => asFuncType(TDECLS)
-    rule asFuncType(TYPEIDS, TYPES, ( type TFIDX ))          => TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] :> FuncType
-    rule asFuncType(TYPEIDS, TYPES, ( type TFIDX ) TDECLS )) => TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] :> FuncType
+    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
+    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
       requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K asFuncType(TDECLS)
 ```
 
@@ -677,8 +677,8 @@ Currently, in the expanded form, the `export`s will come after the definition of
  // -------------------------------------------------------------------
     rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
 
-    rule #asLocalType(.LocalDecls            , TYPES) => [ TYPES ]
-    rule #asLocalType(LDECL:LocalDecl LDECLS , TYPES) => #asLocalType(TDECLS, TYPES) [owise]
+    rule #asLocalType(.LocalDecls            , VTYPES) => [ VTYPES ]
+    rule #asLocalType(LDECL:LocalDecl LDECLS , VTYPES) => #asLocalType(LDECLS, VTYPES) [owise]
     rule #asLocalType(local VTYPES'   LDECLS , VTYPES)
       => #asLocalType(                LDECLS , VTYPES + VTYPES')
 ```
