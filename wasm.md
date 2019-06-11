@@ -625,10 +625,6 @@ This defines helper functions that gathers function together.
 
     rule #gatherTypes(TKW , TKW VTYPES' TDECLS , VTYPES)
       => #gatherTypes(TKW ,             TDECLS , VTYPES + VTYPES')
-
-    syntax FuncType ::= #gatherFuncType ( List ) [function]
- // -------------------------------------------------------
-    rule #gatherFuncType(TDECLS) => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
 ```
 
 ### Typeuse
@@ -643,12 +639,14 @@ A Typeuse should start with `'(' 'type' x:typeidx ')'` followed by a group of in
                          | "(" "type" TextFormatIdx ")" TypeDecls
  // -------------------------------------------------------------
 
-    syntax FuncType    ::= asFuncType ( Map, Map, TypeUse ) [function]
+    syntax FuncType    ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
+                         | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
  // ------------------------------------------------------------------
-    rule asFuncType(TYPEIDS, TYPES, TDECLS)                  => #gatherFuncType(TDECLS)
+    rule asFuncType(TDECLS)                                  => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
+    rule asFuncType(TYPEIDS, TYPES, TDECLS)                  => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, ( type TFIDX ))          => TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] :> FuncType
     rule asFuncType(TYPEIDS, TYPES, ( type TFIDX ) TDECLS )) => TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] :> FuncType
-      requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K #gatherFuncType(TDECLS)
+      requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K asFuncType(TDECLS)
 ```
 
 ### Type Definition
