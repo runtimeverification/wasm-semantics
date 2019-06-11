@@ -27,11 +27,13 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
 ### Identifiers
 
 As defined in the WebAssembly spec, the syntax of identifiers is as follows.
+Also we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
 
 **TODO**: Unsupported characters: `.:^@`
 
 ```k
-    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
+    syntax Identifier ::= #freshId ( Int )
+                        | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
 ```
 

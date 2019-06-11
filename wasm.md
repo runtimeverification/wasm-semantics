@@ -17,8 +17,9 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals>     .Map </locals>
+        <locals> .Map </locals>
       </curFrame>
+      <nextFreshId> 0 </nextFreshId>
       <moduleInst>
         <funcIds> .Map </funcIds> //this is mapping from identifier to index
         <nextFuncIdx>   0 </nextFuncIdx>
@@ -621,20 +622,10 @@ Function Declaration and Invocation
 
 This section introduce how we expand the folded form of function export.
 Currently, in the expanded form, the `export`s will come after the definition of function.
-`#asId ( Int )` is used to generate a fresh identifier.
 
 ```k
-    syntax Identifier  ::= #asId ( Int )
     syntax FuncExport  ::= "(" "export" String ")"
-    syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)] 
-    syntax Instr ::= #handleExports ( Identifier, FuncExports )
- // -----------------------------------------------------------
-    rule <k> #handleExports ( _, .FuncExports ) => . ... </k>
-    rule <k> #handleExports ( FUNCID, ( export ENAME ) FEXPO:FuncExports )
-          => ( export ENAME ( func FUNCID ) )
-          ~> #handleExports ( FUNCID, FEXPO )
-          ...
-         </k>
+    syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)]
 ```
 
 ### Function Declaration
@@ -643,32 +634,21 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax Instr ::= "(" "func"            FuncExports FuncDecls   Instrs ")"
-                   | "(" "func" Identifier FuncExports FuncDecls   Instrs ")"
- // -------------------------------------------------------------------------
+    syntax Instr ::= "(" "func"            FuncExports FuncDecls Instrs ")"
+                   | "(" "func" Identifier FuncExports FuncDecls Instrs ")"
+ // -----------------------------------------------------------------------
     rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
-          => #handleExports( #asId(NEXTIDX), FEXPO ) ...
+          => ( func #freshId(NEXTID) FEXPO FDECLS INSTRS ) ...
          </k>
-         <funcIds> IDS => IDS [ #asId(NEXTIDX) <- NEXTIDX ] </funcIds>
-         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
-         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
-         <funcs>
-           ( .Bag
-          => <funcDef>
-               <fAddr>  NEXTADDR                   </fAddr>
-               <fCode>  INSTRS                     </fCode>
-               <fType>  gatherFuncType(FDECLS)     </fType>
-               <fLocal> gatherTypes(local, FDECLS) </fLocal>
-               ...
-             </funcDef>
-           )
-           ...
-         </funcs>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
-    rule <k> ( func FNAME:Identifier FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
-          => #handleExports( FNAME, FEXPO ) ...
+    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => ( export ENAME ( func FNAME ) )
+          ~> ( func FNAME FEXPO FDECLS INSTRS )
+          ...
          </k>
+
+    rule <k> ( func FNAME:Identifier .FuncExports FDECLS:FuncDecls INSTRS:Instrs ) => . ... </k>
          <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
          <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
          <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
