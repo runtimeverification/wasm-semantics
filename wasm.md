@@ -619,18 +619,22 @@ Function Declaration and Invocation
 
 ### Function Export Definition
 
+This section introduce how we expand the folded form of function export.
+Currently, in the expanded form, the `export`s will come after the definition of function.
+`#asId ( Int )` is used to generate a fresh identifier.
+
 ```k
+    syntax Identifier  ::= #asId ( Int )
     syntax FuncExport  ::= "(" "export" String ")"
     syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)] 
-    syntax Instr ::= #handleExports ( FuncExports )
- // -----------------------------------------------
-    rule <k> #handleExports ( .FuncExports ) => . ... </k>
-    rule <k> #handleExports ( ( export ENAME ) FEXPO:FuncExports )
-          => ( export ENAME ( func NEXTIDX ) )
-          ~> #handleExports( FEXPO )
+    syntax Instr ::= #handleExports ( Identifier, FuncExports )
+ // -----------------------------------------------------------
+    rule <k> #handleExports ( _, .FuncExports ) => . ... </k>
+    rule <k> #handleExports ( FUNCID, ( export ENAME ) FEXPO:FuncExports )
+          => ( export ENAME ( func FUNCID ) )
+          ~> #handleExports ( FUNCID, FEXPO )
           ...
          </k>
-         <nextFuncIdx> NEXTIDX </nextFuncIdx>
 ```
 
 ### Function Declaration
@@ -641,31 +645,41 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 ```k
     syntax Instr ::= "(" "func"            FuncExports FuncDecls   Instrs ")"
                    | "(" "func" Identifier FuncExports FuncDecls   Instrs ")"
-                   |     "func"            FuncType    VecType "{" Instrs "}"
  // -------------------------------------------------------------------------
     rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
-          => #handleExports( FEXPO ) ~> func gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
-         ...
+          => #handleExports( #asId(NEXTIDX), FEXPO ) ...
          </k>
-
-    rule <k> ( func FNAME:Identifier FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
-          => ( func FEXPO FDECLS INSTRS )
-         ...
-         </k>
-         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
-         <nextFuncIdx> NEXTIDX </nextFuncIdx>
-
-    rule <k> func FTYPE LTYPE { INSTRS } => . ... </k>
+         <funcIds> IDS => IDS [ #asId(NEXTIDX) <- NEXTIDX ] </funcIds>
          <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
          <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  NEXTADDR </fAddr>
-               <fCode>  INSTRS   </fCode>
-               <fType>  FTYPE    </fType>
-               <fLocal> LTYPE    </fLocal>
+               <fAddr>  NEXTADDR                   </fAddr>
+               <fCode>  INSTRS                     </fCode>
+               <fType>  gatherFuncType(FDECLS)     </fType>
+               <fLocal> gatherTypes(local, FDECLS) </fLocal>
+               ...
+             </funcDef>
+           )
+           ...
+         </funcs>
+
+    rule <k> ( func FNAME:Identifier FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => #handleExports( FNAME, FEXPO ) ...
+         </k>
+         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
+         <funcs>
+           ( .Bag
+          => <funcDef>
+               <fAddr>  NEXTADDR                   </fAddr>
+               <fCode>  INSTRS                     </fCode>
+               <fType>  gatherFuncType(FDECLS)     </fType>
+               <fLocal> gatherTypes(local, FDECLS) </fLocal>
                ...
              </funcDef>
            )
@@ -726,15 +740,15 @@ Unlike labels, only one frame can be "broken" through at a time.
          <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
-### Function Export
+### Export
 
-Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
+Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
 
 ```k
     syntax Instr ::= "(" "export" String "(" Externval ")" ")"
  // ----------------------------------------------------------
-    rule <k> ( export ENAME ( func TFIDX ) ) => . ... </k>
-         <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
+    rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
+         <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
 ```
 
 Table
