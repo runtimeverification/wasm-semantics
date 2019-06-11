@@ -599,26 +599,16 @@ The `*_local` instructions are defined here.
     rule <k> ( global.set INDEX INSTR ) => INSTR ~> ( global.set INDEX ) ... </k>
 ```
 
-Function Declaration and Invocation
------------------------------------
+Types
+-----
 
-### Function Types Gathering
+### Type Gathering
+
+This defines helper functions that gathers function together.
 
 ```k
-    syntax TypeKeyWord ::= "param" | "result" | "local"
- // ---------------------------------------------------
-
-    syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
-                       | TypeKeyWord ValTypes
-    syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
- // --------------------------------------------------------------
-
-    syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
- // -----------------------------------------------------------
-    rule gatherFuncType(FDECLS) => gatherTypes(param, FDECLS) -> gatherTypes(result, FDECLS)
-
-    syntax VecType ::=  gatherTypes ( TypeKeyWord , FuncDecls )            [function]
-                     | #gatherTypes ( TypeKeyWord , FuncDecls , ValTypes ) [function]
+    syntax VecType ::=  gatherTypes ( FuncKeyWord , FuncDecls )            [function]
+                     | #gatherTypes ( FuncKeyWord , FuncDecls , ValTypes ) [function]
  // ---------------------------------------------------------------------------------
     rule gatherTypes(TKW, FDECLS) => #gatherTypes(TKW, FDECLS, .ValTypes)
 
@@ -627,6 +617,44 @@ Function Declaration and Invocation
 
     rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
       => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
+```
+
+### Typeuse
+
+A type use is a reference to a type definition.
+It may optionally be augmented by explicit inlined parameter and result declarations.
+A Typeuse should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
+
+```k
+    syntax TypeKeyWord ::= "param" | "result"
+    syntax TypeDecl    ::= "(" TypeDecl ")"     [bracket]
+                         | TypeKeyWord ValTypes
+    syntax TypeDecls   ::= List{TypeDecl, ""} [klabel(listTypeDecl)]
+    syntax TypeUse     ::= "(" "type" TextFormatIdx ")"
+                         | "(" "type" TextFormatIdx ")" TypeDecls
+                         | TypeDecls
+ // --------------------------------
+```
+
+### Type Definition
+
+Function Declaration and Invocation
+-----------------------------------
+
+### Function Types Gathering
+
+```k
+    syntax FuncKeyWord ::= "param" | "result" | "local"
+ // ---------------------------------------------------
+
+    syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
+                       | FuncKeyWord ValTypes
+    syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
+ // --------------------------------------------------------------
+
+    syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
+ // -----------------------------------------------------------
+    rule gatherFuncType(FDECLS) => gatherTypes(param, FDECLS) -> gatherTypes(result, FDECLS)
 ```
 
 ### Function Export Definition
