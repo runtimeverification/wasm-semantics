@@ -289,7 +289,8 @@ The function interprets the range of bytes as little-endian.
 External Values
 ---------------
 
-An `external value` is the runtime representation of an entity that can be `imported` or `exported`. It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
+An `external value` is the runtime representation of an entity that can be `imported` or `exported`.
+It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
 Currently only `function` is used as external value. When needed, add the sorts for `table`, `mem` and `global` as well.
 
 ```k
