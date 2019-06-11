@@ -664,6 +664,25 @@ Currently, in the expanded form, the `export`s will come after the definition of
     syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)]
 ```
 
+### Function Local Declaration
+
+```k
+    syntax LocalDecl      ::= "(" LocalDecl ")"     [bracket]
+                            | "local" ValTypes
+    syntax LocalDecls     ::= List{LocalDecl , ""} [klabel(listLocalDecl)]
+ // ----------------------------------------------------------------------
+
+    syntax VecType ::=  asLocalType ( LocalDecls            ) [function]
+                     | #asLocalType ( LocalDecls , ValTypes ) [function]
+ // -------------------------------------------------------------------
+    rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
+
+    rule #asLocalType(.LocalDecls            , TYPES) => [ TYPES ]
+    rule #asLocalType(LDECL:LocalDecl LDECLS , TYPES) => #asLocalType(TDECLS, TYPES) [owise]
+    rule #asLocalType(local VTYPES'   LDECLS , VTYPES)
+      => #asLocalType(                LDECLS , VTYPES + VTYPES')
+```
+
 ### Function Declaration
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
