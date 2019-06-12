@@ -263,20 +263,21 @@ Note that we do not need to call `#chop` on the results here.
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
     rule <k> ITYPE . div_s I1 I2
-          => #if I2 =/=Int 0 andBool (I1 =/=Int #pow1(ITYPE) orBool (I2 =/=Int #pow(ITYPE) -Int 1))
-                #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
-                #else undefined
-             #fi
-         ...
-         </k>
+          => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2)) ... </k>
+      requires I2 =/=Int 0
+       andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
+    // Division by 0.
+    rule <k> ITYPE . div_s I1 I2 => undefined ... </k>
+      requires I2 ==Int 0
+    // Division overflow.
+    rule <k> ITYPE . div_s I1 I2 => undefined ... </k>
+      requires #signed(ITYPE, I1) /Int #signed(ITYPE, I2) ==Int #pow1(ITYPE)
 
     rule <k> ITYPE . rem_s I1 I2
-          => #if I2 =/=Int 0
-                #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
-                #else undefined
-             #fi
-         ...
-         </k>
+          => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2)) ... </k>
+      requires I2 =/=Int 0
+       andBool I1 /Int I2 =/=Int #pow1(ITYPE)
+    rule <k> ITYPE . rem_s I1 I2 => undefined ... </k> requires I2 ==Int 0
 ```
 
 ### Predicates
