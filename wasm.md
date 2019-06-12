@@ -254,9 +254,11 @@ Note that we do not need to call `#chop` on the results here.
 ```k
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule <k> ITYPE . div_u I1 I2 => < ITYPE > (I1 /Int I2)  ... </k> requires I2 =/=Int 0
-    rule <k> ITYPE . div_u I1 I2 => undefined ... </k>               requires I2  ==Int 0
-    rule <k> ITYPE . rem_u I1 I2 => #if I2 =/=Int 0 #then < ITYPE > (I1 %Int I2) #else undefined #fi ... </k>
+    rule <k> ITYPE . div_u I1 I2 => < ITYPE > I1 /Int I2 ... </k> requires I2 =/=Int 0
+    rule <k> ITYPE . div_u I1 I2 => undefined ... </k>            requires I2  ==Int 0
+
+    rule <k> ITYPE . rem_u I1 I2 => < ITYPE > I1 %Int I2 ... </k> requires I2 =/=Int 0
+    rule <k> ITYPE . rem_u I1 I2 => undefined ... </k>            requires I2  ==Int 0
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
