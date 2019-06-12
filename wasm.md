@@ -271,7 +271,8 @@ Note that we do not need to call `#chop` on the results here.
       requires I2 ==Int 0
     // Division overflow.
     rule <k> ITYPE . div_s I1 I2 => undefined ... </k>
-      requires #signed(ITYPE, I1) /Int #signed(ITYPE, I2) ==Int #pow1(ITYPE)
+      requires I2 =/=Int 0
+       andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) ==Int #pow1(ITYPE)
 
     rule <k> ITYPE . rem_s I1 I2
           => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2)) ... </k>
