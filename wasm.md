@@ -465,7 +465,7 @@ It simply executes the block then records a label with an empty continuation.
 
     syntax Instr ::= "(" "block" TypeDecls Instrs ")"
                    | "block" VecType Instrs "end"
- // -------------------------------------------------
+ // ---------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
@@ -618,7 +618,7 @@ This defines helper functions that gathers function together.
     syntax VecType ::=  gatherTypes ( TypeKeyWord , TypeDecls )            [function]
                      | #gatherTypes ( TypeKeyWord , TypeDecls , ValTypes ) [function]
  // ---------------------------------------------------------------------------------
-    rule  gatherTypes(TKW , TDECLS) => #gatherTypes(TKW, TDECLS, .ValTypes)
+    rule  gatherTypes(TKW , TDECLS:TypeDecls) => #gatherTypes(TKW, TDECLS, .ValTypes)
 
     rule #gatherTypes(TKW , .TypeDecls            , TYPES) => [ TYPES ]
     rule #gatherTypes(TKW , TDECL:TypeDecl TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) [owise]
@@ -637,13 +637,13 @@ A Typeuse should start with `'(' 'type' x:typeidx ')'` followed by a group of in
     syntax TypeUse     ::= TypeDecls
                          | "(type" TextFormatIdx ")"           [prefer]
                          | "(type" TextFormatIdx ")" TypeDecls
- // -------------------------------------------------------------
+ // ----------------------------------------------------------
 
     syntax FuncType    ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                          | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
  // -----------------------------------------------------------------------------------------------
-    rule asFuncType(TDECLS)                                  => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
-    rule asFuncType(TYPEIDS, TYPES, TDECLS)                  => asFuncType(TDECLS)
+    rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
+    rule asFuncType(TYPEIDS, TYPES, TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
       requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K asFuncType(TDECLS)
@@ -657,10 +657,10 @@ Type could be declared explicitly and could optionally bind with an identifier.
     syntax Instr ::= "(type" TypeDecls ")"
                    | "(type" Identifier TypeDecls ")"
  // -------------------------------------------------
-    rule <k> (type TDECLS ) => . ... </k>
+    rule <k> (type TDECLS:TypeDecls ) => . ... </k>
          <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
          <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
-    rule <k> (type ID:Identifier TDECLS ) => . ... </k>
+    rule <k> (type ID:Identifier TDECLS:TypeDecls ) => . ... </k>
          <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
          <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
          <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
