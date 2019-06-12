@@ -101,6 +101,22 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          </globals>
 ```
 
+### Type Assertions
+
+`#assertType` checks that whether a type is allocated to the correct index.
+`#assertNextTypeIdx` checks whether the number of types are allocated correctly.
+
+```k
+    syntax Assertion ::= "#assertType" TextFormatIdx FuncType
+                       | "#assertNextTypeIdx" Int
+ // ---------------------------------------------
+    rule <k> #assertType TFIDX FTYPE => . ... </k>
+         <typeIds> IDS </typeIds>
+         <types> ... #ContextLookup(IDS , TFIDX) |-> FTYPE ... </types>
+    rule <k> #assertNextTypeIdx IDX => . ... </k>
+         <nextTypeIdx> IDX </nextTypeIdx>
+```
+
 ### Function Assertions
 
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.

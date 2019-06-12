@@ -1,11 +1,17 @@
 ;; Simple add function
 
-(func $0 (param i32 i32 ) ( result i32 )
+(type $a-cool-type (param i32 i32 ) ( result i32 ))
+#assertType $a-cool-type [ i32 i32 ] -> [ i32 ]
+#assertType 0 [ i32 i32 ] -> [ i32 ]
+#assertNextTypeIdx 1
+
+(func $0 (type $a-cool-type)
     (local.get 0)
     (local.get 1)
     (i32.add)
     (return)
 )
+#assertNextTypeIdx 1
 
 (i32.const 7)
 (i32.const 8)
@@ -15,7 +21,7 @@
 
 ;; String-named add function
 
-(func $add (param i32 i32 ) ( result i32 )
+(func $add (type $a-cool-type) (param i32 i32 ) ( result i32 )
     (local.get 0)
     (local.get 1)
     (i32.add)
@@ -23,6 +29,7 @@
 )
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
+#assertNextTypeIdx 1
 
 ;; Remove return statement
 
@@ -37,6 +44,7 @@
 (call $0)
 #assertTopStack < i32 > 15 "call function 0 no return"
 #assertFunction $0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
+#assertNextTypeIdx 1
 
 ;; More complicated function with locals
 
@@ -57,6 +65,8 @@
 (call $1)
 #assertTopStack < i64 > 35 "call function 1"
 #assertFunction $1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
+#assertType 1 [ i64 i64 i64 ] -> [ i64 ]
+#assertNextTypeIdx 2
 
 ;; Function with complicated declaration of types
 
@@ -71,6 +81,7 @@
 (call $2)
 #assertTopStack < i32 > 5 "out of order type declaration"
 #assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
+#assertNextTypeIdx 3
 
 ;; Function with empty declarations of types
 
@@ -84,6 +95,7 @@
 (call $1)
 #assertTopStack < i64 > 8 "empty type declaration"
 #assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
+#assertNextTypeIdx 4
 
 ;; Function with empty declarations of types, and bracketed in parentheses
 
@@ -97,6 +109,7 @@
 (call $1)
 #assertTopStack < i64 > 8 "empty type declaration + parens"
 #assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations + parens"
+#assertNextTypeIdx 4
 
 ;; Function with just a name
 
@@ -148,6 +161,7 @@
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
 #assertFunction $mul [ i32 i32 ] -> [ i32 ] [ ] "mul function typed correctly"
 #assertFunction $xor [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
+#assertNextTypeIdx 5
 
 (module
     (func $f1 (param i32 i32 ) (result i32) (local i32)
