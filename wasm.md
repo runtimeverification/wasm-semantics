@@ -627,11 +627,11 @@ This defines helper functions that gathers function together.
       => #gatherTypes(TKW ,             TDECLS , VTYPES + VTYPES')
 ```
 
-### Typeuse
+### Type Use
 
 A type use is a reference to a type definition.
 It may optionally be augmented by explicit inlined parameter and result declarations.
-A Typeuse should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
+A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
 
 ```k
     syntax TypeUse     ::= TypeDecls
@@ -666,7 +666,7 @@ Type could be declared explicitly and could optionally bind with an identifier.
          <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
 ```
 
-Also，it could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
+It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
@@ -704,7 +704,6 @@ Currently, in the expanded form, the `export`s will come after the definition of
     rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
 
     rule #asLocalType(.LocalDecls            , VTYPES) => [ VTYPES ]
-    rule #asLocalType(LDECL:LocalDecl LDECLS , VTYPES) => #asLocalType(LDECLS, VTYPES) [owise]
     rule #asLocalType(local VTYPES'   LDECLS , VTYPES)
       => #asLocalType(                LDECLS , VTYPES + VTYPES')
 ```
