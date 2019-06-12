@@ -649,7 +649,33 @@ A Typeuse should start with `'(' 'type' x:typeidx ')'` followed by a group of in
       requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K asFuncType(TDECLS)
 ```
 
-### Type Definition
+### Type Declaration
+
+Type could be declared explicitly and could optionally bind with an identifier.
+
+```k
+    syntax Instr ::= "(type" TypeDecls ")"
+                   | "(type" Identifier TypeDecls ")"
+ // -------------------------------------------------
+    rule <k> (type TDECLS ) => . ... </k>
+         <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
+         <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
+    rule <k> (type ID:Identifier TDECLS ) => . ... </k>
+         <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
+         <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
+         <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
+```
+
+Also，it could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
+
+```k
+    syntax Instr ::= #checkTypeUse ( TypeUse )
+ // ------------------------------------------
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type TDECLS) ... </k>
+         <types> TYPES </types> requires #reverseLookup ( TYPES , asFuncType(TDECLS) ) ==Int -1
+         
+    rule <k> #checkTypeUse ( _ ) => . ... </k> [owise]
+```
 
 Function Declaration and Invocation
 -----------------------------------
@@ -703,7 +729,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
           ...
          </k>
 
-    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => . ... </k>
+    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <typeIds> TYPEIDS </typeIds>
          <types>   TYPES   </types>
          <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
