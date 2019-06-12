@@ -739,10 +739,10 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  NEXTADDR                                   </fAddr>
-               <fCode>  INSTRS                                     </fCode>
-               <fType>  asFuncType  ( TYPEIDS, TYPES, TUSE )       </fType>
-               <fLocal> asLocalType ( LDECLS )                     </fLocal>
+               <fAddr>  NEXTADDR                             </fAddr>
+               <fCode>  INSTRS                               </fCode>
+               <fType>  asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
+               <fLocal> asLocalType ( LDECLS )               </fLocal>
                ...
              </funcDef>
            )
