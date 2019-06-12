@@ -277,6 +277,16 @@ The function interprets the range of bytes as little-endian.
     rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
 ```
 
+`#reverseLookup` looks up a value in a map and returns the first corresponding key, defaulting to -1 if the map does not contain the value.
+
+```k
+    syntax Int ::= #reverseLookup ( Map , Int ) [function]
+ // ------------------------------------------------------
+    rule #lookup( (KEY |-> VAL) M, VAL ) => KEY                                               [concrete]
+    rule #lookup(            .Map, VAL ) => -1                                                [concrete]
+    rule #lookup( ( _ |-> VAL') M, VAL ) => #reverseLookup ( M , VAL ) requires VAL' =/=K VAL [concrete]
+```
+
 `#clearRange(MAP, START, END)` removes all entries from the map from `START` to `END`, inclusive.
 
 ```k
