@@ -17,9 +17,15 @@
     0
   </nextFreshId>
   <moduleInst>
+    <typeIds>
+      .Map
+    </typeIds>
     <funcIds>
       .Map
     </funcIds>
+    <nextTypeIdx>
+      0
+    </nextTypeIdx>
     <nextFuncIdx>
       0
     </nextFuncIdx>
@@ -32,6 +38,9 @@
     <nextGlobalIdx>
       0
     </nextGlobalIdx>
+    <types>
+      .Map
+    </types>
     <funcIndices>
       .Map
     </funcIndices>

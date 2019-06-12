@@ -60,7 +60,7 @@
 
 ;; Function with complicated declaration of types
 
-(func $2 local i32 result i32 param i32 i64 param i64
+(func $2 result i32 param i32 i64 param i64 local i32
     (local.get 0)
     (return)
 )
@@ -74,7 +74,7 @@
 
 ;; Function with empty declarations of types
 
-(func $1 local param i64 i64 result local result i64 param
+(func $1 param i64 i64 result result i64 param local
     (local.get 0)
     (return)
 )
@@ -87,7 +87,7 @@
 
 ;; Function with empty declarations of types, and bracketed in parentheses
 
-(func $1 (local) (param i64 i64) (result) (local) (result i64) (param)
+(func $1 (param i64 i64) (result) (result i64) (param) (local)
     (local.get 0)
     (return)
 )

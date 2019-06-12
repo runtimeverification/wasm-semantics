@@ -21,7 +21,7 @@
 
 ;; test inline export
 
-(func $2 (export "cool-align-1") (export "cool-align-2") local i32 result i32 param i32 i64 param i64
+(func $2 (export "cool-align-1") (export "cool-align-2") result i32 param i32 i64 param i64 local i32
     (local.get 0)
     (return)
 )
@@ -46,7 +46,7 @@
 
 #assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 
-(func (export "export-without-id") local i32 result i32 param i32 i64 param i64
+(func (export "export-without-id") result i32 param i32 i64 param i64 local i32
     (local.get 0)
     (return)
 )
