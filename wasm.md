@@ -654,13 +654,13 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 Type could be declared explicitly and could optionally bind with an identifier.
 
 ```k
-    syntax Instr ::= "(type" TypeDecls ")"
-                   | "(type" Identifier TypeDecls ")"
- // -------------------------------------------------
-    rule <k> (type TDECLS:TypeDecls ) => . ... </k>
+    syntax Instr ::= "(type" "(" "func" TypeDecls ")" ")"
+                   | "(type" Identifier "(" "func" TypeDecls ")" ")"
+ // ----------------------------------------------------------------
+    rule <k> (type (func TDECLS:TypeDecls)) => . ... </k>
          <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
          <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
-    rule <k> (type ID:Identifier TDECLS:TypeDecls ) => . ... </k>
+    rule <k> (type ID:Identifier (func TDECLS:TypeDecls)) => . ... </k>
          <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
          <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
          <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
@@ -671,7 +671,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
-    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type TDECLS) ... </k>
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </k>
          <types> TYPES </types> requires #reverseLookup ( TYPES , asFuncType(TDECLS) ) ==Int -1
          
     rule <k> #checkTypeUse ( _ ) => . ... </k> [owise]
