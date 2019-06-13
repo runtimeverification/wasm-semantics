@@ -17,8 +17,9 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals>     .Map </locals>
+        <locals> .Map </locals>
       </curFrame>
+      <nextFreshId> 0 </nextFreshId>
       <moduleInst>
         <funcIds> .Map </funcIds> //this is mapping from identifier to index
         <nextFuncIdx>   0 </nextFuncIdx>
@@ -29,6 +30,7 @@ Configuration
         <tabIndices>    .Map </tabIndices>
         <memIndices>    .Map </memIndices>
         <globalIndices> .Map </globalIndices>
+        <exports>       .Map </exports>
       </moduleInst>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
@@ -460,7 +462,7 @@ It simply executes the block then records a label with an empty continuation.
 ```k
     syntax Label ::= "label" VecType "{" Instrs "}" ValStack
  // --------------------------------------------------------
-    rule <k> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax Instr ::= "(" "block" FuncDecls Instrs ")"
@@ -484,13 +486,22 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     syntax Instr ::= "(" "br" Int ")"
  // ---------------------------------
     rule <k> ( br N ) ~> (IS:Instrs => .) ... </k>
-    rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
+    rule <k> ( br N ) ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+      requires N ==Int 0
+    rule <k> ( br N ) ~> L:Label => ( br N -Int 1 ) ... </k>
+      requires N >Int 0
 
     syntax Instr ::= "(" "br_if" Int ")" | "(" "br_if" Int Instr ")"
  // ----------------------------------------------------------------
     rule <k> ( br_if N I:Instr ) => I ~> ( br_if N ) ... </k>
-    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else nop #fi ... </k>
+ // ------------------------------------
+    rule <k> ( br_if N ) => ( br N ) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL =/=Int 0
+    rule <k> ( br_if N ) => . ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL  ==Int 0
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -599,10 +610,7 @@ The `*_local` instructions are defined here.
 Function Declaration and Invocation
 -----------------------------------
 
-### Function Declaration
-
-Function declarations can look quite different depending on which fields are ommitted and what the context is.
-Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+### Function Types Gathering
 
 ```k
     syntax TypeKeyWord ::= "param" | "result" | "local"
@@ -610,46 +618,8 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "export" Identifier
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
-
-    syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
-                   | "(" "func" Identifier FuncDecls Instrs ")"
-                   | "func" Identifier "::" FuncType VecType "{" Instrs "}"
- // -----------------------------------------------------------------------
-    rule <k> ( func FDECLS INSTRS )
-          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
-         ...
-         </k>
-
-    rule <k> ( func FNAME FDECLS INSTRS )
-          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
-         ...
-         </k>
-
-    rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
-         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
-         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
-         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
-         <funcs>
-           ( .Bag
-          => <funcDef>
-               <fAddr>  NEXTADDR </fAddr>
-               <fCode>  INSTRS   </fCode>
-               <fType>  FTYPE    </fType>
-               <fLocal> LTYPE    </fLocal>
-               ...
-             </funcDef>
-           )
-           ...
-         </funcs>
-
-    syntax Identifier ::= gatherExportedName ( FuncDecls ) [function]
- // -----------------------------------------------------------------
-    rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
-    rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
 
     syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
  // -----------------------------------------------------------
@@ -665,6 +635,55 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
     rule #gatherTypes(TKW , TKW VTYPES' FDECLS:FuncDecls , VTYPES)
       => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
+```
+
+### Function Export Definition
+
+This section introduce how we expand the folded form of function export.
+Currently, in the expanded form, the `export`s will come after the definition of function.
+
+```k
+    syntax FuncExport  ::= "(" "export" String ")"
+    syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)]
+```
+
+### Function Declaration
+
+Function declarations can look quite different depending on which fields are ommitted and what the context is.
+Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+
+```k
+    syntax Instr ::= "(" "func"            FuncExports FuncDecls Instrs ")"
+                   | "(" "func" Identifier FuncExports FuncDecls Instrs ")"
+ // -----------------------------------------------------------------------
+    rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => ( func #freshId(NEXTID) FEXPO FDECLS INSTRS ) ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
+    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => ( export ENAME ( func FNAME ) )
+          ~> ( func FNAME FEXPO FDECLS INSTRS )
+          ...
+         </k>
+
+    rule <k> ( func FNAME:Identifier .FuncExports FDECLS:FuncDecls INSTRS:Instrs ) => . ... </k>
+         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
+         <funcs>
+           ( .Bag
+          => <funcDef>
+               <fAddr>  NEXTADDR                   </fAddr>
+               <fCode>  INSTRS                     </fCode>
+               <fType>  gatherFuncType(FDECLS)     </fType>
+               <fLocal> gatherTypes(local, FDECLS) </fLocal>
+               ...
+             </funcDef>
+           )
+           ...
+         </funcs>
 ```
 
 ### Function Invocation/Return
@@ -715,9 +734,20 @@ Unlike labels, only one frame can be "broken" through at a time.
 ```k
     syntax Instr ::= "(" "call" TextFormatIdx ")"
  // ---------------------------------------------
-    rule <k> ( call TFIDX ) => ( invoke FADDR ) ... </k>
+    rule <k> ( call TFIDX ) => ( invoke FADDR:Int ) ... </k>
          <funcIds> IDS </funcIds>
          <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+```
+
+### Export
+
+Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
+
+```k
+    syntax Instr ::= "(" "export" String "(" Externval ")" ")"
+ // ----------------------------------------------------------
+    rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
+         <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
 ```
 
 Table
@@ -738,10 +768,10 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
                    | "(" "table"     Int Int      ")" // Min and max.
                    |     "table" "{" Int MaxBound "}"
  // -------------------------------------------------
-    rule <k> ( table                 ) => table { 0   .MaxBound } ... </k>
-    rule <k> ( table MIN:Int         ) => table { MIN .MaxBound } ... </k>
+    rule <k> ( table                 )       => table { 0   .MaxBound } ... </k>
+    rule <k> ( table MIN:Int         ):Instr => table { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table MIN:Int MAX:Int ) => table { MIN MAX       } ... </k>
+    rule <k> ( table MIN:Int MAX:Int )       => table { MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 

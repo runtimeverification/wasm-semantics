@@ -205,6 +205,7 @@ The modules are cleaned all together after the test file is executed.
     syntax Instr ::= "#clearModules"
  // --------------------------------
     rule <k> #clearModules => . ... </k>
+         <nextFreshId> _ => 0 </nextFreshId>
          <moduleInst>
            <funcIds> _ => .Map </funcIds>
            <nextFuncIdx>   _ => 0 </nextFuncIdx>
@@ -215,7 +216,20 @@ The modules are cleaned all together after the test file is executed.
            <tabIndices>    _ => .Map </tabIndices>
            <memIndices>    _ => .Map </memIndices>
            <globalIndices> _ => .Map </globalIndices>
+           <exports>       _ => .Map </exports>
          </moduleInst>
+```
+
+Function Invocation
+-------------------
+
+We allow to `invoke` a function by its exported name in the test code.
+
+```k
+    syntax Instr ::= "(" "invoke" String ")"
+ // ----------------------------------------
+    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
+         <exports> ... ENAME |-> TFIDX ... </exports>
 ```
 
 ```k

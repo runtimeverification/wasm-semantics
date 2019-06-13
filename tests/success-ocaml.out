@@ -13,6 +13,9 @@
       .Map
     </locals>
   </curFrame>
+  <nextFreshId>
+    0
+  </nextFreshId>
   <moduleInst>
     <funcIds>
       .Map
@@ -41,6 +44,9 @@
     <globalIndices>
       .Map
     </globalIndices>
+    <exports>
+      .Map
+    </exports>
   </moduleInst>
   <mainStore>
     <nextFuncAddr>

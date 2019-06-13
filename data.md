@@ -27,11 +27,13 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
 ### Identifiers
 
 As defined in the WebAssembly spec, the syntax of identifiers is as follows.
+Also we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
 
 **TODO**: Unsupported characters: `.:^@`
 
 ```k
-    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
+    syntax Identifier ::= #freshId ( Int )
+                        | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
 ```
 
@@ -284,6 +286,19 @@ The function interprets the range of bytes as little-endian.
       requires START >=Int END
     rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END)
       requires START <Int  END
+```
+
+External Values
+---------------
+
+An `external value` is the runtime representation of an entity that can be `imported` or `exported`.
+It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
+Currently only `function` is used as external value.
+When needed, add the sorts for `table`, `mem` and `global` as well.
+
+```k
+    syntax Externval ::= "func" TextFormatIdx
+ // -----------------------------------------
 ```
 
 ```k
