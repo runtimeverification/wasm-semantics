@@ -13,7 +13,7 @@ Configuration
 
 ```k
     configuration
-      <k> $PGM:Instrs </k>
+      <k> $PGM:Decls </k>
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
@@ -90,14 +90,24 @@ Instructions
 
 ### Sequencing
 
-WebAssembly instructions are space-separated lists of instructions.
+WebAssembly code consists of sequences of declarations (`Decls`).
+We define 4 types of declarations:
+  - Instruction (`Instr`): Administrative or computational instructions. 
+  - Allocation  (`Alloc`): The declarations of `type`, `func`, `table`, `mem` etc.
+  - Auxiliary   (`Auxil`): Functions that only used in our KWASM semantics but not in the official specification including assertions, invoke a function by imported name, and maybe instantiate a module?
+  - The Declaration of a module.
 
 ```k
-    syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
- // -----------------------------------------------------
-    rule          <k> .Instrs           => .       ... </k>
-    rule          <k> I:Instr .Instrs   => I       ... </k>
-    rule [step] : <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .Instrs
+    syntax Decl   ::= Instr | Alloc
+    syntax Decls  ::= Instrs
+                    | Allocs
+                    | List{Decl , ""} [klabel(listDecl)]
+    syntax Instrs ::= List{Instr, ""} [klabel(listDecl)]
+    syntax Allocs ::= List{Alloc, ""} [klabel(listDecl)]
+ // ----------------------------------------------------
+    rule          <k> .Decls    :Decls => .       ... </k>
+    rule          <k> (D .Decls):Decls => D       ... </k>
+    rule [step] : <k> (D DS)    :Decls => D ~> DS ... </k> requires DS =/=K .Decls
 ```
 
 ### Traps
@@ -654,7 +664,7 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 Type could be declared explicitly and could optionally bind with an identifier.
 
 ```k
-    syntax Instr ::= "(type" TypeDecls ")"
+    syntax Alloc ::= "(type" TypeDecls ")"
                    | "(type" Identifier TypeDecls ")"
  // -------------------------------------------------
     rule <k> (type TDECLS:TypeDecls ) => . ... </k>
@@ -714,7 +724,7 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax Instr ::= "(" "func"            FuncExports TypeUse LocalDecls Instrs ")"
+    syntax Alloc ::= "(" "func"            FuncExports TypeUse LocalDecls Instrs ")"
                    | "(" "func" Identifier FuncExports TypeUse LocalDecls Instrs ")"
  // --------------------------------------------------------------------------------
     rule <k> ( func FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
@@ -766,7 +776,7 @@ Unlike labels, only one frame can be "broken" through at a time.
  // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
-          ~> INSTRS
+          ~> {INSTRS}:>Decls
           ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
           ...
           </k>
@@ -807,7 +817,7 @@ Unlike labels, only one frame can be "broken" through at a time.
 Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
 
 ```k
-    syntax Instr ::= "(" "export" String "(" Externval ")" ")"
+    syntax Alloc ::= "(" "export" String "(" Externval ")" ")"
  // ----------------------------------------------------------
     rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
          <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
@@ -826,13 +836,13 @@ When implementing a table, we need a `FuncElem` type to define the type of eleme
 The allocation of a new `tableinst`. Currently at most one table may be defined or imported in a single module.
 
 ```k
-    syntax Instr ::= "(" "table"                  ")"
+    syntax Alloc ::= "(" "table"                  ")"
                    | "(" "table"     Int          ")" // Size only
                    | "(" "table"     Int Int      ")" // Min and max.
                    |     "table" "{" Int MaxBound "}"
  // -------------------------------------------------
     rule <k> ( table                 )       => table { 0   .MaxBound } ... </k>
-    rule <k> ( table MIN:Int         ):Instr => table { MIN .MaxBound } ... </k>
+    rule <k> ( table MIN:Int         ):Alloc => table { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
     rule <k> ( table MIN:Int MAX:Int )       => table { MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
@@ -868,7 +878,7 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
 **TODO**: Allow instantiation with data, and with an identifier and inline export and import.
 
 ```k
-    syntax Instr ::= "(" "memory"                  ")"
+    syntax Alloc ::= "(" "memory"                  ")"
                    | "(" "memory"     Int          ")" // Size only
                    | "(" "memory"     Int Int      ")" // Min and max.
                    |     "memory" "{" Int MaxBound "}"
@@ -1092,9 +1102,9 @@ Currently, we support a single module.
 The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
 
 ```k
-    syntax Instr ::= "(" "module" Instrs ")"
- // ----------------------------------------
-    rule <k> ( module INSTRS ) => INSTRS ... </k>
+    syntax Decl ::= "(" "module" Allocs ")"
+ // ---------------------------------------
+    rule <k> ( module ALLOCS ) => ALLOCS ... </k>
 ```
 
 ```k
