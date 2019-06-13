@@ -102,12 +102,18 @@ We define 4 types of declarations:
     syntax Decls  ::= Instrs
                     | Allocs
                     | List{Decl , ""} [klabel(listDecl)]
-    syntax Instrs ::= List{Instr, ""} [klabel(listDecl)]
-    syntax Allocs ::= List{Alloc, ""} [klabel(listDecl)]
- // ----------------------------------------------------
-    rule          <k> .Decls    :Decls => .       ... </k>
-    rule          <k> (D .Decls):Decls => D       ... </k>
-    rule [step] : <k> (D DS)    :Decls => D ~> DS ... </k> requires DS =/=K .Decls
+    syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
+    syntax Allocs ::= List{Alloc, ""} [klabel(listAlloc)]
+ // -----------------------------------------------------
+    rule          <k> .Decls     :Decls  => .       ... </k>
+    rule          <k> (D .Decls) :Decls  => D       ... </k>
+    rule [step] : <k> (D DS)     :Decls  => D ~> DS ... </k> requires DS =/=K .Decls
+    rule          <k> .Instrs    :Instrs => .       ... </k>
+    rule          <k> (I .Instrs):Instrs => I       ... </k>
+    rule          <k> (I IS)     :Instrs => I ~> IS ... </k> requires IS =/=K .Instrs
+    rule          <k> .Allocs    :Allocs => .       ... </k>
+    rule          <k> (A .Allocs):Allocs => A       ... </k>
+    rule          <k> (A AS)     :Allocs => A ~> AS ... </k> requires AS =/=K .Allocs
 ```
 
 ### Traps
@@ -776,7 +782,7 @@ Unlike labels, only one frame can be "broken" through at a time.
  // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
-          ~> {INSTRS}:>Decls
+          ~> INSTRS
           ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
           ...
           </k>
