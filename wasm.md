@@ -1026,7 +1026,8 @@ The maximum of table size is 2^32 bytes.
  // ----------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET STRINGS ) => ( data 0 OFFSET STRINGS ) ... </k>
-    rule <k> ( data MEMID OFFSET STRINGS ) => OFFSET ~> data { MEMID STRINGS } ... </k>
+    rule <k> ( data MEMID    IS:Instr STRINGS ) => IS ~> data { MEMID STRINGS } ... </k>
+    rule <k> ( data MEMID (offset IS) STRINGS ) => IS ~> data { MEMID STRINGS } ... </k>
 
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX STRING } => . ... </k>
