@@ -1040,10 +1040,9 @@ The maximum of table size is 2^32 bytes.
            ...
          </memInst>
 
-    syntax Int ::= #lengthData       ( Data        ) [function]
-                 | #lengthDataString ( DataString  ) [function]
-                 | Int "/ceilInt" Int                [function]
- // -------------------------------------------------------
+    syntax Int ::= #lengthData        ( Data ) [function]
+                 | Int "/ceilInt" Int          [function]
+ // -----------------------------------------------------
     rule #lengthData((data  _:MemId _ SS)) => #dataStringsLength(SS)
     rule #lengthData((data          _ SS)) => #dataStringsLength(SS) 
     rule #lengthData( data { _        SS}) => #dataStringsLength(SS)

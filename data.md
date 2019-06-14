@@ -240,31 +240,24 @@ Strings
 
 Memory initializatin data can be specified as a string, or even several consequtive strings.
 
+Each character is interpreted as its UTF-8 byte sequence, except for a single `\` followed by two hexadecimal characters, which is then interpreted as a hexadecimal representation of a byte.
+`\` can also be used to escape special characters, represent tabs, etc., in which case their UTF-8 byte representation is used, e.g., `\t` represents the byte value 9.
+Finally, `\u{ ... }` where the bracket contents is some hexadecimal number, is meant to encode UTF-8 characters outside of the range of a single byte.
+
 ```k
     syntax DataString
     syntax DataStrings ::= List{DataString, ""}
-    syntax String  ::= #dataStrings2String ( DataStrings ) [function, hook(STRING.token2string)]
- // --------------------------------------------------
+ // -------------------------------------------
 ```
 
-Strings can be given to initialize memory.
-In that case, we need to calculate the sequence of bytes represented by the characters.
-Each character is interpreted as its UTF-8 byte sequence, except for a single `\` followed by two hexadecimal characters, which is then interpreted as a hexadecimal representation of a byte.
-`\` can also be used to escape special characters, represent tabs, etc., in which case their UTF-8 byte representation is used, e.g., `\t` represents the byte value 9.
-
-Finally, `\u{ ... }` where the bracket contents is some hexadecimal number, is meant to encode UTF-8 characters outside of the range of a single byte.
-Since we only care about the byte value, we unpack the hexadecimal inside.
+In the end, the given initializer strings should be transformed into a list of bytes.
+We represent bytes as integers between 0 and 255 (inclusive).
 
 ```k
-    syntax Strings ::= List{String, ""}
     syntax Ints ::= List{Int, ""}
-    syntax Ints ::= #strings2bytes     ( String      ) [function]
-    syntax Ints ::= #dataStrings2bytes ( DataStrings ) [function]
-    syntax Int  ::= #dataStringsLength ( DataStrings ) [function]
     syntax Int  ::= #dataStrings2int   ( DataStrings ) [function]
-    syntax Int  ::= #length            ( Ints        ) [function] // TODO: Using `size` breaks. Use this implementation for now.
- // ----------------------------------------
-    rule #dataStrings2bytes(DS) => #strings2bytes(#dataStrings2String(DS))
+    syntax Int  ::= #length            ( Ints        ) [function]
+ // -------------------------------------------------------------
     rule #dataStringsLength(DS) => #length(#dataStrings2bytes(DS))
     rule #length(.Ints) => 0
     rule #length(_ IS)  => 1 +Int #length(IS)
