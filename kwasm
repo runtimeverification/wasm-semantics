@@ -94,17 +94,7 @@ view_klab() {
     node --stack-size=$KLAB_NODE_STACK_SIZE $(dirname $(which klab))/../libexec/klab-debug "$klab_log"
 }
 
-# Main
-# ----
-
-
-if [[ ! -z ${1:-} ]] && [[ ! -z ${2:-} ]] && [[ ! "$1" == '--help' ]]; then
-    run_command="$1"; shift
-else
-    run_command="help"
-fi
-
-if [[ "$run_command" == 'help' ]]; then
+function help_and_exit() {
     echo "
     usage: $0 run              [--backend (ocaml|java|haskell)] <pgm>  <K args>*
            $0 kast             [--backend (ocaml|java)]         <pgm>  <output format> <K args>*
@@ -128,7 +118,17 @@ if [[ "$run_command" == 'help' ]]; then
        KLab: Make sure that the 'klab/bin' directory is on your PATH to use this option.
 "
     exit 0
+}
+
+# Main
+# ----
+
+
+if [[ -z ${1:-} ]] || [[ -z ${2:-} ]] || [[ "$1" == '--help' ]] || [ "$1" == 'help' ]; then
+    help_and_exit
 fi
+
+run_command="$1"; shift
 
 backend="ocaml"
 [[ ! "$run_command" == 'prove' ]] || backend='java'
@@ -141,6 +141,9 @@ backend_dir="$defn_dir/$backend"
 [[ ! "$backend" == "ocaml" ]] || eval $(opam config env)
 
 # get the run file
+if [[ -z ${1:-} ]]; then
+    help_and_exit
+fi
 run_file="$curdir/$1" ; shift
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
