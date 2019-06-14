@@ -618,11 +618,10 @@ This defines helper functions that gathers function together.
  // ---------------------------------------------------------------------------------
     rule  gatherTypes(TKW , TDECLS:TypeDecls) => #gatherTypes(TKW, TDECLS, .ValTypes)
 
-    rule #gatherTypes(TKW , .TypeDecls            , TYPES) => [ TYPES ]
-    rule #gatherTypes(TKW , TDECL:TypeDecl TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) [owise]
-
-    rule #gatherTypes(TKW , TKW VTYPES' TDECLS , VTYPES)
-      => #gatherTypes(TKW ,             TDECLS , VTYPES + VTYPES')
+    rule #gatherTypes( _  , .TypeDecls                         , TYPES) => [ TYPES ]
+    rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
+    rule #gatherTypes(TKW , TKW TYPES'                  TDECLS , TYPES)
+      => #gatherTypes(TKW ,                             TDECLS , TYPES + TYPES')
 ```
 
 ### Type Use
@@ -641,7 +640,7 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
                          | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
  // -----------------------------------------------------------------------------------------------
     rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
-    rule asFuncType(TYPEIDS, TYPES, TDECLS:TypeDecls)       => asFuncType(TDECLS)
+    rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
       requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K asFuncType(TDECLS)
@@ -662,16 +661,6 @@ Type could be declared explicitly and could optionally bind with an identifier.
          <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
          <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
          <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
-```
-
-It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
-
-```k
-    syntax Instr ::= #checkTypeUse ( TypeUse )
- // ------------------------------------------
-    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </k>
-         <types> TYPES </types> requires #reverseLookup ( TYPES , asFuncType(TDECLS) ) ==Int -1
-    rule <k> #checkTypeUse ( _ ) => . ... </k> [owise]
 ```
 
 Function Declaration and Invocation
@@ -703,6 +692,18 @@ Currently, in the expanded form, the `export`s will come after the definition of
     rule #asLocalType(.LocalDecls            , VTYPES) => [ VTYPES ]
     rule #asLocalType(local VTYPES'   LDECLS , VTYPES)
       => #asLocalType(                LDECLS , VTYPES + VTYPES')
+```
+
+### Function Implicit Type Declaration
+
+It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
+
+```k
+    syntax Instr ::= #checkTypeUse ( TypeUse )
+ // ------------------------------------------
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </k>
+         <types> TYPES </types> requires #reverseLookup ( TYPES , asFuncType(TDECLS) ) ==Int -1
+    rule <k> #checkTypeUse ( _ ) => . ... </k> [owise]
 ```
 
 ### Function Declaration
@@ -839,7 +840,7 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
          <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
 
     rule <k> table { MIN MAX } => . ... </k>
-         <tabIndices> .Map => (NEXTIDX |-> NEXTADDR) </tabIndices>
+         <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
          <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
@@ -880,7 +881,7 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          <memIndices> MAP </memIndices> requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <memIndices> .Map => (NEXTIDX |-> NEXTADDR) </memIndices>
+         <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
