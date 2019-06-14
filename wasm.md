@@ -1018,6 +1018,9 @@ The maximum of table size is 2^32 bytes.
 
 ### Data Segments
 
+Memories can be initialized with data, specified as a list of bytes together with an offset.
+The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
+
 ```k
     syntax Instr ::= Data
     syntax Data ::= "(" "data" MemId DataOffset DataStrings ")"
