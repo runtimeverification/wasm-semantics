@@ -1022,17 +1022,18 @@ The maximum of table size is 2^32 bytes.
     syntax Instr ::= Data
     syntax Data ::= "(" "data" MemId DataOffset DataStrings ")"
                   | "(" "data"       DataOffset DataStrings ")"
-                  |     "data" "{" DataStrings "}"
- // -------------------------------------------------------
-    // The MemId must always resolve to 0, due to validation, so we discard it.
-    rule <k> ( data _   OFFSET STRINGS ) => ( data   OFFSET STRINGS ) ... </k>
-    rule <k> ( data     OFFSET STRINGS ) =>  OFFSET ~> data { STRINGS } ... </k>
+                  |     "data" "{" MemId DataStrings "}"
+ // ----------------------------------------------------
+    // Default to memory 0.
+    rule <k> ( data       OFFSET STRINGS ) => ( data 0 OFFSET STRINGS ) ... </k>
+    rule <k> ( data MEMID OFFSET STRINGS ) => OFFSET ~> data { MEMID STRINGS } ... </k>
 
-    rule <k> data { STRING } => . ... </k>
-         <stack> < i32 > OFFSET : STACK => STACK </stack>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+    // For now, deal only with memory 0.
+    rule <k> data { 0 STRING } => . ... </k>
+         <valstack> < i32 > OFFSET : STACK => STACK </valstack>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr> ADDR </mAddr>
            <mdata>   DATA
                   => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING) -Int 1) [ OFFSET := #dataStrings2int(STRING)]
            </mdata>
@@ -1045,7 +1046,7 @@ The maximum of table size is 2^32 bytes.
  // -------------------------------------------------------
     rule #lengthData((data  _:MemId _ SS)) => #dataStringsLength(SS)
     rule #lengthData((data          _ SS)) => #dataStringsLength(SS) 
-    rule #lengthData( data {          SS}) => #dataStringsLength(SS)
+    rule #lengthData( data { _        SS}) => #dataStringsLength(SS)
 
     rule I1 /ceilInt I2 => (I1 /Int I2) +Int #if I1 modInt I2 ==Int 0 #then 0 #else 1 #fi
 ```
