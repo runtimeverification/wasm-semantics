@@ -97,7 +97,12 @@ view_klab() {
 # Main
 # ----
 
-run_command="$1" ; shift
+
+if [[ ! -z ${1:-} ]] && [[ ! -z ${2:-} ]] && [[ ! "$1" == '--help' ]]; then
+    run_command="$1"; shift
+else
+    run_command="help"
+fi
 
 if [[ "$run_command" == 'help' ]]; then
     echo "
