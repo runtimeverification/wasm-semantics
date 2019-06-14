@@ -350,10 +350,10 @@ Repo layout
 ---------
 
 * Literate programming style in markdown with K code blocks.
-* `wasm.md`: The main part of the semantics 
+* `wasm.md`: The main part of the semantics
 * `data.md`: Some helper data structures.
 * `test.md`: Some useful assertion functions.
-* `kwasm-lemmas.md`: A trusted base for proving. 
+* `kwasm-lemmas.md`: A trusted base for proving.
 
 Proving
 =======
@@ -391,4 +391,3 @@ References
 ----------
 
 \tiny
-
