@@ -700,9 +700,16 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
-    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </k>
-         <types> TYPES </types> requires #reverseLookup ( TYPES , asFuncType(TDECLS) ) ==Int -1
-    rule <k> #checkTypeUse ( _ ) => . ... </k> [owise]
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls )
+       => #if   notBool asFuncType(TDECLS) in values(TYPES)
+          #then (type (func TDECLS))
+          #else .K
+          #fi
+         ...
+         </k>
+         <types> TYPES </types>
+    rule <k> #checkTypeUse ( (type TFIDF) )        => . ... </k>
+    rule <k> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </k>
 ```
 
 ### Function Declaration
