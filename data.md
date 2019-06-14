@@ -238,29 +238,22 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 Strings
 -------
 
-Memory initializatin data can be specified as a string, or even several consequtive strings.
-
-Each character is interpreted as its UTF-8 byte sequence, except for a single `\` followed by two hexadecimal characters, which is then interpreted as a hexadecimal representation of a byte.
-`\` can also be used to escape special characters, represent tabs, etc., in which case their UTF-8 byte representation is used, e.g., `\t` represents the byte value 9.
-Finally, `\u{ ... }` where the bracket contents is some hexadecimal number, is meant to encode UTF-8 characters outside of the range of a single byte.
-
-```k
-    syntax DataString
-    syntax DataStrings ::= List{DataString, ""}
- // -------------------------------------------
-```
-
-In the end, the given initializer strings should be transformed into a list of bytes.
-We represent bytes as integers between 0 and 255 (inclusive).
+Wasm memories can be initialized with a segment of data, sepcified as a string.
+The string considered to represent the sequence of UTF-8 bytes that encode it.
+The exception if for characters that are explicitly escaped which can represent bytes in hexadecimal form.
+To avoid dealing with these data strings in K, we use a list of integers as an initializer.
+Later on, we could either convert from strings to integers directly in K, or with the help of an external parser.
 
 ```k
-    syntax Ints ::= List{Int, ""}
-    syntax Int  ::= #dataStrings2int   ( DataStrings ) [function]
-    syntax Int  ::= #length            ( Ints        ) [function]
- // -------------------------------------------------------------
-    rule #dataStringsLength(DS) => #length(#dataStrings2bytes(DS))
-    rule #length(.Ints) => 0
-    rule #length(_ IS)  => 1 +Int #length(IS)
+    syntax DataStrings ::= List{Int, ""}
+    syntax Int ::= #dataStrings2int   (DataStrings) [function]
+    syntax Int ::= #dataStringsLength (DataStrings) [function]
+ // ----------------------------------------------------------
+    rule #dataStringsLength(  .DataStrings) => 0
+    rule #dataStringsLength(I DS          ) => 1 +Int #dataStringsLength(DS)
+
+    rule #dataStrings2int(  .DataStrings) => 0
+    rule #dataStrings2int(I DS          ) => I +Int #dataStrings2int(DS)
 ```
 
 Byte Map
