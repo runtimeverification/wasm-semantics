@@ -325,4 +325,3 @@ When needed, add the sorts for `table`, `mem` and `global` as well.
 ```k
 endmodule
 ```
-
