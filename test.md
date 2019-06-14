@@ -103,7 +103,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 
 ### Type Assertions
 
-`#assertType` checks that whether a type is allocated to the correct index.
+`#assertType` checks whether a type is allocated to the correct index.
 `#assertNextTypeIdx` checks whether the number of types are allocated correctly.
 
 ```k
@@ -153,7 +153,6 @@ This asserts related operation about tables.
          <nextTabAddr> NEXT </nextTabAddr>
 
     rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
-         <nextTabIdx> NEXT => NEXT -Int 1 </nextTabIdx>
          <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
@@ -182,7 +181,6 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <nextMemIdx> NEXT => NEXT -Int 1 </nextMemIdx>
          <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
@@ -227,8 +225,6 @@ The modules are cleaned all together after the test file is executed.
            <funcIds> _ => .Map </funcIds>
            <nextTypeIdx>   _ => 0 </nextTypeIdx>
            <nextFuncIdx>   _ => 0 </nextFuncIdx>
-           <nextTabIdx>    _ => 0 </nextTabIdx>
-           <nextMemIdx>    _ => 0 </nextMemIdx>
            <nextGlobalIdx> _ => 0 </nextGlobalIdx>
            <types>         _ => .Map </types>
            <funcIndices>   _ => .Map </funcIndices>

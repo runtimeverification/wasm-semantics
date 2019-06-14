@@ -25,8 +25,6 @@ Configuration
         <funcIds>       .Map </funcIds> //this is mapping from identifier to index
         <nextTypeIdx>   0    </nextTypeIdx>
         <nextFuncIdx>   0    </nextFuncIdx>
-        <nextTabIdx>    0    </nextTabIdx>
-        <nextMemIdx>    0    </nextMemIdx>
         <nextGlobalIdx> 0    </nextGlobalIdx>
         <types>         .Map </types>
         <funcIndices>   .Map </funcIndices> //this is mapping from index to address
@@ -841,7 +839,6 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
          <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
 
     rule <k> table { MIN MAX } => . ... </k>
-         <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
          <tabIndices> .Map => (NEXTIDX |-> NEXTADDR) </tabIndices>
          <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
@@ -883,7 +880,6 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
          <memIndices> MAP </memIndices> requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <nextMemIdx> NEXTIDX => NEXTIDX +Int 1 </nextMemIdx>
          <memIndices> .Map => (NEXTIDX |-> NEXTADDR) </memIndices>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
