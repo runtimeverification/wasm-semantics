@@ -326,11 +326,3 @@ When needed, add the sorts for `table`, `mem` and `global` as well.
 endmodule
 ```
 
-```k
-module WASM-STRING
-
-  // TODO: Implement actual regex,this is for general strings.
-    syntax DataString ::= r"[\\\"](([^\\\"\\n\\r\\\\])|([\\\\][nrtf\\\"\\\\])|([\\\\][x][0-9a-fA-F]{2})|([\\\\][u][0-9a-fA-F]{4})|([\\\\][U][0-9a-fA-F]{8}))*[\\\"]" [token,avoid]
-
-endmodule
-```
