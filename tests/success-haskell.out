@@ -5,34 +5,70 @@
   <deterministicMemoryGrowth>
     true
   </deterministicMemoryGrowth>
-  <stack>
-    .Stack
-  </stack>
+  <valstack>
+    .ValStack
+  </valstack>
   <curFrame>
-    <addrs>
-      .Map
-    </addrs>
     <locals>
       .Map
     </locals>
-    <moduleInst>
-      <globals>
-        .Map
-      </globals>
-      <memAddrs>
-        .Map
-      </memAddrs>
-    </moduleInst>
   </curFrame>
+  <nextFreshId>
+    0
+  </nextFreshId>
+  <moduleInst>
+    <funcIds>
+      .Map
+    </funcIds>
+    <nextFuncIdx>
+      0
+    </nextFuncIdx>
+    <nextTabIdx>
+      0
+    </nextTabIdx>
+    <nextMemIdx>
+      0
+    </nextMemIdx>
+    <nextGlobalIdx>
+      0
+    </nextGlobalIdx>
+    <funcIndices>
+      .Map
+    </funcIndices>
+    <tabIndices>
+      .Map
+    </tabIndices>
+    <memIndices>
+      .Map
+    </memIndices>
+    <globalIndices>
+      .Map
+    </globalIndices>
+    <exports>
+      .Map
+    </exports>
+  </moduleInst>
   <mainStore>
+    <nextFuncAddr>
+      0
+    </nextFuncAddr>
     <funcs>
       .FuncDefCellMap
     </funcs>
+    <nextTabAddr>
+      0
+    </nextTabAddr>
+    <tabs>
+      .TabInstCellMap
+    </tabs>
     <nextMemAddr>
       0
     </nextMemAddr>
     <mems>
       .MemInstCellMap
     </mems>
+    <globals>
+      .GlobalInstCellMap
+    </globals>
   </mainStore>
 </generatedTop>

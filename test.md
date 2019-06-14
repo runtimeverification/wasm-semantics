@@ -40,23 +40,23 @@ This asserts that a `trap` was just thrown.
     rule <k> trap ~> #assertTrap _ => . ... </k>
 ```
 
-### Stack Assertions
+### ValStack Assertions
 
-These functions make assertions about the state of the `<stack>` cell.
+These functions make assertions about the state of the `<valstack>` cell.
 
 ```k
-    syntax Assertion ::= "#assertTopStack"        Val   String
-                       | "#assertTopStackExactly" Val   String
-                       | "#assertStack"           Stack String
- // ----------------------------------------------------------
-    rule <k> #assertTopStack S                      _ => . ... </k> <stack> S              : STACK => STACK </stack>
-    rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <stack> < ITYPE > VAL' : STACK => STACK </stack>
+    syntax Assertion ::= "#assertTopStack"        Val      String
+                       | "#assertTopStackExactly" Val      String
+                       | "#assertStack"           ValStack String
+ // -------------------------------------------------------------
+    rule <k> #assertTopStack S                      _ => . ... </k> <valstack> S              : VALSTACK => VALSTACK </valstack>
+    rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL' : VALSTACK => VALSTACK </valstack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'
 
-    rule <k> #assertTopStackExactly < ITYPE:IValType > VAL _ => . ... </k> <stack> < ITYPE > VAL : STACK => STACK </stack>
+    rule <k> #assertTopStackExactly < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL : VALSTACK => VALSTACK </valstack>
 
-    rule <k> #assertStack .Stack      _   => .                                               ... </k>
-    rule <k> #assertStack (S : STACK) STR => #assertTopStack S STR ~> #assertStack STACK STR ... </k>
+    rule <k> #assertStack .ValStack      _   => .                                               ... </k>
+    rule <k> #assertStack (S : VALSTACK) STR => #assertTopStack S STR ~> #assertStack VALSTACK STR ... </k>
 ```
 
 ### Variables Assertions
@@ -71,7 +71,35 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
-         <globals> ... (INDEX |-> VALUE => .Map) ... </globals>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <globals>
+           ( <globalInst>
+               <gAddr>  GADDR </gAddr>
+               <gValue> VALUE </gValue>
+               ...
+             </globalInst>
+          => .Bag
+           )
+           ...
+         </globals>
+```
+
+`init_global` is a helper function that helps us to declare a new global variable.
+
+```k
+    syntax Instr ::= "init_global" Int Int
+ // --------------------------------------
+    rule <k> init_global INDEX GADDR => . ... </k>
+         <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
+         <globals>
+           ( .Bag =>
+             <globalInst>
+               <gAddr> GADDR </gAddr>
+               ...
+             </globalInst>
+           )
+           ...
+         </globals>
 ```
 
 ### Function Assertions
@@ -79,14 +107,17 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Assertion ::= "#assertFunction" FunctionName FuncType VecType String
- // ---------------------------------------------------------------------------
-    rule <k> #assertFunction FNAME FTYPE LTYPE _ => . ... </k>
+    syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
+ // ----------------------------------------------------------------------------
+    rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
-               <fname>  FNAME </fname>
-               <ftype>  FTYPE </ftype>
-               <flocal> LTYPE </flocal>
+               <fAddr>  FADDR </fAddr>
+               <fType>  FTYPE </fType>
+               <fLocal> LTYPE </fLocal>
                ...
              </funcDef>
           => .Bag
@@ -95,23 +126,53 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
          </funcs>
 ```
 
+### Table Assertions
+
+This asserts related operation about tables.
+
+```k
+    syntax Assertion ::= "#assertEmptyTable"    Int MaxBound String
+                       | "#assertEmptyTableAux" Int Int MaxBound String
+ // -------------------------------------------------------------------
+    rule <k> #assertEmptyTable SIZE MAX MSG => #assertEmptyTableAux (NEXT -Int 1) SIZE MAX MSG ... </k>
+         <nextTabAddr> NEXT </nextTabAddr>
+
+    rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
+         <nextTabIdx> NEXT => NEXT -Int 1 </nextTabIdx>
+         <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
+         <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
+         <tabs>
+           ( <tabInst>
+               <tAddr>   ADDR  </tAddr>
+               <tmax>    MAX   </tmax>
+               <tsize>   SIZE  </tsize>
+               <tdata>   .Map  </tdata>
+               ...
+             </tabInst>
+          => .Bag
+           )
+           ...
+         </tabs>
+```
+
 ### Memory Assertions
 
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertEmptyMemory"    Int MemBound String
-                       | "#assertEmptyMemoryAux" Int Int MemBound String
+    syntax Assertion ::= "#assertEmptyMemory"    Int MaxBound String
+                       | "#assertEmptyMemoryAux" Int Int MaxBound String
  // --------------------------------------------------------------------
     rule <k> #assertEmptyMemory SIZE MAX MSG => #assertEmptyMemoryAux (NEXT -Int 1) SIZE MAX MSG ... </k>
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <memAddrs> (0 |-> ADDR) => .Map </memAddrs>
+         <nextMemIdx> NEXT => NEXT -Int 1 </nextMemIdx>
+         <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>
-               <memAddr> ADDR  </memAddr>
+               <mAddr>   ADDR  </mAddr>
                <mmax>    MAX   </mmax>
                <msize>   SIZE  </msize>
                <mdata>   .Map  </mdata>
@@ -125,15 +186,51 @@ This checks that the last allocated memory has the given size and max value.
     syntax Assertion ::= "#assertMemoryData" "(" Int "," Int ")" String
  // -------------------------------------------------------------------
     rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <mems>
            <memInst>
-             <memAddr> ADDR </memAddr>
+             <mAddr> ADDR </mAddr>
              <mdata> ...  KEY |-> VAL => .Map ... </mdata>
                ...
            </memInst>
            ...
          </mems>
+```
+
+Clear Module Instances
+----------------------
+
+The modules are cleaned all together after the test file is executed.
+
+```k
+    syntax Instr ::= "#clearModules"
+ // --------------------------------
+    rule <k> #clearModules => . ... </k>
+         <nextFreshId> _ => 0 </nextFreshId>
+         <moduleInst>
+           <funcIds> _ => .Map </funcIds>
+           <nextFuncIdx>   _ => 0 </nextFuncIdx>
+           <nextTabIdx>    _ => 0 </nextTabIdx>
+           <nextMemIdx>    _ => 0 </nextMemIdx>
+           <nextGlobalIdx> _ => 0 </nextGlobalIdx>
+           <funcIndices>   _ => .Map </funcIndices>
+           <tabIndices>    _ => .Map </tabIndices>
+           <memIndices>    _ => .Map </memIndices>
+           <globalIndices> _ => .Map </globalIndices>
+           <exports>       _ => .Map </exports>
+         </moduleInst>
+```
+
+Function Invocation
+-------------------
+
+We allow to `invoke` a function by its exported name in the test code.
+
+```k
+    syntax Instr ::= "(" "invoke" String ")"
+ // ----------------------------------------
+    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
+         <exports> ... ENAME |-> TFIDX ... </exports>
 ```
 
 ```k

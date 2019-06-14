@@ -2,19 +2,19 @@
 
 (i32.const 15)
 (drop)
-#assertStack .Stack "drop i32"
+#assertStack .ValStack "drop i32"
 
 (i64.const 15)
 (drop)
-#assertStack .Stack "drop i64"
+#assertStack .ValStack "drop i64"
 
 (f32.const 15.0)
 (drop)
-#assertStack .Stack "drop f32"
+#assertStack .ValStack "drop f32"
 
 (f64.const 15.0)
 (drop)
-#assertStack .Stack "drop f64"
+#assertStack .ValStack "drop f64"
 
 (i32.const 5)
 (drop (i32.const 1))
@@ -63,3 +63,5 @@
 #assertTrap                "select strict in condition"
 #assertTopStack < i64 > -1 "select strict in condition"
 #assertTopStack < i64 >  1 "select strict in condition"
+
+#clearModules

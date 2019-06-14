@@ -27,12 +27,23 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
 ### Identifiers
 
 As defined in the WebAssembly spec, the syntax of identifiers is as follows.
+Also we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
 
 **TODO**: Unsupported characters: `.:^@`
 
 ```k
-    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
+    syntax Identifier ::= #freshId ( Int )
+                        | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
+```
+
+### Text Format Indices
+
+Indices in the text format could be either an `address` or an `identifier.
+
+```k
+    syntax TextFormatIdx ::= Int | Identifier
+ // -----------------------------------------
 ```
 
 WebAssembly Types
@@ -102,6 +113,13 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i32) => 4294967296
     rule #pow1(i64) => 9223372036854775808
     rule #pow (i64) => 18446744073709551616
+```
+
+### Type Mutability
+
+```k
+    syntax Mut ::= ".Mut" | "const" | "var"
+ // ---------------------------------------
 ```
 
 Values
@@ -187,15 +205,15 @@ Data Structures
 ---------------
 
 WebAssembly is a stack-machine, so here we provide the stack to operate over.
-Operator `_++_` implements an append operator for sort `Stack`.
+Operator `_++_` implements an append operator for sort `ValStack`.
 
 ```k
-    syntax Stack ::= ".Stack"
-                   | Val ":" Stack
-                   | Stack "++" Stack [function]
- // --------------------------------------------
-    rule .Stack       ++ STACK' => STACK'
-    rule (SI : STACK) ++ STACK' => SI : (STACK ++ STACK')
+    syntax ValStack ::= ".ValStack"
+                   | Val      ":"  ValStack
+                   | ValStack "++" ValStack [function]
+ // --------------------------------------------------
+    rule .ValStack       ++ VALSTACK' => VALSTACK'
+    rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')
 ```
 
 `#zero` will create a specified stack of zero values in a given type.
@@ -203,18 +221,18 @@ Operator `_++_` implements an append operator for sort `Stack`.
 `#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
 
 ```k
-    syntax Stack ::= #zero ( ValTypes )         [function]
-                   | #take ( ValTypes , Stack ) [function]
-                   | #drop ( ValTypes , Stack ) [function]
- // ------------------------------------------------------
-    rule #zero(.ValTypes)             => .Stack
+    syntax ValStack ::= #zero ( ValTypes )         [function]
+                   | #take ( ValTypes , ValStack ) [function]
+                   | #drop ( ValTypes , ValStack ) [function]
+ // ---------------------------------------------------------
+    rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(.ValTypes,   _)                           => .Stack
-    rule #take(TYPE VTYPES, < TYPE > VAL:Number : STACK) => < TYPE > VAL : #take(VTYPES, STACK)
+    rule #take(.ValTypes,   _)                              => .ValStack
+    rule #take(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
 
-    rule #drop(.ValTypes,   STACK)                       => STACK
-    rule #drop(TYPE VTYPES, < TYPE > VAL:Number : STACK) => #drop(VTYPES, STACK)
+    rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
+    rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 ```
 
 Strings
@@ -303,6 +321,19 @@ The function interprets the range of bytes as little-endian.
       requires START >=Int END
     rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END)
       requires START <Int  END
+```
+
+External Values
+---------------
+
+An `external value` is the runtime representation of an entity that can be `imported` or `exported`.
+It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
+Currently only `function` is used as external value.
+When needed, add the sorts for `table`, `mem` and `global` as well.
+
+```k
+    syntax Externval ::= "func" TextFormatIdx
+ // -----------------------------------------
 ```
 
 ```k

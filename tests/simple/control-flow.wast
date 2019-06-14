@@ -9,7 +9,7 @@ block [ i32 i32 i32 ]
     (i32.const 2)
     (i32.const 3)
 end
-#assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .Stack "block 1"
+#assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .ValStack "block 1"
 
 block [ i32 i32 ]
     (i32.const 1)
@@ -17,14 +17,14 @@ block [ i32 i32 ]
     (i32.const 3)
     (drop)
 end
-#assertStack < i32 > 2 : < i32 > 1 : .Stack "block 2"
+#assertStack < i32 > 2 : < i32 > 1 : .ValStack "block 2"
 
 block [ i32 i32 ]
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
 end
-#assertStack < i32 > 3 : < i32 > 2 : .Stack "block 3 (invalid)"
+#assertStack < i32 > 3 : < i32 > 2 : .ValStack "block 3 (invalid)"
 
 (block (result i32)
     (i32.const 1)
@@ -36,7 +36,7 @@ end
     (i32.const 1)
     (i64.const 5)
 )
-#assertStack < i64 > 5 : < i32 > 1 : .Stack "block with named result 2"
+#assertStack < i64 > 5 : < i32 > 1 : .ValStack "block with named result 2"
 
 ;; Breaks
 
@@ -48,7 +48,7 @@ block [ ]
     (i32.const 4)
     (br 0)
 end
-#assertStack < i32 > 2 : < i32 > 1 : .Stack "br 1"
+#assertStack < i32 > 2 : < i32 > 1 : .ValStack "br 1"
 
 (i32.const 1)
 (i32.const 2)
@@ -62,7 +62,7 @@ block [ ]
     (i32.const 6)
     (br 0)
 end
-#assertStack < i32 > 2 : < i32 > 1 : .Stack "br 2"
+#assertStack < i32 > 2 : < i32 > 1 : .ValStack "br 2"
 
 (i32.const 1)
 (i32.const 2)
@@ -76,7 +76,7 @@ block [ i32 i32 ]
     (i32.const 6)
     (br 0)
 end
-#assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 3"
+#assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .ValStack "br 3"
 
 (i32.const 1)
 (i32.const 2)
@@ -90,7 +90,7 @@ block [ i32 i32 ]
     (i32.const 6)
     (br 0)
 end
-#assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br 4"
+#assertStack < i32 > 5 : < i32 > 4 : < i32 > 2 : < i32 > 1 : .ValStack "br 4"
 
 (i32.const 1)
 (i32.const 2)
@@ -101,7 +101,7 @@ block [ i32 ]
     (i32.const 4)
     (br 0)
 end
-#assertStack < i32 > 4 : < i32 > 2 : < i32 > 1 : .Stack "br_if 1 false"
+#assertStack < i32 > 4 : < i32 > 2 : < i32 > 1 : .ValStack "br_if 1 false"
 
 (i32.const 1)
 (i32.const 2)
@@ -112,7 +112,7 @@ block [ i32 ]
     (i32.const 4)
     (br 0)
 end
-#assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .Stack "br_if 1 true"
+#assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .ValStack "br_if 1 true"
 
 (i32.const 1)
 (i32.const 2)
@@ -123,7 +123,7 @@ block [ ]
     (i32.const 4)
     (br 0)
 end
-#assertStack < i32 > 2 : < i32 > 1 : .Stack "br_if 2 true"
+#assertStack < i32 > 2 : < i32 > 1 : .ValStack "br_if 2 true"
 
 ;; Conditional
 
@@ -141,11 +141,11 @@ end
 
 (i32.const -1)
 (if [ i32 ] (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
-#assertStack < i32 > 1 : < i32 > -1 : .Stack "if folded true"
+#assertStack < i32 > 1 : < i32 > -1 : .ValStack "if folded true"
 
 (i32.const -1)
 (if [ i32 ] (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
-#assertStack < i32 > 2 : < i32 > -1 : .Stack "if folded false"
+#assertStack < i32 > 2 : < i32 > -1 : .ValStack "if folded false"
 
 (if [ i32 ] (i32.const 1) (then (unreachable)) (else (i32.const 1)))
 #assertTrap "if lazy first branch true"
@@ -164,25 +164,22 @@ end
 
 ;; Looping
 
-init_locals < i32 > 10 : < i32 > 0 : .Stack
-block [ ]
-    loop [ ]
-        (local.get 0)
-        (local.get 1)
-        (i32.add)
-        (local.set 1)
-        (local.get 0)
-        (i32.const 1)
-        (i32.sub)
-        (local.tee 0)
-        (i32.eqz)
-        (br_if 1)
-    end
+init_locals < i32 > 10 : < i32 > 0 : .ValStack
+loop [ ]
+    (local.get 0)
+    (local.get 1)
+    (i32.add)
+    (local.set 1)
+    (local.get 0)
+    (i32.const 1)
+    (i32.sub)
+    (local.tee 0)
+    (br_if 0)
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop"
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
 
-init_locals < i32 > 10 : < i32 > 0 : .Stack
+init_locals < i32 > 10 : < i32 > 0 : .ValStack
 block [ ]
     ( loop [ ]
         (local.get 0)
@@ -195,6 +192,7 @@ block [ ]
         (local.tee 0)
         (i32.eqz)
         (br_if 1)
+        (br 0)
     )
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop concrete syntax"
@@ -207,3 +205,5 @@ end
 ;; block [ i32 i32 ]
 ;;     (i32.const 7)
 ;; end
+
+#clearModules

@@ -15,34 +15,59 @@ Configuration
     configuration
       <k> $PGM:Instrs </k>
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
-      <stack> .Stack </stack>
+      <valstack> .ValStack </valstack>
       <curFrame>
-        <addrs>  .Map </addrs>
         <locals> .Map </locals>
-        <moduleInst>
-          <globals>  .Map  </globals>
-          <memAddrs> .Map  </memAddrs>
-        </moduleInst>
       </curFrame>
+      <nextFreshId> 0 </nextFreshId>
+      <moduleInst>
+        <funcIds> .Map </funcIds> //this is mapping from identifier to index
+        <nextFuncIdx>   0 </nextFuncIdx>
+        <nextTabIdx>    0 </nextTabIdx>
+        <nextMemIdx>    0 </nextMemIdx>
+        <nextGlobalIdx> 0 </nextGlobalIdx>
+        <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+        <tabIndices>    .Map </tabIndices>
+        <memIndices>    .Map </memIndices>
+        <globalIndices> .Map </globalIndices>
+        <exports>       .Map </exports>
+      </moduleInst>
       <mainStore>
+        <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
           <funcDef multiplicity="*" type="Map">
-            <fname>  .FunctionName  </fname>
-            <fcode>  .Instrs:Instrs </fcode>
-            <ftype>  .Type          </ftype>
-            <flocal> .Type          </flocal>
-            <faddrs> .Map           </faddrs>
+            <fAddr>    0              </fAddr>
+            <fCode>    .Instrs:Instrs </fCode>
+            <fType>    .Type          </fType>
+            <fLocal>   .Type          </fLocal>
+            <fModInst> 0              </fModInst>
           </funcDef>
         </funcs>
+        <nextTabAddr> 0 </nextTabAddr>
+        <tabs>
+          <tabInst multiplicity="*" type="Map">
+            <tAddr>   0         </tAddr>
+            <tmax>    .MaxBound </tmax>
+            <tsize>   0         </tsize>
+            <tdata>   .Map      </tdata>
+          </tabInst>
+        </tabs>
         <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <memAddr> 0         </memAddr>
-            <mmax>    .MemBound </mmax>
+            <mAddr>   0         </mAddr>
+            <mmax>    .MaxBound </mmax>
             <msize>   0         </msize>
             <mdata>   .Map      </mdata>
           </memInst>
         </mems>
+        <globals>
+          <globalInst multiplicity="*" type="Map">
+            <gAddr>  0         </gAddr>
+            <gValue> undefined </gValue>
+            <gMut>   .Mut      </gMut>
+          </globalInst>
+        </globals>
       </mainStore>
 ```
 
@@ -69,20 +94,20 @@ WebAssembly instructions are space-separated lists of instructions.
  // -----------------------------------------------------
     rule          <k> .Instrs           => .       ... </k>
     rule          <k> I:Instr .Instrs   => I       ... </k>
-    rule [step] : <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .List
+    rule [step] : <k> I:Instr IS:Instrs => I ~> IS ... </k> requires IS =/=K .Instrs
 ```
 
 ### Traps
 
-When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<stack>` cell).
+When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<valstack>` cell).
 If the value is the special `undefined`, then `trap` is generated instead.
 
 ```k
     syntax Instr ::= "trap"
  // -----------------------
     rule <k> undefined => trap ... </k>
-    rule <k> V:Val     => .    ... </k>
-         <stack> STACK => V : STACK </stack>
+    rule <k>        V:Val    => .        ... </k>
+         <valstack> VALSTACK => V : VALSTACK </valstack>
       requires V =/=K undefined
 ```
 
@@ -105,9 +130,21 @@ Function `#unsigned` is called on integers to allow programs to use negative num
     rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL        ... </k>
 ```
 
+### Text Format Conventions
+
+The text format allows the use of symbolic `identifiers` in place of `indices`.
+To resolve these `identifiers` into concrete `indices`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
+
+```k
+    syntax Int ::= #ContextLookup ( Map , TextFormatIdx ) [function]
+ // ----------------------------------------------------------------
+    rule #ContextLookup(IDS:Map, I:Int) => I
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+```
+
 ### Unary Operators
 
-When a unary operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+When a unary operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
 A `UnOp` operator always produces a result of the same type as its operand.
 
 ```k
@@ -121,12 +158,12 @@ A `UnOp` operator always produces a result of the same type as its operand.
     rule <k> ( ITYPE . UOP:IUnOp I:Instr ) => I ~> ( ITYPE . UOP ) ... </k>
 
     rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP C1 ... </k>
-         <stack> < ITYPE > C1 : STACK => STACK </stack>
+         <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Binary Operators
 
-When a binary operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+When a binary operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 A `BinOp` operator always produces a result of the same type as its operands.
 
 ```k
@@ -140,12 +177,12 @@ A `BinOp` operator always produces a result of the same type as its operands.
     rule <k> ( ITYPE . BOP:IBinOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . BOP ) ... </k>
 
     rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
-         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK </stack>
+         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Test Operations
 
-When a test operator is the next instruction, the single argument is loaded from the `<stack>` automatically.
+When a test operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
 Test operations consume one operand and produce a bool, which is an `i32` value.
 
 ```k
@@ -154,12 +191,12 @@ Test operations consume one operand and produce a bool, which is an `i32` value.
     rule <k> ( ITYPE . TOP:ITestOp I:Instr ) => I ~> ( ITYPE . TOP ) ... </k>
 
     rule <k> ( ITYPE . TOP:ITestOp ) => ITYPE . TOP C1 ... </k>
-         <stack> < ITYPE > C1 : STACK => STACK </stack>
+         <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Comparison Operations
 
-When a comparison operator is the next instruction, the two arguments are loaded from the `<stack>` automatically.
+When a comparison operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 Comparisons consume two operands and produce a bool, which is an `i32` value.
 
 
@@ -174,7 +211,7 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
     rule <k> ( ITYPE . ROP:IRelOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . ROP ) ... </k>
 
     rule <k> ( ITYPE . ROP:IRelOp ) => ITYPE . ROP C1 C2 ... </k>
-         <stack> < ITYPE > C2 : < ITYPE > C1 : STACK => STACK  </stack>
+         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK  </valstack>
 ```
 
 ### Conversion Operations
@@ -191,7 +228,7 @@ The target type is before the `.`, and the source type is after the `_`.
     rule <k> ( ITYPE . CONVOP:ConvOp I:Instr ) => I ~> ( ITYPE . CONVOP ) ... </k>
 
     rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1  ... </k>
-         <stack> < SRCTYPE > C1 : STACK => STACK </stack>
+         <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
       requires #convSourceType(CONVOP) ==K SRCTYPE
 
     syntax IValType ::= #convSourceType ( ConvOp ) [function]
@@ -365,10 +402,10 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
     rule #convSourceType(extend_i32_s) => i32
 ```
 
-Stack Operations
-----------------
+ValStack Operations
+-------------------
 
-Operator `drop` removes a single item from the `<stack>`.
+Operator `drop` removes a single item from the `<valstack>`.
 The `select` operator picks one of the second or third stack values based on the first.
 
 ```k
@@ -378,7 +415,7 @@ The `select` operator picks one of the second or third stack values based on the
     rule <k> ( drop I ) => I ~> ( drop ) ... </k>
 
     rule <k> ( drop ) => . ... </k>
-         <stack> _ : STACK => STACK </stack>
+         <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     syntax Instr ::= "(" "select" Instr Instr Instr ")"
                    | "(" "select"                   ")"
@@ -386,9 +423,9 @@ The `select` operator picks one of the second or third stack values based on the
     rule <k> ( select B1 B2 C ) => B1 ~> B2 ~> C ~> ( select ) ... </k>
 
     rule <k> ( select ) => . ... </k>
-         <stack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : STACK
-              => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : STACK
-         </stack>
+         <valstack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
+              => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
+         </valstack>
 ```
 
 Structured Control Flow
@@ -418,10 +455,10 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax Label ::= "label" VecType "{" Instrs "}" Stack
- // -----------------------------------------------------
-    rule <k> label [ TYPES ] { IS } STACK' => IS ... </k>
-         <stack> STACK => #take(TYPES, STACK) ++ STACK' </stack>
+    syntax Label ::= "label" VecType "{" Instrs "}" ValStack
+ // --------------------------------------------------------
+    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax Instr ::= "(" "block" FuncDecls Instrs ")"
                    | "block" VecType Instrs "end"
@@ -431,8 +468,8 @@ It simply executes the block then records a label with an empty continuation.
          ...
          </k>
 
-    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } STACK ... </k>
-         <stack> STACK => .Stack </stack>
+    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -444,12 +481,20 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     syntax Instr ::= "(" "br" Int ")"
  // ---------------------------------
     rule <k> ( br N ) ~> (IS:Instrs => .) ... </k>
-    rule <k> ( br N ) ~> L:Label => #if N ==Int 0 #then L #else ( br N -Int 1 ) #fi ... </k>
+    rule <k> ( br N ) ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+      requires N ==Int 0
+    rule <k> ( br N ) ~> L:Label => ( br N -Int 1 ) ... </k>
+      requires N >Int 0
 
     syntax Instr ::= "(" "br_if" Int ")"
  // ------------------------------------
-    rule <k> ( br_if N ) => #if VAL =/=Int 0 #then ( br N ) #else .K #fi ... </k>
-         <stack> < TYPE > VAL : STACK => STACK </stack>
+    rule <k> ( br_if N ) => ( br N ) ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         requires VAL =/=Int 0
+    rule <k> ( br_if N ) => . ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         requires VAL  ==Int 0
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -464,18 +509,18 @@ Finally, we have the conditional and loop instructions.
 
     rule <k> ( if VTYPE IS else IS' end )
           => #if VAL =/=Int 0 #then IS #else IS' #fi
-          ~> label VTYPE { .Instrs } STACK
+          ~> label VTYPE { .Instrs } VALSTACK
          ...
          </k>
-         <stack> < i32 > VAL : STACK => .Stack </stack>
+         <valstack> < i32 > VAL : VALSTACK => .ValStack </valstack>
 
     syntax Instr ::= "loop" VecType Instrs "end"
                    | "(" "loop" VecType Instrs ")"
  // ----------------------------------------------
     rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
 
-    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } STACK ... </k>
-         <stack> STACK => .Stack </stack>
+    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
 ```
 
 Memory Operators
@@ -487,18 +532,18 @@ The various `init_local` variants assist in setting up the `locals` cell.
 
 ```k
     syntax Instr ::=  "init_local"  Int Val
-                   |  "init_locals"     Stack
-                   | "#init_locals" Int Stack
- // -----------------------------------------
+                   |  "init_locals"     ValStack
+                   | "#init_locals" Int ValStack
+ // --------------------------------------------
     rule <k> init_local INDEX VALUE => . ... </k>
          <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
 
     rule <k> init_locals VALUES => #init_locals 0 VALUES ... </k>
 
-    rule <k> #init_locals _ .Stack => . ... </k>
-    rule <k> #init_locals N (VALUE : STACK)
+    rule <k> #init_locals _ .ValStack => . ... </k>
+    rule <k> #init_locals N (VALUE : VALSTACK)
           => init_local N VALUE
-          ~> #init_locals (N +Int 1) STACK
+          ~> #init_locals (N +Int 1) VALSTACK
           ...
           </k>
 ```
@@ -511,90 +556,59 @@ The `*_local` instructions are defined here.
                    | "(" "local.tee" Int ")"
  // ----------------------------------------
     rule <k> ( local.get INDEX ) => . ... </k>
-         <stack> STACK => VALUE : STACK </stack>
+         <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> VALUE ... </locals>
 
     rule <k> ( local.set INDEX ) => . ... </k>
-         <stack> VALUE : STACK => STACK </stack>
+         <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 
     rule <k> ( local.tee INDEX ) => . ... </k>
-         <stack> VALUE : STACK </stack>
+         <valstack> VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 ```
 
 ### Globals
 
 ```k
-    syntax Instr ::= "init_global" Int Val
-                   | "(" "global.get" Int ")"
-                   | "(" "global.set" Int ")"
- // -----------------------------------------
-    rule <k> init_global INDEX VALUE => . ... </k>
-         <globals> GLOBALS => GLOBALS [ INDEX <- VALUE ] </globals>
-
+    syntax Instr ::= "(" "global.get" Int       ")"
+                   | "(" "global.set" Int       ")"
+                   | "(" "global.set" Int Instr ")"
+ // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
-         <stack> STACK => VALUE : STACK </stack>
-         <globals> ... INDEX |-> VALUE ... </globals>
+         <valstack> VALSTACK => VALUE : VALSTACK </valstack>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <globalInst>
+           <gAddr>  GADDR </gAddr>
+           <gValue> VALUE </gValue>
+           ...
+         </globalInst>
 
     rule <k> ( global.set INDEX ) => . ... </k>
-         <stack> VALUE : STACK => STACK </stack>
-         <globals> ... INDEX |-> (_ => VALUE) ... </globals>
+         <valstack> VALUE : VALSTACK => VALSTACK </valstack>
+         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <globalInst>
+           <gAddr>  GADDR      </gAddr>
+           <gValue> _ => VALUE </gValue>
+           ...
+         </globalInst>
+
+    rule <k> ( global.set INDEX INSTR ) => INSTR ~> ( global.set INDEX ) ... </k>
 ```
 
 Function Declaration and Invocation
 -----------------------------------
 
-### Function Declaration
-
-Function declarations can look quite different depending on which fields are ommitted and what the context is.
-Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+### Function Types Gathering
 
 ```k
-    syntax FunctionName ::= ".FunctionName" | Int | Identifier
- // ----------------------------------------------------------
-
     syntax TypeKeyWord ::= "param" | "result" | "local"
  // ---------------------------------------------------
 
     syntax FuncDecl  ::= "(" FuncDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "export" FunctionName
     syntax FuncDecls ::= List{FuncDecl, ""} [klabel(listFuncDecl)]
  // --------------------------------------------------------------
-
-    syntax Instr ::= "(" "func"              FuncDecls Instrs ")"
-                   | "(" "func" FunctionName FuncDecls Instrs ")"
-                   | "func" FunctionName "::" FuncType VecType "{" Instrs "}"
- // -------------------------------------------------------------------------
-    rule <k> ( func FDECLS INSTRS )
-          => func gatherExportedName(FDECLS) :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
-         ...
-         </k>
-
-    rule <k> ( func FNAME FDECLS INSTRS )
-          => func FNAME :: gatherFuncType(FDECLS) gatherTypes(local, FDECLS) { INSTRS }
-         ...
-         </k>
-
-    rule <k> func FNAME :: FTYPE LTYPE { INSTRS } => . ... </k>
-         <funcs>
-           ( .Bag
-          => <funcDef>
-               <fname>  FNAME  </fname>
-               <fcode>  INSTRS </fcode>
-               <ftype>  FTYPE  </ftype>
-               <flocal> LTYPE  </flocal>
-               ...
-             </funcDef>
-           )
-           ...
-         </funcs>
-
-    syntax FunctionName ::= gatherExportedName ( FuncDecls ) [function]
- // -------------------------------------------------------------------
-    rule gatherExportedName(export FNAME   FDECLS:FuncDecls) => FNAME
-    rule gatherExportedName(FDECL:FuncDecl FDECLS:FuncDecls) => gatherExportedName(FDECLS) [owise]
 
     syntax FuncType ::= gatherFuncType ( FuncDecls ) [function]
  // -----------------------------------------------------------
@@ -612,6 +626,55 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
       => #gatherTypes(TKW ,             FDECLS           , VTYPES + VTYPES')
 ```
 
+### Function Export Definition
+
+This section introduce how we expand the folded form of function export.
+Currently, in the expanded form, the `export`s will come after the definition of function.
+
+```k
+    syntax FuncExport  ::= "(" "export" String ")"
+    syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)]
+```
+
+### Function Declaration
+
+Function declarations can look quite different depending on which fields are ommitted and what the context is.
+Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+
+```k
+    syntax Instr ::= "(" "func"            FuncExports FuncDecls Instrs ")"
+                   | "(" "func" Identifier FuncExports FuncDecls Instrs ")"
+ // -----------------------------------------------------------------------
+    rule <k> ( func FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => ( func #freshId(NEXTID) FEXPO FDECLS INSTRS ) ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
+    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports FDECLS:FuncDecls INSTRS:Instrs )
+          => ( export ENAME ( func FNAME ) )
+          ~> ( func FNAME FEXPO FDECLS INSTRS )
+          ...
+         </k>
+
+    rule <k> ( func FNAME:Identifier .FuncExports FDECLS:FuncDecls INSTRS:Instrs ) => . ... </k>
+         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
+         <funcs>
+           ( .Bag
+          => <funcDef>
+               <fAddr>  NEXTADDR                   </fAddr>
+               <fCode>  INSTRS                     </fCode>
+               <fType>  gatherFuncType(FDECLS)     </fType>
+               <fLocal> gatherTypes(local, FDECLS) </fLocal>
+               ...
+             </funcDef>
+           )
+           ...
+         </funcs>
+```
+
 ### Function Invocation/Return
 
 Frames are used to store function return points.
@@ -619,40 +682,106 @@ Similar to labels, they sit on the instruction stack (the `<k>` cell), and `retu
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" ValTypes Stack Map
- // -------------------------------------------
-    rule <k> frame TRANGE STACK' LOCAL' => . ... </k>
-         <stack> STACK => #take(TRANGE, STACK) ++ STACK' </stack>
+    syntax Frame ::= "frame" ValTypes ValStack Map
+ // ----------------------------------------------
+    rule <k> frame TRANGE VALSTACK' LOCAL' => . ... </k>
+         <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
 
-    syntax Instr ::= "invoke" FunctionName
- // --------------------------------------
-    rule <k> invoke FNAME
-          => init_locals #take(TDOMAIN, STACK) ++ #zero(TLOCALS)
+    syntax Instr ::= "(" "invoke" Int ")"
+ // -------------------------------------
+    rule <k> ( invoke FADDR )
+          => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
-          ~> frame TRANGE #drop(TDOMAIN, STACK) LOCAL
+          ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
           ...
           </k>
-         <stack>  STACK => .Stack </stack>
+         <valstack>  VALSTACK => .ValStack </valstack>
          <curFrame>
-           <addrs> _ => ADDRS </addrs>
            <locals> LOCAL => .Map </locals>
            ...
          </curFrame>
          <funcDef>
-           <fname>  FNAME                     </fname>
-           <fcode>  INSTRS                    </fcode>
-           <ftype>  [ TDOMAIN ] -> [ TRANGE ] </ftype>
-           <flocal> [ TLOCALS ]               </flocal>
-           <faddrs> ADDRS                     </faddrs>
+           <fAddr>  FADDR                     </fAddr>
+           <fCode>  INSTRS                    </fCode>
+           <fType>  [ TDOMAIN ] -> [ TRANGE ] </fType>
+           <fLocal> [ TLOCALS ]               </fLocal>
            ...
          </funcDef>
 
-    syntax Instr ::= "return"
- // -------------------------
-    rule <k> return ~> (IS:Instrs => .)  ... </k>
-    rule <k> return ~> (L:Label   => .)  ... </k>
-    rule <k> (return => .) ~> FR:Frame ... </k>
+    syntax Instr ::= "(" "return" ")"
+ // ---------------------------------
+    rule <k> (return) ~> (IS:Instrs => .)  ... </k>
+    rule <k> (return) ~> (L:Label   => .)  ... </k>
+    rule <k> ((return) => .) ~> FR:Frame ... </k>
+```
+
+### Function Call
+
+`call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
+
+```k
+    syntax Instr ::= "(" "call" TextFormatIdx ")"
+ // ---------------------------------------------
+    rule <k> ( call TFIDX ) => ( invoke FADDR:Int ) ... </k>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+```
+
+### Export
+
+Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
+
+```k
+    syntax Instr ::= "(" "export" String "(" Externval ")" ")"
+ // ----------------------------------------------------------
+    rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
+         <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
+```
+
+Table
+-----
+
+When implementing a table, we need a `FuncElem` type to define the type of elements inside a `tableinst`.
+
+```k
+    syntax FuncElem ::= ".FuncElem" | Int
+ // -------------------------------------
+```
+
+The allocation of a new `tableinst`. Currently at most one table may be defined or imported in a single module.
+
+```k
+    syntax Instr ::= "(" "table"                  ")"
+                   | "(" "table"     Int          ")" // Size only
+                   | "(" "table"     Int Int      ")" // Min and max.
+                   |     "table" "{" Int MaxBound "}"
+ // -------------------------------------------------
+    rule <k> ( table                 )       => table { 0   .MaxBound } ... </k>
+    rule <k> ( table MIN:Int         ):Instr => table { MIN .MaxBound } ... </k>
+      requires MIN <=Int #maxTableSize()
+    rule <k> ( table MIN:Int MAX:Int )       => table { MIN MAX       } ... </k>
+      requires MIN <=Int #maxTableSize()
+       andBool MAX <=Int #maxTableSize()
+
+    rule <k> table { _ _ } => trap ... </k>
+         <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
+
+    rule <k> table { MIN MAX } => . ... </k>
+         <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
+         <tabIndices> .Map => (NEXTIDX |-> NEXTADDR) </tabIndices>
+         <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
+         <tabs>
+           ( .Bag
+          => <tabInst>
+               <tAddr>   NEXTADDR </tAddr>
+               <tmax>    MAX      </tmax>
+               <tsize>   MIN      </tsize>
+               <tdata>   .Map     </tdata>
+             </tabInst>
+           )
+           ...
+         </tabs>
 ```
 
 Memory
@@ -669,10 +798,10 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
                    | "(" "memory"     Int          ")" // Size only
                    | "(" "memory"     Int Int      ")" // Min and max.
                    | "(" "memory"     Data         ")"
-                   |     "memory" "{" Int MemBound "}"
+                   |     "memory" "{" Int MaxBound "}"
  // --------------------------------------------------
-    rule <k> ( memory                 ) => memory { 0                 .MemBound         }         ... </k>
-    rule <k> ( memory MIN:Int         ) => memory { MIN               .MemBound         }         ... </k>
+    rule <k> ( memory                 ) => memory { 0   .MaxBound } ... </k>
+    rule <k> ( memory MIN:Int         ) => memory { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
     rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN               MAX               }         ... </k>
       requires MIN <=Int #maxMemorySize()
@@ -681,18 +810,19 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
       requires #lengthData(DATA) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
-         <memAddrs> MAP </memAddrs> requires MAP =/=K .Map
+         <memIndices> MAP </memIndices> requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <memAddrs>    .Map => (0 |-> NEXT)  </memAddrs>
-         <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
+         <nextMemIdx> NEXTIDX => NEXTIDX +Int 1 </nextMemIdx>
+         <memIndices> .Map => (NEXTIDX |-> NEXTADDR) </memIndices>
+         <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
           => <memInst>
-               <memAddr> NEXT </memAddr>
-               <mmax>    MAX  </mmax>
-               <msize>   MIN  </msize>
-               <mdata>   .Map </mdata>
+               <mAddr>   NEXTADDR </mAddr>
+               <mmax>    MAX      </mmax>
+               <msize>   MIN      </msize>
+               <mdata>   .Map     </mdata>
              </memInst>
            )
            ...
@@ -716,14 +846,14 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <k> ( ITYPE . SOPM:StoreOpM I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOPM ) ... </k>
 
     rule <k> ( ITYPE . SOP:StoreOp               ) => ITYPE . SOP  IDX                          VAL ... </k>
-         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+         <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
     rule <k> ( ITYPE . SOP:StoreOp MEMARG:MemArg ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
-         <stack> < ITYPE > VAL : < i32 > IDX : STACK => STACK </stack>
+         <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH -Int 1) [EA := VAL ] </mdata>
            ...
@@ -731,9 +861,9 @@ The value is encoded as bytes and stored at the "effective address", which is th
          requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -762,9 +892,9 @@ The value is fethced from the "effective address", which is the address given on
     rule <k> ( ITYPE . LOPM:LoadOpM I:Instr ) => I ~> ( ITYPE . LOPM ) ... </k>
 
     rule <k> ( ITYPE . LOP:LoadOp              ) => ITYPE . LOP  IDX                          ... </k>
-         <stack> < i32 > IDX : STACK => STACK </stack>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
     rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
-         <stack> < i32 > IDX : STACK => STACK </stack>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> load { ITYPE WIDTH EA SIGN }
           => < ITYPE > #if SIGN ==K Signed
@@ -773,9 +903,9 @@ The value is fethced from the "effective address", which is the address given on
                        #fi
          ...
          </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            <mdata>   DATA </mdata>
            ...
@@ -783,9 +913,9 @@ The value is fethced from the "effective address", which is the address given on
       requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -827,9 +957,9 @@ The `size` operation returns the size of the memory, measured in pages.
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
-           <memAddr> ADDR </memAddr>
+           <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
            ...
          </memInst>
@@ -846,12 +976,12 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
  // ---------------------------------------------------------------------------------
     rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
     rule <k> ( memory.grow ) => grow N ... </k>
-         <stack> < i32 > N : STACK => STACK </stack>
+         <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memIndices> 0 |-> ADDR </memIndices>
          <memInst>
-           <memAddr> ADDR  </memAddr>
+           <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>
            <msize>   SIZE => #if #growthAllowed(SIZE +Int N, MAX) #then SIZE +Int N #else SIZE #fi </msize>
            ...
@@ -860,27 +990,30 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> grow N => < i32 > #unsigned(i32, -1) </k>
          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
 
-    syntax Bool ::= #growthAllowed(Int, MemBound) [function]
+    syntax Bool ::= #growthAllowed(Int, MaxBound) [function]
  // --------------------------------------------------------
-    rule #growthAllowed(SIZE, .MemBound) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MemBound) andBool SIZE <=Int I
+    rule #growthAllowed(SIZE, .MaxBound) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MaxBound) andBool SIZE <=Int I
 ```
 
 Memories can optionally have a max size which the memory may not grow beyond.
 
 ```k
-    syntax MemBound ::= Int | ".MemBound"
+    syntax MaxBound ::= Int | ".MaxBound"
 ```
 
 However, the absolute max allowed size if 2^16 pages.
 Incidentally, the page size is 2^16 bytes.
+The maximum of table size is 2^32 bytes.
 
 ```k
     syntax Int ::= #pageSize()      [function]
     syntax Int ::= #maxMemorySize() [function]
+    syntax Int ::= #maxTableSize()  [function]
  // ------------------------------------------
-    rule #maxMemorySize() => 65536
     rule #pageSize()      => 65536
+    rule #maxMemorySize() => 65536
+    rule #maxTableSize()  => 4294967296
 ```
 
 ### Data Segments
