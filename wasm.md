@@ -1029,9 +1029,9 @@ The maximum of table size is 2^32 bytes.
     rule <k> ( data MEMID OFFSET STRINGS ) => OFFSET ~> data { MEMID STRINGS } ... </k>
 
     // For now, deal only with memory 0.
-    rule <k> data { 0 STRING } => . ... </k>
+    rule <k> data { MEMIDX STRING } => . ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <memIndices> MEMIDX |-> ADDR </memIndices>
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata>   DATA
