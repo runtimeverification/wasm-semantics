@@ -803,7 +803,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     rule <k> ( memory                 ) => memory { 0   .MaxBound } ... </k>
     rule <k> ( memory MIN:Int         ) => memory { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN               MAX               }         ... </k>
+    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( DATA:Data )   ) => memory { #lengthDataPages(DATA) #lengthDataPages(DATA) } ~> DATA ... </k>
