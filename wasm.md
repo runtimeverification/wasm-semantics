@@ -806,8 +806,8 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN               MAX               }         ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-    rule <k> ( memory ( DATA:Data )   ) => memory { #lengthData(DATA) #lengthData(DATA) } ~> DATA ... </k>
-      requires #lengthData(DATA) <=Int #maxMemorySize()
+    rule <k> ( memory ( DATA:Data )   ) => memory { #lengthDataPages(DATA) #lengthDataPages(DATA) } ~> DATA ... </k>
+      requires #lengthDataPages(DATA) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
          <memIndices> MAP </memIndices> requires MAP =/=K .Map
@@ -1040,12 +1040,12 @@ The maximum of table size is 2^32 bytes.
            ...
          </memInst>
 
-    syntax Int ::= #lengthData        ( Data ) [function]
+    syntax Int ::= #lengthDataPages        ( Data ) [function]
                  | Int "/ceilInt" Int          [function]
  // -----------------------------------------------------
-    rule #lengthData((data  _:MemId _ SS)) => #dataStringsLength(SS)
-    rule #lengthData((data          _ SS)) => #dataStringsLength(SS) 
-    rule #lengthData( data { _        SS}) => #dataStringsLength(SS)
+    rule #lengthDataPages((data  _:MemId _ SS)) => #dataStringsLength(SS) /ceilInt #pageSize()
+    rule #lengthDataPages((data          _ SS)) => #dataStringsLength(SS) /ceilInt #pageSize()
+    rule #lengthDataPages( data { _        SS}) => #dataStringsLength(SS) /ceilInt #pageSize()
 
     rule I1 /ceilInt I2 => (I1 /Int I2) +Int #if I1 modInt I2 ==Int 0 #then 0 #else 1 #fi
 ```

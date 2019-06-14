@@ -253,7 +253,7 @@ Later on, we could either convert from strings to integers directly in K, or wit
     rule #dataStringsLength(I DS          ) => 1 +Int #dataStringsLength(DS)
 
     rule #dataStrings2int(  .DataStrings) => 0
-    rule #dataStrings2int(I DS          ) => I +Int #dataStrings2int(DS)
+    rule #dataStrings2int(I DS          ) => I +Int (256 *Int #dataStrings2int(DS))
 ```
 
 Byte Map
