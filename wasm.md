@@ -1035,8 +1035,8 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Instr ::= Data
-    syntax Data ::= "(" "data" MemId DataOffset DataStrings ")"
-                  | "(" "data"       DataOffset DataStrings ")"
+    syntax Data ::= "(" "data" MemId Offset DataStrings ")"
+                  | "(" "data"       Offset DataStrings ")"
                   |     "data" "{" MemId DataStrings "}"
  // ----------------------------------------------------
     // Default to memory 0.
