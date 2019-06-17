@@ -940,8 +940,8 @@ The `align` parameter is for optimization only and is not allowed to influence t
 
 ```k
     syntax MemArg ::= OffsetArg | AlignArg | OffsetArg AlignArg
-    syntax OffsetArg ::= "offset" "=" Int
-    syntax AlignArg  ::= "align"  "=" Int
+    syntax OffsetArg ::= "offset=" Int
+    syntax AlignArg  ::= "align="  Int
  // -------------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function]
