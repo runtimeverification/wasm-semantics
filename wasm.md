@@ -279,7 +279,6 @@ Note that we do not need to call `#chop` on the results here.
     rule <k> ITYPE . rem_s I1 I2
           => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2)) ... </k>
       requires I2 =/=Int 0
-       andBool I1 /Int I2 =/=Int #pow1(ITYPE)
     rule <k> ITYPE . rem_s I1 I2 => undefined ... </k> requires I2 ==Int 0
 ```
 
