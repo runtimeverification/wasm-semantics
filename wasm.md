@@ -1062,8 +1062,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
     syntax Int ::= Int "up/Int" Int [function] 
  // ------------------------------------------ 
-    rule I1 up/Int 1  => I1 
-    rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >Int 1
+    rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >Int 0
 ```
 
 Module Declaration
