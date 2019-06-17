@@ -794,10 +794,10 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
 **TODO**: Allow instantiation with data, and with an identifier and inline export and import.
 
 ```k
-    syntax Instr ::= "(" "memory"                  ")"
-                   | "(" "memory"     Int          ")" // Size only
-                   | "(" "memory"     Int Int      ")" // Min and max.
-                   | "(" "memory"     Data         ")"
+    syntax Instr ::= "(" "memory"                            ")"
+                   | "(" "memory"     Int                    ")" // Size only
+                   | "(" "memory"     Int Int                ")" // Min and max.
+                   | "(" "memory" "(" "data" DataStrings ")" ")"
                    |     "memory" "{" Int MaxBound "}"
  // --------------------------------------------------
     rule <k> ( memory                 ) => memory { 0   .MaxBound } ... </k>
@@ -806,8 +806,10 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-    rule <k> ( memory ( DATA:Data )   ) => memory { #lengthDataPages(DATA) #lengthDataPages(DATA) } ~> DATA ... </k>
-      requires #lengthDataPages(DATA) <=Int #maxMemorySize()
+    rule <k> ( memory ( data DS ) )
+          => ( memory ) memory { #lengthDataPages(DS) #lengthDataPages(DS) }
+          ~> ( data (i32.const 0) DS ) ... </k>
+      requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
          <memIndices> MAP </memIndices> requires MAP =/=K .Map
@@ -1056,11 +1058,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
            ...
          </memInst>
 
-    syntax Int ::= #lengthDataPages ( Data ) [function]
- // ---------------------------------------------------
-    rule #lengthDataPages((data  _:MemId _ SS)) => #dataStringsLength(SS) /ceilInt #pageSize()
-    rule #lengthDataPages((data          _ SS)) => #dataStringsLength(SS) /ceilInt #pageSize()
-    rule #lengthDataPages( data { _        SS}) => #dataStringsLength(SS) /ceilInt #pageSize()
+    syntax Int ::= #lengthDataPages ( DataStrings ) [function]
+ // ----------------------------------------------------------
+    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) /ceilInt #pageSize()
 
     syntax Int ::= Int "/ceilInt" Int [function]
  // --------------------------------------------
