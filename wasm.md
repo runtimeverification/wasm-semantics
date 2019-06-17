@@ -791,7 +791,7 @@ When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<mAddr>` cell is an array with at most one value, at index 0.
 
-**TODO**: Allow instantiation with data, and with an identifier and inline export and import.
+**TODO**: Allow instantiation with an identifier and inline export and import.
 
 ```k
     syntax Instr ::= "(" "memory"                            ")"
