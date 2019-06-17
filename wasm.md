@@ -1035,10 +1035,10 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Instr ::= Data
-    syntax Data ::= "(" "data" TextFormatIdx Offset DataStrings ")"
-                  | "(" "data"               Offset DataStrings ")"
-                  |     "data" "{" MemId DataStrings "}"
- // ----------------------------------------------------
+    syntax Data ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
+                  | "(" "data"                   Offset DataStrings ")"
+                  |     "data" "{" TextFormatIdx        DataStrings "}"
+ // -------------------------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET STRINGS ) => ( data 0 OFFSET STRINGS ) ... </k>
     rule <k> ( data MEMID    IS:Instr STRINGS ) => IS ~> data { MEMID STRINGS } ... </k>
