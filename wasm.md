@@ -807,7 +807,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) )
-          => ( memory ) memory { #lengthDataPages(DS) #lengthDataPages(DS) }
+          =>  memory { #lengthDataPages(DS) #lengthDataPages(DS) }
           ~> ( data (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
