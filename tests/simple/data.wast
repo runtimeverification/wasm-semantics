@@ -19,6 +19,13 @@
 #assertMemoryData (103, 77) "text to ascii M"
 #assertEmptyMemory 1 1 "memorys string length"
 
+(memory (data)))
+#assertEmptyMemory 0 0 "memorys string length"
+
+(memory (data 87)))
+#assertMemoryData (0, 87) "text to ascii W"
+#assertEmptyMemory 1 1 "memorys string length"
+
 (memory 0 1)
 (data (i32.const 100) 87 65 83 77)
 #assertMemoryData (100, 87) "text to ascii W"
