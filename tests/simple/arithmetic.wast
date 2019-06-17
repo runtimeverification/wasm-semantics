@@ -68,10 +68,30 @@
 (i32.div_s)
 #assertTopStack < i32 > 2 "div_s"
 
+(i32.const 91)
+(i32.const 13)
+(i32.rem_s)
+#assertTopStack <i32 > 0 "rem_s"
+
+(i32.const -91)
+(i32.const -13)
+(i32.rem_s)
+#assertTopStack <i32 > 0 "rem_s"
+
+(i32.const -1)
+(i32.const -3)
+(i32.rem_s)
+#assertTopStack <i32 > -1 "rem_s"
+
 (i32.const 10)
 (i32.const 0)
 (i32.rem_s)
 #assertTrap "rem_s"
+
+(i32.const #pow1(i32))
+(i32.const #pow(i32) -Int 1)
+(i32.div_s)
+#assertTopStack <i32 > 0 "rem_s"
 
 ;; The following tests were generated using the reference OCaml WASM interpreter.
 
