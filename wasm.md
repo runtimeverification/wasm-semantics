@@ -876,14 +876,15 @@ Memory
 
 When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
-Currently, only one memory may be accessible to a module, and thus the `<memAddrs>` cell is an array with at most one value, at index 0.
+Currently, only one memory may be accessible to a module, and thus the `<mAddr>` cell is an array with at most one value, at index 0.
 
-**TODO**: Allow instantiation with data, and with an identifier and inline export and import.
+**TODO**: Allow instantiation with an identifier and inline export and import.
 
 ```k
-    syntax Instr ::= "(" "memory"                  ")"
-                   | "(" "memory"     Int          ")" // Size only
-                   | "(" "memory"     Int Int      ")" // Min and max.
+    syntax Instr ::= "(" "memory"                            ")"
+                   | "(" "memory"     Int                    ")" // Size only
+                   | "(" "memory"     Int Int                ")" // Min and max.
+                   | "(" "memory" "(" "data" DataStrings ")" ")"
                    |     "memory" "{" Int MaxBound "}"
  // --------------------------------------------------
     rule <k> ( memory                 ) => memory { 0   .MaxBound } ... </k>
@@ -892,6 +893,10 @@ Currently, only one memory may be accessible to a module, and thus the `<memAddr
     rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
+    rule <k> ( memory ( data DS ) )
+          =>  memory { #lengthDataPages(DS) #lengthDataPages(DS) }
+          ~> ( data (i32.const 0) DS ) ... </k>
+      requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
          <memIndices> MAP </memIndices> requires MAP =/=K .Map
@@ -1020,16 +1025,16 @@ The `offset` parameter is added to the the address given on the stack, resulting
 The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
 
 ```k
-    syntax MemArg ::= Offset | Align | Offset Align
-    syntax Offset ::= "offset" "=" Int
-    syntax Align  ::= "align"  "=" Int
+    syntax MemArg ::= OffsetArg | AlignArg | OffsetArg AlignArg
+    syntax OffsetArg ::= "offset=" Int
+    syntax AlignArg  ::= "align="  Int
  // ----------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function]
  // -----------------------------------------------
-    rule #getOffset(           _:Align) => 0
-    rule #getOffset(offset= OS        ) => OS
-    rule #getOffset(offset= OS _:Align) => OS
+    rule #getOffset(           _:AlignArg) => 0
+    rule #getOffset(offset= OS           ) => OS
+    rule #getOffset(offset= OS _:AlignArg) => OS
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
@@ -1095,6 +1100,55 @@ The maximum of table size is 2^32 bytes.
     rule #pageSize()      => 65536
     rule #maxMemorySize() => 65536
     rule #maxTableSize()  => 4294967296
+```
+
+Initializers
+------------
+
+The `elem` and `data` initializers take an offset, which is an instruction.
+This is not optional.
+The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
+
+```k
+    syntax Offset ::= "(" "offset" Instr ")"
+                    | Instr
+```
+
+### Data Segments
+
+Memories can be initialized with data, specified as a list of bytes together with an offset.
+The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
+
+```k
+    syntax Instr ::= Data
+    syntax Data ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
+                  | "(" "data"                   Offset DataStrings ")"
+                  |     "data" "{" TextFormatIdx        DataStrings "}"
+ // -------------------------------------------------------------------
+    // Default to memory 0.
+    rule <k> ( data       OFFSET      STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
+    rule <k> ( data MEMID IS:Instr    STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data MEMID (offset IS) STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+
+    // For now, deal only with memory 0.
+    rule <k> data { MEMIDX STRING } => . ... </k>
+         <valstack> < i32 > OFFSET : STACK => STACK </valstack>
+         <memIndices> MEMIDX |-> ADDR </memIndices>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mdata>   DATA
+                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING) -Int 1) [ OFFSET := #dataStrings2int(STRING)]
+           </mdata>
+           ...
+         </memInst>
+
+    syntax Int ::= #lengthDataPages ( DataStrings ) [function]
+ // ----------------------------------------------------------
+    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) up/Int #pageSize()
+
+    syntax Int ::= Int "up/Int" Int [function] 
+ // ------------------------------------------ 
+    rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >Int 0
 ```
 
 Module Declaration

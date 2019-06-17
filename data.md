@@ -235,6 +235,28 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 ```
 
+Strings
+-------
+
+Wasm memories can be initialized with a segment of data, sepcified as a string.
+The string considered to represent the sequence of UTF-8 bytes that encode it.
+The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
+To avoid dealing with these data strings in K, we use a list of integers as an initializer.
+
+**TODO:** Either convert from strings to integers directly in K or with a pre-processor.
+
+```k
+    syntax DataStrings ::= List{Int, ""}
+    syntax Int ::= #dataStrings2int   (DataStrings) [function]
+    syntax Int ::= #dataStringsLength (DataStrings) [function]
+ // ----------------------------------------------------------
+    rule #dataStringsLength(  .DataStrings) => 0
+    rule #dataStringsLength(I DS          ) => 1 +Int #dataStringsLength(DS)
+
+    rule #dataStrings2int(  .DataStrings) => 0
+    rule #dataStrings2int(I DS          ) => I +Int (256 *Int #dataStrings2int(DS))
+```
+
 Byte Map
 --------
 
