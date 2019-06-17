@@ -1040,9 +1040,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
                   |     "data" "{" TextFormatIdx        DataStrings "}"
  // -------------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET STRINGS ) => ( data 0 OFFSET STRINGS ) ... </k>
-    rule <k> ( data MEMID    IS:Instr STRINGS ) => IS ~> data { MEMID STRINGS } ... </k>
-    rule <k> ( data MEMID (offset IS) STRINGS ) => IS ~> data { MEMID STRINGS } ... </k>
+    rule <k> ( data       OFFSET      STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
+    rule <k> ( data MEMID IS:Instr    STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data MEMID (offset IS) STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
 
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX STRING } => . ... </k>
