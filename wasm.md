@@ -1151,6 +1151,17 @@ The `data` initializer simply puts these bytes into the specified memory, starti
     rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >Int 0
 ```
 
+Start Function
+--------------
+
+```k
+    syntax Instr ::= "(" "start" TextFormatIdx ")"
+ // ----------------------------------------------
+    rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+```
+
 Module Declaration
 ------------------
 
