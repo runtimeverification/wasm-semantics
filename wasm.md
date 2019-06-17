@@ -1058,15 +1058,12 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
     syntax Int ::= #lengthDataPages ( DataStrings ) [function]
  // ----------------------------------------------------------
-    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) /ceilInt #pageSize()
+    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) up/Int/g #pageSize()
 
-    syntax Int ::= Int "/ceilInt" Int [function]
- // --------------------------------------------
-    rule I1 /ceilInt I2 => (I1 /Int I2)
-      requires I1 modInt I2  ==Int 0
-    rule I1 /ceilInt I2 => (I1 /Int I2) +Int 1
-      requires I1 modInt I2 =/=Int 0
-```
+    syntax Int ::= Int "up/Int" Int [function] 
+ // ------------------------------------------ 
+    rule I1 up/Int 1  => I1 
+    rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >```
 
 Module Declaration
 ------------------
