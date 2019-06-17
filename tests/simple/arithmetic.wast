@@ -90,8 +90,8 @@
 
 (i32.const #pow1(i32))
 (i32.const #pow(i32) -Int 1)
-(i32.div_s)
-#assertTopStack <i32 > 0 "rem_s"
+(i32.rem_s)
+#assertTopStack <i32 > 0 "rem_s edge case"
 
 ;; The following tests were generated using the reference OCaml WASM interpreter.
 
