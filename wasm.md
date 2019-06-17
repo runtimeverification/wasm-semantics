@@ -939,10 +939,10 @@ The `offset` parameter is added to the the address given on the stack, resulting
 The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
 
 ```k
-    syntax MemArg ::= Offset | Align | Offset Align
-    syntax Offset ::= "offset" "=" Int
-    syntax Align  ::= "align"  "=" Int
- // ----------------------------------
+    syntax MemArg ::= OffsetArg | AlignArg | OffsetArg AlignArg
+    syntax OffsetArg ::= "offset" "=" Int
+    syntax AlignArg  ::= "align"  "=" Int
+ // -------------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function]
  // -----------------------------------------------
@@ -1016,6 +1016,18 @@ The maximum of table size is 2^32 bytes.
     rule #maxTableSize()  => 4294967296
 ```
 
+Initializers
+------------
+
+The `elem` and `data` initializers take an offset, which is an instruction.
+This is not optional.
+The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
+
+```k
+    syntax Offset ::= "(" "offset" Instr ")"
+                    | Instr
+```
+
 ### Data Segments
 
 Memories can be initialized with data, specified as a list of bytes together with an offset.
@@ -1058,13 +1070,6 @@ The `data` initializer simply puts these bytes into the specified memory, starti
       requires I1 modInt I2 =/=Int 0
 ```
 
-The `data` instruction takes an offset, which is an instruction.
-This is not optional.
-
-```k
-    syntax DataOffset ::= "(" "offset" Instr ")"
-                        | Instr
-```
 
 Module Declaration
 ------------------
