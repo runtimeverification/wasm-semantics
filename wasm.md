@@ -257,10 +257,10 @@ Note that we do not need to call `#chop` on the results here.
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
     rule <k> ITYPE . div_u I1 I2 => < ITYPE > I1 /Int I2 ... </k> requires I2 =/=Int 0
-    rule <k> ITYPE . div_u I1 I2 => undefined ... </k>            requires I2  ==Int 0
+    rule <k> ITYPE . div_u I1 I2 => undefined            ... </k> requires I2  ==Int 0
 
     rule <k> ITYPE . rem_u I1 I2 => < ITYPE > I1 %Int I2 ... </k> requires I2 =/=Int 0
-    rule <k> ITYPE . rem_u I1 I2 => undefined ... </k>            requires I2  ==Int 0
+    rule <k> ITYPE . rem_u I1 I2 => undefined            ... </k> requires I2  ==Int 0
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
@@ -492,10 +492,10 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> ( br N ) ~> L:Label => ( br N -Int 1 ) ... </k>
       requires N >Int 0
 
-    syntax Instr ::= "(" "br_if" Int ")" | "(" "br_if" Int Instr ")"
- // ----------------------------------------------------------------
+    syntax Instr ::= "(" "br_if" Int Instr ")"
+                   | "(" "br_if" Int       ")"
+ // ------------------------------------------
     rule <k> ( br_if N I:Instr ) => I ~> ( br_if N ) ... </k>
- // ------------------------------------
     rule <k> ( br_if N ) => ( br N ) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
