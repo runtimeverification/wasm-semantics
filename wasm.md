@@ -1068,7 +1068,6 @@ The `data` initializer simply puts these bytes into the specified memory, starti
       requires I1 modInt I2 =/=Int 0
 ```
 
-
 Module Declaration
 ------------------
 
