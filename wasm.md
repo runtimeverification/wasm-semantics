@@ -1044,14 +1044,18 @@ The `data` initializer simply puts these bytes into the specified memory, starti
            ...
          </memInst>
 
-    syntax Int ::= #lengthDataPages        ( Data ) [function]
-                 | Int "/ceilInt" Int          [function]
- // -----------------------------------------------------
+    syntax Int ::= #lengthDataPages ( Data ) [function]
+ // ---------------------------------------------------
     rule #lengthDataPages((data  _:MemId _ SS)) => #dataStringsLength(SS) /ceilInt #pageSize()
     rule #lengthDataPages((data          _ SS)) => #dataStringsLength(SS) /ceilInt #pageSize()
     rule #lengthDataPages( data { _        SS}) => #dataStringsLength(SS) /ceilInt #pageSize()
 
-    rule I1 /ceilInt I2 => (I1 /Int I2) +Int #if I1 modInt I2 ==Int 0 #then 0 #else 1 #fi
+    syntax Int ::= Int "/ceilInt" Int [function]
+ // --------------------------------------------
+    rule I1 /ceilInt I2 => (I1 /Int I2)
+      requires I1 modInt I2  ==Int 0
+    rule I1 /ceilInt I2 => (I1 /Int I2) +Int 1
+      requires I1 modInt I2 =/=Int 0
 ```
 
 The `data` instruction takes an offset, which is an instruction.
