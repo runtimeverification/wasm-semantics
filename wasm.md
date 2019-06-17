@@ -256,26 +256,30 @@ Note that we do not need to call `#chop` on the results here.
 ```k
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule <k> ITYPE . div_u I1 I2 => #if I2 =/=Int 0 #then < ITYPE > (I1 /Int I2) #else undefined #fi ... </k>
-    rule <k> ITYPE . rem_u I1 I2 => #if I2 =/=Int 0 #then < ITYPE > (I1 %Int I2) #else undefined #fi ... </k>
+    rule <k> ITYPE . div_u I1 I2 => < ITYPE > I1 /Int I2 ... </k> requires I2 =/=Int 0
+    rule <k> ITYPE . div_u I1 I2 => undefined            ... </k> requires I2  ==Int 0
+
+    rule <k> ITYPE . rem_u I1 I2 => < ITYPE > I1 %Int I2 ... </k> requires I2 =/=Int 0
+    rule <k> ITYPE . rem_u I1 I2 => undefined            ... </k> requires I2  ==Int 0
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
     rule <k> ITYPE . div_s I1 I2
-          => #if I2 =/=Int 0 andBool (I1 =/=Int #pow1(ITYPE) orBool (I2 =/=Int #pow(ITYPE) -Int 1))
-                #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
-                #else undefined
-             #fi
-         ...
-         </k>
+          => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2)) ... </k>
+      requires I2 =/=Int 0
+       andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
+    // Division by 0.
+    rule <k> ITYPE . div_s I1 I2 => undefined ... </k>
+      requires I2 ==Int 0
+    // Division overflow.
+    rule <k> ITYPE . div_s I1 I2 => undefined ... </k>
+      requires I2 =/=Int 0
+       andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) ==Int #pow1(ITYPE)
 
     rule <k> ITYPE . rem_s I1 I2
-          => #if I2 =/=Int 0
-                #then < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
-                #else undefined
-             #fi
-         ...
-         </k>
+          => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2)) ... </k>
+      requires I2 =/=Int 0
+    rule <k> ITYPE . rem_s I1 I2 => undefined ... </k> requires I2 ==Int 0
 ```
 
 ### Predicates
@@ -487,14 +491,16 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> ( br N ) ~> L:Label => ( br N -Int 1 ) ... </k>
       requires N >Int 0
 
-    syntax Instr ::= "(" "br_if" Int ")"
- // ------------------------------------
+    syntax Instr ::= "(" "br_if" Int Instr ")"
+                   | "(" "br_if" Int       ")"
+ // ------------------------------------------
+    rule <k> ( br_if N I:Instr ) => I ~> ( br_if N ) ... </k>
     rule <k> ( br_if N ) => ( br N ) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
-         requires VAL =/=Int 0
+      requires VAL =/=Int 0
     rule <k> ( br_if N ) => . ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
-         requires VAL  ==Int 0
+      requires VAL  ==Int 0
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -503,16 +509,18 @@ Finally, we have the conditional and loop instructions.
     syntax Instr ::= "(" "if" VecType Instrs "else" Instrs "end" ")"
                    | "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
                    | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                   | "(" "if"         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
  // ----------------------------------------------------------------------------------------
     rule <k> ( if VTYPE C:Instrs ( then IS ) )              => C ~> ( if VTYPE IS else .Instrs end ) ... </k>
     rule <k> ( if VTYPE C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if VTYPE IS else IS'     end ) ... </k>
+    rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if [ .ValTypes ] IS else IS' end ) ... </k>
 
-    rule <k> ( if VTYPE IS else IS' end )
-          => #if VAL =/=Int 0 #then IS #else IS' #fi
-          ~> label VTYPE { .Instrs } VALSTACK
-         ...
-         </k>
-         <valstack> < i32 > VAL : VALSTACK => .ValStack </valstack>
+    rule <k> ( if VTYPE IS else IS' end ) => IS  ~> label VTYPE { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+       requires VAL =/=Int 0
+    rule <k> ( if VTYPE IS else IS' end ) => IS' ~> label VTYPE { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+       requires VAL  ==Int 0
 
     syntax Instr ::= "loop" VecType Instrs "end"
                    | "(" "loop" VecType Instrs ")"
@@ -552,17 +560,19 @@ The `*_local` instructions are defined here.
 
 ```k
     syntax Instr ::= "(" "local.get" Int ")"
-                   | "(" "local.set" Int ")"
-                   | "(" "local.tee" Int ")"
- // ----------------------------------------
+                   | "(" "local.set" Int ")" | "(" "local.set" Int Instr ")"
+                   | "(" "local.tee" Int ")" | "(" "local.tee" Int Instr ")"
+ //-------------------------------------------------------------------------
     rule <k> ( local.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> VALUE ... </locals>
 
+    rule <k> ( local.set INDEX I) => I ~> ( local.set INDEX ) ... </k>
     rule <k> ( local.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 
+    rule <k> ( local.tee INDEX I) => I ~> ( local.tee INDEX ) ... </k>
     rule <k> ( local.tee INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
