@@ -173,7 +173,8 @@ media: presentations reports
 presentations: TO_FORMAT=beamer
 presentations: media/201803-presentation-ethcc.pdf    \
                media/201903-presentation-edcon.pdf    \
-               media/201903-presentation-chalmers.pdf
+               media/201903-presentation-chalmers.pdf \
+               media/201906-presentation-wasm-on-blockchain.pdf
 
 reports: TO_FORMAT=latex
 reports: media/201903-report-chalmers.pdf
