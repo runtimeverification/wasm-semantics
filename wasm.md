@@ -829,8 +829,6 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
            )
            ...
          </mems>
-
-    syntax MemId ::= Identifier | Int
 ```
 
 The assorted store operations take an address of type `i32` and a value.
@@ -1037,8 +1035,8 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Instr ::= Data
-    syntax Data ::= "(" "data" MemId Offset DataStrings ")"
-                  | "(" "data"       Offset DataStrings ")"
+    syntax Data ::= "(" "data" TextFormatIdx Offset DataStrings ")"
+                  | "(" "data"               Offset DataStrings ")"
                   |     "data" "{" MemId DataStrings "}"
  // ----------------------------------------------------
     // Default to memory 0.
