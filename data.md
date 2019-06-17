@@ -240,9 +240,10 @@ Strings
 
 Wasm memories can be initialized with a segment of data, sepcified as a string.
 The string considered to represent the sequence of UTF-8 bytes that encode it.
-The exception if for characters that are explicitly escaped which can represent bytes in hexadecimal form.
+The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
-Later on, we could either convert from strings to integers directly in K, or with the help of an external parser.
+
+**TODO:** Either convert from strings to integers directly in K or with a pre-processor.
 
 ```k
     syntax DataStrings ::= List{Int, ""}
