@@ -1058,7 +1058,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
     syntax Int ::= #lengthDataPages ( DataStrings ) [function]
  // ----------------------------------------------------------
-    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) up/Int/g #pageSize()
+    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) up/Int #pageSize()
 
     syntax Int ::= Int "up/Int" Int [function] 
  // ------------------------------------------ 
