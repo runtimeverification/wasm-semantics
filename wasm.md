@@ -946,9 +946,9 @@ The `align` parameter is for optimization only and is not allowed to influence t
 
     syntax Int ::= #getOffset ( MemArg ) [function]
  // -----------------------------------------------
-    rule #getOffset(           _:Align) => 0
-    rule #getOffset(offset= OS        ) => OS
-    rule #getOffset(offset= OS _:Align) => OS
+    rule #getOffset(           _:AlignArg) => 0
+    rule #getOffset(offset= OS           ) => OS
+    rule #getOffset(offset= OS _:AlignArg) => OS
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
