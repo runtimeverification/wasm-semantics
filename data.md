@@ -299,7 +299,7 @@ The function interprets the range of bytes as little-endian.
     rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
 ```
 
-`#clearRange(MAP, START, END)` removes all entries from the map from `START` to `END`, inclusive.
+`#clearRange(MAP, START, END)` removes all entries from the map from `START` to `END`, exclusive.
 
 ```k
     syntax Map ::= #clearRange(Map, Int, Int) [function]

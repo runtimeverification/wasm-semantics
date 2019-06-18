@@ -941,7 +941,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
-           <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH -Int 1) [EA := VAL ] </mdata>
+           <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH) [EA := VAL ] </mdata>
            ...
          </memInst>
          requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
@@ -1137,7 +1137,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata>   DATA
-                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING) -Int 1) [ OFFSET := #dataStrings2int(STRING)]
+                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING)) [ OFFSET := #dataStrings2int(STRING)]
            </mdata>
            ...
          </memInst>
