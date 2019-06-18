@@ -856,26 +856,29 @@ Now it contains only Function exports. The exported functions should be able to 
 Table
 -----
 
-When implementing a table, we need a `FuncElem` type to define the type of elements inside a `tableinst`.
+When implementing a table, we first need to define the `TableElemType` type to define the type of elements inside a `tableinst`.
+Currently there is only one possiblt value for it which is "funcref".
 
 ```k
-    syntax FuncElem ::= ".FuncElem" | Int
- // -------------------------------------
+    syntax TableElemType ::= "funcref"
+ // ----------------------------------
 ```
 
-The allocation of a new `tableinst`. Currently at most one table may be defined or imported in a single module.
+The allocation of a new `tableinst`.
+Currently at most one table may be defined or imported in a single module.
+The only allowed `TableElemType` is "funcref", so we ignore this term in the reducted sort.
 
 ```k
     syntax Defn      ::= TableDefn
-    syntax TableDefn ::= "(" "table"                  ")"
-                       | "(" "table"     Int          ")" // Size only
-                       | "(" "table"     Int Int      ")" // Min and max.
-                       |     "table" "{" Int MaxBound "}"
- // -----------------------------------------------------
-    rule <k> ( table                 )       => table { 0   .MaxBound } ... </k>
-    rule <k> ( table MIN:Int         ):Defn  => table { MIN .MaxBound } ... </k>
+    syntax TableDefn ::= "(" "table"                  TableElemType ")"
+                       | "(" "table"     Int          TableElemType ")" // Size only
+                       | "(" "table"     Int Int      TableElemType ")" // Min and max.
+                       |     "table" "{" Int MaxBound TableElemType "}"
+ // -------------------------------------------------------------------
+    rule <k> ( table                 funcref )       => table { 0   .MaxBound } ... </k>
+    rule <k> ( table MIN:Int         funcref ):Defn  => table { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table MIN:Int MAX:Int )       => table { MIN MAX       } ... </k>
+    rule <k> ( table MIN:Int MAX:Int funcref )       => table { MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
