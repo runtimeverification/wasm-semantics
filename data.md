@@ -183,8 +183,8 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
     rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
     rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
 
-    rule #signedWidth(1,  N) => N            requires 0     <=Int N andBool N <Int 128
-    rule #signedWidth(1,  N) => N -Int 256   requires 128   <=Int N andBool N <Int 256
+    rule #signedWidth(1, N) => N            requires 0     <=Int N andBool N <Int 128
+    rule #signedWidth(1, N) => N -Int 256   requires 128   <=Int N andBool N <Int 256
     rule #signedWidth(2, N) => N            requires 0     <=Int N andBool N <Int 32768
     rule #signedWidth(2, N) => N -Int 65536 requires 32768 <=Int N andBool N <Int 65536
     rule #signedWidth(4, N) => #signed(i32, N)
@@ -299,7 +299,7 @@ The function interprets the range of bytes as little-endian.
     rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
 ```
 
-`#clearRange(MAP, START, END)` removes all entries from the map from `START` to `END`, exclusive.
+`#clearRange(MAP, START, END)` removes all entries in the map from `START` (inclusive) to `END` (exclusive).
 
 ```k
     syntax Map ::= #clearRange(Map, Int, Int) [function]
