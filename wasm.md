@@ -964,10 +964,10 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
-           <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH -Int 1) [EA := VAL ] </mdata>
+           <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH) [EA := VAL ] </mdata>
            ...
          </memInst>
-         requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
+         requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
          <memIndices> 0 |-> ADDR </memIndices>
@@ -976,19 +976,19 @@ The value is encoded as bytes and stored at the "effective address", which is th
            <msize>   SIZE </msize>
            ...
          </memInst>
-         requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
+         requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
     syntax StoreOp ::= "store" | "store8" | "store16" | "store32"
  // -------------------------------------------------------------
     rule <k> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL            } ... </k>
-    rule <k> _     . store8  EA VAL => store { 8                EA #wrap(8,  VAL) } ... </k>
-    rule <k> _     . store16 EA VAL => store { 16               EA #wrap(16, VAL) } ... </k>
-    rule <k> i64   . store32 EA VAL => store { 32               EA #wrap(32, VAL) } ... </k>
+    rule <k> _     . store8  EA VAL => store { 1                EA #wrap(8,  VAL) } ... </k>
+    rule <k> _     . store16 EA VAL => store { 2                EA #wrap(16, VAL) } ... </k>
+    rule <k> i64   . store32 EA VAL => store { 4                EA #wrap(32, VAL) } ... </k>
 ```
 
 The assorted load operations take an address of type `i32`.
 The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
-The value is fethced from the "effective address", which is the address given on the stack plus offset.
+The value is fetched from the "effective address", which is the address given on the stack plus offset.
 
 ```k
     syntax Instr ::= "(" IValType  "." LoadOpM Instr ")" | "(" IValType  "." LoadOpM ")"
@@ -1007,8 +1007,8 @@ The value is fethced from the "effective address", which is the address given on
 
     rule <k> load { ITYPE WIDTH EA SIGN }
           => < ITYPE > #if SIGN ==K Signed
-                           #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH /Int 8))
-                           #else #range(DATA, EA, WIDTH /Int 8)
+                           #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH))
+                           #else #range(DATA, EA, WIDTH)
                        #fi
          ...
          </k>
@@ -1019,7 +1019,7 @@ The value is fethced from the "effective address", which is the address given on
            <mdata>   DATA </mdata>
            ...
          </memInst>
-      requires (EA +Int WIDTH /Int 8) <=Int (SIZE *Int #pageSize())
+      requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
          <memIndices> 0 |-> ADDR </memIndices>
@@ -1028,19 +1028,19 @@ The value is fethced from the "effective address", which is the address given on
            <msize>   SIZE </msize>
            ...
          </memInst>
-      requires (EA +Int WIDTH /Int 8) >Int (SIZE *Int #pageSize())
+      requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
     syntax LoadOp ::= "load"
                     | "load8_u" | "load16_u" | "load32_u"
                     | "load8_s" | "load16_s" | "load32_s"
  // -----------------------------------------------------
     rule <k> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </k>
-    rule <k> ITYPE . load8_u  EA:Int => load { ITYPE 8                EA Unsigned } ... </k>
-    rule <k> ITYPE . load16_u EA:Int => load { ITYPE 16               EA Unsigned } ... </k>
-    rule <k> i64   . load32_u EA:Int => load { i64   32               EA Unsigned } ... </k>
-    rule <k> ITYPE . load8_s  EA:Int => load { ITYPE 8                EA Signed   } ... </k>
-    rule <k> ITYPE . load16_s EA:Int => load { ITYPE 16               EA Signed   } ... </k>
-    rule <k> i64   . load32_s EA:Int => load { i64   32               EA Signed   } ... </k>
+    rule <k> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </k>
+    rule <k> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </k>
+    rule <k> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </k>
+    rule <k> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </k>
+    rule <k> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </k>
+    rule <k> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </k>
 ```
 
 `MemArg`s can optionally be passed to `load` and `store` operations.
@@ -1160,7 +1160,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata>   DATA
-                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING) -Int 1) [ OFFSET := #dataStrings2int(STRING)]
+                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING)) [ OFFSET := #dataStrings2int(STRING)]
            </mdata>
            ...
          </memInst>
@@ -1172,6 +1172,17 @@ The `data` initializer simply puts these bytes into the specified memory, starti
     syntax Int ::= Int "up/Int" Int [function] 
  // ------------------------------------------ 
     rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >Int 0
+```
+
+Start Function
+--------------
+
+```k
+    syntax Instr ::= "(" "start" TextFormatIdx ")"
+ // ----------------------------------------------
+    rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
 Module Declaration

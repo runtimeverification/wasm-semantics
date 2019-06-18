@@ -108,4 +108,13 @@
 (i32.store8  (i32.const 2) (i32.const 0))
 #assertEmptyMemory 1 .MaxBound "Zero updates erases memory"
 
+(memory 1)
+(i64.store (i32.const 1) (i64.const #pow(i64) -Int 1))
+(i32.store8 (i32.const 2) (i32.const 0))
+(i32.store (i32.const 4) (i32.const 0))
+#assertMemoryData (1, 255) ""
+#assertMemoryData (3, 255) ""
+#assertMemoryData (8, 255) ""
+#assertEmptyMemory 1 .MaxBound "Zero updates don't over-erase"
+
 #clearModules

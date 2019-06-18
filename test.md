@@ -33,6 +33,7 @@ This will allow `trap` to "bubble up" (more correctly, to "consume the continuat
     syntax Auxil ::= Assertion
  // --------------------------
     rule <k> trap ~> (L:Label => .) ... </k>
+    rule <k> trap ~> (F:Frame => .) ... </k>
     rule <k> trap ~> (.Instrs => .) ... </k>
     rule <k> trap ~> (I:Instr => .) ... </k>
 
