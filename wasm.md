@@ -13,7 +13,7 @@ Configuration
 
 ```k
     configuration
-      <k> $PGM:Decls </k>
+      <k> $PGM:Stmts </k>
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
@@ -88,30 +88,32 @@ Instructions
 
 ### Sequencing
 
-WebAssembly code consists of sequences of declarations (`Decls`).
-We define 4 types of declarations:
+WebAssembly code consists of sequences of statements (`Stmts`).
+In this file we define 3 types of statements:
   - Instruction (`Instr`): Administrative or computational instructions. 
-  - Allocation  (`Alloc`): The declarations of `type`, `func`, `table`, `mem` etc.
-  - Auxiliary   (`Auxil`): Functions that only used in our KWASM semantics but not in the official specification including assertions, invoke a function by imported name, and maybe instantiate a module?
+  - Definitions (`Defn`) : The declarations of `type`, `func`, `table`, `mem` etc.
   - The Declaration of a module.
 
 ```k
-    syntax Decl   ::= Instr | Alloc
-    syntax Decls  ::= Instrs
-                    | Allocs
-                    | List{Decl , ""} [klabel(listDecl)]
-    syntax Instrs ::= List{Instr, ""} [klabel(listInstr)]
-    syntax Allocs ::= List{Alloc, ""} [klabel(listAlloc)]
- // -----------------------------------------------------
-    rule          <k> .Decls     :Decls  => .       ... </k>
-    rule          <k> (D .Decls) :Decls  => D       ... </k>
-    rule [step] : <k> (D DS)     :Decls  => D ~> DS ... </k> requires DS =/=K .Decls
-    rule          <k> .Instrs    :Instrs => .       ... </k>
-    rule          <k> (I .Instrs):Instrs => I       ... </k>
-    rule          <k> (I IS)     :Instrs => I ~> IS ... </k> requires IS =/=K .Instrs
-    rule          <k> .Allocs    :Allocs => .       ... </k>
-    rule          <k> (A .Allocs):Allocs => A       ... </k>
-    rule          <k> (A AS)     :Allocs => A ~> AS ... </k> requires AS =/=K .Allocs
+    syntax Stmt   ::= Instr | Defn 
+    syntax Instrs ::= List{Instr, ""}
+    syntax Defns  ::= List{Defn , ""}
+    syntax Stmts  ::= List{Stmt , ""}
+ // ---------------------------------
+    rule          <k> .Stmts     :Stmts  => .       ... </k>
+    rule          <k> (S .Stmts) :Stmts  => S       ... </k>
+    rule [step] : <k> (S SS)     :Stmts  => S ~> SS ... </k> requires SS =/=K .Stmts
+
+    syntax Stmts ::= #asStatements ( Instrs ) [function]
+                   | #asStatements ( Defns  ) [function]
+ // ----------------------------------------------------
+    rule <k> INSTRS:Instrs => #asStatements(INSTRS) ... </k>
+    rule <k>  DEFNS:Defns  => #asStatements(DEFNS)  ... </k>
+
+    rule #asStatements(.Instrs)           => .Stmts
+    rule #asStatements(I:Instr IS:Instrs) => I #asStatements(IS)
+    rule #asStatements(.Defns)            => .Stmts
+    rule #asStatements(D:Defn  DS:Defns ) => D #asStatements(DS)
 ```
 
 ### Traps
@@ -677,10 +679,10 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 Type could be declared explicitly and could optionally bind with an identifier.
 
 ```k
-    syntax Alloc     ::= TypeAlloc
-    syntax TypeAlloc ::= "(type" "(" "func" TypeDecls ")" ")"
-                       | "(type" Identifier "(" "func" TypeDecls ")" ")"
- // --------------------------------------------------------------------
+    syntax Defn     ::= TypeDefn
+    syntax TypeDefn ::= "(type" "(" "func" TypeDecls ")" ")"
+                      | "(type" Identifier "(" "func" TypeDecls ")" ")"
+ // -------------------------------------------------------------------
     rule <k> (type (func TDECLS:TypeDecls)) => . ... </k>
          <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
          <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
@@ -745,10 +747,10 @@ Function declarations can look quite different depending on which fields are omm
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 
 ```k
-    syntax Alloc     ::= FuncAlloc
-    syntax FuncAlloc ::= "(" "func"            FuncExports TypeUse LocalDecls Instrs ")"
-                       | "(" "func" Identifier FuncExports TypeUse LocalDecls Instrs ")"
- // ------------------------------------------------------------------------------------
+    syntax Defn     ::= FuncDefn
+    syntax FuncDefn ::= "(" "func"            FuncExports TypeUse LocalDecls Instrs ")"
+                      | "(" "func" Identifier FuncExports TypeUse LocalDecls Instrs ")"
+ // -----------------------------------------------------------------------------------
     rule <k> ( func FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS ) ...
          </k>
@@ -839,9 +841,9 @@ Unlike labels, only one frame can be "broken" through at a time.
 Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
 
 ```k
-    syntax Alloc       ::= ExportAlloc
-    syntax ExportAlloc ::= "(" "export" String "(" Externval ")" ")"
- // ----------------------------------------------------------------
+    syntax Defn       ::= ExportDefn
+    syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
+ // ---------------------------------------------------------------
     rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
          <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
 ```
@@ -859,14 +861,14 @@ When implementing a table, we need a `FuncElem` type to define the type of eleme
 The allocation of a new `tableinst`. Currently at most one table may be defined or imported in a single module.
 
 ```k
-    syntax Alloc      ::= TableAlloc
-    syntax TableAlloc ::= "(" "table"                  ")"
-                        | "(" "table"     Int          ")" // Size only
-                        | "(" "table"     Int Int      ")" // Min and max.
-                        |     "table" "{" Int MaxBound "}"
- // ------------------------------------------------------
+    syntax Defn      ::= TableDefn
+    syntax TableDefn ::= "(" "table"                  ")"
+                       | "(" "table"     Int          ")" // Size only
+                       | "(" "table"     Int Int      ")" // Min and max.
+                       |     "table" "{" Int MaxBound "}"
+ // -----------------------------------------------------
     rule <k> ( table                 )       => table { 0   .MaxBound } ... </k>
-    rule <k> ( table MIN:Int         ):Alloc => table { MIN .MaxBound } ... </k>
+    rule <k> ( table MIN:Int         ):Defn  => table { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
     rule <k> ( table MIN:Int MAX:Int )       => table { MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
@@ -901,13 +903,13 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
 **TODO**: Allow instantiation with an identifier and inline export and import.
 
 ```k
-    syntax Alloc       ::= MemoryAlloc
-    syntax MemoryAlloc ::= "(" "memory"                            ")"
-                         | "(" "memory"     Int                    ")" // Size only
-                         | "(" "memory"     Int Int                ")" // Min and max.
-                         | "(" "memory" "(" "data" DataStrings ")" ")"
-                         |     "memory" "{" Int MaxBound "}"
- // --------------------------------------------------------
+    syntax Defn       ::= MemoryDefn
+    syntax MemoryDefn ::= "(" "memory"                            ")"
+                        | "(" "memory"     Int                    ")" // Size only
+                        | "(" "memory"     Int Int                ")" // Min and max.
+                        | "(" "memory" "(" "data" DataStrings ")" ")"
+                        |     "memory" "{" Int MaxBound "}"
+ // -------------------------------------------------------
     rule <k> ( memory                 ) => memory { 0   .MaxBound } ... </k>
     rule <k> ( memory MIN:Int         ) => memory { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
@@ -1141,11 +1143,11 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax Alloc ::= DataAlloc
-    syntax DataAlloc ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
-                       | "(" "data"                   Offset DataStrings ")"
-                       |     "data" "{" TextFormatIdx        DataStrings "}"
- // ------------------------------------------------------------------------
+    syntax Defn  ::= DataDefn
+    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
+                      | "(" "data"                   Offset DataStrings ")"
+                      |     "data" "{" TextFormatIdx        DataStrings "}"
+ // -----------------------------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET      STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
     rule <k> ( data MEMID IS:Instr    STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
@@ -1179,9 +1181,9 @@ Currently, we support a single module.
 The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
 
 ```k
-    syntax Decl ::= "(" "module" Allocs ")"
- // ---------------------------------------
-    rule <k> ( module ALLOCS ) => ALLOCS ... </k>
+    syntax Stmt ::= "(" "module" Defns ")"
+ // --------------------------------------
+    rule <k> ( module DEFNS ) => DEFNS ... </k>
 ```
 
 ```k

@@ -10,6 +10,16 @@ module WASM-TEST
     imports WASM
 ```
 
+Auxiliary
+---------
+
+Here we extend the sort `Stmt` by adding a new subsort called `Auxil`.
+This subsort contains Auxiliary functions that only used in our KWASM semantics but not in the official specification including assertions, initializing a global variable and the invocation of a function by exported name.
+
+```k
+    syntax Stmt ::= Auxil
+```
+
 Assertions
 ----------
 
@@ -20,14 +30,13 @@ We'll make `Assertion` a subsort of `Auxil`, so that we can easily consume `Inst
 This will allow `trap` to "bubble up" (more correctly, to "consume the continuation") until it reaches its paired `#assertTrap_` statement.
 
 ```k
-    syntax Decl  ::= Auxil
     syntax Auxil ::= Assertion
  // --------------------------
     rule <k> trap ~> (L:Label => .) ... </k>
     rule <k> trap ~> (.Instrs => .) ... </k>
     rule <k> trap ~> (I:Instr => .) ... </k>
 
-    rule <k> trap ~> (D:Decl DS:Decls => D ~> DS) ... </k>
+    rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 ```
 
 ### Trap Assertion
