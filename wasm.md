@@ -99,8 +99,8 @@ In this file we define 3 types of statements:
     syntax Stmt   ::= Instr | Defn 
     syntax Instrs ::= List{Instr, ""}
     syntax Defns  ::= List{Defn , ""}
-    syntax Stmts  ::= List{Stmt , ""}
- // ---------------------------------
+    syntax Stmts  ::= List{Stmt , ""} [klabel(listStmt)]
+ // ----------------------------------------------------
     rule          <k> .Stmts     :Stmts  => .       ... </k>
     rule          <k> (S .Stmts) :Stmts  => S       ... </k>
     rule [step] : <k> (S SS)     :Stmts  => S ~> SS ... </k> requires SS =/=K .Stmts
@@ -504,7 +504,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 ```k
     syntax Instr ::= "(" "br" Int ")"
  // ---------------------------------
-    rule <k> ( br N ) ~> (IS:Instrs => .) ... </k>
+    rule <k> ( br N ) ~> (SS:Stmts => .) ... </k>
     rule <k> ( br N ) ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
       requires N ==Int 0
@@ -820,8 +820,8 @@ Unlike labels, only one frame can be "broken" through at a time.
 
     syntax Instr ::= "(" "return" ")"
  // ---------------------------------
-    rule <k> (return) ~> (IS:Instrs => .)  ... </k>
-    rule <k> (return) ~> (L:Label   => .)  ... </k>
+    rule <k> (return) ~> (SS:Stmts => .)  ... </k>
+    rule <k> (return) ~> (L:Label  => .)  ... </k>
     rule <k> ((return) => .) ~> FR:Frame ... </k>
 ```
 
