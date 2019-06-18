@@ -10,24 +10,34 @@ module WASM-TEST
     imports WASM
 ```
 
+Auxiliary
+---------
+
+Here we extend the sort `Stmt` by adding a new subsort called `Auxil`.
+This subsort contains Auxiliary functions that only used in our KWASM semantics but not in the official specification including assertions, initializing a global variable and the invocation of a function by exported name.
+
+```k
+    syntax Stmt ::= Auxil
+```
+
 Assertions
 ----------
 
 These assertions will check the supplied property, and then clear that state from the configuration.
 In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
 
-We'll make `Assertion` a subsort of `Instr`, so that we can easily consume `Instr` with `trap`s, but not consume `Assertion`s.
+We'll make `Assertion` a subsort of `Auxil`, so that we can easily consume `Instr` with `trap`s, but not consume `Assertion`s.
 This will allow `trap` to "bubble up" (more correctly, to "consume the continuation") until it reaches its paired `#assertTrap_` statement.
 
 ```k
-    syntax Instr ::= Assertion
+    syntax Auxil ::= Assertion
  // --------------------------
-    rule <k> trap ~> (L:Label => .) ... </k>
-    rule <k> trap ~> (F:Frame => .) ... </k>
-    rule <k> trap ~> (.Instrs => .) ... </k>
-    rule <k> trap ~> (I:Instr => .) ... </k> requires notBool isAssertion(I)
+    rule <k> trap ~> (L:Label   => .) ... </k>
+    rule <k> trap ~> (F:Frame   => .) ... </k>
+    rule <k> trap ~> (I:Instr   => .) ... </k>
+    rule <k> trap ~> (IS:Instrs => .) ... </k>
 
-    rule <k> trap ~> (I:Instr IS:Instrs => I ~> IS) ... </k>
+    rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 ```
 
 ### Trap Assertion
@@ -87,7 +97,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 `init_global` is a helper function that helps us to declare a new global variable.
 
 ```k
-    syntax Instr ::= "init_global" Int Int
+    syntax Auxil ::= "init_global" Int Int
  // --------------------------------------
     rule <k> init_global INDEX GADDR => . ... </k>
          <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
@@ -217,7 +227,7 @@ Clear Module Instances
 The modules are cleaned all together after the test file is executed.
 
 ```k
-    syntax Instr ::= "#clearModules"
+    syntax Auxil ::= "#clearModules"
  // --------------------------------
     rule <k> #clearModules => . ... </k>
          <nextFreshId> _ => 0 </nextFreshId>
@@ -242,7 +252,7 @@ Function Invocation
 We allow to `invoke` a function by its exported name in the test code.
 
 ```k
-    syntax Instr ::= "(" "invoke" String ")"
+    syntax Auxil ::= "(" "invoke" String ")"
  // ----------------------------------------
     rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
          <exports> ... ENAME |-> TFIDX ... </exports>
