@@ -873,8 +873,8 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     syntax TableDefn ::= "(" "table"                  TableElemType ")"
                        | "(" "table"     Int          TableElemType ")" // Size only
                        | "(" "table"     Int Int      TableElemType ")" // Min and max.
-                       |     "table" "{" Int MaxBound TableElemType "}"
- // -------------------------------------------------------------------
+                       |     "table" "{" Int MaxBound "}"
+ // -----------------------------------------------------
     rule <k> ( table                 funcref )       => table { 0   .MaxBound } ... </k>
     rule <k> ( table MIN:Int         funcref ):Defn  => table { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
