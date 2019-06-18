@@ -90,9 +90,10 @@ Instructions
 
 WebAssembly code consists of sequences of statements (`Stmts`).
 In this file we define 3 types of statements:
-  - Instruction (`Instr`): Administrative or computational instructions. 
-  - Definitions (`Defn`) : The declarations of `type`, `func`, `table`, `mem` etc.
-  - The Declaration of a module.
+
+-   Instruction (`Instr`): Administrative or computational instructions. 
+-   Definitions (`Defn`) : The declarations of `type`, `func`, `table`, `mem` etc.
+-   The Declaration of a module.
 
 ```k
     syntax Stmt   ::= Instr | Defn 
