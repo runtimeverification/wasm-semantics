@@ -1198,7 +1198,7 @@ Module Declaration
 ------------------
 
 Currently, we support a single module.
-The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
+The surrounding `module` tag is discarded, and the inner portions are run like they are instructions.
 
 ```k
     syntax Stmt ::= "(" "module" Defns ")"
