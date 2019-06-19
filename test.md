@@ -246,8 +246,13 @@ The modules are cleaned all together after the test file is executed.
          </moduleInst>
 ```
 
-Function Invocation
--------------------
+Official Test Assertions
+------------------------
+
+The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
+The reference interpreter is a particular embedder with auxillary instructions, specified in [spec interpreter](https://github.com/WebAssembly/spec/blob/master/interpreter/README.md).
+
+### Function Invocation
 
 We allow to `invoke` a function by its exported name in the test code.
 
@@ -256,6 +261,24 @@ We allow to `invoke` a function by its exported name in the test code.
  // ----------------------------------------
     rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
          <exports> ... ENAME |-> TFIDX ... </exports>
+```
+
+### Registering Modules
+
+
+```k
+    syntax Assertion ::= "(" "register" String            ")"
+                       | "(" "register" String Identifier ")"
+                       |     "register" String Int
+ // ----------------------------------------------
+    rule <k> ( register S ) => register S (NEXT -Int 1) ... </k> // Register last module.
+         <nextModuleIdx> NEXT </nextModuleIdx>
+         requires NEXT >Int 0
+    rule <k> ( register S ID:Identifier ) => register S IDX ... </k>
+         <moduleIds> ... ID |-> IDX ... </moduleIds>
+    rule <k> register S:String IDX:Int => . ... </k>
+         <moduleInstances> ... IDX |-> INST ... </moduleInstances>
+         <moduleRegistry> ... .Map => S |-> INST ... </moduleRegistry>
 ```
 
 ```k
