@@ -841,6 +841,30 @@ Unlike labels, only one frame can be "broken" through at a time.
          <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
+```k
+    syntax Instr ::= "(" "call_indirect" TypeUse ")"
+    syntax Instr ::= "(" "call_indirect" TypeUse Instrs ")"
+ // -------------------------------------------------------
+    rule <k> ( call_indirect TUSE:TypeUse IS:Instrs ) => IS ~> ( call_indirect TUSE ) ... </k>
+    rule <k> ( call_indirect TUSE:TypeUse           ) => ( invoke FADDR )             ... </k>
+         <typeIds> TYPEIDS </typeIds>
+         <types>   TYPES   </types>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
+         <tabIndices> 0 |-> ADDR </tabIndices>
+         <tabInst>
+           <tAddr> ADDR </tAddr>
+           <tdata> ... IDX |-> TFIDX ... </tdata>
+           ...
+         </tabInst>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <funcDef>
+           <fAddr> FADDR </fAddr>
+           <fType> FTYPE </fType>
+           ...
+         </funcDef> requires asFuncType(TYPEIDS, TYPES, TUSE) ==K FTYPE
+```
+
 ### Export
 
 Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
