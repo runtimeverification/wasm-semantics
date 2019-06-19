@@ -16,9 +16,9 @@ module VERIFICATION
              (br_if 0)
          end
     rule loopBody
-      => (i32.add (local.get 0) (local.get 1))
+      => (ITYPE.add (local.get 0) (local.get 1))
          (local.set 1)
-         (i32.sub (local.get 0) (i32.const 1))
+         (ITYPE.sub (local.get 0) (ITYPE.const 1))
          (local.tee 0)
 
 endmodule
@@ -30,23 +30,24 @@ module LOOP-SUM-SPEC
 // LEMMA
 // =====
     rule <k> loopBody => . ... </k>
-         <valstack> STACK => <i32> N -Int 1 : STACK </valstack>
+         <valstack> STACK => <ITYPE> N -Int 1 : STACK </valstack>
          <locals>
            ...
-           0 |-> < i32 > (N => N -Int 1)
-           1 |-> < i32 > (S => S +Int N)
+           0 |-> < ITYPE > (N => N -Int 1)
+           1 |-> < ITYPE > (S => S +Int N)
            ...
          </locals>
-         requires #inUnsignedRange(i32, N)
-          andBool #inUnsignedRange(i32, N +Int 1)
-          andBool #inUnsignedRange(i32, S)
-          andBool #inUnsignedRange(i32, S +Int N)
+         requires #inUnsignedRange(ITYPE, N)
+          andBool #inUnsignedRange(ITYPE, N +Int 1)
+          andBool #inUnsignedRange(ITYPE, S)
+          andBool #inUnsignedRange(ITYPE, S +Int N)
+          [lemma]
 
 
 // TODO: Generalize to i32 AND i64
 // MAIN CLAIM
 // ==========
-    rule <k> sumLocal => . ... </k>
+    rule <k> sumLocal => . </k>
          <locals>
            ...
            0 |-> < i32 > (N:Int => 0)
@@ -58,13 +59,12 @@ module LOOP-SUM-SPEC
          // Either of these preconditions work.
           andBool #inUnsignedRange(i32, N *Int (N +Int 1) /Int 2)
           // andBool N <=Int 92681 // The largest i32 that won't overflow.
-          [trusted]
 
 
 // LOOP INVARIANT
 // ==============
 
-    rule <k> sumLocal => . ... </k>
+    rule <k> sumLocal => . </k>
          <locals>
            ...
            0 |-> < i32 > (N => 0)
@@ -75,6 +75,6 @@ module LOOP-SUM-SPEC
           andBool N >Int 0
           andBool #inUnsignedRange(i32, S)
           andBool #inUnsignedRange(i32, S +Int (I *Int (I +Int 1) /Int 2))
-          [trusted]
+          [lemma]
 
 endmodule
