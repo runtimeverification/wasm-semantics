@@ -18,6 +18,7 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
 
 ```k
     syntax Stmt ::= Auxil
+ // ---------------------
 ```
 
 Assertions
@@ -30,6 +31,7 @@ We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level emb
 
 ```k
     syntax Auxil ::= Assertion
+ // --------------------------
 ```
 
 ### Trap Assertion
