@@ -278,6 +278,7 @@ We also want to be able to test that the embedder's registration function is wor
 
 Reference Interpreter Commands
 ------------------------------
+
 TODO: Move this to embedder module?
 
 The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
@@ -310,9 +311,9 @@ We will reference modules by name in imports.
 
 ```k
     syntax Auxil ::= "(" "register" String            ")"
-                       | "(" "register" String Identifier ")"
-                       |     "register" String Int
- // ----------------------------------------------
+                   | "(" "register" String Identifier ")"
+                   |     "register" String Int
+ // ------------------------------------------
     rule <k> ( register S ) => register S (NEXT -Int 1) ... </k> // Register last module.
          <nextModuleIdx> NEXT </nextModuleIdx>
          requires NEXT >Int 0
