@@ -178,6 +178,19 @@ This asserts related operation about tables.
            )
            ...
          </tabs>
+
+    syntax Assertion ::= "#assertTableData" "(" Int "," Int ")" String
+ // ------------------------------------------------------------------
+    rule <k> #assertTableData (KEY , VAL) MSG => . ... </k>
+         <tabIndices> 0 |-> ADDR </tabIndices>
+         <tabs>
+           <tabInst>
+             <tAddr> ADDR </tAddr>
+             <tdata> ...  KEY |-> VAL => .Map ... </tdata>
+               ...
+           </tabInst>
+           ...
+         </tabs>
 ```
 
 ### Memory Assertions
