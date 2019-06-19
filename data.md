@@ -44,7 +44,7 @@ When we are initializing a table with element segment, we need to define a list 
 
 ```k
     syntax TextFormatIdx ::= Int | Identifier
-    syntax ElemSegment   ::= List{TextFormatIdx, ""}
+    syntax ElemSegment   ::= List{TextFormatIdx, ""} [klabel(listTextFormatIdx)]
     syntax Int ::= #lengthElemSegment (ElemSegment) [function]
  // ----------------------------------------------------------
     rule #lengthElemSegment(.ElemSegment) => 0
