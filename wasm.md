@@ -70,6 +70,10 @@ Configuration
           </globalInst>
         </globals>
       </mainStore>
+      <moduleIds> .Map </moduleIds>
+      <nextModuleIdx> 0 </nextModuleIdx>
+      <moduleInstances> .Map </moduleInstances>
+      <moduleRegistry> .Map </moduleRegistry>
 ```
 
 ### Assumptions and invariants
