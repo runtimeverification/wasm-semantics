@@ -31,13 +31,6 @@ This will allow `trap` to "bubble up" (more correctly, to "consume the continuat
 
 ```k
     syntax Auxil ::= Assertion
- // --------------------------
-    rule <k> trap ~> (L:Label   => .) ... </k>
-    rule <k> trap ~> (F:Frame   => .) ... </k>
-    rule <k> trap ~> (I:Instr   => .) ... </k>
-    rule <k> trap ~> (IS:Instrs => .) ... </k>
-
-    rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 ```
 
 ### Trap Assertion

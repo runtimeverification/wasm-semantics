@@ -123,12 +123,30 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
 
 ### Traps
 
-When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<valstack>` cell).
-If the value is the special `undefined`, then `trap` is generated instead.
+`trap` is the error mechanism of Wasm.
+Traps cause all execution to halt, and can not be caught from within Wasm.
+We emulate this by consuming everything in the `<k>` cell that is not a `Stmt`.
+Statements are not part of Wasm semantics, but rather of the embedder, and is where traps can be caught.
+Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") until it reaches a statement which is not an `Instr` or `Def`.
 
 ```k
     syntax Instr ::= "trap"
  // -----------------------
+    rule <k> trap ~> (L:Label      => .) ... </k>
+    rule <k> trap ~> (F:Frame      => .) ... </k>
+    rule <k> trap ~> (I:Instr      => .) ... </k>
+    rule <k> trap ~> (IS:Instrs    => .) ... </k>
+    rule <k> trap ~> (D:Defn       => .) ... </k>
+    rule <k> trap ~> (DS:Defns     => .) ... </k>
+    rule <k> trap ~> ((module  _)  => .) ... </k>
+
+    rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
+```
+
+When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<valstack>` cell).
+If the value is the special `undefined`, then `trap` is generated instead.
+
+```k
     rule <k> undefined => trap ... </k>
     rule <k>        V:Val    => .        ... </k>
          <valstack> VALSTACK => V : VALSTACK </valstack>
