@@ -321,7 +321,7 @@ We will reference modules by name in imports.
          <moduleIds> ... ID |-> IDX ... </moduleIds>
     rule <k> register S:String IDX:Int => . ... </k>
          <moduleInstances> ... IDX |-> INST ... </moduleInstances>
-         <moduleRegistry> ... .Map => S |-> INST ... </moduleRegistry>
+         <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
 
 ```k
