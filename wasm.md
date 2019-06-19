@@ -1214,7 +1214,8 @@ After a module is instantiated, it should be saved somewhere.
 How this is done is up to the embedder.
 
 ```k
-   syntax Stmt ::= "#storeInstance"
+    syntax Stmt ::= "#storeInstance"
+ // --------------------------------
 ```
 
 ```k
