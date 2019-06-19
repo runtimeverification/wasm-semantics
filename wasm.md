@@ -91,30 +91,34 @@ Instructions
 WebAssembly code consists of sequences of statements (`Stmts`).
 In this file we define 3 types of statements:
 
--   Instruction (`Instr`): Administrative or computational instructions. 
+-   Instruction (`Instr`): Administrative or computational instructions.
 -   Definitions (`Defn`) : The declarations of `type`, `func`, `table`, `mem` etc.
 -   The Declaration of a module.
 
+The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list of `Stmt`, `Instr`, or `Defn` has a unique least sort.
+
 ```k
-    syntax Stmt   ::= Instr | Defn 
-    syntax Instrs ::= List{Instr, ""}
-    syntax Defns  ::= List{Defn , ""}
-    syntax Stmts  ::= List{Stmt , ""} [klabel(listStmt)]
- // ----------------------------------------------------
+    syntax EmptyStmt
+ // ----------------
+
+    syntax Instr ::= EmptyStmt
+    syntax Defn  ::= EmptyStmt
+    syntax Stmt  ::= Instr | Defn
+ // -----------------------------
+
+    syntax EmptyStmts ::= List{EmptyStmt, ""} [klabel(listStmt)]
+    syntax Instrs     ::= List{Instr, ""}     [klabel(listStmt)]
+    syntax Defns      ::= List{Defn , ""}     [klabel(listStmt)]
+    syntax Stmts      ::= List{Stmt , ""}     [klabel(listStmt)]
+ // ------------------------------------------------------------
+
+    syntax Instrs ::= EmptyStmts
+    syntax Defns  ::= EmptyStmts
+    syntax Stmts  ::= Instrs | Defns
+ // --------------------------------
     rule          <k> .Stmts     :Stmts  => .       ... </k>
     rule          <k> (S .Stmts) :Stmts  => S       ... </k>
     rule [step] : <k> (S SS)     :Stmts  => S ~> SS ... </k> requires SS =/=K .Stmts
-
-    syntax Stmts ::= #asStatements ( Instrs ) [function]
-                   | #asStatements ( Defns  ) [function]
- // ----------------------------------------------------
-    rule <k> INSTRS:Instrs => #asStatements(INSTRS) ... </k>
-    rule <k>  DEFNS:Defns  => #asStatements(DEFNS)  ... </k>
-
-    rule #asStatements(.Instrs)           => .Stmts
-    rule #asStatements(I:Instr IS:Instrs) => I #asStatements(IS)
-    rule #asStatements(.Defns)            => .Stmts
-    rule #asStatements(D:Defn  DS:Defns ) => D #asStatements(DS)
 ```
 
 ### Traps
@@ -1170,8 +1174,8 @@ The `data` initializer simply puts these bytes into the specified memory, starti
  // ----------------------------------------------------------
     rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) up/Int #pageSize()
 
-    syntax Int ::= Int "up/Int" Int [function] 
- // ------------------------------------------ 
+    syntax Int ::= Int "up/Int" Int [function]
+ // ------------------------------------------
     rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >Int 0
 ```
 
