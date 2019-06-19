@@ -268,7 +268,7 @@ We also want to be able to test that the embedder's registration function is wor
     syntax Assertion ::= "#assertRegistrationUnnamed" String
     syntax Assertion ::= "#assertRegistrationNamed"   String Identifier
  // -------------------------------------------------------------------
-    rule <k> #assertRegistrationUnnamed REGNAME => .Map ... </k>
+    rule <k> #assertRegistrationUnnamed REGNAME => . ... </k>
          <moduleInstances> ... IDX |-> _ ... </moduleInstances>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
     rule <k> #assertRegistrationNamed REGNAME NAME => . ... </k>
