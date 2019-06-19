@@ -873,7 +873,7 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     syntax TableDefn ::= "(" "table"                  TableElemType ")"
                        | "(" "table"     Int          TableElemType ")" // Size only
                        | "(" "table"     Int Int      TableElemType ")" // Min and max.
-                       | "(" "table" "(" "elem" ElemSegment ")" ")"
+                       | "(" "table"                  TableElemType "(" "elem" ElemSegment ")" ")"
                        |     "table" "{" Int MaxBound "}"
  // -----------------------------------------------------
     rule <k> ( table                 funcref )       => table { 0   .MaxBound } ... </k>
@@ -882,7 +882,7 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     rule <k> ( table MIN:Int MAX:Int funcref )       => table { MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-    rule <k> ( table ( elem ES ) )
+    rule <k> ( table funcref ( elem ES ) )
           =>  table { #lengthElemSegment(ES) #lengthElemSegment(ES) }
           ~> ( elem (i32.const 0) ES ) ... </k>
 
@@ -1156,26 +1156,25 @@ The initialization of a table needs an offset and a list of function indices.
 A table index is optional and will be default to zero.
 
 ```k
-    syntax FuncIndices ::= List{TextFormatIdx, ""}
     syntax Defn        ::= ElemDefn
-    syntax ElemDefn    ::= "(" "elem"     TextFormatIdx Offset FuncIndices ")"
-                         | "(" "elem"                   Offset FuncIndices ")"
-                         |     "elem" "{" TextFormatIdx        FuncIndices "}"
-    syntax Stmt        ::= #initElements ( Int, Int, FuncIndices )
- // --------------------------------------------------------------------------
+    syntax ElemDefn    ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
+                         | "(" "elem"                   Offset ElemSegment ")"
+                         |     "elem" "{" TextFormatIdx        ElemSegment "}"
+    syntax Stmt        ::= #initElements ( Int, Int, ElemSegment )
+ // --------------------------------------------------------------
     // Default to table with index 0.
-    rule <k> ( elem        OFFSET      FUNCINDICES ) =>     ( elem 0 OFFSET FUNCINDICES ) ... </k>
-    rule <k> ( elem TABIDX IS:Instr    FUNCINDICES ) => IS ~> elem { TABIDX FUNCINDICES } ... </k>
-    rule <k> ( elem TABIDX (offset IS) FUNCINDICES ) => IS ~> elem { TABIDX FUNCINDICES } ... </k>
+    rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
+    rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
+    rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
-    rule <k> elem { TABIDX FUNCINDICES } => #initElements ( ADDR, OFFSET, FUNCINDICES ) ... </k>
+    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, ELEMSEGMENT ) ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <tabIndices> TABIDX |-> ADDR </tabIndices>
-    rule <k> #initElements ( ADDR, OFFSET, .FuncIndices      ) => . ... </k>
-    rule <k> #initElements ( ADDR, OFFSET, TFIDX FUNCINDICES ) => #initElements ( ADDR, OFFSET +Int 1, FUNCINDICES ) ... </k>
+    rule <k> #initElements ( ADDR, OFFSET, .ElemSegment ) => . ... </k>
+    rule <k> #initElements ( ADDR, OFFSET,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA [ OFFSET <- TFIDX ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- E ] </tdata>
            ...
          </tabInst>
 ```
