@@ -40,10 +40,15 @@ Also we use `#freshId ( Int )` to generate a fresh identifier based on the eleme
 ### Text Format Indices
 
 Indices in the text format could be either an `address` or an `identifier.
+When we are initializing a table with element segment, we need to define a list of Text Format Indices and calculate the length of it.
 
 ```k
     syntax TextFormatIdx ::= Int | Identifier
- // -----------------------------------------
+    syntax ElemSegment   ::= List{TextFormatIdx, ""}
+    syntax Int ::= #lengthElemSegment (ElemSegment) [function]
+ // ----------------------------------------------------------
+    rule #lengthElemSegment(.ElemSegment) => 0
+    rule #lengthElemSegment(TFIDX     ES) => 1 +Int #lengthElemSegment(ES)
 ```
 
 WebAssembly Types
