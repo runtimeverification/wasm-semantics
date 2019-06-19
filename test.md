@@ -244,6 +244,10 @@ The modules are cleaned all together after the test file is executed.
            <globalIndices> _ => .Map </globalIndices>
            <exports>       _ => .Map </exports>
          </moduleInst>
+         <moduleIds> _ => .Map </moduleIds>
+         <nextModuleIdx> _ => 0 </nextModuleIdx>
+         <moduleInstances> _ => .Map </moduleInstances>
+         <moduleRegistry> _ => .Map </moduleRegistry>
 ```
 
 Official Test Assertions
@@ -265,6 +269,17 @@ We allow to `invoke` a function by its exported name in the test code.
 
 ### Registering Modules
 
+We first define how modules get stored away.
+
+```k
+    rule <k> #storeInstance => . ... </k>
+         <moduleInst> INST </moduleInst>
+         <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
+         <moduleInstances> ... .Map => NEXT |-> INST ... </moduleInstances>
+```
+
+We will reference modules by name in imports.
+`register` is the instruction that allows us to associate a name with a module.
 
 ```k
     syntax Assertion ::= "(" "register" String            ")"

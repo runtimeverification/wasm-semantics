@@ -1203,7 +1203,14 @@ The surronding `module` tag is discarded, and the inner portions are run like th
 ```k
     syntax Stmt ::= "(" "module" Defns ")"
  // --------------------------------------
-    rule <k> ( module DEFNS ) => DEFNS ... </k>
+    rule <k> ( module DEFNS ) => DEFNS ~> #storeInstance ... </k>
+```
+
+After a module is instantiated, it should be saved somewhere.
+How this is done is up to the embedder.
+
+```k
+   syntax Stmt ::= "#storeInstance"
 ```
 
 ```k
