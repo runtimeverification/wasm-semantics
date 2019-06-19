@@ -1202,7 +1202,11 @@ The surronding `module` tag is discarded, and the inner portions are run like th
 
 ```k
     syntax Stmt ::= "(" "module" Defns ")"
- // --------------------------------------
+                  | "(" "module" Identifier Defns ")"
+ // -------------------------------------------------
+    rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
+         <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
+         <nextModuleIdx> NEXT </nextModuleIdx>
     rule <k> ( module DEFNS ) => DEFNS ~> #storeInstance ... </k>
 ```
 
