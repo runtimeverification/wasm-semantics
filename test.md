@@ -221,6 +221,22 @@ This checks that the last allocated memory has the given size and max value.
          </mems>
 ```
 
+### Module Assertions
+
+These assertions test (and delete) module instances.
+These assertions act on the last module defined.
+
+```k
+    syntax Assertion ::= "#assertUnnamedModule"
+    syntax Assertion ::= "#assertNamedModule" Identifier
+ // ----------------------------------------------------
+    rule <k> #assertUnnamedModule => . ... </k>
+         <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
+         <moduleInstances> ... NEXT -Int 1 |-> _ => .Map ... </moduleInstances>
+    rule <k> #assertNamedModule NAME => #assertUnnamedModule ... </k>
+         <moduleIds> ... NAME |-> _ => .Map ... </moduleIds>
+```
+
 Clear Module Instances
 ----------------------
 
@@ -244,14 +260,25 @@ The modules are cleaned all together after the test file is executed.
            <globalIndices> _ => .Map </globalIndices>
            <exports>       _ => .Map </exports>
          </moduleInst>
-         <moduleIds> _ => .Map </moduleIds>
-         <nextModuleIdx> _ => 0 </nextModuleIdx>
-         <moduleInstances> _ => .Map </moduleInstances>
-         <moduleRegistry> _ => .Map </moduleRegistry>
 ```
 
-Official Test Assertions
-------------------------
+We also want to be able to test that the embedder's registration function is working.
+
+```k
+    syntax Assertion ::= "#assertRegistrationUnnamed" String
+    syntax Assertion ::= "#assertRegistrationNamed"   String Identifier
+ // -------------------------------------------------------------------
+    rule <k> #assertRegistrationUnnamed REGNAME => .Map ... </k>
+         <moduleInstances> ... IDX |-> _ ... </moduleInstances>
+         <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
+    rule <k> #assertRegistrationNamed REGNAME NAME => . ... </k>
+         <moduleInstances> ... IDX |-> _ ... </moduleInstances>
+         <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
+```
+
+Reference Interpreter Commands
+------------------------------
+TODO: Move this to embedder module?
 
 The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
 The reference interpreter is a particular embedder with auxillary instructions, specified in [spec interpreter](https://github.com/WebAssembly/spec/blob/master/interpreter/README.md).
@@ -282,7 +309,7 @@ We will reference modules by name in imports.
 `register` is the instruction that allows us to associate a name with a module.
 
 ```k
-    syntax Assertion ::= "(" "register" String            ")"
+    syntax Auxil ::= "(" "register" String            ")"
                        | "(" "register" String Identifier ")"
                        |     "register" String Int
  // ----------------------------------------------
