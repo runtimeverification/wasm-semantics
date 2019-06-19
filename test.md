@@ -179,8 +179,8 @@ This asserts related operation about tables.
            ...
          </tabs>
 
-    syntax Assertion ::= "#assertTableElem" "(" Int "," Int ")" String
- // ------------------------------------------------------------------
+    syntax Assertion ::= "#assertTableElem" "(" Int "," TextFormatIdx ")" String
+ // ----------------------------------------------------------------------------
     rule <k> #assertTableElem (KEY , VAL) MSG => . ... </k>
          <tabIndices> 0 |-> ADDR </tabIndices>
          <tabs>
