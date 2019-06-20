@@ -246,7 +246,12 @@ This asserts related operation about tables.
     syntax Assertion ::= "#assertTableElem" "(" Int "," TextFormatIdx ")" String
  // ----------------------------------------------------------------------------
     rule <k> #assertTableElem (KEY , VAL) MSG => . ... </k>
-         <tabIndices> 0 |-> ADDR </tabIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> 0 |-> ADDR </tabIndices>
+           ...
+         </moduleInst>
          <tabs>
            <tabInst>
              <tAddr> ADDR </tAddr>
@@ -319,12 +324,12 @@ These assertions act on the last module defined.
                        | "#assertNamedModule" Identifier String
  // -----------------------------------------------------------
     rule <k> #assertUnnamedModule S => #assertUnnamedModuleAux CUR S ... </k>
-         <curModIdx> CUR => 0 </curModIdx>
+         <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            ...
          </moduleInst>
-         <nextModuleIdx> NEXT => NEXT </nextModuleIdx>
+         <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
 
     rule <k> #assertUnnamedModuleAux IDX _ => . ... </k>
          <moduleInstances>

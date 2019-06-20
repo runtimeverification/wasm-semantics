@@ -837,7 +837,6 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
                <fType>    asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
                <fLocal>   asLocalType ( LDECLS )               </fLocal>
                <fModInst> CUR                                  </fModInst>
-               ...
              </funcDef>
            )
            ...
@@ -875,7 +874,6 @@ Unlike labels, only one frame can be "broken" through at a time.
            <fType>    [ TDOMAIN ] -> [ TRANGE ] </fType>
            <fLocal>   [ TLOCALS ]               </fLocal>
            <fModInst> MODIDX'                   </fModInst>
-           ...
          </funcDef>
 
     syntax Instr ::= "(" "return" ")"
@@ -908,17 +906,22 @@ Unlike labels, only one frame can be "broken" through at a time.
  // -------------------------------------------------------
     rule <k> ( call_indirect TUSE:TypeUse IS:Instrs ) => IS ~> ( call_indirect TUSE ) ... </k>
     rule <k> ( call_indirect TUSE:TypeUse           ) => ( invoke FADDR )             ... </k>
-         <typeIds> TYPEIDS </typeIds>
-         <types>   TYPES   </types>
+         <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
-         <tabIndices> 0 |-> ADDR </tabIndices>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> TYPEIDS </typeIds>
+           <types> TYPES </types>
+           <tabIndices> 0 |-> ADDR </tabIndices>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
          <tabInst>
            <tAddr> ADDR </tAddr>
            <tdata> ... IDX |-> TFIDX ... </tdata>
            ...
          </tabInst>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
          <funcDef>
            <fAddr> FADDR </fAddr>
            <fType> FTYPE </fType>
@@ -1307,8 +1310,13 @@ A table index is optional and will be default to zero.
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
     rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, ELEMSEGMENT ) ... </k>
+         <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
-         <tabIndices> TABIDX |-> ADDR </tabIndices>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> TABIDX |-> ADDR </tabIndices>
+           ...
+         </moduleInst>
 
     rule <k> #initElements ( ADDR, OFFSET, .ElemSegment ) => . ... </k>
     rule <k> #initElements ( ADDR, OFFSET,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, ES ) ... </k>

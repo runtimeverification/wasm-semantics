@@ -21,6 +21,8 @@
 #assertTableElem (2, $g) "table elem 2"
 #assertEmptyTable 4 .MaxBound "should be empty now"
 
+#assertUnnamedModule ""
+
 (module
   (type $out-i32 (func (result i32)))
   (table 10 funcref)
@@ -57,4 +59,5 @@
 #assertEmptyTable 10 .MaxBound "should be empty now"
 
 #assertUnnamedModule ""
+#clearFreshId
 #clearModuleIdx
