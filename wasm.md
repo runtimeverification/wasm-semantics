@@ -23,7 +23,7 @@ Configuration
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
         <moduleInst multiplicity="*" type="Map">
-/*TODO */ <modIdx>        0    </modIdx>
+          <modIdx>        0    </modIdx>
 /*TODO */ <typeIds>       .Map </typeIds>
 /*TODO */ <funcIds>       .Map </funcIds> //this is mapping from identifier to index
 /*TODO */ <nextTypeIdx>   0    </nextTypeIdx>
@@ -1197,11 +1197,11 @@ Start Function
          <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
-Module Declaration
-------------------
+Module Instantiation
+--------------------
 
-Currently, we support a single module.
-The surrounding `module` tag is discarded, and the inner portions are run like they are instructions.
+A new module instance gets allocated.
+Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
     syntax Stmt ::= "(" "module" Defns ")"
@@ -1211,16 +1211,32 @@ The surrounding `module` tag is discarded, and the inner portions are run like t
     rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
-    rule <k> ( module DEFNS ) => DEFNS ~> #storeInstance ... </k>
+    rule <k> ( module DEFNS ) => DEFNS ... </k>
+         <curModIdx> _ => NEXT </curModIdx>
+         <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
+         <moduleInstances>
+           (.Bag =>
+             <moduleInst>
+               <modIdx>        NEXT    </modIdx>
+               <typeIds>       .Map </typeIds>
+               <funcIds>       .Map </funcIds>
+               <nextTypeIdx>   0    </nextTypeIdx>
+               <nextFuncIdx>   0    </nextFuncIdx>
+               <nextGlobalIdx> 0    </nextGlobalIdx>
+               <types>         .Map </types>
+               <funcIndices>   .Map </funcIndices>
+               <tabIndices>    .Map </tabIndices>
+               <memIndices>    .Map </memIndices>
+               <globalIndices> .Map </globalIndices>
+               <exports>       .Map </exports>
+             </moduleInst>
+           )
+           ...
+         </moduleInstances>
 ```
 
 After a module is instantiated, it should be saved somewhere.
 How this is done is up to the embedder.
-
-```k
-    syntax Stmt ::= "#storeInstance"
- // --------------------------------
-```
 
 ```k
 endmodule
