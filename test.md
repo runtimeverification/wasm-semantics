@@ -118,7 +118,12 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
-         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           ...
+         </moduleInst>
          <globals>
            ( <globalInst>
                <gAddr>  GADDR </gAddr>
@@ -137,7 +142,12 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
     syntax Auxil ::= "init_global" Int Int
  // --------------------------------------
     rule <k> init_global INDEX GADDR => . ... </k>
-         <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
+           ...
+         </moduleInst>
          <globals>
            ( .Bag =>
              <globalInst>
@@ -159,10 +169,20 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
                        | "#assertNextTypeIdx" Int
  // ---------------------------------------------
     rule <k> #assertType TFIDX FTYPE => . ... </k>
-         <typeIds> IDS </typeIds>
-         <types> ... #ContextLookup(IDS , TFIDX) |-> FTYPE ... </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> IDS </typeIds>
+           <types> ... #ContextLookup(IDS , TFIDX) |-> FTYPE ... </types>
+           ...
+         </moduleInst>
     rule <k> #assertNextTypeIdx IDX => . ... </k>
-         <nextTypeIdx> IDX </nextTypeIdx>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <nextTypeIdx> IDX </nextTypeIdx>
+           ...
+         </moduleInst>
 ```
 
 ### Function Assertions
@@ -173,8 +193,13 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
     syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
  // ----------------------------------------------------------------------------
     rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
          <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
@@ -201,7 +226,12 @@ This asserts related operation about tables.
          <nextTabAddr> NEXT </nextTabAddr>
 
     rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
-         <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
+           ...
+         </moduleInst>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
            ( <tabInst>
@@ -229,7 +259,12 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
+           ...
+         </moduleInst>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>
@@ -247,7 +282,12 @@ This checks that the last allocated memory has the given size and max value.
     syntax Assertion ::= "#assertMemoryData" "(" Int "," Int ")" String
  // -------------------------------------------------------------------
     rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <mems>
            <memInst>
              <mAddr> ADDR </mAddr>
@@ -268,7 +308,12 @@ These assertions act on the last module defined.
     syntax Assertion ::= "#assertUnnamedModuleAux" Int
     syntax Assertion ::= "#assertNamedModule" Identifier
  // ----------------------------------------------------
-    rule <k> #assertUnnamedModule => #assertUnnamedModuleAux NEXT ... </k>
+    rule <k> #assertUnnamedModule => #assertUnnamedModuleAux CUR ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           ...
+         </moduleInst>
          <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
     rule <k> #assertUnnamedModuleAux IDX => . ... </k>
          <moduleInstances>

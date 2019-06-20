@@ -161,7 +161,7 @@
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
 #assertFunction $mul [ i32 i32 ] -> [ i32 ] [ ] "mul function typed correctly"
 #assertFunction $xor [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
-#assertNextTypeIdx 5
+#assertNextTypeIdx 1
 #assertUnnamedModule
 
 (module
