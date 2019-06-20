@@ -1306,10 +1306,10 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
     syntax Stmt ::= "(" "module" Defns ")"
                   | "(" "module" Identifier Defns ")"
  // -------------------------------------------------
- // Map the given id to the next available module number, and then define the module as usual.
     rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
+
     rule <k> ( module DEFNS ) => DEFNS ... </k>
          <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
