@@ -858,6 +858,30 @@ Unlike labels, only one frame can be "broken" through at a time.
          <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
 ```
 
+```k
+    syntax Instr ::= "(" "call_indirect" TypeUse ")"
+    syntax Instr ::= "(" "call_indirect" TypeUse Instrs ")"
+ // -------------------------------------------------------
+    rule <k> ( call_indirect TUSE:TypeUse IS:Instrs ) => IS ~> ( call_indirect TUSE ) ... </k>
+    rule <k> ( call_indirect TUSE:TypeUse           ) => ( invoke FADDR )             ... </k>
+         <typeIds> TYPEIDS </typeIds>
+         <types>   TYPES   </types>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
+         <tabIndices> 0 |-> ADDR </tabIndices>
+         <tabInst>
+           <tAddr> ADDR </tAddr>
+           <tdata> ... IDX |-> TFIDX ... </tdata>
+           ...
+         </tabInst>
+         <funcIds> IDS </funcIds>
+         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <funcDef>
+           <fAddr> FADDR </fAddr>
+           <fType> FTYPE </fType>
+           ...
+         </funcDef> requires asFuncType(TYPEIDS, TYPES, TUSE) ==K FTYPE
+```
+
 ### Export
 
 Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
@@ -873,28 +897,37 @@ Now it contains only Function exports. The exported functions should be able to 
 Table
 -----
 
-When implementing a table, we need a `FuncElem` type to define the type of elements inside a `tableinst`.
+When implementing a table, we first need to define the `TableElemType` type to define the type of elements inside a `tableinst`.
+Currently there is only one possiblt value for it which is "funcref".
 
 ```k
-    syntax FuncElem ::= ".FuncElem" | Int
- // -------------------------------------
+    syntax TableElemType ::= "funcref"
+ // ----------------------------------
 ```
 
-The allocation of a new `tableinst`. Currently at most one table may be defined or imported in a single module.
+The allocation of a new `tableinst`.
+Currently at most one table may be defined or imported in a single module.
+The only allowed `TableElemType` is "funcref", so we ignore this term in the reducted sort.
 
 ```k
     syntax Defn      ::= TableDefn
-    syntax TableDefn ::= "(" "table"                  ")"
-                       | "(" "table"     Int          ")" // Size only
-                       | "(" "table"     Int Int      ")" // Min and max.
+    syntax TableDefn ::= "(" "table"                  TableElemType ")"
+                       | "(" "table"     Int          TableElemType ")" // Size only
+                       | "(" "table"     Int Int      TableElemType ")" // Min and max.
+                       | "(" "table"                  TableElemType "(" "elem" ElemSegment ")" ")"
                        |     "table" "{" Int MaxBound "}"
  // -----------------------------------------------------
-    rule <k> ( table                 )       => table { 0   .MaxBound } ... </k>
-    rule <k> ( table MIN:Int         ):Defn  => table { MIN .MaxBound } ... </k>
+    rule <k> ( table                 funcref )       => table { 0   .MaxBound } ... </k>
+    rule <k> ( table MIN:Int         funcref ):Defn  => table { MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table MIN:Int MAX:Int )       => table { MIN MAX       } ... </k>
+    rule <k> ( table MIN:Int MAX:Int funcref )       => table { MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
+    rule <k> ( table funcref ( elem ES ) )
+          =>  table { #lengthElemSegment(ES) #lengthElemSegment(ES) }
+          ~> ( elem (i32.const 0) ES )
+          ...
+         </k>
 
     rule <k> table { _ _ } => trap ... </k>
          <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
@@ -1159,6 +1192,37 @@ The offset can either be specified explicitly with the `offset` key word, or be 
                     | Instr
 ```
 
+### Element Segments
+
+Tables can be initialized with element and the element type is always `funcref".
+The initialization of a table needs an offset and a list of function indices.
+A table index is optional and will be default to zero.
+
+```k
+    syntax Defn        ::= ElemDefn
+    syntax ElemDefn    ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
+                         | "(" "elem"                   Offset ElemSegment ")"
+                         |     "elem" "{" TextFormatIdx        ElemSegment "}"
+    syntax Stmt        ::= #initElements ( Int, Int, ElemSegment )
+ // --------------------------------------------------------------
+    // Default to table with index 0.
+    rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
+    rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
+    rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
+
+    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, ELEMSEGMENT ) ... </k>
+         <valstack> < i32 > OFFSET : STACK => STACK </valstack>
+         <tabIndices> TABIDX |-> ADDR </tabIndices>
+
+    rule <k> #initElements ( ADDR, OFFSET, .ElemSegment ) => . ... </k>
+    rule <k> #initElements ( ADDR, OFFSET,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, ES ) ... </k>
+         <tabInst>
+           <tAddr> ADDR </tAddr>
+           <tdata> DATA => DATA [ OFFSET <- E ] </tdata>
+           ...
+         </tabInst>
+```
+
 ### Data Segments
 
 Memories can be initialized with data, specified as a list of bytes together with an offset.
@@ -1181,7 +1245,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <memIndices> MEMIDX |-> ADDR </memIndices>
          <memInst>
            <mAddr> ADDR </mAddr>
-           <mdata>   DATA
+           <mdata> DATA
                   => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING)) [ OFFSET := #dataStrings2int(STRING)]
            </mdata>
            ...
