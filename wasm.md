@@ -814,10 +814,11 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  NEXTADDR                             </fAddr>
-               <fCode>  INSTRS                               </fCode>
-               <fType>  asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
-               <fLocal> asLocalType ( LDECLS )               </fLocal>
+               <fAddr>    NEXTADDR                             </fAddr>
+               <fCode>    INSTRS                               </fCode>
+               <fType>    asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
+               <fLocal>   asLocalType ( LDECLS )               </fLocal>
+               <fModInst> CUR                                  </fModInst>
                ...
              </funcDef>
            )
@@ -832,30 +833,30 @@ Similar to labels, they sit on the instruction stack (the `<k>` cell), and `retu
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" ValTypes ValStack Map
- // ----------------------------------------------
-    rule <k> frame TRANGE VALSTACK' LOCAL' => . ... </k>
+    syntax Frame ::= "frame" Int ValTypes ValStack Map
+ // --------------------------------------------------
+    rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </k>
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
+         <curModIdx> _ => MODIDX' </curModIdx>
 
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
-          ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
+          ~> frame MODIDX TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
-         <curFrame>
-           <locals> LOCAL => .Map </locals>
-           ...
-         </curFrame>
+         <locals> LOCAL => .Map </locals>
+         <curModIdx> MODIDX => MODIDX' </curModIdx>
          <funcDef>
-           <fAddr>  FADDR                     </fAddr>
-           <fCode>  INSTRS                    </fCode>
-           <fType>  [ TDOMAIN ] -> [ TRANGE ] </fType>
-           <fLocal> [ TLOCALS ]               </fLocal>
+           <fAddr>   FADDR                     </fAddr>
+           <fCode>   INSTRS                    </fCode>
+           <fType>   [ TDOMAIN ] -> [ TRANGE ] </fType>
+           <fLocal>  [ TLOCALS ]               </fLocal>
+           <fModIdx> MODIDX'                   </fModIdx>
            ...
          </funcDef>
 
