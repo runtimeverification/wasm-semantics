@@ -309,12 +309,12 @@ These assertions act on the last module defined.
     syntax Assertion ::= "#assertNamedModule" Identifier String
  // -----------------------------------------------------------
     rule <k> #assertUnnamedModule S => #assertUnnamedModuleAux CUR S ... </k>
-         <curModIdx> CUR </curModIdx>
+         <curModIdx> CUR => 0 </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            ...
          </moduleInst>
-         <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
+         <nextModuleIdx> NEXT => NEXT </nextModuleIdx>
     rule <k> #assertUnnamedModuleAux IDX _ => . ... </k>
          <moduleInstances>
            ( <moduleInst>
@@ -325,21 +325,20 @@ These assertions act on the last module defined.
            )
            ...
          </moduleInstances>
-    rule <k> #assertNamedModule NAME S => #assertUnnamedModule S ... </k>
-         <moduleIds> ... NAME |-> _ => .Map ... </moduleIds>
+    rule <k> #assertNamedModule NAME S => #assertUnnamedModuleAux IDX S ... </k>
+         <moduleIds> ... NAME |-> IDX => .Map ... </moduleIds>
 ```
-
-Registry Assertations
----------------------
 
 The modules are cleaned all together after the test file is executed.
 
 ```k
-    syntax Auxil ::= "#clearModules"
- // --------------------------------
-    rule <k> #clearModules => . ... </k>
-         <nextFreshId> _ => 0 </nextFreshId>
-         <curModIdx> CUR => 0 </curModIdx>
+    syntax Auxil ::= "#clearCurrentModule"
+    syntax Auxil ::= "#setCurrentModule" Int
+    syntax Auxil ::= "#clearFreshId"
+    syntax Auxil ::= "#clearModuleIdx"
+ // ----------------------------------
+    rule <k> #clearCurrentModule => . ... </k>
+         <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> _ => .Map </typeIds>
@@ -354,7 +353,16 @@ The modules are cleaned all together after the test file is executed.
            <globalIndices> _ => .Map </globalIndices>
            <exports>       _ => .Map </exports>
          </moduleInst>
+    rule <k> #setCurrentModule I => . ... </k>
+         <curModIdx> _ => I </curModIdx>
+    rule <k> #clearFreshId => . ... </k>
+         <nextFreshId> _ => 0 </nextFreshId>
+    rule <k> #clearModuleIdx => . ... </k>
+         <nextModuleIdx> _ => 0 </nextModuleIdx>
 ```
+
+Registry Assertations
+---------------------
 
 We also want to be able to test that the embedder's registration function is working.
 
