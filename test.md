@@ -51,8 +51,10 @@ We will reference modules by name in imports.
     rule <k> ( register S ) => ( register S (NEXT -Int 1) )... </k> // Register last instantiated module.
          <nextModuleIdx> NEXT </nextModuleIdx>
       requires NEXT >Int 0
+
     rule <k> ( register S ID:Identifier ) => ( register S IDX ) ... </k>
          <moduleIds> ... ID |-> IDX ... </moduleIds>
+
     rule <k> ( register S:String IDX:Int ) => . ... </k>
          <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
@@ -176,6 +178,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
            <types> ... #ContextLookup(IDS , TFIDX) |-> FTYPE ... </types>
            ...
          </moduleInst>
+
     rule <k> #assertNextTypeIdx IDX => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -305,8 +308,8 @@ These assertions act on the last module defined.
 
 ```k
     syntax Assertion ::= "#assertUnnamedModule"          String
-    syntax Assertion ::= "#assertUnnamedModuleAux" Int   String
-    syntax Assertion ::= "#assertNamedModule" Identifier String
+                       | "#assertUnnamedModuleAux" Int   String
+                       | "#assertNamedModule" Identifier String
  // -----------------------------------------------------------
     rule <k> #assertUnnamedModule S => #assertUnnamedModuleAux CUR S ... </k>
          <curModIdx> CUR => 0 </curModIdx>
@@ -315,6 +318,7 @@ These assertions act on the last module defined.
            ...
          </moduleInst>
          <nextModuleIdx> NEXT => NEXT </nextModuleIdx>
+
     rule <k> #assertUnnamedModuleAux IDX _ => . ... </k>
          <moduleInstances>
            ( <moduleInst>
@@ -325,6 +329,7 @@ These assertions act on the last module defined.
            )
            ...
          </moduleInstances>
+
     rule <k> #assertNamedModule NAME S => #assertUnnamedModuleAux IDX S ... </k>
          <moduleIds> ... NAME |-> IDX => .Map ... </moduleIds>
 ```
@@ -353,12 +358,10 @@ The modules are cleaned all together after the test file is executed.
            <globalIndices> _ => .Map </globalIndices>
            <exports>       _ => .Map </exports>
          </moduleInst>
-    rule <k> #setCurrentModule I => . ... </k>
-         <curModIdx> _ => I </curModIdx>
-    rule <k> #clearFreshId => . ... </k>
-         <nextFreshId> _ => 0 </nextFreshId>
-    rule <k> #clearModuleIdx => . ... </k>
-         <nextModuleIdx> _ => 0 </nextModuleIdx>
+
+    rule <k> #setCurrentModule I => . ... </k> <curModIdx>     _ => I </curModIdx>
+    rule <k> #clearFreshId       => . ... </k> <nextFreshId>   _ => 0 </nextFreshId>
+    rule <k> #clearModuleIdx     => . ... </k> <nextModuleIdx> _ => 0 </nextModuleIdx>
 ```
 
 Registry Assertations
@@ -368,11 +371,12 @@ We also want to be able to test that the embedder's registration function is wor
 
 ```k
     syntax Assertion ::= "#assertRegistrationUnnamed" String            String
-    syntax Assertion ::= "#assertRegistrationNamed"   String Identifier String
+                       | "#assertRegistrationNamed"   String Identifier String
  // --------------------------------------------------------------------------
     rule <k> #assertRegistrationUnnamed REGNAME _ => . ... </k>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
+
     rule <k> #assertRegistrationNamed REGNAME NAME _ => . ... </k>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
