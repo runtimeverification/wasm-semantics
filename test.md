@@ -18,6 +18,7 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
 
 ```k
     syntax Stmt ::= Auxil
+ // ---------------------
 ```
 
 Assertions
@@ -26,18 +27,11 @@ Assertions
 These assertions will check the supplied property, and then clear that state from the configuration.
 In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
 
-We'll make `Assertion` a subsort of `Auxil`, so that we can easily consume `Instr` with `trap`s, but not consume `Assertion`s.
-This will allow `trap` to "bubble up" (more correctly, to "consume the continuation") until it reaches its paired `#assertTrap_` statement.
+We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level embedder instrucion.
 
 ```k
     syntax Auxil ::= Assertion
  // --------------------------
-    rule <k> trap ~> (L:Label   => .) ... </k>
-    rule <k> trap ~> (F:Frame   => .) ... </k>
-    rule <k> trap ~> (I:Instr   => .) ... </k>
-    rule <k> trap ~> (IS:Instrs => .) ... </k>
-
-    rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 ```
 
 ### Trap Assertion
