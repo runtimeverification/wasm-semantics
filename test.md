@@ -304,18 +304,18 @@ These assertions test (and delete) module instances.
 These assertions act on the last module defined.
 
 ```k
-    syntax Assertion ::= "#assertUnnamedModule"
-    syntax Assertion ::= "#assertUnnamedModuleAux" Int
-    syntax Assertion ::= "#assertNamedModule" Identifier
- // ----------------------------------------------------
-    rule <k> #assertUnnamedModule => #assertUnnamedModuleAux CUR ... </k>
+    syntax Assertion ::= "#assertUnnamedModule"          String
+    syntax Assertion ::= "#assertUnnamedModuleAux" Int   String
+    syntax Assertion ::= "#assertNamedModule" Identifier String
+ // -----------------------------------------------------------
+    rule <k> #assertUnnamedModule S => #assertUnnamedModuleAux CUR S ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            ...
          </moduleInst>
          <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
-    rule <k> #assertUnnamedModuleAux IDX => . ... </k>
+    rule <k> #assertUnnamedModuleAux IDX _ => . ... </k>
          <moduleInstances>
            ( <moduleInst>
                <modIdx> IDX </modIdx>
@@ -325,7 +325,7 @@ These assertions act on the last module defined.
            )
            ...
          </moduleInstances>
-    rule <k> #assertNamedModule NAME => #assertUnnamedModule ... </k>
+    rule <k> #assertNamedModule NAME S => #assertUnnamedModule S ... </k>
          <moduleIds> ... NAME |-> _ => .Map ... </moduleIds>
 ```
 
@@ -359,13 +359,13 @@ The modules are cleaned all together after the test file is executed.
 We also want to be able to test that the embedder's registration function is working.
 
 ```k
-    syntax Assertion ::= "#assertRegistrationUnnamed" String
-    syntax Assertion ::= "#assertRegistrationNamed"   String Identifier
- // -------------------------------------------------------------------
-    rule <k> #assertRegistrationUnnamed REGNAME => . ... </k>
+    syntax Assertion ::= "#assertRegistrationUnnamed" String            String
+    syntax Assertion ::= "#assertRegistrationNamed"   String Identifier String
+ // --------------------------------------------------------------------------
+    rule <k> #assertRegistrationUnnamed REGNAME _ => . ... </k>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
-    rule <k> #assertRegistrationNamed REGNAME NAME => . ... </k>
+    rule <k> #assertRegistrationNamed REGNAME NAME _ => . ... </k>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
 ```
