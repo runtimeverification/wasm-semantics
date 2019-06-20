@@ -1204,6 +1204,7 @@ The surrounding `module` tag is discarded, and the inner portions are run like t
     syntax Stmt ::= "(" "module" Defns ")"
                   | "(" "module" Identifier Defns ")"
  // -------------------------------------------------
+ // Map the given id to the next available module number, and then define the module as usual.
     rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
