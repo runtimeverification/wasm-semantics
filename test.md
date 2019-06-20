@@ -265,13 +265,15 @@ These assertions act on the last module defined.
 
 ```k
     syntax Assertion ::= "#assertUnnamedModule"
+    syntax Assertion ::= "#assertUnnamedModuleAux" Int
     syntax Assertion ::= "#assertNamedModule" Identifier
  // ----------------------------------------------------
-    rule <k> #assertUnnamedModule => . ... </k>
+    rule <k> #assertUnnamedModule => #assertUnnamedModuleAux NEXT ... </k>
          <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
+    rule <k> #assertUnnamedModuleAux IDX => . ... </k>
          <moduleInstances>
            ( <moduleInst>
-               <modIdx> NEXT -Int 1 </modIdx>
+               <modIdx> IDX </modIdx>
                ...
              </moduleInst>
           => .Bag
