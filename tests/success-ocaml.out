@@ -12,45 +12,25 @@
     <locals>
       .Map
     </locals>
+    <curModIdx>
+      0
+    </curModIdx>
   </curFrame>
   <nextFreshId>
     0
   </nextFreshId>
-  <moduleInst>
-    <typeIds>
-      .Map
-    </typeIds>
-    <funcIds>
-      .Map
-    </funcIds>
-    <nextTypeIdx>
-      0
-    </nextTypeIdx>
-    <nextFuncIdx>
-      0
-    </nextFuncIdx>
-    <nextGlobalIdx>
-      0
-    </nextGlobalIdx>
-    <types>
-      .Map
-    </types>
-    <funcIndices>
-      .Map
-    </funcIndices>
-    <tabIndices>
-      .Map
-    </tabIndices>
-    <memIndices>
-      .Map
-    </memIndices>
-    <globalIndices>
-      .Map
-    </globalIndices>
-    <exports>
-      .Map
-    </exports>
-  </moduleInst>
+  <moduleInstances>
+    .ModuleInstCellMap
+  </moduleInstances>
+  <moduleIds>
+    .Map
+  </moduleIds>
+  <nextModuleIdx>
+    0
+  </nextModuleIdx>
+  <moduleRegistry>
+    .Map
+  </moduleRegistry>
   <mainStore>
     <nextFuncAddr>
       0
@@ -74,16 +54,4 @@
       .GlobalInstCellMap
     </globals>
   </mainStore>
-  <moduleIds>
-    .Map
-  </moduleIds>
-  <nextModuleIdx>
-    0
-  </nextModuleIdx>
-  <moduleInstances>
-    .Map
-  </moduleInstances>
-  <moduleRegistry>
-    .Map
-  </moduleRegistry>
 </generatedTop>

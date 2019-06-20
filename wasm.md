@@ -852,11 +852,11 @@ Unlike labels, only one frame can be "broken" through at a time.
          <locals> LOCAL => .Map </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
          <funcDef>
-           <fAddr>   FADDR                     </fAddr>
-           <fCode>   INSTRS                    </fCode>
-           <fType>   [ TDOMAIN ] -> [ TRANGE ] </fType>
-           <fLocal>  [ TLOCALS ]               </fLocal>
-           <fModIdx> MODIDX'                   </fModIdx>
+           <fAddr>    FADDR                     </fAddr>
+           <fCode>    INSTRS                    </fCode>
+           <fType>    [ TDOMAIN ] -> [ TRANGE ] </fType>
+           <fLocal>   [ TLOCALS ]               </fLocal>
+           <fModInst> MODIDX'                   </fModInst>
            ...
          </funcDef>
 

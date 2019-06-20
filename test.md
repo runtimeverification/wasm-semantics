@@ -294,7 +294,7 @@ The modules are cleaned all together after the test file is executed.
  // --------------------------------
     rule <k> #clearModules => . ... </k>
          <nextFreshId> _ => 0 </nextFreshId>
-         <curModIdx> CUR </curModIdx>
+         <curModIdx> CUR => 0 </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> _ => .Map </typeIds>
