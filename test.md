@@ -20,8 +20,55 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
     syntax Stmt ::= Auxil
 ```
 
-Assertions
-----------
+Reference Interpreter Commands
+------------------------------
+
+TODO: Move this to a separate `EMBEDDER` module?
+
+The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
+The reference interpreter is a particular embedder with auxillary instructions, specified in [spec interpreter](https://github.com/WebAssembly/spec/blob/master/interpreter/README.md).
+
+### Function Invocation
+
+We allow to `invoke` a function by its exported name in the test code.
+
+```k
+    syntax Auxil ::= "(" "invoke" String ")"
+ // ----------------------------------------
+    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
+         <exports> ... ENAME |-> TFIDX ... </exports>
+```
+
+### Registering Modules
+
+We first define how modules get stored away.
+
+```k
+    rule <k> #storeInstance => . ... </k>
+         <moduleInst> INST </moduleInst>
+         <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
+         <moduleInstances> ... .Map => NEXT |-> INST ... </moduleInstances>
+```
+
+We will reference modules by name in imports.
+`register` is the instruction that allows us to associate a name with a module.
+
+```k
+    syntax Auxil ::= "(" "register" String               ")"
+                   | "(" "register" String TextFormatIdx ")"
+ // --------------------------------------------------------
+    rule <k> ( register S ) => ( register S (NEXT -Int 1) )... </k> // Register last instantiated module.
+         <nextModuleIdx> NEXT </nextModuleIdx>
+         requires NEXT >Int 0
+    rule <k> ( register S ID:Identifier ) => ( register S IDX ... ) </k>
+         <moduleIds> ... ID |-> IDX ... </moduleIds>
+    rule <k> ( register S:String IDX:Int ) => . ... </k>
+         <moduleInstances> ... IDX |-> INST ... </moduleInstances>
+         <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
+```
+
+Assertions for KWasm tests
+--------------------------
 
 These assertions will check the supplied property, and then clear that state from the configuration.
 In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
@@ -274,54 +321,6 @@ We also want to be able to test that the embedder's registration function is wor
     rule <k> #assertRegistrationNamed REGNAME NAME => . ... </k>
          <moduleInstances> ... IDX |-> _ ... </moduleInstances>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
-```
-
-Reference Interpreter Commands
-------------------------------
-
-TODO: Move this to embedder module?
-
-The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
-The reference interpreter is a particular embedder with auxillary instructions, specified in [spec interpreter](https://github.com/WebAssembly/spec/blob/master/interpreter/README.md).
-
-### Function Invocation
-
-We allow to `invoke` a function by its exported name in the test code.
-
-```k
-    syntax Auxil ::= "(" "invoke" String ")"
- // ----------------------------------------
-    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
-         <exports> ... ENAME |-> TFIDX ... </exports>
-```
-
-### Registering Modules
-
-We first define how modules get stored away.
-
-```k
-    rule <k> #storeInstance => . ... </k>
-         <moduleInst> INST </moduleInst>
-         <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
-         <moduleInstances> ... .Map => NEXT |-> INST ... </moduleInstances>
-```
-
-We will reference modules by name in imports.
-`register` is the instruction that allows us to associate a name with a module.
-
-```k
-    syntax Auxil ::= "(" "register" String            ")"
-                   | "(" "register" String Identifier ")"
-                   |     "register" String Int
- // ------------------------------------------
-    rule <k> ( register S ) => register S (NEXT -Int 1) ... </k> // Register last module.
-         <nextModuleIdx> NEXT </nextModuleIdx>
-         requires NEXT >Int 0
-    rule <k> ( register S ID:Identifier ) => register S IDX ... </k>
-         <moduleIds> ... ID |-> IDX ... </moduleIds>
-    rule <k> register S:String IDX:Int => . ... </k>
-         <moduleInstances> ... IDX |-> INST ... </moduleInstances>
-         <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
 
 ```k
