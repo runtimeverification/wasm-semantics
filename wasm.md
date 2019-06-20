@@ -925,7 +925,9 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
        andBool MAX <=Int #maxTableSize()
     rule <k> ( table funcref ( elem ES ) )
           =>  table { #lengthElemSegment(ES) #lengthElemSegment(ES) }
-          ~> ( elem (i32.const 0) ES ) ... </k>
+          ~> ( elem (i32.const 0) ES )
+          ...
+         </k>
 
     rule <k> table { _ _ } => trap ... </k>
          <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
@@ -1211,6 +1213,7 @@ A table index is optional and will be default to zero.
     rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, ELEMSEGMENT ) ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <tabIndices> TABIDX |-> ADDR </tabIndices>
+
     rule <k> #initElements ( ADDR, OFFSET, .ElemSegment ) => . ... </k>
     rule <k> #initElements ( ADDR, OFFSET,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, ES ) ... </k>
          <tabInst>
