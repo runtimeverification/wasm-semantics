@@ -277,14 +277,17 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
 
 ```k
     syntax PlainInstr ::= IValType "." IRelOp
- //                     | FValType "." FRelOp
+                        | FValType "." FRelOp
  // -----------------------------------------
 
     syntax Instr ::= IValType "." IRelOp Int   Int
- //                | FValType "." FRelOp Float Float
+                   | FValType "." FRelOp Float Float
  // ------------------------------------------------
     rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK  </valstack>
+
+    rule <k> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </k>
+         <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK  </valstack>
 ```
 
 ### Conversion Operations
@@ -363,7 +366,9 @@ Note that we do not need to call `#chop` on the results here.
  // ---------------------------------------------------------------------------------
 
     syntax FBinOp ::= "add" | "sub" | "mul" | "div" | "min" | "max" | "store"
-                    | "lt" | "gt" | "le" | "ge" | "eq" | "ne"
+ // -------------------------------------------------------------------------
+
+    syntax FRelOp ::= "lt" | "gt" | "le" | "ge" | "eq" | "ne"
  // ---------------------------------------------------------
 ```
 
