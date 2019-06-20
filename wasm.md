@@ -132,12 +132,12 @@ Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") unt
 ```k
     syntax Instr ::= "trap"
  // -----------------------
-    rule <k> trap ~> (L:Label      => .) ... </k>
-    rule <k> trap ~> (F:Frame      => .) ... </k>
-    rule <k> trap ~> (I:Instr      => .) ... </k>
-    rule <k> trap ~> (IS:Instrs    => .) ... </k>
-    rule <k> trap ~> (D:Defn       => .) ... </k>
-    rule <k> trap ~> (DS:Defns     => .) ... </k>
+    rule <k> trap ~> (L:Label   => .) ... </k>
+    rule <k> trap ~> (F:Frame   => .) ... </k>
+    rule <k> trap ~> (I:Instr   => .) ... </k>
+    rule <k> trap ~> (IS:Instrs => .) ... </k>
+    rule <k> trap ~> (D:Defn    => .) ... </k>
+    rule <k> trap ~> (DS:Defns  => .) ... </k>
 
     rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 ```
