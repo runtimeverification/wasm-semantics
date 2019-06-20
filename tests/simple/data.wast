@@ -1,3 +1,5 @@
+(module)
+
 ;; Instantiating with data
 
 (memory (data 87 65 83 77 50 46 48))
@@ -34,3 +36,6 @@
 (memory (data 87))
 #assertMemoryData (0, 87) "text to ascii W"
 #assertEmptyMemory 1 1 "memorys string length"
+
+#assertUnnamedModule ""
+#clearModuleIdx

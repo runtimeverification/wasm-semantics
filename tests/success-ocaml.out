@@ -20,50 +20,13 @@
     0
   </nextFreshId>
   <moduleInstances>
-    <moduleInst>
-      <modIdx>
-        0
-      </modIdx>
-      <typeIds>
-        .Map
-      </typeIds>
-      <funcIds>
-        .Map
-      </funcIds>
-      <nextTypeIdx>
-        0
-      </nextTypeIdx>
-      <nextFuncIdx>
-        0
-      </nextFuncIdx>
-      <nextGlobalIdx>
-        0
-      </nextGlobalIdx>
-      <types>
-        .Map
-      </types>
-      <funcIndices>
-        .Map
-      </funcIndices>
-      <tabIndices>
-        .Map
-      </tabIndices>
-      <memIndices>
-        .Map
-      </memIndices>
-      <globalIndices>
-        .Map
-      </globalIndices>
-      <exports>
-        .Map
-      </exports>
-    </moduleInst>
+    .ModuleInstCellMap
   </moduleInstances>
   <moduleIds>
     .Map
   </moduleIds>
   <nextModuleIdx>
-    1
+    0
   </nextModuleIdx>
   <moduleRegistry>
     .Map

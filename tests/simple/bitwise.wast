@@ -149,4 +149,3 @@
 (i64.popcnt)
 #assertTopStack < i64 > 64 "popcnt 2^64 - 1"
 
-#clearModules
