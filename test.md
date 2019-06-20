@@ -151,8 +151,8 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
            ...
          </moduleInst>
          <globals>
-           ( .Bag =>
-             <globalInst>
+           ( .Bag
+          => <globalInst>
                <gAddr> GADDR </gAddr>
                ...
              </globalInst>
@@ -344,20 +344,18 @@ The modules are cleaned all together after the test file is executed.
  // ----------------------------------
     rule <k> #clearCurrentModule => . ... </k>
          <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <typeIds> _ => .Map </typeIds>
-           <funcIds> _ => .Map </funcIds>
-           <nextTypeIdx>   _ => 0 </nextTypeIdx>
-           <nextFuncIdx>   _ => 0 </nextFuncIdx>
-           <nextGlobalIdx> _ => 0 </nextGlobalIdx>
-           <types>         _ => .Map </types>
-           <funcIndices>   _ => .Map </funcIndices>
-           <tabIndices>    _ => .Map </tabIndices>
-           <memIndices>    _ => .Map </memIndices>
-           <globalIndices> _ => .Map </globalIndices>
-           <exports>       _ => .Map </exports>
-         </moduleInst>
+         <moduleInstances>
+           ( <moduleInst>
+               <modIdx> CUR </modIdx>
+               ...
+             </moduleInst>
+          => <moduleInst>
+               <modIdx> CUR </modIdx>
+               ...
+             </moduleInst>
+           )
+           ...
+         </moduleInstances>
 
     rule <k> #setCurrentModule I => . ... </k> <curModIdx>     _ => I </curModIdx>
     rule <k> #clearFreshId       => . ... </k> <nextFreshId>   _ => 0 </nextFreshId>
