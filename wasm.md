@@ -138,7 +138,6 @@ Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") unt
     rule <k> trap ~> (IS:Instrs    => .) ... </k>
     rule <k> trap ~> (D:Defn       => .) ... </k>
     rule <k> trap ~> (DS:Defns     => .) ... </k>
-    rule <k> trap ~> ((module  _)  => .) ... </k>
 
     rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 ```
