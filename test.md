@@ -333,9 +333,9 @@ The modules are cleaned all together after the test file is executed.
 
 ```k
     syntax Auxil ::= "#clearCurrentModule"
-    syntax Auxil ::= "#setCurrentModule" Int
-    syntax Auxil ::= "#clearFreshId"
-    syntax Auxil ::= "#clearModuleIdx"
+                   | "#setCurrentModule" Int
+                   | "#clearFreshId"
+                   | "#clearModuleIdx"
  // ----------------------------------
     rule <k> #clearCurrentModule => . ... </k>
          <curModIdx> CUR </curModIdx>
