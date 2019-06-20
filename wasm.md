@@ -24,17 +24,17 @@ Configuration
       <moduleInstances>
         <moduleInst multiplicity="*" type="Map">
           <modIdx>        0    </modIdx>
-/*TODO */ <typeIds>       .Map </typeIds>
-/*TODO */ <funcIds>       .Map </funcIds> //this is mapping from identifier to index
-/*TODO */ <nextTypeIdx>   0    </nextTypeIdx>
-/*TODO */ <nextFuncIdx>   0    </nextFuncIdx>
-/*TODO */ <nextGlobalIdx> 0    </nextGlobalIdx>
-/*TODO */ <types>         .Map </types>
-/*TODO */ <funcIndices>   .Map </funcIndices> //this is mapping from index to address
-/*TODO */ <tabIndices>    .Map </tabIndices>
-/*TODO */ <memIndices>    .Map </memIndices>
-/*TODO */ <globalIndices> .Map </globalIndices>
-/*TODO */ <exports>       .Map </exports>
+          <typeIds>       .Map </typeIds>
+          <funcIds>       .Map </funcIds> //this is mapping from identifier to index
+          <nextTypeIdx>   0    </nextTypeIdx>
+          <nextFuncIdx>   0    </nextFuncIdx>
+          <nextGlobalIdx> 0    </nextGlobalIdx>
+          <types>         .Map </types>
+          <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+          <tabIndices>    .Map </tabIndices>
+          <memIndices>    .Map </memIndices>
+          <globalIndices> .Map </globalIndices>
+          <exports>       .Map </exports>
         </moduleInst>
       </moduleInstances>
       <moduleIds> .Map </moduleIds>
@@ -618,7 +618,12 @@ The `*_local` instructions are defined here.
  // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           ...
+         </moduleInst>
          <globalInst>
            <gAddr>  GADDR </gAddr>
            <gValue> VALUE </gValue>
@@ -627,7 +632,12 @@ The `*_local` instructions are defined here.
 
     rule <k> ( global.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           ...
+         </moduleInst>
          <globalInst>
            <gAddr>  GADDR      </gAddr>
            <gValue> _ => VALUE </gValue>
@@ -696,12 +706,22 @@ Type could be declared explicitly and could optionally bind with an identifier.
                       | "(type" Identifier "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
     rule <k> (type (func TDECLS:TypeDecls)) => . ... </k>
-         <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-         <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
+           <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
+           ...
+         </moduleInst>
     rule <k> (type ID:Identifier (func TDECLS:TypeDecls)) => . ... </k>
-         <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
-         <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
-         <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
+           <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
+           <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
+           ...
+         </moduleInst>
 ```
 
 Function Declaration and Invocation
@@ -748,7 +768,12 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
           #fi
          ...
          </k>
-         <types> TYPES </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <types> TYPES </types>
+           ...
+         </moduleInst>
     rule <k> #checkTypeUse ( (type TFIDF) )        => . ... </k>
     rule <k> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </k>
 ```
@@ -775,11 +800,16 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          </k>
 
     rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
-         <typeIds> TYPEIDS </typeIds>
-         <types>   TYPES   </types>
-         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
-         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> TYPEIDS </typeIds>
+           <types>   TYPES   </types>
+           <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+           <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+           <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+           ...
+         </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
@@ -844,8 +874,13 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Instr ::= "(" "call" TextFormatIdx ")"
  // ---------------------------------------------
     rule <k> ( call TFIDX ) => ( invoke FADDR:Int ) ... </k>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
 ```
 
 ### Export
@@ -857,7 +892,12 @@ Now it contains only Function exports. The exported functions should be able to 
     syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
  // ---------------------------------------------------------------
     rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
-         <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
+           ...
+         </moduleInst>
 ```
 
 Table
@@ -887,10 +927,21 @@ The allocation of a new `tableinst`. Currently at most one table may be defined 
        andBool MAX <=Int #maxTableSize()
 
     rule <k> table { _ _ } => trap ... </k>
-         <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> MAP </tabIndices>
+           ...
+         </moduleInst>
+       requires MAP =/=K .Map
 
     rule <k> table { MIN MAX } => . ... </k>
-         <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
+           ...
+         </moduleInst>
          <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
@@ -934,10 +985,21 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
-         <memIndices> MAP </memIndices> requires MAP =/=K .Map
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> MAP </memIndices>
+           ...
+         </moduleInst>
+         requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
+           ...
+         </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
@@ -982,7 +1044,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
          requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1024,7 +1091,12 @@ The value is fetched from the "effective address", which is the address given on
                        #fi
          ...
          </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1034,7 +1106,12 @@ The value is fetched from the "effective address", which is the address given on
       requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1078,7 +1155,12 @@ The `size` operation returns the size of the memory, measured in pages.
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1100,7 +1182,12 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>
@@ -1168,7 +1255,12 @@ The `data` initializer simply puts these bytes into the specified memory, starti
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX STRING } => . ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
-         <memIndices> MEMIDX |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> MEMIDX |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata>   DATA
@@ -1193,8 +1285,13 @@ Start Function
     syntax Instr ::= "(" "start" TextFormatIdx ")"
  // ----------------------------------------------
     rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
 ```
 
 Module Instantiation
