@@ -41,15 +41,6 @@ We allow to `invoke` a function by its exported name in the test code.
 
 ### Registering Modules
 
-We first define how modules get stored away.
-
-```k
-    rule <k> #storeInstance => . ... </k>
-         <moduleInst> INST </moduleInst>
-         <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
-         <moduleInstances> ... .Map => NEXT |-> INST ... </moduleInstances>
-```
-
 We will reference modules by name in imports.
 `register` is the instruction that allows us to associate a name with a module.
 
@@ -60,10 +51,9 @@ We will reference modules by name in imports.
     rule <k> ( register S ) => ( register S (NEXT -Int 1) )... </k> // Register last instantiated module.
          <nextModuleIdx> NEXT </nextModuleIdx>
          requires NEXT >Int 0
-    rule <k> ( register S ID:Identifier ) => ( register S IDX ... ) </k>
+    rule <k> ( register S ID:Identifier ) => ( register S IDX ) ... </k>
          <moduleIds> ... ID |-> IDX ... </moduleIds>
     rule <k> ( register S:String IDX:Int ) => . ... </k>
-         <moduleInstances> ... IDX |-> INST ... </moduleInstances>
          <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
 
@@ -279,13 +269,21 @@ These assertions act on the last module defined.
  // ----------------------------------------------------
     rule <k> #assertUnnamedModule => . ... </k>
          <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
-         <moduleInstances> ... NEXT -Int 1 |-> _ => .Map ... </moduleInstances>
+         <moduleInstances>
+           ( <moduleInst>
+               <modIdx> NEXT -Int 1 </modIdx>
+               ...
+             </moduleInst>
+          => .Bag
+           )
+           ...
+         </moduleInstances>
     rule <k> #assertNamedModule NAME => #assertUnnamedModule ... </k>
          <moduleIds> ... NAME |-> _ => .Map ... </moduleIds>
 ```
 
-Clear Module Instances
-----------------------
+Registry Assertations
+---------------------
 
 The modules are cleaned all together after the test file is executed.
 
@@ -294,7 +292,9 @@ The modules are cleaned all together after the test file is executed.
  // --------------------------------
     rule <k> #clearModules => . ... </k>
          <nextFreshId> _ => 0 </nextFreshId>
+         <curModIdx> CUR </curModIdx>
          <moduleInst>
+           <modIdx> CUR </modIdx>
            <typeIds> _ => .Map </typeIds>
            <funcIds> _ => .Map </funcIds>
            <nextTypeIdx>   _ => 0 </nextTypeIdx>
@@ -316,10 +316,10 @@ We also want to be able to test that the embedder's registration function is wor
     syntax Assertion ::= "#assertRegistrationNamed"   String Identifier
  // -------------------------------------------------------------------
     rule <k> #assertRegistrationUnnamed REGNAME => . ... </k>
-         <moduleInstances> ... IDX |-> _ ... </moduleInstances>
+         <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
     rule <k> #assertRegistrationNamed REGNAME NAME => . ... </k>
-         <moduleInstances> ... IDX |-> _ ... </moduleInstances>
+         <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
 ```
 

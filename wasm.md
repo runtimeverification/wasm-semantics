@@ -18,21 +18,28 @@ Configuration
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals> .Map </locals>
+        <curModIdx> 0 </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
-      <moduleInst>
-        <typeIds>       .Map </typeIds>
-        <funcIds>       .Map </funcIds> //this is mapping from identifier to index
-        <nextTypeIdx>   0    </nextTypeIdx>
-        <nextFuncIdx>   0    </nextFuncIdx>
-        <nextGlobalIdx> 0    </nextGlobalIdx>
-        <types>         .Map </types>
-        <funcIndices>   .Map </funcIndices> //this is mapping from index to address
-        <tabIndices>    .Map </tabIndices>
-        <memIndices>    .Map </memIndices>
-        <globalIndices> .Map </globalIndices>
-        <exports>       .Map </exports>
-      </moduleInst>
+      <moduleInstances>
+        <moduleInst multiplicity="*" type="Map">
+/*TODO */ <modIdx>        0    </modIdx>
+/*TODO */ <typeIds>       .Map </typeIds>
+/*TODO */ <funcIds>       .Map </funcIds> //this is mapping from identifier to index
+/*TODO */ <nextTypeIdx>   0    </nextTypeIdx>
+/*TODO */ <nextFuncIdx>   0    </nextFuncIdx>
+/*TODO */ <nextGlobalIdx> 0    </nextGlobalIdx>
+/*TODO */ <types>         .Map </types>
+/*TODO */ <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+/*TODO */ <tabIndices>    .Map </tabIndices>
+/*TODO */ <memIndices>    .Map </memIndices>
+/*TODO */ <globalIndices> .Map </globalIndices>
+/*TODO */ <exports>       .Map </exports>
+        </moduleInst>
+      </moduleInstances>
+      <moduleIds> .Map </moduleIds>
+      <nextModuleIdx> 0 </nextModuleIdx>
+      <moduleRegistry> .Map </moduleRegistry>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
@@ -70,10 +77,6 @@ Configuration
           </globalInst>
         </globals>
       </mainStore>
-      <moduleIds> .Map </moduleIds>
-      <nextModuleIdx> 0 </nextModuleIdx>
-      <moduleInstances> .Map </moduleInstances>
-      <moduleRegistry> .Map </moduleRegistry>
 ```
 
 ### Assumptions and invariants
