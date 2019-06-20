@@ -1333,6 +1333,32 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          </moduleInstances>
 ```
 
+Note that we want to always have a module available, for execution Statements outside of modules.
+We do this with a small hack to ensure that a first module is always created when needed, if not available.
+
+```k
+    rule <curModIdx> _ => NEXT </curModIdx>
+         <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
+         <moduleInstances>
+           (.Bag =>
+             <moduleInst>
+               <modIdx>        NEXT    </modIdx>
+               <typeIds>       .Map </typeIds>
+               <funcIds>       .Map </funcIds>
+               <nextTypeIdx>   0    </nextTypeIdx>
+               <nextFuncIdx>   0    </nextFuncIdx>
+               <nextGlobalIdx> 0    </nextGlobalIdx>
+               <types>         .Map </types>
+               <funcIndices>   .Map </funcIndices>
+               <tabIndices>    .Map </tabIndices>
+               <memIndices>    .Map </memIndices>
+               <globalIndices> .Map </globalIndices>
+               <exports>       .Map </exports>
+             </moduleInst>
+           )
+         </moduleInstances>
+```
+
 After a module is instantiated, it should be saved somewhere.
 How this is done is up to the embedder.
 
