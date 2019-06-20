@@ -710,9 +710,10 @@ Type could be declared explicitly and could optionally bind with an identifier.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-           <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
+           <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
            ...
          </moduleInst>
+
     rule <k> (type ID:Identifier (func TDECLS:TypeDecls)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -992,7 +993,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
            <memIndices> MAP </memIndices>
            ...
          </moduleInst>
-         requires MAP =/=K .Map
+      requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1313,20 +1314,10 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
          <moduleInstances>
-           (.Bag =>
-             <moduleInst>
-               <modIdx>        NEXT    </modIdx>
-               <typeIds>       .Map </typeIds>
-               <funcIds>       .Map </funcIds>
-               <nextTypeIdx>   0    </nextTypeIdx>
-               <nextFuncIdx>   0    </nextFuncIdx>
-               <nextGlobalIdx> 0    </nextGlobalIdx>
-               <types>         .Map </types>
-               <funcIndices>   .Map </funcIndices>
-               <tabIndices>    .Map </tabIndices>
-               <memIndices>    .Map </memIndices>
-               <globalIndices> .Map </globalIndices>
-               <exports>       .Map </exports>
+           ( .Bag
+          => <moduleInst>
+               <modIdx> NEXT </modIdx>
+               ...
              </moduleInst>
            )
            ...

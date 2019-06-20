@@ -50,7 +50,7 @@ We will reference modules by name in imports.
  // --------------------------------------------------------
     rule <k> ( register S ) => ( register S (NEXT -Int 1) )... </k> // Register last instantiated module.
          <nextModuleIdx> NEXT </nextModuleIdx>
-         requires NEXT >Int 0
+      requires NEXT >Int 0
     rule <k> ( register S ID:Identifier ) => ( register S IDX ) ... </k>
          <moduleIds> ... ID |-> IDX ... </moduleIds>
     rule <k> ( register S:String IDX:Int ) => . ... </k>
