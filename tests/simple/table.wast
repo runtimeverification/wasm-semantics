@@ -1,3 +1,5 @@
+(module)
+
 ( table funcref )
 #assertEmptyTable 0 .MaxBound "table initial 1"
 
@@ -18,6 +20,8 @@
 #assertTableElem (1, $f) "table elem 1"
 #assertTableElem (2, $g) "table elem 2"
 #assertEmptyTable 4 .MaxBound "should be empty now"
+
+#assertUnnamedModule ""
 
 (module
   (type $out-i32 (func (result i32)))
@@ -54,4 +58,6 @@
 #assertTableElem (9, $const-i32-b) "table elem 9"
 #assertEmptyTable 10 .MaxBound "should be empty now"
 
-#clearModules
+#assertUnnamedModule ""
+#clearFreshId
+#clearModuleIdx

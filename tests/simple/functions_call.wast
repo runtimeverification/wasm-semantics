@@ -1,3 +1,5 @@
+(module)
+
 ;; Simple add function
 
 (type $a-cool-type (func (param i32 i32 ) ( result i32 )))
@@ -116,6 +118,7 @@
 (func $3)
 
 #assertFunction $3 [ ] -> [ ] [ ] "no domain/range or locals"
+#assertUnnamedModule ""
 
 (module
     (func $add
@@ -161,7 +164,8 @@
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
 #assertFunction $mul [ i32 i32 ] -> [ i32 ] [ ] "mul function typed correctly"
 #assertFunction $xor [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
-#assertNextTypeIdx 5
+#assertNextTypeIdx 1
+#assertUnnamedModule "add-mul-xor module"
 
 (module
     (func $f1 (param i32 i32 ) (result i32) (local i32)
@@ -196,6 +200,7 @@
 #assertTopStack < i32 > 77000 "nested method call"
 #assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
 #assertFunction $f1 [ i32 i32     ] -> [ i32 ] [ i32     ] "inner calling method"
+#assertUnnamedModule "f1-f2 module"
 
 (module
     (func $dummy)
@@ -210,5 +215,5 @@
 
 #assertFunction $dummy [         ] -> [     ] [ ] "$dummy function in module"
 #assertFunction $add   [ i32 i32 ] -> [ i32 ] [ ] "second function in module"
-
-#clearModules
+#assertUnnamedModule "dummy-add module"
+#clearModuleIdx

@@ -1,3 +1,5 @@
+(module)
+
 ( memory )
 #assertEmptyMemory 0 .MaxBound "memory initial 1"
 
@@ -117,4 +119,5 @@
 #assertMemoryData (8, 255) ""
 #assertEmptyMemory 1 .MaxBound "Zero updates don't over-erase"
 
-#clearModules
+#assertUnnamedModule ""
+#clearModuleIdx

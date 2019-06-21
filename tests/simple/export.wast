@@ -1,3 +1,4 @@
+(module)
 ;; test function export
 
 (func $1 param i64 i64 i64 result i64 local i64
@@ -59,4 +60,6 @@
 
 #assertFunction 0 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "removing a function by its inner index"
 
-#clearModules
+#assertUnnamedModule ""
+#clearFreshId
+#clearModuleIdx

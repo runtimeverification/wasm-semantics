@@ -21,8 +21,47 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
  // ---------------------
 ```
 
-Assertions
-----------
+Reference Interpreter Commands
+------------------------------
+
+TODO: Move this to a separate `EMBEDDER` module?
+
+The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
+The reference interpreter is a particular embedder with auxillary instructions, specified in [spec interpreter](https://github.com/WebAssembly/spec/blob/master/interpreter/README.md).
+
+### Function Invocation
+
+We allow to `invoke` a function by its exported name in the test code.
+
+```k
+    syntax Auxil ::= "(" "invoke" String ")"
+ // ----------------------------------------
+    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
+         <exports> ... ENAME |-> TFIDX ... </exports>
+```
+
+### Registering Modules
+
+We will reference modules by name in imports.
+`register` is the instruction that allows us to associate a name with a module.
+
+```k
+    syntax Auxil ::= "(" "register" String               ")"
+                   | "(" "register" String TextFormatIdx ")"
+ // --------------------------------------------------------
+    rule <k> ( register S ) => ( register S (NEXT -Int 1) )... </k> // Register last instantiated module.
+         <nextModuleIdx> NEXT </nextModuleIdx>
+      requires NEXT >Int 0
+
+    rule <k> ( register S ID:Identifier ) => ( register S IDX ) ... </k>
+         <moduleIds> ... ID |-> IDX ... </moduleIds>
+
+    rule <k> ( register S:String IDX:Int ) => . ... </k>
+         <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
+```
+
+Assertions for KWasm tests
+--------------------------
 
 These assertions will check the supplied property, and then clear that state from the configuration.
 In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
@@ -75,7 +114,12 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
-         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           ...
+         </moduleInst>
          <globals>
            ( <globalInst>
                <gAddr>  GADDR </gAddr>
@@ -94,10 +138,15 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
     syntax Auxil ::= "init_global" Int Int
  // --------------------------------------
     rule <k> init_global INDEX GADDR => . ... </k>
-         <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
+           ...
+         </moduleInst>
          <globals>
-           ( .Bag =>
-             <globalInst>
+           ( .Bag
+          => <globalInst>
                <gAddr> GADDR </gAddr>
                ...
              </globalInst>
@@ -116,10 +165,21 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
                        | "#assertNextTypeIdx" Int
  // ---------------------------------------------
     rule <k> #assertType TFIDX FTYPE => . ... </k>
-         <typeIds> IDS </typeIds>
-         <types> ... #ContextLookup(IDS , TFIDX) |-> FTYPE ... </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> IDS </typeIds>
+           <types> ... #ContextLookup(IDS , TFIDX) |-> FTYPE ... </types>
+           ...
+         </moduleInst>
+
     rule <k> #assertNextTypeIdx IDX => . ... </k>
-         <nextTypeIdx> IDX </nextTypeIdx>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <nextTypeIdx> IDX </nextTypeIdx>
+           ...
+         </moduleInst>
 ```
 
 ### Function Assertions
@@ -130,8 +190,13 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
     syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
  // ----------------------------------------------------------------------------
     rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
          <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
          <funcs>
            ( <funcDef>
@@ -158,7 +223,12 @@ This asserts related operation about tables.
          <nextTabAddr> NEXT </nextTabAddr>
 
     rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
-         <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
+           ...
+         </moduleInst>
          <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
            ( <tabInst>
@@ -176,7 +246,12 @@ This asserts related operation about tables.
     syntax Assertion ::= "#assertTableElem" "(" Int "," TextFormatIdx ")" String
  // ----------------------------------------------------------------------------
     rule <k> #assertTableElem (KEY , VAL) MSG => . ... </k>
-         <tabIndices> 0 |-> ADDR </tabIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> 0 |-> ADDR </tabIndices>
+           ...
+         </moduleInst>
          <tabs>
            <tabInst>
              <tAddr> ADDR </tAddr>
@@ -199,7 +274,12 @@ This checks that the last allocated memory has the given size and max value.
          <nextMemAddr> NEXT </nextMemAddr>
 
     rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
-         <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
+           ...
+         </moduleInst>
          <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
            ( <memInst>
@@ -217,7 +297,12 @@ This checks that the last allocated memory has the given size and max value.
     syntax Assertion ::= "#assertMemoryData" "(" Int "," Int ")" String
  // -------------------------------------------------------------------
     rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <mems>
            <memInst>
              <mAddr> ADDR </mAddr>
@@ -228,41 +313,83 @@ This checks that the last allocated memory has the given size and max value.
          </mems>
 ```
 
-Clear Module Instances
-----------------------
+### Module Assertions
+
+These assertions test (and delete) module instances.
+These assertions act on the last module defined.
+
+```k
+    syntax Assertion ::= "#assertUnnamedModule"          String
+                       | "#assertUnnamedModuleAux" Int   String
+                       | "#assertNamedModule" Identifier String
+ // -----------------------------------------------------------
+    rule <k> #assertUnnamedModule S => #assertUnnamedModuleAux CUR S ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           ...
+         </moduleInst>
+         <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
+
+    rule <k> #assertUnnamedModuleAux IDX _ => . ... </k>
+         <moduleInstances>
+           ( <moduleInst>
+               <modIdx> IDX </modIdx>
+               ...
+             </moduleInst>
+          => .Bag
+           )
+           ...
+         </moduleInstances>
+
+    rule <k> #assertNamedModule NAME S => #assertUnnamedModuleAux IDX S ... </k>
+         <moduleIds> ... NAME |-> IDX => .Map ... </moduleIds>
+```
 
 The modules are cleaned all together after the test file is executed.
 
 ```k
-    syntax Auxil ::= "#clearModules"
- // --------------------------------
-    rule <k> #clearModules => . ... </k>
-         <nextFreshId> _ => 0 </nextFreshId>
-         <moduleInst>
-           <typeIds> _ => .Map </typeIds>
-           <funcIds> _ => .Map </funcIds>
-           <nextTypeIdx>   _ => 0 </nextTypeIdx>
-           <nextFuncIdx>   _ => 0 </nextFuncIdx>
-           <nextGlobalIdx> _ => 0 </nextGlobalIdx>
-           <types>         _ => .Map </types>
-           <funcIndices>   _ => .Map </funcIndices>
-           <tabIndices>    _ => .Map </tabIndices>
-           <memIndices>    _ => .Map </memIndices>
-           <globalIndices> _ => .Map </globalIndices>
-           <exports>       _ => .Map </exports>
-         </moduleInst>
+    syntax Auxil ::= "#clearCurrentModule"
+                   | "#setCurrentModule" Int
+                   | "#clearFreshId"
+                   | "#clearModuleIdx"
+ // ----------------------------------
+    rule <k> #clearCurrentModule => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInstances>
+           ( <moduleInst>
+               <modIdx> CUR </modIdx>
+               ...
+             </moduleInst>
+          => <moduleInst>
+               <modIdx> CUR </modIdx>
+               ...
+             </moduleInst>
+           )
+           ...
+         </moduleInstances>
+
+    rule <k> #setCurrentModule I => . ... </k> <curModIdx>     _ => I </curModIdx>
+    rule <k> #clearFreshId       => . ... </k> <nextFreshId>   _ => 0 </nextFreshId>
+    rule <k> #clearModuleIdx     => . ... </k> <nextModuleIdx> _ => 0 </nextModuleIdx>
 ```
 
-Function Invocation
--------------------
+Registry Assertations
+---------------------
 
-We allow to `invoke` a function by its exported name in the test code.
+We also want to be able to test that the embedder's registration function is working.
 
 ```k
-    syntax Auxil ::= "(" "invoke" String ")"
- // ----------------------------------------
-    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
-         <exports> ... ENAME |-> TFIDX ... </exports>
+    syntax Assertion ::= "#assertRegistrationUnnamed" String            String
+                       | "#assertRegistrationNamed"   String Identifier String
+ // --------------------------------------------------------------------------
+    rule <k> #assertRegistrationUnnamed REGNAME _ => . ... </k>
+         <modIdx> IDX </modIdx>
+         <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
+
+    rule <k> #assertRegistrationNamed REGNAME NAME _ => . ... </k>
+         <modIdx> IDX </modIdx>
+         <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
 ```
 
 ```k

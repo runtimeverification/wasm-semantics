@@ -23,5 +23,3 @@
 
 (i64.extend_i32_s (i32.const 15))
 #assertTopStack < i64 > 15 "folded extend sig"
-
-#clearModules

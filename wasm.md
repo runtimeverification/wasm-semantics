@@ -18,21 +18,28 @@ Configuration
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals> .Map </locals>
+        <curModIdx> 0 </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
-      <moduleInst>
-        <typeIds>       .Map </typeIds>
-        <funcIds>       .Map </funcIds> //this is mapping from identifier to index
-        <nextTypeIdx>   0    </nextTypeIdx>
-        <nextFuncIdx>   0    </nextFuncIdx>
-        <nextGlobalIdx> 0    </nextGlobalIdx>
-        <types>         .Map </types>
-        <funcIndices>   .Map </funcIndices> //this is mapping from index to address
-        <tabIndices>    .Map </tabIndices>
-        <memIndices>    .Map </memIndices>
-        <globalIndices> .Map </globalIndices>
-        <exports>       .Map </exports>
-      </moduleInst>
+      <moduleInstances>
+        <moduleInst multiplicity="*" type="Map">
+          <modIdx>        0    </modIdx>
+          <typeIds>       .Map </typeIds>
+          <funcIds>       .Map </funcIds> //this is mapping from identifier to index
+          <nextTypeIdx>   0    </nextTypeIdx>
+          <nextFuncIdx>   0    </nextFuncIdx>
+          <nextGlobalIdx> 0    </nextGlobalIdx>
+          <types>         .Map </types>
+          <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+          <tabIndices>    .Map </tabIndices>
+          <memIndices>    .Map </memIndices>
+          <globalIndices> .Map </globalIndices>
+          <exports>       .Map </exports>
+        </moduleInst>
+      </moduleInstances>
+      <moduleIds> .Map </moduleIds>
+      <nextModuleIdx> 0 </nextModuleIdx>
+      <moduleRegistry> .Map </moduleRegistry>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
@@ -628,7 +635,12 @@ The `*_local` instructions are defined here.
  // -----------------------------------------------
     rule <k> ( global.get INDEX ) => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           ...
+         </moduleInst>
          <globalInst>
            <gAddr>  GADDR </gAddr>
            <gValue> VALUE </gValue>
@@ -637,7 +649,12 @@ The `*_local` instructions are defined here.
 
     rule <k> ( global.set INDEX ) => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           ...
+         </moduleInst>
          <globalInst>
            <gAddr>  GADDR      </gAddr>
            <gValue> _ => VALUE </gValue>
@@ -706,12 +723,23 @@ Type could be declared explicitly and could optionally bind with an identifier.
                       | "(type" Identifier "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
     rule <k> (type (func TDECLS:TypeDecls)) => . ... </k>
-         <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-         <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)]   </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
+           <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
+           ...
+         </moduleInst>
+
     rule <k> (type ID:Identifier (func TDECLS:TypeDecls)) => . ... </k>
-         <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
-         <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
-         <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
+           <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
+           <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
+           ...
+         </moduleInst>
 ```
 
 Function Declaration and Invocation
@@ -758,7 +786,12 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
           #fi
          ...
          </k>
-         <types> TYPES </types>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <types> TYPES </types>
+           ...
+         </moduleInst>
     rule <k> #checkTypeUse ( (type TFIDF) )        => . ... </k>
     rule <k> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </k>
 ```
@@ -785,20 +818,25 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
          </k>
 
     rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
-         <typeIds> TYPEIDS </typeIds>
-         <types>   TYPES   </types>
-         <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
-         <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-         <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> TYPEIDS </typeIds>
+           <types>   TYPES   </types>
+           <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
+           <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
+           <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+           ...
+         </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>  NEXTADDR                             </fAddr>
-               <fCode>  INSTRS                               </fCode>
-               <fType>  asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
-               <fLocal> asLocalType ( LDECLS )               </fLocal>
-               ...
+               <fAddr>    NEXTADDR                             </fAddr>
+               <fCode>    INSTRS                               </fCode>
+               <fType>    asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
+               <fLocal>   asLocalType ( LDECLS )               </fLocal>
+               <fModInst> CUR                                  </fModInst>
              </funcDef>
            )
            ...
@@ -812,31 +850,30 @@ Similar to labels, they sit on the instruction stack (the `<k>` cell), and `retu
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" ValTypes ValStack Map
- // ----------------------------------------------
-    rule <k> frame TRANGE VALSTACK' LOCAL' => . ... </k>
+    syntax Frame ::= "frame" Int ValTypes ValStack Map
+ // --------------------------------------------------
+    rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </k>
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
+         <curModIdx> _ => MODIDX' </curModIdx>
 
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
-          ~> frame TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
+          ~> frame MODIDX TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
-         <curFrame>
-           <locals> LOCAL => .Map </locals>
-           ...
-         </curFrame>
+         <locals> LOCAL => .Map </locals>
+         <curModIdx> MODIDX => MODIDX' </curModIdx>
          <funcDef>
-           <fAddr>  FADDR                     </fAddr>
-           <fCode>  INSTRS                    </fCode>
-           <fType>  [ TDOMAIN ] -> [ TRANGE ] </fType>
-           <fLocal> [ TLOCALS ]               </fLocal>
-           ...
+           <fAddr>    FADDR                     </fAddr>
+           <fCode>    INSTRS                    </fCode>
+           <fType>    [ TDOMAIN ] -> [ TRANGE ] </fType>
+           <fLocal>   [ TLOCALS ]               </fLocal>
+           <fModInst> MODIDX'                   </fModInst>
          </funcDef>
 
     syntax Instr ::= "(" "return" ")"
@@ -854,8 +891,13 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Instr ::= "(" "call" TextFormatIdx ")"
  // ---------------------------------------------
     rule <k> ( call TFIDX ) => ( invoke FADDR:Int ) ... </k>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
 ```
 
 ```k
@@ -864,17 +906,22 @@ Unlike labels, only one frame can be "broken" through at a time.
  // -------------------------------------------------------
     rule <k> ( call_indirect TUSE:TypeUse IS:Instrs ) => IS ~> ( call_indirect TUSE ) ... </k>
     rule <k> ( call_indirect TUSE:TypeUse           ) => ( invoke FADDR )             ... </k>
-         <typeIds> TYPEIDS </typeIds>
-         <types>   TYPES   </types>
+         <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
-         <tabIndices> 0 |-> ADDR </tabIndices>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> TYPEIDS </typeIds>
+           <types> TYPES </types>
+           <tabIndices> 0 |-> ADDR </tabIndices>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
          <tabInst>
            <tAddr> ADDR </tAddr>
            <tdata> ... IDX |-> TFIDX ... </tdata>
            ...
          </tabInst>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
          <funcDef>
            <fAddr> FADDR </fAddr>
            <fType> FTYPE </fType>
@@ -891,7 +938,12 @@ Now it contains only Function exports. The exported functions should be able to 
     syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
  // ---------------------------------------------------------------
     rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
-         <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
+           ...
+         </moduleInst>
 ```
 
 Table
@@ -930,10 +982,21 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
          </k>
 
     rule <k> table { _ _ } => trap ... </k>
-         <tabIndices> MAP </tabIndices> requires MAP =/=K .Map
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> MAP </tabIndices>
+           ...
+         </moduleInst>
+       requires MAP =/=K .Map
 
     rule <k> table { MIN MAX } => . ... </k>
-         <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
+           ...
+         </moduleInst>
          <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
@@ -977,10 +1040,21 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ } => trap ... </k>
-         <memIndices> MAP </memIndices> requires MAP =/=K .Map
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> MAP </memIndices>
+           ...
+         </moduleInst>
+      requires MAP =/=K .Map
 
     rule <k> memory { MIN MAX } => . ... </k>
-         <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
+           ...
+         </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
          <mems>
            ( .Bag
@@ -1025,7 +1099,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
          requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
     rule <k> store { WIDTH  EA  _ } => trap ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1067,7 +1146,12 @@ The value is fetched from the "effective address", which is the address given on
                        #fi
          ...
          </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1077,7 +1161,12 @@ The value is fetched from the "effective address", which is the address given on
       requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
     rule <k> load { _ WIDTH EA _ } => trap ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1121,7 +1210,12 @@ The `size` operation returns the size of the memory, measured in pages.
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => < i32 > SIZE ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1143,7 +1237,12 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>
@@ -1211,8 +1310,13 @@ A table index is optional and will be default to zero.
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
     rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, ELEMSEGMENT ) ... </k>
+         <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
-         <tabIndices> TABIDX |-> ADDR </tabIndices>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> TABIDX |-> ADDR </tabIndices>
+           ...
+         </moduleInst>
 
     rule <k> #initElements ( ADDR, OFFSET, .ElemSegment ) => . ... </k>
     rule <k> #initElements ( ADDR, OFFSET,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, ES ) ... </k>
@@ -1242,7 +1346,12 @@ The `data` initializer simply puts these bytes into the specified memory, starti
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX STRING } => . ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
-         <memIndices> MEMIDX |-> ADDR </memIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> MEMIDX |-> ADDR </memIndices>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata> DATA
@@ -1267,21 +1376,45 @@ Start Function
     syntax Instr ::= "(" "start" TextFormatIdx ")"
  // ----------------------------------------------
     rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
-         <funcIds> IDS </funcIds>
-         <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
 ```
 
-Module Declaration
-------------------
+Module Instantiation
+--------------------
 
-Currently, we support a single module.
-The surronding `module` tag is discarded, and the inner portions are run like they are instructions.
+A new module instance gets allocated.
+Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
     syntax Stmt ::= "(" "module" Defns ")"
- // --------------------------------------
+                  | "(" "module" Identifier Defns ")"
+ // -------------------------------------------------
+    rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
+         <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
+         <nextModuleIdx> NEXT </nextModuleIdx>
+
     rule <k> ( module DEFNS ) => DEFNS ... </k>
+         <curModIdx> _ => NEXT </curModIdx>
+         <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
+         <moduleInstances>
+           ( .Bag
+          => <moduleInst>
+               <modIdx> NEXT </modIdx>
+               ...
+             </moduleInst>
+           )
+           ...
+         </moduleInstances>
 ```
+
+After a module is instantiated, it should be saved somewhere.
+How this is done is up to the embedder.
 
 ```k
 endmodule
