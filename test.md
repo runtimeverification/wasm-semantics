@@ -91,15 +91,20 @@ These functions make assertions about the state of the `<valstack>` cell.
     syntax Assertion ::= "#assertTopStack"        Val      String
                        | "#assertTopStackExactly" Val      String
                        | "#assertStack"           ValStack String
- // -------------------------------------------------------------
-    rule <k> #assertTopStack S                      _ => . ... </k> <valstack> S              : VALSTACK => VALSTACK </valstack>
-    rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL' : VALSTACK => VALSTACK </valstack>
+                       | "#assertStackAux"        ValStack ValStack
+ // ---------------------------------------------------------------
+    rule <k> #assertTopStack S                      _ => . ... </k> <valstack> S              : VALSTACK </valstack>
+    rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL' : VALSTACK </valstack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'
 
-    rule <k> #assertTopStackExactly < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL : VALSTACK => VALSTACK </valstack>
+    rule <k> #assertTopStackExactly < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL : VALSTACK </valstack>
 
-    rule <k> #assertStack .ValStack      _   => .                                               ... </k>
-    rule <k> #assertStack (S : VALSTACK) STR => #assertTopStack S STR ~> #assertStack VALSTACK STR ... </k>
+    rule <k> #assertStack S1 _ => #assertStackAux S1 S2  ... </k>
+         <valstack> S2 </valstack>
+    rule <k> #assertStackAux .ValStack  _                                 => .                       ... </k>
+    rule <k> #assertStackAux (            V : S1')              (V : S2') => #assertStackAux S1' S2' ... </k>
+    rule <k> #assertStackAux (< ITYPE > VAL : S1') (< ITYPE > VAL' : S2') => #assertStackAux S1' S2' ... </k>
+      requires #unsigned(ITYPE, VAL) ==Int VAL'
 ```
 
 ### Variables Assertions
