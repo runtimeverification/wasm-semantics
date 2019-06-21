@@ -149,10 +149,6 @@ simple_tests:=$(wildcard tests/simple/*.wast)
 
 test-simple: $(simple_tests:=.run)
 
-core_tests:=$(wildcard tests/core/*.wast)
-
-test-core: $(core_tests:=.run)
-
 ### Conformance Tests
 
 conformance_tests:=$(wildcard tests/wasm-tests/test/core/*.wast)
