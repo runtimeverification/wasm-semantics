@@ -29,14 +29,24 @@ TODO: Move this to a separate `EMBEDDER` module?
 The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
 The reference interpreter is a particular embedder with auxillary instructions, specified in [spec interpreter](https://github.com/WebAssembly/spec/blob/master/interpreter/README.md).
 
-### Function Invocation
+### Actions
 
-We allow to `invoke` a function by its exported name in the test code.
+We allow 2 kinds of actions:
+
+-   We allow to `invoke` a function by its exported name.
+-   We allow to `get` a global export.
+
+** TODO **: implement "get".
 
 ```k
-    syntax Auxil ::= "(" "invoke" String ")"
- // ----------------------------------------
-    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
+    syntax Auxil  ::= Action
+    syntax Action ::= "(" "invoke"         String        ")"
+                    | "(" "invoke"         String Instrs ")"
+                    | "(" "get"            String        ")"
+                    | "(" "get" Identifier String        ")"
+ // --------------------------------------------------------
+    rule <k> ( invoke ENAME:String IS:Instrs ) => IS ~> ( invoke ENAME ) ... </k>
+    rule <k> ( invoke ENAME:String )           => ( call TFIDX )         ... </k>
          <exports> ... ENAME |-> TFIDX ... </exports>
 ```
 
