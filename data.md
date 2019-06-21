@@ -191,7 +191,7 @@ WebAssembly values are either integers or floating-point numbers, of 32- or 64-b
     syntax Float ::= "inf" | "-inf" | "nan" | "-nan" | Int
                    | r"-?0x[01](\\.?[0-9a-z]*)p[+-][0-9]*" [token]
                    | Float ":" Int // for cases like nan:0x20000
- // -----------------------------------------------------
+ // ------------------------------------------------------------
 ```
 
 Proper values are numbers annotated with their types.
