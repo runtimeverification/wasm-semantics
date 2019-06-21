@@ -32,17 +32,20 @@ The reference interpreter is a particular embedder with auxillary instructions, 
 ### Actions
 
 We allow 2 kinds of actions:
-- We allow to `invoke` a function by its exported name.
-- We allow to `get` a global export.
+
+-   We allow to `invoke` a function by its exported name.
+-   We allow to `get` a global export.
 ** TODO **: implement "get".
 
 ```k
     syntax Auxil  ::= Action
-    syntax Action ::= "(" "invoke"         String ")"
-                    | "(" "get"            String ")"
-                    | "(" "get" Identifier String ")"
- // -------------------------------------------------
-    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
+    syntax Action ::= "(" "invoke"         String        ")"
+    syntax Action ::= "(" "invoke"         String Instrs ")"
+                    | "(" "get"            String        ")"
+                    | "(" "get" Identifier String        ")"
+ // --------------------------------------------------------
+    rule <k> ( invoke ENAME:String IS:Instrs ) => IS ~> ( invoke ENAME ) ... </k>
+    rule <k> ( invoke ENAME:String )           => ( call TFIDX )         ... </k>
          <exports> ... ENAME |-> TFIDX ... </exports>
 ```
 
@@ -82,6 +85,8 @@ We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level emb
 ### Conformance Assertions
 
 Here we inplement the conformance assertions specified in [spec interpreter] including:
+
+```
   ( assert_return <action> <expr>* )         ;; assert action has expected results
   ( assert_return_canonical_nan <action> )   ;; assert action results in NaN in a canonical form
   ( assert_return_arithmetic_nan <action> )  ;; assert action results in NaN with 1 in MSB of fraction field
@@ -90,6 +95,8 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
   ( assert_invalid <module> <failure> )      ;; assert module is invalid with given failure string
   ( assert_unlinkable <module> <failure> )   ;; assert module fails to link
   ( assert_trap <module> <failure> )         ;; assert module traps on instantiation
+```
+
 ** TODO **: implement them.
 
 ```k
@@ -102,7 +109,7 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
                        | "(" "assert_unlinkable"            ModuleDecl String ")"
                        | "(" "assert_trap"                  ModuleDecl String ")"
  // -----------------------------------------------------------------------------
-    rule <k> (assert_return ACT INSTRS)         => ACT ~> INSTRS ... </k>
+    rule <k> (assert_return ACT INSTRS)              => ACT ~> INSTRS ... </k>
     rule <k> (assert_return_canonical_nan  ACT)      => . ... </k>
     rule <k> (assert_return_arithmetic_nan ACT)      => . ... </k>
     rule <k> (assert_trap       ACT:Action     DESC) => . ... </k>

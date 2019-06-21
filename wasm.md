@@ -94,18 +94,14 @@ Instructions
 ------------
 
 Instructions are syntactically distinguished into plain and structured instructions.
-
-### Plain Instructions
-
 Plain Instructions could be written in the folded form.
 
 ```k
     syntax Instr ::= PlainInstr
-                   | "(" PlainInstr ")"
+                   | BlockInstr
                    | "(" PlainInstr Instrs ")"
  // ------------------------------------------
-    rule <k> ( PI:PlainInstr )           =>       PI ... </k>
-    rule <k> ( PI:PlainInstr IS:Instrs ) => IS ~> PI ... </k>
+    rule <k> ( PI:PlainInstr IS:Instrs ):Instr => IS ~> PI ... </k>
 ```
 
 ### Sequencing
@@ -503,8 +499,8 @@ Structured Control Flow
 `unreachable` causes an immediate `trap`.
 
 ```k
-    syntax Instr ::= "unreachable"
- // ------------------------------
+    syntax PlainInstr ::= "unreachable"
+ // -----------------------------------
     rule <k> unreachable => trap ... </k>
 ```
 
@@ -521,9 +517,9 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax Instr ::= "(" "block" TypeDecls Instrs ")"
-                   | "block" VecType Instrs "end"
- // ---------------------------------------------
+    syntax Instr      ::= "(" "block" TypeDecls Instrs ")"
+    syntax BlockInstr ::= "block" VecType Instrs "end"
+ // --------------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
@@ -537,6 +533,8 @@ The `br*` instructions search through the instruction stack (the `<k>` cell) for
 Upon reaching it, the label itself is executed.
 
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
+
+** TODO **: implement "br_table"
 
 ```k
     syntax PlainInstr ::= "br" Int
@@ -556,6 +554,9 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> br_if N => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
+
+    syntax PlainInstr ::= "br_table" ElemSegment
+ // --------------------------------------------
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -577,9 +578,9 @@ Finally, we have the conditional and loop instructions.
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
 
-    syntax Instr ::= "loop" VecType Instrs "end"
-                   | "(" "loop" VecType Instrs ")"
- // ----------------------------------------------
+    syntax BlockInstr ::= "loop" VecType Instrs "end"
+    syntax Instr      ::=  "(" "loop" VecType Instrs ")"
+ // ----------------------------------------------------
     rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
 
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
@@ -636,7 +637,6 @@ The `*_local` instructions are defined here.
 ```k
     syntax PlainInstr ::= "global.get" Int
                         | "global.set" Int
-                        | "global.set" Int Instr
  // --------------------------------------------
     rule <k> global.get INDEX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
@@ -890,7 +890,7 @@ Unlike labels, only one frame can be "broken" through at a time.
  // ------------------------------
     rule <k> return ~> (SS:Stmts => .)    ... </k>
     rule <k> return ~> (L:Label  => .)    ... </k>
-    rule <k> return => .) ~> FR:Frame    ... </k>
+    rule <k> (return => .) ~> FR:Frame    ... </k>
 ```
 
 ### Function Call
@@ -1082,18 +1082,16 @@ The `storeX` operations first wrap the the value to be stored to the bit wdith `
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= "(" IValType "." StoreOpM Instr Instr ")" | "(" IValType  "." StoreOpM ")"
- //                | "(" FValType "." StoreOpM Instr Instr ")" | "(" FValType  "." StoreOpM ")"
-                   | IValType "." StoreOp Int Int
- //                | FValType "." StoreOp Int Float
-                   | "store" "{" Int Int Number "}"
+    syntax PlainInstr ::= IValType  "." StoreOpM
+ //                     | FValType  "." StoreOpM
+    syntax Instr      ::= IValType "." StoreOp Int Int
+ //                     | FValType "." StoreOp Int Float
+                        | "store" "{" Int Int Number "}"
     syntax StoreOpM ::= StoreOp | StoreOp MemArg
  // --------------------------------------------
-    rule <k> ( ITYPE . SOPM:StoreOpM I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOPM ) ... </k>
-
-    rule <k> ( ITYPE . SOP:StoreOp               ) => ITYPE . SOP  IDX                          VAL ... </k>
+    rule <k> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </k>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
-    rule <k> ( ITYPE . SOP:StoreOp MEMARG:MemArg ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
+    rule <k> ITYPE . SOP:StoreOp MEMARG:MemArg => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
@@ -1213,9 +1211,9 @@ The `align` parameter is for optimization only and is not allowed to influence t
 The `size` operation returns the size of the memory, measured in pages.
 
 ```k
-    syntax Instr ::= "(" "memory.size" ")"
- // --------------------------------------
-    rule <k> ( memory.size ) => < i32 > SIZE ... </k>
+    syntax PlainInstr ::= "memory.size"
+ // -----------------------------------
+    rule <k> memory.size => < i32 > SIZE ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1236,10 +1234,10 @@ Success is indicated by pushing the previous memory size to the stack.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
 
 ```k
-    syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
- // ---------------------------------------------------------------------------------
-    rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
-    rule <k> ( memory.grow ) => grow N ... </k>
+    syntax PlainInstr ::= "memory.grow"
+    syntax Instr      ::= "grow" Int
+ // --------------------------------
+    rule <k> memory.grow => grow N ... </k>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
