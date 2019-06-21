@@ -82,6 +82,42 @@ We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level emb
     syntax Auxil ::= Assertion
  // --------------------------
 ```
+### Conformance Assertions
+
+Here we inplement the conformance assertions specified in [spec interpreter] including:
+
+```
+  ( assert_return <action> <expr>* )         ;; assert action has expected results. Sometimes <expr>* is just empty.
+  ( assert_return_canonical_nan <action> )   ;; assert action results in NaN in a canonical form
+  ( assert_return_arithmetic_nan <action> )  ;; assert action results in NaN with 1 in MSB of fraction field
+  ( assert_trap <action> <failure> )         ;; assert action traps with given failure string
+  ( assert_malformed <module> <failure> )    ;; assert module cannot be decoded with given failure string
+  ( assert_invalid <module> <failure> )      ;; assert module is invalid with given failure string
+  ( assert_unlinkable <module> <failure> )   ;; assert module fails to link
+  ( assert_trap <module> <failure> )         ;; assert module traps on instantiation
+```
+
+** TODO **: implement them.
+
+```k
+    syntax Assertion ::= "(" "assert_return"                Action     Instrs ")"
+                       | "(" "assert_return_canonical_nan"  Action            ")"
+                       | "(" "assert_return_arithmetic_nan" Action            ")"
+                       | "(" "assert_trap"                  Action     String ")"
+                       | "(" "assert_malformed"             ModuleDecl String ")"
+                       | "(" "assert_invalid"               ModuleDecl String ")"
+                       | "(" "assert_unlinkable"            ModuleDecl String ")"
+                       | "(" "assert_trap"                  ModuleDecl String ")"
+ // -----------------------------------------------------------------------------
+    rule <k> (assert_return ACT INSTRS)              => ACT ~> INSTRS ... </k>
+    rule <k> (assert_return_canonical_nan  ACT)      => . ... </k>
+    rule <k> (assert_return_arithmetic_nan ACT)      => . ... </k>
+    rule <k> (assert_trap       ACT:Action     DESC) => . ... </k>
+    rule <k> (assert_malformed  MOD            DESC) => . ... </k>
+    rule <k> (assert_invalid    MOD            DESC) => . ... </k>
+    rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
+    rule <k> (assert_trap       MOD:ModuleDecl DESC) => . ... </k>
+```
 
 ### Trap Assertion
 
