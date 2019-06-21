@@ -35,6 +35,9 @@ init_global 1 1
 
 ;; Test global folded forms
 
+#clearConfig
+(module)
+
 init_global 0 0
 (global.set 0 (i32.const 77))
 init_global 1 1
@@ -43,5 +46,4 @@ init_global 1 1
 #assertGlobal 1 < i32 > 99 "set_global folded"
 #assertGlobal 0 < i32 > 77 "set_global folded 2"
 
-#assertUnnamedModule ""
-#clearModuleIdx
+#clearConfig

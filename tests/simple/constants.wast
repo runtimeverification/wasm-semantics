@@ -75,3 +75,4 @@
 (i64.const #unsigned(i64, #signed(i64, #pow(i64) -Int 1)))
 #assertTopStack < i64 > #pow(i64) -Int 1 "#unsigned . #signed 6"
 
+#clearConfig

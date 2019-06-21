@@ -1,27 +1,27 @@
-(module)
+(module ( table funcref ) )
+#assertTable 0 .MaxBound "table initial 1"
 
-( table funcref )
-#assertEmptyTable 0 .MaxBound "table initial 1"
+(module ( table 4 funcref) )
+#assertTable 4 .MaxBound "table initial 2"
 
-( table 4 funcref)
-#assertEmptyTable 4 .MaxBound "table initial 2"
+(module ( table 14 21 funcref ) )
+#assertTable 14 21 "table initial 3"
 
-( table 14 21 funcref )
-#assertEmptyTable 14 21 "table initial 3"
-
-( table funcref (elem $f $g $k))
+(module ( table funcref (elem $f $g $k)) )
 #assertTableElem (0, $f) "table elem 0"
 #assertTableElem (1, $g) "table elem 1"
 #assertTableElem (2, $k) "table elem 2"
-#assertEmptyTable 3 3 "should be empty now"
+#assertTable 3 3 "should be empty now"
 
-( table 4 funcref)
-(elem 0 (i32.const 1) $f $g)
+(module
+  ( table 4 funcref)
+  ( elem 0 (i32.const 1) $f $g)
+)
+
 #assertTableElem (1, $f) "table elem 1"
 #assertTableElem (2, $g) "table elem 2"
-#assertEmptyTable 4 .MaxBound "should be empty now"
+#assertTable 4 .MaxBound "should be empty now"
 
-#assertUnnamedModule ""
 
 (module
   (type $out-i32 (func (result i32)))
@@ -56,8 +56,6 @@
 #assertFunction 4 [ ] -> [ i32 ] [ ] "call function 5 exists"
 #assertTableElem (8, $const-i32-a) "table elem 8"
 #assertTableElem (9, $const-i32-b) "table elem 9"
-#assertEmptyTable 10 .MaxBound "should be empty now"
+#assertTable 10 .MaxBound "should be empty now"
 
-#assertUnnamedModule ""
-#clearFreshId
-#clearModuleIdx
+#clearConfig

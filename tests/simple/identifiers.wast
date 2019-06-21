@@ -67,5 +67,4 @@
 
 #assertFunction $aenuth_ae`st|23~423 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
 
-#assertUnnamedModule ""
-#clearModuleIdx
+#clearConfig

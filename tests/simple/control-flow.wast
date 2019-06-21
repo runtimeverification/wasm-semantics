@@ -205,3 +205,5 @@ end
 ;; block [ i32 i32 ]
 ;;     (i32.const 7)
 ;; end
+
+#clearConfig

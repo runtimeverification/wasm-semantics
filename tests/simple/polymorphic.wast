@@ -62,5 +62,7 @@
 (select (i64.const 1) (i64.const -1) (unreachable))
 #assertTrap                "select strict in condition"
 #assertTopStack < i64 > -1 "select strict in condition"
+(drop)
 #assertTopStack < i64 >  1 "select strict in condition"
 
+#clearConfig

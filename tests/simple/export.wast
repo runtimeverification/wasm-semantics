@@ -58,8 +58,6 @@
 (invoke "export-without-id")
 #assertTopStack < i32 > 1 "export-without-id"
 
-#assertFunction 0 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "removing a function by its inner index"
+#assertFunction 2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "removing a function by its inner index"
 
-#assertUnnamedModule ""
-#clearFreshId
-#clearModuleIdx
+#clearConfig
