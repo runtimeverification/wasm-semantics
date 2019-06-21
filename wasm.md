@@ -670,13 +670,15 @@ Types
 ### Type Gathering
 
 This defines helper functions that gathers function together.
+**TODO**: implement function `id` to extract id from `param`, `result` or `local`.
 
 ```k
     syntax TypeKeyWord  ::= "param" | "result"
  // ------------------------------------------
 
     syntax TypeDecl      ::= "(" TypeDecl ")"     [bracket]
-                           | TypeKeyWord ValTypes
+                           | TypeKeyWord            ValTypes
+                           | TypeKeyWord Identifier ValTypes
     syntax TypeDecls     ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
  // -------------------------------------------------------------------
 
@@ -686,9 +688,12 @@ This defines helper functions that gathers function together.
     rule  gatherTypes(TKW , TDECLS:TypeDecls) => #gatherTypes(TKW, TDECLS, .ValTypes)
 
     rule #gatherTypes( _  , .TypeDecls                         , TYPES) => [ TYPES ]
-    rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
-    rule #gatherTypes(TKW , TKW TYPES'                  TDECLS , TYPES)
-      => #gatherTypes(TKW ,                             TDECLS , TYPES + TYPES')
+    rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes              TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
+    rule #gatherTypes(TKW , TKW':TypeKeyWord _:Identifier _:ValTypes TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
+    rule #gatherTypes(TKW , TKW TYPES'                               TDECLS , TYPES)
+      => #gatherTypes(TKW ,                                          TDECLS , TYPES + TYPES')
+    rule #gatherTypes(TKW , TKW _:Identifier TYPES'                  TDECLS , TYPES)
+      => #gatherTypes(TKW ,                                          TDECLS , TYPES + TYPES')
 ```
 
 ### Type Use
@@ -760,6 +765,7 @@ Currently, in the expanded form, the `export`s will come after the definition of
 ```k
     syntax LocalDecl  ::= "(" LocalDecl ")"    [bracket]
                         | "local" ValTypes
+                        | "local" Identifier ValTypes
     syntax LocalDecls ::= List{LocalDecl , ""} [klabel(listLocalDecl)]
  // ------------------------------------------------------------------
 
@@ -768,8 +774,9 @@ Currently, in the expanded form, the `export`s will come after the definition of
  // -------------------------------------------------------------------
     rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
 
-    rule #asLocalType(.LocalDecls          , VTYPES) => [ VTYPES ]
-    rule #asLocalType(local VTYPES' LDECLS , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
+    rule #asLocalType(.LocalDecls                        , VTYPES) => [ VTYPES ]
+    rule #asLocalType(local               VTYPES' LDECLS , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
+    rule #asLocalType(local ID:Identifier VTYPES' LDECLS , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
 ```
 
 ### Function Implicit Type Declaration
@@ -877,10 +884,12 @@ Unlike labels, only one frame can be "broken" through at a time.
          </funcDef>
 
     syntax Instr ::= "(" "return" ")"
- // ---------------------------------
-    rule <k> (return) ~> (SS:Stmts => .)  ... </k>
-    rule <k> (return) ~> (L:Label  => .)  ... </k>
-    rule <k> ((return) => .) ~> FR:Frame ... </k>
+                   | "(" "return" Instrs ")"
+ // ----------------------------------------
+    rule <k> (return IS) => IS ~> (return)  ... </k>
+    rule <k> (return) ~> (SS:Stmts => .)    ... </k>
+    rule <k> (return) ~> (L:Label  => .)    ... </k>
+    rule <k> ((return) => .) ~> FR:Frame    ... </k>
 ```
 
 ### Function Call
@@ -1392,9 +1401,10 @@ A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    syntax Stmt ::= "(" "module" Defns ")"
-                  | "(" "module" Identifier Defns ")"
- // -------------------------------------------------
+    syntax Stmt       ::= ModuleDecl
+    syntax ModuleDecl ::= "(" "module" Defns ")"
+                        | "(" "module" Identifier Defns ")"
+ // -------------------------------------------------------
     rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
