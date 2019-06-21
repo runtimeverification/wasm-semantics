@@ -398,8 +398,8 @@ The comparisons test for equality and different types of inequalities between nu
 ```k
     syntax IRelOp ::= "eq" | "ne"
  // -----------------------------
-    rule <k> _ . eq I1 I2 => < i32 > #bool(I1 ==Int   I2) ... </k>
-    rule <k> _ . ne I1 I2 => < i32 > #bool(I1 =/=Int  I2) ... </k>
+    rule <k> _:IValType . eq I1 I2 => < i32 > #bool(I1  ==Int I2) ... </k>
+    rule <k> _:IValType . ne I1 I2 => < i32 > #bool(I1 =/=Int I2) ... </k>
 
     syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
  // ---------------------------------------------------
