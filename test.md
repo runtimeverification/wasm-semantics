@@ -111,7 +111,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
                        | "#assertGlobal" Int Val String
  // ---------------------------------------------------
     rule <k> #assertLocal INDEX VALUE _ => . ... </k>
-         <locals> ... (INDEX |-> VALUE => .Map) ... </locals>
+         <locals> ... INDEX |-> VALUE ... </locals>
 
     rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -121,13 +121,11 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
            ...
          </moduleInst>
          <globals>
-           ( <globalInst>
-               <gAddr>  GADDR </gAddr>
-               <gValue> VALUE </gValue>
-               ...
-             </globalInst>
-          => .Bag
-           )
+           <globalInst>
+             <gAddr>  GADDR </gAddr>
+             <gValue> VALUE </gValue>
+             ...
+           </globalInst>
            ...
          </globals>
 ```
@@ -197,16 +195,14 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
            <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
-         <nextFuncAddr> NEXT => NEXT -Int 1 </nextFuncAddr>
+         <nextFuncAddr> NEXT </nextFuncAddr>
          <funcs>
-           ( <funcDef>
-               <fAddr>  FADDR </fAddr>
-               <fType>  FTYPE </fType>
-               <fLocal> LTYPE </fLocal>
-               ...
-             </funcDef>
-          => .Bag
-           )
+           <funcDef>
+             <fAddr>  FADDR </fAddr>
+             <fType>  FTYPE </fType>
+             <fLocal> LTYPE </fLocal>
+             ...
+           </funcDef>
            ...
          </funcs>
 ```
@@ -216,30 +212,22 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This asserts related operation about tables.
 
 ```k
-    syntax Assertion ::= "#assertEmptyTable"    Int MaxBound String
-                       | "#assertEmptyTableAux" Int Int MaxBound String
- // -------------------------------------------------------------------
-    rule <k> #assertEmptyTable SIZE MAX MSG => #assertEmptyTableAux (NEXT -Int 1) SIZE MAX MSG ... </k>
-         <nextTabAddr> NEXT </nextTabAddr>
-
-    rule <k> #assertEmptyTableAux ADDR SIZE MAX _ => .  ... </k>
+    syntax Assertion ::= "#assertTable" Int MaxBound String
+ // -------------------------------------------------------
+    rule <k> #assertTable SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIndices> ( 0 |-> ADDR ) => .Map </tabIndices>
+           <tabIndices> 0 |-> ADDR </tabIndices>
            ...
          </moduleInst>
-         <nextTabAddr> NEXT => NEXT -Int 1 </nextTabAddr>
          <tabs>
-           ( <tabInst>
-               <tAddr>   ADDR  </tAddr>
-               <tmax>    MAX   </tmax>
-               <tsize>   SIZE  </tsize>
-               <tdata>   .Map  </tdata>
-               ...
-             </tabInst>
-          => .Bag
-           )
+           <tabInst>
+             <tAddr> ADDR </tAddr>
+             <tmax>  MAX  </tmax>
+             <tsize> SIZE </tsize>
+             ...
+           </tabInst>
            ...
          </tabs>
 
@@ -255,7 +243,7 @@ This asserts related operation about tables.
          <tabs>
            <tabInst>
              <tAddr> ADDR </tAddr>
-             <tdata> ...  KEY |-> VAL => .Map ... </tdata>
+             <tdata> ...  KEY |-> VAL ... </tdata>
                ...
            </tabInst>
            ...
@@ -267,30 +255,22 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertEmptyMemory"    Int MaxBound String
-                       | "#assertEmptyMemoryAux" Int Int MaxBound String
- // --------------------------------------------------------------------
-    rule <k> #assertEmptyMemory SIZE MAX MSG => #assertEmptyMemoryAux (NEXT -Int 1) SIZE MAX MSG ... </k>
-         <nextMemAddr> NEXT </nextMemAddr>
-
-    rule <k> #assertEmptyMemoryAux ADDR SIZE MAX _ => .  ... </k>
+    syntax Assertion ::= "#assertMemory" Int MaxBound String
+ // --------------------------------------------------------
+    rule <k> #assertMemory SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> ( 0 |-> ADDR ) => .Map </memIndices>
+           <memIndices> 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
-         <nextMemAddr> NEXT => NEXT -Int 1 </nextMemAddr>
          <mems>
-           ( <memInst>
-               <mAddr>   ADDR  </mAddr>
-               <mmax>    MAX   </mmax>
-               <msize>   SIZE  </msize>
-               <mdata>   .Map  </mdata>
-               ...
-             </memInst>
-          => .Bag
-           )
+           <memInst>
+             <mAddr>   ADDR  </mAddr>
+             <mmax>    MAX   </mmax>
+             <msize>   SIZE  </msize>
+             ...
+           </memInst>
            ...
          </mems>
 
@@ -306,8 +286,8 @@ This checks that the last allocated memory has the given size and max value.
          <mems>
            <memInst>
              <mAddr> ADDR </mAddr>
-             <mdata> ...  KEY |-> VAL => .Map ... </mdata>
-               ...
+             <mdata> ... KEY |-> VAL ... </mdata>
+             ...
            </memInst>
            ...
          </mems>
@@ -319,59 +299,42 @@ These assertions test (and delete) module instances.
 These assertions act on the last module defined.
 
 ```k
-    syntax Assertion ::= "#assertUnnamedModule"          String
-                       | "#assertUnnamedModuleAux" Int   String
-                       | "#assertNamedModule" Identifier String
+    syntax Assertion ::= "#assertNamedModule" Identifier String
  // -----------------------------------------------------------
-    rule <k> #assertUnnamedModule S => #assertUnnamedModuleAux CUR S ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           ...
-         </moduleInst>
-         <nextModuleIdx> NEXT => NEXT -Int 1 </nextModuleIdx>
-
-    rule <k> #assertUnnamedModuleAux IDX _ => . ... </k>
+    rule <k> #assertNamedModule NAME S => . ... </k>
+         <moduleIds> ... NAME |-> IDX ... </moduleIds>
          <moduleInstances>
-           ( <moduleInst>
-               <modIdx> IDX </modIdx>
-               ...
-             </moduleInst>
-          => .Bag
-           )
+           <moduleInst>
+             <modIdx> IDX </modIdx>
+             ...
+           </moduleInst>
            ...
          </moduleInstances>
-
-    rule <k> #assertNamedModule NAME S => #assertUnnamedModuleAux IDX S ... </k>
-         <moduleIds> ... NAME |-> IDX => .Map ... </moduleIds>
 ```
 
 The modules are cleaned all together after the test file is executed.
 
 ```k
-    syntax Auxil ::= "#clearCurrentModule"
-                   | "#setCurrentModule" Int
-                   | "#clearFreshId"
-                   | "#clearModuleIdx"
- // ----------------------------------
-    rule <k> #clearCurrentModule => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInstances>
-           ( <moduleInst>
-               <modIdx> CUR </modIdx>
-               ...
-             </moduleInst>
-          => <moduleInst>
-               <modIdx> CUR </modIdx>
-               ...
-             </moduleInst>
-           )
-           ...
-         </moduleInstances>
-
-    rule <k> #setCurrentModule I => . ... </k> <curModIdx>     _ => I </curModIdx>
-    rule <k> #clearFreshId       => . ... </k> <nextFreshId>   _ => 0 </nextFreshId>
-    rule <k> #clearModuleIdx     => . ... </k> <nextModuleIdx> _ => 0 </nextModuleIdx>
+    syntax Auxil ::= "#clearConfig"
+ // -------------------------------
+    rule <k>    #clearConfig => . ...     </k>
+         <curModIdx>       _ => 0         </curModIdx>
+         <valstack>        _ => .ValStack </valstack>
+         <locals>          _ => .Map      </locals>
+         <nextFreshId>     _ => 0         </nextFreshId>
+         <moduleInstances> _ => .Bag      </moduleInstances>
+         <moduleIds>       _ => .Map      </moduleIds>
+         <nextModuleIdx>   _ => 0         </nextModuleIdx>
+         <moduleRegistry>  _ => .Map      </moduleRegistry>
+         <mainStore>
+           <nextFuncAddr>  _ => 0         </nextFuncAddr>
+           <funcs>         _ => .Bag      </funcs>
+           <nextTabAddr>   _ => 0         </nextTabAddr>
+           <tabs>          _ => .Bag      </tabs>
+           <nextMemAddr>   _ => 0         </nextMemAddr>
+           <mems>          _ => .Bag      </mems>
+           <globals>       _ => .Bag      </globals>
+         </mainStore>
 ```
 
 Registry Assertations
@@ -385,11 +348,11 @@ We also want to be able to test that the embedder's registration function is wor
  // --------------------------------------------------------------------------
     rule <k> #assertRegistrationUnnamed REGNAME _ => . ... </k>
          <modIdx> IDX </modIdx>
-         <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
+         <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
 
     rule <k> #assertRegistrationNamed REGNAME NAME _ => . ... </k>
          <modIdx> IDX </modIdx>
-         <moduleRegistry> ... REGNAME |-> IDX => .Map ...  </moduleRegistry>
+         <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
 ```
 
 ```k

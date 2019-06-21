@@ -20,3 +20,4 @@ should be ignored
 (i32.add)
 #assertTopStack < i32 > 3 "dummy test 2"
 
+#clearConfig

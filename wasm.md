@@ -1373,8 +1373,8 @@ Start Function
 --------------
 
 ```k
-    syntax Instr ::= "(" "start" TextFormatIdx ")"
- // ----------------------------------------------
+    syntax Defn ::= "(" "start" TextFormatIdx ")"
+ // ---------------------------------------------
     rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>

@@ -179,3 +179,4 @@
 (i32.sub (i32.mul (i32.const 5) (i32.const 7)) (i32.const 4))
 #assertTopStack < i32 > 31 "mul nested in sub folded"
 
+#clearConfig

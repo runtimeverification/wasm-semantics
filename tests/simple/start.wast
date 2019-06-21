@@ -20,9 +20,8 @@
 ;;assertFunction $inc  [ ] -> [ ] [ ] ""
 ;;#assertFunction $main [ ] -> [ ] [ ] ""
 ;;#assertFunction $foo  [ ] -> [ ] [ ] ""
-;;#assertEmptyMemory 1 .MaxBound ""
+;;#assertMemory 1 .MaxBound ""
 ;;
-;;#assertUnnamedModule ""
 ;;
 ;;;; (module)
 ;;
@@ -30,6 +29,5 @@
 ;; (start $foo)
 ;; #assertTrap "Trap propagates through start invocation"
 ;;
-;; #assertUnnamedModule ""
 
-#clearModuleIdx
+#clearConfig

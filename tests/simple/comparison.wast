@@ -112,3 +112,4 @@
 (i32.ge_s)
 #assertTopStack < i32 > 0 "ge_s 3"
 
+#clearConfig
