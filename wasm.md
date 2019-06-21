@@ -362,14 +362,25 @@ Note that we do not need to call `#chop` on the results here.
 **TODO**: Unimplemented
 
 ```k
-    syntax FUnOp ::= "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest" | "load"
- // ---------------------------------------------------------------------------------
+    syntax FUnOp ::= "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest" | "load" [klabel(floatLoad)]
+ // -----------------------------------------------------------------------------------------------------
 
-    syntax FBinOp ::= "add" | "sub" | "mul" | "div" | "min" | "max" | "store"
- // -------------------------------------------------------------------------
+    syntax FBinOp ::= "add"   [klabel(floatAdd)]
+                    | "sub"   [klabel(floatSub)]
+                    | "mul"   [klabel(floatMul)]
+                    | "div"   [klabel(floatDiv)]
+                    | "min"   [klabel(floatMin)]
+                    | "max"   [klabel(floatMax)]
+                    | "store" [klabel(floatStore)]
+ // ----------------------------------------------
 
-    syntax FRelOp ::= "lt" | "gt" | "le" | "ge" | "eq" | "ne"
- // ---------------------------------------------------------
+    syntax FRelOp ::= "lt" [klabel(floatLt)]
+                    | "gt" [klabel(floatGt)]
+                    | "le" [klabel(floatLe)]
+                    | "ge" [klabel(floatGe)]
+                    | "eq" [klabel(floatEq)]
+                    | "ne" [klabel(floatNe)]
+ // ----------------------------------------
 ```
 
 ### Predicates
