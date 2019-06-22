@@ -534,8 +534,6 @@ Upon reaching it, the label itself is executed.
 
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
-** TODO **: implement "br_table"
-
 ```k
     syntax PlainInstr ::= "br" Int
  // ------------------------------
@@ -554,9 +552,6 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> br_if N => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
-
-    syntax PlainInstr ::= "br_table" ElemSegment
- // --------------------------------------------
 ```
 
 Finally, we have the conditional and loop instructions.
