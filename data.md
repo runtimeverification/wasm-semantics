@@ -155,7 +155,7 @@ We also add `token` as a value in order to implement some test assertions.
 ```k
     syntax Val ::= "undefined"
                  | "token"
- // --------------------------
+ // ----------------------
 ```
 
 ### Value Operations
