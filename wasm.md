@@ -93,6 +93,17 @@ All places in the data with no entry are considered zero bytes.
 Instructions
 ------------
 
+Instructions are syntactically distinguished into plain and structured instructions.
+Plain Instructions could be written in the folded form.
+
+```k
+    syntax Instr ::= PlainInstr
+                   | BlockInstr
+                   | "(" PlainInstr Instrs ")"
+ // ------------------------------------------
+    rule <k> ( PI:PlainInstr IS:Instrs ):Instr => IS ~> PI ... </k>
+```
+
 ### Sequencing
 
 WebAssembly code consists of sequences of statements (`Stmts`).
@@ -171,11 +182,11 @@ Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
 
 ```k
-    syntax Instr ::= "(" IValType "." "const" Int   ")"
-                   | "(" FValType "." "const" Float ")"
- // ---------------------------------------------------
-    rule <k> ( ITYPE:IValType . const VAL ) => #chop(< ITYPE > VAL) ... </k>
-    rule <k> ( FTYPE:FValType . const VAL ) => < FTYPE > VAL        ... </k>
+    syntax PlainInstr ::= IValType "." "const" Int
+                        | FValType "." "const" Float
+ // ------------------------------------------------
+    rule <k> ITYPE:IValType . const VAL => #chop(< ITYPE > VAL) ... </k>
+    rule <k> FTYPE:FValType . const VAL => < FTYPE > VAL        ... </k>
 ```
 
 ### Text Format Conventions
@@ -461,20 +472,14 @@ Operator `drop` removes a single item from the `<valstack>`.
 The `select` operator picks one of the second or third stack values based on the first.
 
 ```k
-    syntax Instr ::= "(" "drop" Instr ")"
-                   | "(" "drop"       ")"
- // -------------------------------------
-    rule <k> ( drop I ) => I ~> ( drop ) ... </k>
-
-    rule <k> ( drop ) => . ... </k>
+    syntax PlainInstr ::= "drop"
+ // ----------------------------
+    rule <k> drop => . ... </k>
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
-    syntax Instr ::= "(" "select" Instr Instr Instr ")"
-                   | "(" "select"                   ")"
- // ---------------------------------------------------
-    rule <k> ( select B1 B2 C ) => B1 ~> B2 ~> C ~> ( select ) ... </k>
-
-    rule <k> ( select ) => . ... </k>
+    syntax PlainInstr ::= "select"
+ // ------------------------------
+    rule <k> select => . ... </k>
          <valstack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
               => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
          </valstack>
@@ -486,17 +491,17 @@ Structured Control Flow
 `nop` does nothing.
 
 ```k
-    syntax Instr ::= "nop"
- // ----------------------
+    syntax PlainInstr ::= "nop"
+ // ---------------------------
     rule <k> nop => . ... </k>
 ```
 
 `unreachable` causes an immediate `trap`.
 
 ```k
-    syntax Instr ::= "(" "unreachable" ")"
- // --------------------------------------
-    rule <k> ( unreachable ) => trap ... </k>
+    syntax PlainInstr ::= "unreachable"
+ // -----------------------------------
+    rule <k> unreachable => trap ... </k>
 ```
 
 Labels are administrative instructions used to mark the targets of break instructions.
@@ -512,9 +517,9 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax Instr ::= "(" "block" TypeDecls Instrs ")"
-                   | "block" VecType Instrs "end"
- // ---------------------------------------------
+    syntax Instr      ::= "(" "block" TypeDecls Instrs ")"
+    syntax BlockInstr ::= "block" VecType Instrs "end"
+ // --------------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
@@ -529,26 +534,29 @@ Upon reaching it, the label itself is executed.
 
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
+** TODO **: implement "br_table"
+
 ```k
-    syntax Instr ::= "(" "br" Int ")"
- // ---------------------------------
-    rule <k> ( br N ) ~> (SS:Stmts => .) ... </k>
-    rule <k> ( br N ) ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    syntax PlainInstr ::= "br" Int
+ // ------------------------------
+    rule <k> br N ~> (SS:Stmts => .) ... </k>
+    rule <k> br N ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
       requires N ==Int 0
-    rule <k> ( br N ) ~> L:Label => ( br N -Int 1 ) ... </k>
+    rule <k> br N ~> L:Label => br N -Int 1 ... </k>
       requires N >Int 0
 
-    syntax Instr ::= "(" "br_if" Int Instr ")"
-                   | "(" "br_if" Int       ")"
- // ------------------------------------------
-    rule <k> ( br_if N I:Instr ) => I ~> ( br_if N ) ... </k>
-    rule <k> ( br_if N ) => ( br N ) ... </k>
+    syntax PlainInstr ::= "br_if" Int
+ // ---------------------------------
+    rule <k> br_if N => br N ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <k> ( br_if N ) => . ... </k>
+    rule <k> br_if N => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
+
+    syntax PlainInstr ::= "br_table" ElemSegment
+ // --------------------------------------------
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -570,9 +578,9 @@ Finally, we have the conditional and loop instructions.
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
 
-    syntax Instr ::= "loop" VecType Instrs "end"
-                   | "(" "loop" VecType Instrs ")"
- // ----------------------------------------------
+    syntax BlockInstr ::= "loop" VecType Instrs "end"
+    syntax Instr      ::=  "(" "loop" VecType Instrs ")"
+ // ----------------------------------------------------
     rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
 
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
@@ -607,21 +615,19 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax Instr ::= "(" "local.get" Int ")"
-                   | "(" "local.set" Int ")" | "(" "local.set" Int Instr ")"
-                   | "(" "local.tee" Int ")" | "(" "local.tee" Int Instr ")"
- //-------------------------------------------------------------------------
-    rule <k> ( local.get INDEX ) => . ... </k>
+    syntax PlainInstr ::= "local.get" Int
+                        | "local.set" Int
+                        | "local.tee" Int
+ //--------------------------------------
+    rule <k> local.get INDEX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> VALUE ... </locals>
 
-    rule <k> ( local.set INDEX I) => I ~> ( local.set INDEX ) ... </k>
-    rule <k> ( local.set INDEX ) => . ... </k>
+    rule <k> local.set INDEX => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 
-    rule <k> ( local.tee INDEX I) => I ~> ( local.tee INDEX ) ... </k>
-    rule <k> ( local.tee INDEX ) => . ... </k>
+    rule <k> local.tee INDEX => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
          <locals> ... INDEX |-> (_ => VALUE) ... </locals>
 ```
@@ -629,11 +635,10 @@ The `*_local` instructions are defined here.
 ### Globals
 
 ```k
-    syntax Instr ::= "(" "global.get" Int       ")"
-                   | "(" "global.set" Int       ")"
-                   | "(" "global.set" Int Instr ")"
- // -----------------------------------------------
-    rule <k> ( global.get INDEX ) => . ... </k>
+    syntax PlainInstr ::= "global.get" Int
+                        | "global.set" Int
+ // --------------------------------------------
+    rule <k> global.get INDEX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -647,7 +652,7 @@ The `*_local` instructions are defined here.
            ...
          </globalInst>
 
-    rule <k> ( global.set INDEX ) => . ... </k>
+    rule <k> global.set INDEX => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -660,8 +665,6 @@ The `*_local` instructions are defined here.
            <gValue> _ => VALUE </gValue>
            ...
          </globalInst>
-
-    rule <k> ( global.set INDEX INSTR ) => INSTR ~> ( global.set INDEX ) ... </k>
 ```
 
 Types
@@ -876,11 +879,11 @@ Unlike labels, only one frame can be "broken" through at a time.
            <fModInst> MODIDX'                   </fModInst>
          </funcDef>
 
-    syntax Instr ::= "(" "return" ")"
- // ---------------------------------
-    rule <k> (return) ~> (SS:Stmts => .)  ... </k>
-    rule <k> (return) ~> (L:Label  => .)  ... </k>
-    rule <k> ((return) => .) ~> FR:Frame ... </k>
+    syntax PlainInstr ::= "return"
+ // ------------------------------
+    rule <k> return ~> (SS:Stmts => .)    ... </k>
+    rule <k> return ~> (L:Label  => .)    ... </k>
+    rule <k> (return => .) ~> FR:Frame    ... </k>
 ```
 
 ### Function Call
@@ -888,9 +891,9 @@ Unlike labels, only one frame can be "broken" through at a time.
 `call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
 
 ```k
-    syntax Instr ::= "(" "call" TextFormatIdx ")"
- // ---------------------------------------------
-    rule <k> ( call TFIDX ) => ( invoke FADDR:Int ) ... </k>
+    syntax PlainInstr ::= "call" TextFormatIdx
+ // ------------------------------------------
+    rule <k> call TFIDX => ( invoke FADDR:Int ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -901,11 +904,9 @@ Unlike labels, only one frame can be "broken" through at a time.
 ```
 
 ```k
-    syntax Instr ::= "(" "call_indirect" TypeUse ")"
-    syntax Instr ::= "(" "call_indirect" TypeUse Instrs ")"
- // -------------------------------------------------------
-    rule <k> ( call_indirect TUSE:TypeUse IS:Instrs ) => IS ~> ( call_indirect TUSE ) ... </k>
-    rule <k> ( call_indirect TUSE:TypeUse           ) => ( invoke FADDR )             ... </k>
+    syntax PlainInstr ::= "call_indirect" TypeUse
+ // ---------------------------------------------
+    rule <k> call_indirect TUSE:TypeUse => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
          <moduleInst>
@@ -1074,18 +1075,16 @@ The `storeX` operations first wrap the the value to be stored to the bit wdith `
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= "(" IValType "." StoreOpM Instr Instr ")" | "(" IValType  "." StoreOpM ")"
- //                | "(" FValType "." StoreOpM Instr Instr ")" | "(" FValType  "." StoreOpM ")"
-                   | IValType "." StoreOp Int Int
- //                | FValType "." StoreOp Int Float
-                   | "store" "{" Int Int Number "}"
+    syntax PlainInstr ::= IValType  "." StoreOpM
+ //                     | FValType  "." StoreOpM
+    syntax Instr      ::= IValType "." StoreOp Int Int
+ //                     | FValType "." StoreOp Int Float
+                        | "store" "{" Int Int Number "}"
     syntax StoreOpM ::= StoreOp | StoreOp MemArg
  // --------------------------------------------
-    rule <k> ( ITYPE . SOPM:StoreOpM I:Instr I':Instr) => I ~> I' ~> ( ITYPE . SOPM ) ... </k>
-
-    rule <k> ( ITYPE . SOP:StoreOp               ) => ITYPE . SOP  IDX                          VAL ... </k>
+    rule <k> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </k>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
-    rule <k> ( ITYPE . SOP:StoreOp MEMARG:MemArg ) => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
+    rule <k> ITYPE . SOP:StoreOp MEMARG:MemArg => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
@@ -1125,19 +1124,17 @@ The `loadX_sx` operations loads `X` bits from memory, and extend it to the right
 The value is fetched from the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= "(" IValType  "." LoadOpM Instr ")" | "(" IValType  "." LoadOpM ")"
- //                | "(" FValType  "." LoadOpM Instr ")" | "(" FValType  "." LoadOpM ")"
-                   | IValType "." LoadOp Int
-                   | "load" "{" IValType Int Int Signedness"}"
-    syntax LoadOpM ::= LoadOp | LoadOp MemArg
+    syntax PlainInstr ::= IValType  "." LoadOpM
+ //                     | FValType  "." LoadOpM
+                        | IValType "." LoadOp Int
+    syntax Instr      ::= "load" "{" IValType Int Int Signedness"}"
+    syntax LoadOpM    ::= LoadOp | LoadOp MemArg
     syntax Signedness ::= "Signed" | "Unsigned"
  // -------------------------------------------
-    rule <k> ( ITYPE . LOPM:LoadOpM I:Instr ) => I ~> ( ITYPE . LOPM ) ... </k>
-
-    rule <k> ( ITYPE . LOP:LoadOp              ) => ITYPE . LOP  IDX                          ... </k>
-         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
-    rule <k> ( ITYPE . LOP:LoadOp MEMARG:MemArg) => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
-         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
+    rule <k> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </k>
+         <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
+    rule <k> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
+         <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
 
     rule <k> load { ITYPE WIDTH EA SIGN }
           => < ITYPE > #if SIGN ==K Signed
@@ -1207,9 +1204,9 @@ The `align` parameter is for optimization only and is not allowed to influence t
 The `size` operation returns the size of the memory, measured in pages.
 
 ```k
-    syntax Instr ::= "(" "memory.size" ")"
- // --------------------------------------
-    rule <k> ( memory.size ) => < i32 > SIZE ... </k>
+    syntax PlainInstr ::= "memory.size"
+ // -----------------------------------
+    rule <k> memory.size => < i32 > SIZE ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1230,10 +1227,10 @@ Success is indicated by pushing the previous memory size to the stack.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
 
 ```k
-    syntax Instr ::= "(" "memory.grow" ")" | "(" "memory.grow" Instr ")" | "grow" Int
- // ---------------------------------------------------------------------------------
-    rule <k> ( memory.grow I:Instr ) => I ~> ( memory.grow ) ... </k>
-    rule <k> ( memory.grow ) => grow N ... </k>
+    syntax PlainInstr ::= "memory.grow"
+    syntax Instr      ::= "grow" Int
+ // --------------------------------
+    rule <k> memory.grow => grow N ... </k>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
     rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
