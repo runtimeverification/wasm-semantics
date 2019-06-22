@@ -47,7 +47,12 @@ We allow 2 kinds of actions:
  // --------------------------------------------------------
     rule <k> ( invoke ENAME:String IS:Instrs ) => IS ~> ( invoke ENAME ) ... </k>
     rule <k> ( invoke ENAME:String )           => ( call TFIDX )         ... </k>
-         <exports> ... ENAME |-> TFIDX ... </exports>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <exports> ... ENAME |-> TFIDX ... </exports>
+           ...
+         </moduleInst>
 ```
 
 ### Registering Modules
