@@ -150,9 +150,11 @@ Proper values are numbers annotated with their types.
 ```
 
 We also add `undefined` as a value, which makes many partial functions in the semantics total.
+We also add `token` as a value in order to implement some test assertions.
 
 ```k
     syntax Val ::= "undefined"
+                 | "token"
  // --------------------------
 ```
 

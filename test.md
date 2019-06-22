@@ -100,7 +100,8 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
 ** TODO **: implement them.
 
 ```k
-    syntax Assertion ::= "(" "assert_return"                Action     Instrs ")"
+    syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
+                       | "(" "assert_return"                Action            ")"
                        | "(" "assert_return_canonical_nan"  Action            ")"
                        | "(" "assert_return_arithmetic_nan" Action            ")"
                        | "(" "assert_trap"                  Action     String ")"
@@ -109,7 +110,10 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
                        | "(" "assert_unlinkable"            ModuleDecl String ")"
                        | "(" "assert_trap"                  ModuleDecl String ")"
  // -----------------------------------------------------------------------------
-    rule <k> (assert_return ACT INSTRS)              => ACT ~> INSTRS ... </k>
+    rule <k> (assert_return ACT INSTR)               => ACT ~> INSTR ~> #assertAndRemoveEqual ~> #assertAndRemoveToken ... </k>
+         <valstack> VALSTACK => token : VALSTACK </valstack>
+    rule <k> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </k>
+         <valstack> VALSTACK => token : VALSTACK </valstack>
     rule <k> (assert_return_canonical_nan  ACT)      => . ... </k>
     rule <k> (assert_return_arithmetic_nan ACT)      => . ... </k>
     rule <k> (assert_trap       ACT:Action     DESC) => . ... </k>
@@ -117,6 +121,18 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
     rule <k> (assert_invalid    MOD            DESC) => . ... </k>
     rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
     rule <k> (assert_trap       MOD:ModuleDecl DESC) => . ... </k>
+```
+
+And we implement some helper assertions to help testing.
+
+```k
+    syntax Assertion ::= "#assertAndRemoveEqual"
+                       | "#assertAndRemoveToken"
+ // --------------------------------------------
+    rule <k> #assertAndRemoveEqual   => #assertTopStack V "" ~> ( drop ) ... </k>
+         <valstack> V : VALSTACK     => VALSTACK </valstack>
+    rule <k> #assertAndRemoveToken   => . ... </k>
+         <valstack> token : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Trap Assertion
