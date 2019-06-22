@@ -116,11 +116,11 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
          <valstack> VALSTACK => token : VALSTACK </valstack>
     rule <k> (assert_return_canonical_nan  ACT)      => . ... </k>
     rule <k> (assert_return_arithmetic_nan ACT)      => . ... </k>
-    rule <k> (assert_trap       ACT:Action     DESC) => . ... </k>
+    rule <k> (assert_trap       ACT:Action     DESC) => ACT ~> #assertTrap DESC ... </k>
     rule <k> (assert_malformed  MOD            DESC) => . ... </k>
     rule <k> (assert_invalid    MOD            DESC) => . ... </k>
     rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
-    rule <k> (assert_trap       MOD:ModuleDecl DESC) => . ... </k>
+    rule <k> (assert_trap       MOD:ModuleDecl DESC) => MOD ~> #assertTrap DESC ... </k>
 ```
 
 And we implement some helper assertions to help testing.
