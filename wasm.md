@@ -211,12 +211,10 @@ A `UnOp` operator always produces a result of the same type as its operand.
  //               | FUnOp
  // ---------------------
 
-    syntax Instr ::= "(" IValType "." IUnOp ")" | "(" IValType "." IUnOp Instr ")" | IValType "." IUnOp Int
- //                | "(" FValType "." FUnOp ")" | "(" FValType "." FUnOp Instr ")" | FValType "." FUnOp Float
- // ---------------------------------------------------------------------------------------------------------
-    rule <k> ( ITYPE . UOP:IUnOp I:Instr ) => I ~> ( ITYPE . UOP ) ... </k>
-
-    rule <k> ( ITYPE . UOP:IUnOp ) => ITYPE . UOP C1 ... </k>
+    syntax PlainInstr ::= IValType "." IUnOp
+ //                     | FValType "." FUnOp
+ // ----------------------------------------
+    rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -230,12 +228,10 @@ A `BinOp` operator always produces a result of the same type as its operands.
  //                | FBinOp
  // -----------------------
 
-    syntax Instr ::= "(" IValType "." IBinOp ")" | "(" IValType "." IBinOp Instr Instr ")" | IValType "." IBinOp Int   Int
- //                | "(" FValType "." FBinOp ")" | "(" FValType "." FBinOp Instr Instr ")" | FValType "." FBinOp Float Float
- // ------------------------------------------------------------------------------------------------------------------------
-    rule <k> ( ITYPE . BOP:IBinOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . BOP ) ... </k>
-
-    rule <k> ( ITYPE . BOP:IBinOp ) => ITYPE . BOP C1 C2 ... </k>
+    syntax PlainInstr ::= IValType "." IBinOp
+ //                     | FValType "." FBinOp
+ // -----------------------------------------
+    rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -245,11 +241,9 @@ When a test operator is the next instruction, the single argument is loaded from
 Test operations consume one operand and produce a bool, which is an `i32` value.
 
 ```k
-    syntax Instr ::= "(" IValType "." ITestOp ")" | "(" IValType "." ITestOp Instr ")" | IValType "." ITestOp Int
- // -------------------------------------------------------------------------------------------------------------
-    rule <k> ( ITYPE . TOP:ITestOp I:Instr ) => I ~> ( ITYPE . TOP ) ... </k>
-
-    rule <k> ( ITYPE . TOP:ITestOp ) => ITYPE . TOP C1 ... </k>
+    syntax PlainInstr ::= IValType "." ITestOp
+ // ------------------------------------------
+    rule <k> ITYPE . TOP:ITestOp => ITYPE . TOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -264,12 +258,10 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
  //                | FRelOp
  // -----------------------
 
-    syntax Instr ::= "(" IValType "." IRelOp ")" | "(" IValType "." IRelOp Instr Instr ")" | IValType "." IRelOp Int   Int
- //                  "(" FValType "." FRelOp ")" | "(" IValType "." FRelOp Instr Instr ")" | IValType "." FRelOp Float Float
- // ------------------------------------------------------------------------------------------------------------------------
-    rule <k> ( ITYPE . ROP:IRelOp I:Instr I':Instr ) => I ~> I' ~> ( ITYPE . ROP ) ... </k>
-
-    rule <k> ( ITYPE . ROP:IRelOp ) => ITYPE . ROP C1 C2 ... </k>
+    syntax PlainInstr ::= IValType "." IRelOp
+ //                     | FValType "." FRelOp
+ // -----------------------------------------
+    rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK  </valstack>
 ```
 
@@ -282,11 +274,9 @@ These operators convert constant elements at the top of the stack to another typ
 The target type is before the `.`, and the source type is after the `_`.
 
 ```k
-    syntax Instr ::= "(" IValType "." ConvOp ")" | "(" IValType "." ConvOp Instr ")" | IValType "." ConvOp Int
- // ----------------------------------------------------------------------------------------------------------
-    rule <k> ( ITYPE . CONVOP:ConvOp I:Instr ) => I ~> ( ITYPE . CONVOP ) ... </k>
-
-    rule <k> ( ITYPE . CONVOP:ConvOp ) => ITYPE . CONVOP C1  ... </k>
+    syntax PlainInstr ::= IValType "." ConvOp
+ // -----------------------------------------
+    rule <k> ITYPE . CONVOP:ConvOp => ITYPE . CONVOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
       requires #convSourceType(CONVOP) ==K SRCTYPE
 
@@ -296,6 +286,19 @@ The target type is before the `.`, and the source type is after the `_`.
 
 Numeric Operators
 -----------------
+
+```k
+    syntax Instr  ::= IValType "." IUnOp   Int
+                    | IValType "." IBinOp  Int   Int
+                    | IValType "." ITestOp Int
+                    | IValType "." IRelOp  Int   Int
+                    | IValType "." ConvOp  Int
+ //                 | FValType "." FUnOp   Float
+ //                 | FValType "." FBinOp  Float Float
+ //                 | FValType "." FTestOp Float
+ //                 | FValType "." FRelOp  Float Float
+ //                 | FValType "." ConvOp  Float
+```
 
 ### Integer Arithmetic
 
