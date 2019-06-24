@@ -21,6 +21,13 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
  // ---------------------
 ```
 
+We also add `token` as a value in order to implement some test assertions.
+
+```k
+    syntax Val ::= "token"
+ // ----------------------
+```
+
 Reference Interpreter Commands
 ------------------------------
 
@@ -29,15 +36,30 @@ TODO: Move this to a separate `EMBEDDER` module?
 The official test suite contains some special auxillary instructions outside of the standard Wasm semantics.
 The reference interpreter is a particular embedder with auxillary instructions, specified in [spec interpreter](https://github.com/WebAssembly/spec/blob/master/interpreter/README.md).
 
-### Function Invocation
+### Actions
 
-We allow to `invoke` a function by its exported name in the test code.
+We allow 2 kinds of actions:
+
+-   We allow to `invoke` a function by its exported name.
+-   We allow to `get` a global export.
+
+**TODO**: implement "get".
 
 ```k
-    syntax Auxil ::= "(" "invoke" String ")"
- // ----------------------------------------
-    rule <k> ( invoke ENAME:String ) => ( call TFIDX ) ... </k>
-         <exports> ... ENAME |-> TFIDX ... </exports>
+    syntax Auxil  ::= Action
+    syntax Action ::= "(" "invoke"         String        ")"
+                    | "(" "invoke"         String Instrs ")"
+                    | "(" "get"            String        ")"
+                    | "(" "get" Identifier String        ")"
+ // --------------------------------------------------------
+    rule <k> ( invoke ENAME:String IS:Instrs ) => IS ~> ( invoke ENAME ) ... </k>
+    rule <k> ( invoke ENAME:String )           => ( call TFIDX )         ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <exports> ... ENAME |-> TFIDX ... </exports>
+           ...
+         </moduleInst>
 ```
 
 ### Registering Modules
@@ -60,6 +82,19 @@ We will reference modules by name in imports.
          <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
 
+### Addtional Module Syntax
+
+The conformance test cases contain the syntax of declaring modules in the format of `(module binary <string>*)` and `(module quote <string>*)`. In order to parse the conformance test cases, we handle these declarations here and just reduce them to empty.
+
+**TODO**: Implement `(module binary <string>*)` and put it into `wasm.md`.
+
+```k
+    syntax DefnStrings ::= List{String, ""}
+    syntax ModuleDecl  ::= "(" "module" "quote" DefnStrings ")"
+ // -----------------------------------------------------------
+    rule <k> ( module quote  _ ) => . ... </k>
+```
+
 Assertions for KWasm tests
 --------------------------
 
@@ -71,6 +106,58 @@ We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level emb
 ```k
     syntax Auxil ::= Assertion
  // --------------------------
+```
+### Conformance Assertions
+
+Here we inplement the conformance assertions specified in [spec interpreter] including:
+
+```
+  ( assert_return <action> <expr>* )         ;; assert action has expected results. Sometimes <expr>* is just empty.
+  ( assert_return_canonical_nan <action> )   ;; assert action results in NaN in a canonical form
+  ( assert_return_arithmetic_nan <action> )  ;; assert action results in NaN with 1 in MSB of fraction field
+  ( assert_trap <action> <failure> )         ;; assert action traps with given failure string
+  ( assert_malformed <module> <failure> )    ;; assert module cannot be decoded with given failure string
+  ( assert_invalid <module> <failure> )      ;; assert module is invalid with given failure string
+  ( assert_unlinkable <module> <failure> )   ;; assert module fails to link
+  ( assert_trap <module> <failure> )         ;; assert module traps on instantiation
+```
+
+Except `assert_return` and `assert_trap`, the remaining rules are directly reduced to empty. We are not planning to implement them and these rules are only used to make it easier to parse conformance tests.
+
+```k
+    syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
+                       | "(" "assert_return"                Action            ")"
+                       | "(" "assert_return_canonical_nan"  Action            ")"
+                       | "(" "assert_return_arithmetic_nan" Action            ")"
+                       | "(" "assert_trap"                  Action     String ")"
+                       | "(" "assert_malformed"             ModuleDecl String ")"
+                       | "(" "assert_invalid"               ModuleDecl String ")"
+                       | "(" "assert_unlinkable"            ModuleDecl String ")"
+                       | "(" "assert_trap"                  ModuleDecl String ")"
+ // -----------------------------------------------------------------------------
+    rule <k> (assert_return ACT INSTR)               => ACT ~> INSTR ~> #assertAndRemoveEqual ~> #assertAndRemoveToken ... </k>
+         <valstack> VALSTACK => token : VALSTACK </valstack>
+    rule <k> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </k>
+         <valstack> VALSTACK => token : VALSTACK </valstack>
+    rule <k> (assert_return_canonical_nan  ACT)      => . ... </k>
+    rule <k> (assert_return_arithmetic_nan ACT)      => . ... </k>
+    rule <k> (assert_trap       ACT:Action     DESC) => ACT ~> #assertTrap DESC ... </k>
+    rule <k> (assert_malformed  MOD            DESC) => . ... </k>
+    rule <k> (assert_invalid    MOD            DESC) => . ... </k>
+    rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
+    rule <k> (assert_trap       MOD:ModuleDecl DESC) => MOD ~> #assertTrap DESC ... </k>
+```
+
+And we implement some helper assertions to help testing.
+
+```k
+    syntax Assertion ::= "#assertAndRemoveEqual"
+                       | "#assertAndRemoveToken"
+ // --------------------------------------------
+    rule <k> #assertAndRemoveEqual   => #assertTopStack V "" ~> ( drop ) ... </k>
+         <valstack> V : VALSTACK     => VALSTACK </valstack>
+    rule <k> #assertAndRemoveToken   => . ... </k>
+         <valstack> token : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Trap Assertion

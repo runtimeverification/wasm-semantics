@@ -116,11 +116,13 @@
 ;; Function with just a name
 
 (func $3)
+(export "return-null" (func $3) )
+(assert_return (invoke "return-null"))
 
 #assertFunction $3 [ ] -> [ ] [ ] "no domain/range or locals"
 
 (module
-    (func $add
+    (func $add (export "add")
         (param i32 i32)
         (result i32)
         (local.get 0)
@@ -129,7 +131,7 @@
         (return)
     )
 
-    (func $mul
+    (func $mul (export "mul")
         (param i32 i32)
         (result i32)
         (local.get 0)
@@ -145,20 +147,9 @@
     )
 )
 
-(i32.const 3)
-(i32.const 5)
-(call $add)
-#assertTopStack < i32 > 8 "add in module correctly"
-
-(i32.const 3)
-(i32.const 5)
-(call $mul)
-#assertTopStack < i32 > 15 "mul in module correctly"
-
-(i32.const 3)
-(i32.const 5)
-(call $xor)
-#assertTopStack < i32 > 6 "xor in module correctly"
+(assert_return (invoke "add" (i32.const 3) (i32.const 5)) (i32.const 8))
+(assert_return (invoke "mul" (i32.const 3) (i32.const 5)) (i32.const 15))
+(assert_return (invoke "xor" (i32.const 3) (i32.const 5)) (i32.const 6))
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
 #assertFunction $mul [ i32 i32 ] -> [ i32 ] [ ] "mul function typed correctly"
