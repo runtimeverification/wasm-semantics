@@ -82,6 +82,19 @@ We will reference modules by name in imports.
          <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
 
+### Addtional Module Syntax
+
+The conformance test cases contain the syntax of declaring modules in the format of `(module binary <string>*)` and `(module quote <string>*)`. In order to parse the conformance test cases, we handle these declarations here and just reduce them to empty.
+
+**TODO**: Implement `(module binary <string>*)` and put it into `wasm.md`.
+
+```k
+    syntax DefnStrings ::= List{String, ""}
+    syntax ModuleDecl  ::= "(" "module" "quote" DefnStrings ")"
+ // -----------------------------------------------------------
+    rule <k> ( module quote  _ ) => . ... </k>
+```
+
 Assertions for KWasm tests
 --------------------------
 
@@ -109,7 +122,7 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
   ( assert_trap <module> <failure> )         ;; assert module traps on instantiation
 ```
 
-**TODO**: implement them.
+Except `assert_return` and `assert_trap`, the remaining rules are directly reduced to empty. We are not planning to implement them and these rules are only used to make it easier to parse conformance tests.
 
 ```k
     syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"

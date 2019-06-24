@@ -145,7 +145,7 @@
         (local.get 1)
         (i32.xor)
     )
-) 
+)
 
 (assert_return (invoke "add" (i32.const 3) (i32.const 5)) (i32.const 8))
 (assert_return (invoke "mul" (i32.const 3) (i32.const 5)) (i32.const 15))

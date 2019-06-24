@@ -23,4 +23,14 @@
 #assertRegistrationNamed "a module name 2" $myMod2 "registration4"
 #assertRegistrationUnnamed "third module name" "registration5"
 
+(assert_malformed
+  (module quote "(func block end $l)")
+  "mismatching label"
+)
+
+(assert_malformed
+  (module quote "(func block $a end $l)")
+  "mismatching label"
+)
+
 #clearConfig
