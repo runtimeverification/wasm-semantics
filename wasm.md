@@ -99,9 +99,10 @@ Plain Instructions could be written in the folded form.
 ```k
     syntax Instr ::= PlainInstr
                    | BlockInstr
-                   | "(" PlainInstr Instrs ")"
- // ------------------------------------------
-    rule <k> ( PI:PlainInstr IS:Instrs ):Instr => IS ~> PI ... </k>
+                   | FoldedInstr
+    syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
+ // ------------------------------------------------
+    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
 ```
 
 ### Sequencing
@@ -520,9 +521,9 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax Instr      ::= "(" "block" TypeDecls Instrs ")"
-    syntax BlockInstr ::= "block" VecType Instrs "end"
- // --------------------------------------------------
+    syntax FoldedInstr ::= "(" "block" TypeDecls Instrs ")"
+    syntax BlockInstr  ::= "block" VecType Instrs "end"
+ // ---------------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
@@ -576,9 +577,9 @@ Finally, we have the conditional and loop instructions.
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
 
-    syntax BlockInstr ::= "loop" VecType Instrs "end"
-    syntax Instr      ::=  "(" "loop" VecType Instrs ")"
- // ----------------------------------------------------
+    syntax BlockInstr  ::= "loop" VecType Instrs "end"
+    syntax FoldedInstr ::=  "(" "loop" VecType Instrs ")"
+ // -----------------------------------------------------
     rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
 
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
