@@ -561,25 +561,27 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= "(" "if" VecType Instrs "else" Instrs "end" ")"
-                   | "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
-                   | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                   | "(" "if"         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
- // ----------------------------------------------------------------------------------------
+    syntax FoldedInstr ::= "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                         | "(" "if"         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+    syntax BlockInstr  ::= "if" VecType Instrs "else" Instrs "end"
+                         | "if" VecType Instrs               "end"
+ // --------------------------------------------------------------
     rule <k> ( if VTYPE C:Instrs ( then IS ) )              => C ~> ( if VTYPE IS else .Instrs end ) ... </k>
     rule <k> ( if VTYPE C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if VTYPE IS else IS'     end ) ... </k>
     rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if [ .ValTypes ] IS else IS' end ) ... </k>
 
-    rule <k> ( if VTYPE IS else IS' end ) => IS  ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if VTYPE IS          end => if VTYPE IS else .Instrs end ... </k>
+    rule <k> if VTYPE IS else IS' end => IS  ~> label VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
-    rule <k> ( if VTYPE IS else IS' end ) => IS' ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if VTYPE IS else IS' end => IS' ~> label VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
 
-    syntax BlockInstr  ::= "loop" VecType Instrs "end"
     syntax FoldedInstr ::=  "(" "loop" VecType Instrs ")"
- // -----------------------------------------------------
+    syntax BlockInstr  ::= "loop" VecType Instrs "end"
+ // --------------------------------------------------
     rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
 
     rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
