@@ -21,6 +21,13 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
  // ---------------------
 ```
 
+We also add `token` as a value in order to implement some test assertions.
+
+```k
+    syntax Val ::= "token"
+ // ----------------------
+```
+
 Reference Interpreter Commands
 ------------------------------
 
@@ -36,7 +43,7 @@ We allow 2 kinds of actions:
 -   We allow to `invoke` a function by its exported name.
 -   We allow to `get` a global export.
 
-** TODO **: implement "get".
+**TODO**: implement "get".
 
 ```k
     syntax Auxil  ::= Action
@@ -102,7 +109,7 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
   ( assert_trap <module> <failure> )         ;; assert module traps on instantiation
 ```
 
-** TODO **: implement them.
+**TODO**: implement them.
 
 ```k
     syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
