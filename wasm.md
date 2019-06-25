@@ -295,6 +295,9 @@ The target type is before the `.`, and the source type is after the `_`.
 Numeric Operators
 -----------------
 
+These instructions are reduced to from the plain instructions defined above.
+They take operands as parameters rather than from the `<valstack>` and is used to define the numeric computation rules.
+
 ```k
     syntax Instr  ::= IValType "." IUnOp   Int
                     | IValType "." IBinOp  Int   Int
