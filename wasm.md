@@ -17,8 +17,9 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals> .Map </locals>
-        <curModIdx> 0 </curModIdx>
+        <localIds>  .Map </localIds>
+        <locals>    .Map </locals>
+        <curModIdx> 0    </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
@@ -692,6 +693,7 @@ This defines helper functions that gathers function together.
 
     syntax TypeDecl      ::= "(" TypeDecl ")"     [bracket]
                            | TypeKeyWord ValTypes
+                           | "param" Identifier ValType
     syntax TypeDecls     ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
  // -------------------------------------------------------------------
 

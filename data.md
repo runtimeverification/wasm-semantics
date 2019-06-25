@@ -57,12 +57,14 @@ WebAssembly Types
 ### Base Types
 
 WebAssembly has four basic types, for 32 and 64 bit integers and floats.
+`NValType` represents "named valtype".
 
 ```k
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
     syntax  ValType ::= IValType | FValType
- // ---------------------------------------
+    syntax NValType ::= Identifier ValType
+ // --------------------------------------
 ```
 
 ### Type Constructors
