@@ -57,14 +57,15 @@ WebAssembly Types
 ### Base Types
 
 WebAssembly has four basic types, for 32 and 64 bit integers and floats.
-`NValType` represents "named valtype".
+`local` or `param` could declared with an identifier associated to it.
 
 ```k
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
-    syntax  ValType ::= IValType | FValType
-    syntax NValType ::= Identifier ValType
- // --------------------------------------
+    syntax AValType ::= IValType | FValType
+    syntax NValType ::= "{" Identifier AValType "}"
+    syntax ValType  ::= AValType | NValType
+ // ---------------------------------------
 ```
 
 ### Type Constructors
@@ -229,17 +230,17 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 
 ```k
     syntax ValStack ::= #zero ( ValTypes )         [function]
-                   | #take ( ValTypes , ValStack ) [function]
-                   | #drop ( ValTypes , ValStack ) [function]
- // ---------------------------------------------------------
+                      | #take ( ValTypes , ValStack ) [function]
+                      | #drop ( ValTypes , ValStack ) [function]
+ // ------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
     rule #take(.ValTypes,   _)                              => .ValStack
-    rule #take(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
+    rule #take(TYPE:ValType VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
 
     rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
-    rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
+    rule #drop(TYPE:ValType VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 ```
 
 Strings

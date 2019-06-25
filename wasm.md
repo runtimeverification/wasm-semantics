@@ -17,7 +17,6 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <localIds>  .Map </localIds>
         <locals>    .Map </locals>
         <curModIdx> 0    </curModIdx>
       </curFrame>
@@ -691,11 +690,11 @@ This defines helper functions that gathers function together.
     syntax TypeKeyWord  ::= "param" | "result"
  // ------------------------------------------
 
-    syntax TypeDecl      ::= "(" TypeDecl ")"     [bracket]
-                           | TypeKeyWord ValTypes
-                           | "param" Identifier ValType
-    syntax TypeDecls     ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
- // -------------------------------------------------------------------
+    syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
+                       | TypeKeyWord ValTypes
+                       | "param" Identifier ValType
+    syntax TypeDecls ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
+ // ---------------------------------------------------------------
 
     syntax VecType ::=  gatherTypes ( TypeKeyWord , TypeDecls )            [function]
                      | #gatherTypes ( TypeKeyWord , TypeDecls , ValTypes ) [function]
@@ -706,6 +705,9 @@ This defines helper functions that gathers function together.
     rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
     rule #gatherTypes(TKW , TKW TYPES'                  TDECLS , TYPES)
       => #gatherTypes(TKW ,                             TDECLS , TYPES + TYPES')
+
+    rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param , TDECLS , TYPES)
+    rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param , TDECLS , TYPES + { ID VTYPE } .ValTypes)
 ```
 
 ### Type Use
