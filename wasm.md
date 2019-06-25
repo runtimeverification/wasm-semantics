@@ -1392,9 +1392,10 @@ A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    syntax Stmt ::= "(" "module" Defns ")"
-                  | "(" "module" Identifier Defns ")"
- // -------------------------------------------------
+    syntax Stmt       ::= ModuleDecl
+    syntax ModuleDecl ::= "(" "module" Defns ")"
+                        | "(" "module" Identifier Defns ")"
+ // -------------------------------------------------------
     rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
