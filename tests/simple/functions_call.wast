@@ -2,7 +2,7 @@
 
 ;; Simple add function
 
-(type $a-cool-type (func (param i32 i32 ) ( result i32 )))
+(type $a-cool-type (func ( param i32 ) ( param $k i32 ) ( result i32 )))
 #assertType $a-cool-type [ i32 i32 ] -> [ i32 ]
 #assertType 0 [ i32 i32 ] -> [ i32 ]
 #assertNextTypeIdx 1

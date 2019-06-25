@@ -81,6 +81,22 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
  // ----------------------------------------
 ```
 
+We need a helper function to remove all the identifiers from a `ValTypes`, and to merge 2 `ValTypes`.
+
+```k
+    syntax ValTypes ::= unnameValTypes ( ValTypes )
+                      | mergeValTypes  ( ValTypes, ValTypes )
+ // ---------------------------------------------------------
+    rule unnameValTypes ( .ValTypes     ) => .ValTypes
+    rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
+    rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
+    rule mergeValTypes  ( .ValTypes, .ValTypes ) => .ValTypes
+    rule mergeValTypes  ( V:AValType VS, V':AValType VS' ) => V        mergeValTypes ( VS, VS' ) requires V ==K V'
+    rule mergeValTypes  ( { ID V }   VS, V':AValType VS' ) => { ID V } mergeValTypes ( VS, VS' ) requires V ==K V'
+    rule mergeValTypes  ( V:AValType VS, { ID  V' }  VS' ) => { ID V } mergeValTypes ( VS, VS' ) requires V ==K V'
+    rule mergeValTypes  ( { ID V }   VS, { ID' V' }  VS' ) => { ID V } mergeValTypes ( VS, VS' ) requires { ID V } ==K { ID' V' }
+```
+
 All told, a `Type` can be a value type, vector of types, or function type.
 
 ```k

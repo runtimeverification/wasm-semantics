@@ -701,10 +701,10 @@ This defines helper functions that gathers function together.
  // ---------------------------------------------------------------------------------
     rule  gatherTypes(TKW , TDECLS:TypeDecls) => #gatherTypes(TKW, TDECLS, .ValTypes)
 
-    rule #gatherTypes( _  , .TypeDecls                         , TYPES) => [ TYPES ]
-    rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
-    rule #gatherTypes(TKW , TKW TYPES'                  TDECLS , TYPES)
-      => #gatherTypes(TKW ,                             TDECLS , TYPES + TYPES')
+    rule #gatherTypes( _  ,                                   .TypeDecls , TYPES) => [ TYPES ]
+    rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS:TypeDecls , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
+    rule #gatherTypes(TKW , TKW         TYPES':ValTypes TDECLS:TypeDecls , TYPES)
+      => #gatherTypes(TKW ,                             TDECLS:TypeDecls , TYPES + TYPES')
 
     rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param , TDECLS , TYPES)
     rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param , TDECLS , TYPES + { ID VTYPE } .ValTypes)
@@ -724,12 +724,16 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 
     syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                       | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
- // --------------------------------------------------------------------------------------------
-    rule asFuncType(TDECLS:TypeDecls)                      => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
-    rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)      => asFuncType(TDECLS)
-    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))         => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
-    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS ) => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
-      requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K asFuncType(TDECLS)
+                      | unnameFuncType ( FuncType )
+                      | mergeFuncType  ( FuncType, FuncType )
+ // ---------------------------------------------------------
+    rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
+    rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
+    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
+    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => mergeFuncType({TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType, asFuncType(TDECLS))
+      requires unnameFuncType({TYPES[#ContextLookup(TYPEIDS, TFIDX)]}:>FuncType) ==K unnameFuncType(asFuncType(TDECLS))
+    rule unnameFuncType ( [ V1 ]->[ V2 ] )                  => [ unnameValTypes ( V1 )      ]->[ V2 ]
+    rule mergeFuncType  ( [ V1 ]->[ V2 ], [ V1' ]->[ V2 ] ) => [ mergeValTypes  ( V1, V1' ) ]->[ V2 ]
 ```
 
 ### Type Declaration
@@ -778,7 +782,8 @@ Currently, in the expanded form, the `export`s will come after the definition of
 
 ```k
     syntax LocalDecl  ::= "(" LocalDecl ")"    [bracket]
-                        | "local" ValTypes
+                        | "local"            ValTypes
+                        | "local" Identifier AValType
     syntax LocalDecls ::= List{LocalDecl , ""} [klabel(listLocalDecl)]
  // ------------------------------------------------------------------
 
@@ -787,8 +792,9 @@ Currently, in the expanded form, the `export`s will come after the definition of
  // -------------------------------------------------------------------
     rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
 
-    rule #asLocalType(.LocalDecls          , VTYPES) => [ VTYPES ]
-    rule #asLocalType(local VTYPES' LDECLS , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
+    rule #asLocalType(.LocalDecls                              , VTYPES) => [ VTYPES ]
+    rule #asLocalType(local               VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
+    rule #asLocalType(local ID:Identifier VTYPE:AValType   LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + { ID VTYPE } .ValTypes)
 ```
 
 ### Function Implicit Type Declaration
@@ -796,8 +802,9 @@ Currently, in the expanded form, the `export`s will come after the definition of
 It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
 
 ```k
-    syntax Instr ::= #checkTypeUse ( TypeUse )
- // ------------------------------------------
+    syntax Instr ::= #checkTypeUse  ( TypeUse )
+                   | #findPlainType ( FuncType,  )
+ // ----------------------------------------------
     rule <k> #checkTypeUse ( TDECLS:TypeDecls )
        => #if   notBool asFuncType(TDECLS) in values(TYPES)
           #then (type (func TDECLS))
