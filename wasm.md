@@ -1389,14 +1389,54 @@ Start Function
 Module Instantiation
 --------------------
 
-A new module instance gets allocated.
-Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
+There is some dependencies among definitions that require that we do them in a certain order, even though they may appear in many valid orders.
+First, functions, tables, memories and globals get *allocated*.
+Then, tables, memories and globals get *instantiated* with elements, data and initialization vectors.
+However, since (currently) globals can only make use of imported globals to be instantiated, we can initialize at allocation time.
+Finally, the start function is evoked.
+Exports may appear anywhere in a function, but can only be performed after what they refer to is allocated.
+Inlined imports and exports are safe to extract as they appear.
+Imports must appear first in a module due to validation.
+Exports only depend on what they are exporting having been allocated, so can appear right after allocation.
+
+The following functions filters out different definitions so that they can be properly ordered.
 
 ```k
-    syntax Defns ::= gatherAllocs(Defns)
- // ------------------------------------
-    rule <k> D:Func
+    syntax Map ::=  structureModule (     Defns) [function]
+                 | #structureModule (Map, Defns) [function]
+                 | #initialMap ()                [function]
+ // -------------------------------------------------------
+    rule #initialMap
+      => "typeDecls" |-> .Defns
+         "imports"   |-> .Defns
+         "allocs"    |-> .Defns
+         "exports"   |-> .Defns
+         "inits"     |-> .Defns
+      
+    rule structureModule(DS) => #structureModule(#initialMap, DS)
+
+    rule #structureModule(M, .Defns       ) => M
+    rule #strucuteModule (M, T:TypeDecl DS:Defns) => T gatherTypeDecls(DS)
+
+    rule gatherAllocs    (             .Defns  ) => .Defns
+    rule gatherAllocs    (F:FuncDefn   DS:Defns) => F gatherAllocs(DS)
+    rule gatherAllocs    (T:Table      DS:Defns) => T gatherAllocs(DS) // There can only be one.
+    rule gatherAllocs    (M:MemoryDefn DS:Defns) => M gatherAllocs(DS) // There can only be one.
+    rule gatherAllocs    (G:GlobalDefn DS:Defns) => G gatherAllocs(DS)
+    
+    rule gatherExports   (             .Defns  ) => .Defns
+    rule gatherExports   (E:ExportDefn DS:Defns) => E gatherExports(DS)
+
+    rule gatherInits     (             .Defns  ) => .Defns
+    rule gatherInits     (D:DataDefn   DS:Defns) => D gatherInits(DS)
+    rule gatherInits     (E:ElemDefn   DS:Defns) => E gatherInits(DS)
+
+    rule gatherInits     (             .Defns  ) => .Defns
+    rule gatherInits     (S:StartDefn  DS:Defns) => S gatherInits(DS) // There can only be one.
 ```
+
+A new module instance gets allocated.
+Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
     syntax Stmt       ::= ModuleDecl
@@ -1407,7 +1447,14 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
 
-    rule <k> ( module DEFNS ) => DEFNS ... </k>
+    rule <k> ( module DEFNS )
+          => gatherImport    (DEFNS)
+          ~> gatherTypeDecls (DEFNS)
+          ~> gatherAllocs    (DEFNS)
+          ~> gatherExports   (DEFNS)
+          ~> gatherInits     (DEFNS)
+         ...
+         </k>
          <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
          <moduleInstances>
