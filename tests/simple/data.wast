@@ -1,5 +1,3 @@
-(module)
-
 ;; Instantiating with data
 
 (memory (data 87 65 83 77 50 46 48))
@@ -15,7 +13,6 @@
 #assertMemory 1 1 "memorys string length"
 
 #clearConfig
-(module)
 
 (memory 1 1)
 (data (offset (i32.const 100)) 87 65 83 77)
@@ -26,7 +23,6 @@
 #assertMemory 1 1 "memorys string length"
 
 #clearConfig
-(module)
 
 (memory 0 1)
 (data (i32.const 100) 87 65 83 77)
@@ -37,13 +33,11 @@
 #assertMemory 0 1 "memory data separate inst"
 
 #clearConfig
-(module)
 
 (memory (data))
 #assertMemory 0 0 "memorys string length"
 
 #clearConfig
-(module)
 
 (memory (data 87))
 #assertMemoryData (0, 87) "text to ascii W"

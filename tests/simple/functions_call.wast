@@ -1,5 +1,3 @@
-(module)
-
 ;; Simple add function
 
 (type $a-cool-type (func ( param $p1 i32 ) ( param i32 ) ( result i32 )))

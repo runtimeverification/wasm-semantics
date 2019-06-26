@@ -16,7 +16,7 @@
       .Map
     </localIds>
     <curModIdx>
-      0
+      .
     </curModIdx>
   </curFrame>
   <nextFreshId>
@@ -53,6 +53,9 @@
     <mems>
       .Map
     </mems>
+    <nextGlobAddr>
+      0
+    </nextGlobAddr>
     <globals>
       .Map
     </globals>
