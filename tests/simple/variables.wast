@@ -19,8 +19,8 @@ init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .ValStack
 
 ;; Test globals
 
-init_global 0 0
-init_global 1 1
+(global (mut i32) (i32.const 0))
+(global (mut i32) (i32.const 0))
 
 (i32.const 43)
 (global.set 0)
@@ -36,9 +36,9 @@ init_global 1 1
 
 #clearConfig
 
-init_global 0 0
+(global (mut i32) (i32.const 0))
 (global.set 0 (i32.const 77))
-init_global 1 1
+(global (mut i32) (i32.const 0))
 (global.set 1 (i32.const 99))
 
 #assertGlobal 1 < i32 > 99 "set_global folded"

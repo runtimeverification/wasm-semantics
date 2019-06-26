@@ -225,29 +225,6 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          </globals>
 ```
 
-`init_global` is a helper function that helps us to declare a new global variable.
-
-```k
-    syntax Defn ::= "init_global" Int Int
- // -------------------------------------
-    rule <k> init_global INDEX GADDR => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
-           ...
-         </moduleInst>
-         <globals>
-           ( .Bag
-          => <globalInst>
-               <gAddr> GADDR </gAddr>
-               ...
-             </globalInst>
-           )
-           ...
-         </globals>
-```
-
 ### Type Assertions
 
 `#assertType` checks whether a type is allocated to the correct index.
