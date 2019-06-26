@@ -73,7 +73,7 @@ WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax ValTypes ::= List{ValType, ""}
+    syntax ValTypes ::= List{ValType, ""} [klabel(listValTypes)]
     syntax VecType  ::= "[" ValTypes "]"
  // ------------------------------------
 
@@ -84,17 +84,16 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
 We need a helper function to remove all the identifiers from a `ValTypes`, and to merge 2 `ValTypes`.
 
 ```k
-    syntax ValTypes ::= unnameValTypes ( ValTypes )
-                      | mergeValTypes  ( ValTypes, ValTypes )
- // ---------------------------------------------------------
+    syntax ValTypes ::= unnameValTypes ( ValTypes )           [function]
+                      | mergeValTypes  ( ValTypes, ValTypes ) [function]
+ // --------------------------------------------------------------------
     rule unnameValTypes ( .ValTypes     ) => .ValTypes
     rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
     rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
     rule mergeValTypes  ( .ValTypes, .ValTypes ) => .ValTypes
-    rule mergeValTypes  ( V:AValType VS, V':AValType VS' ) => V        mergeValTypes ( VS, VS' ) requires V ==K V'
-    rule mergeValTypes  ( { ID V }   VS, V':AValType VS' ) => { ID V } mergeValTypes ( VS, VS' ) requires V ==K V'
-    rule mergeValTypes  ( V:AValType VS, { ID  V' }  VS' ) => { ID V } mergeValTypes ( VS, VS' ) requires V ==K V'
-    rule mergeValTypes  ( { ID V }   VS, { ID' V' }  VS' ) => { ID V } mergeValTypes ( VS, VS' ) requires { ID V } ==K { ID' V' }
+    rule mergeValTypes  ( V:ValType  VS:ValTypes, V:ValType  VS':ValTypes ) => V        mergeValTypes ( VS, VS' )
+    rule mergeValTypes  ( { ID V }   VS:ValTypes, V:AValType VS':ValTypes ) => { ID V } mergeValTypes ( VS, VS' )
+    rule mergeValTypes  ( V:AValType VS:ValTypes, { ID  V }  VS':ValTypes ) => { ID V } mergeValTypes ( VS, VS' )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.

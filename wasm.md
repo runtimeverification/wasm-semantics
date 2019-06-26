@@ -706,8 +706,8 @@ This defines helper functions that gathers function together.
     rule #gatherTypes(TKW , TKW         TYPES':ValTypes TDECLS:TypeDecls , TYPES)
       => #gatherTypes(TKW ,                             TDECLS:TypeDecls , TYPES + TYPES')
 
-    rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param , TDECLS , TYPES)
-    rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param , TDECLS , TYPES + { ID VTYPE } .ValTypes)
+    rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
+    rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + { ID VTYPE } .ValTypes)
 ```
 
 ### Type Use
@@ -724,9 +724,9 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 
     syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                       | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
-                      | unnameFuncType ( FuncType )
-                      | mergeFuncType  ( FuncType, FuncType )
- // ---------------------------------------------------------
+                      | unnameFuncType ( FuncType )      [function]
+                      | mergeFuncType  ( FuncType, FuncType ) [function]
+ // --------------------------------------------------------------------
     rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
     rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
@@ -734,6 +734,11 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
       requires unnameFuncType({TYPES[#ContextLookup(TYPEIDS, TFIDX)]}:>FuncType) ==K unnameFuncType(asFuncType(TDECLS))
     rule unnameFuncType ( [ V1 ]->[ V2 ] )                  => [ unnameValTypes ( V1 )      ]->[ V2 ]
     rule mergeFuncType  ( [ V1 ]->[ V2 ], [ V1' ]->[ V2 ] ) => [ mergeValTypes  ( V1, V1' ) ]->[ V2 ]
+
+    syntax List ::= unnameFuncTypes ( List ) [function]
+ // ---------------------------------------------------
+    rule unnameFuncTypes ( .List ) => .List
+    rule unnameFuncTypes ( ListItem(F) RS:List ) => ListItem(unnameFuncType({F}:>FuncType)) unnameFuncTypes(RS)
 ```
 
 ### Type Declaration
@@ -802,12 +807,11 @@ Currently, in the expanded form, the `export`s will come after the definition of
 It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
 
 ```k
-    syntax Instr ::= #checkTypeUse  ( TypeUse )
-                   | #findPlainType ( FuncType,  )
- // ----------------------------------------------
+    syntax Instr ::= #checkTypeUse ( TypeUse ) [function]
+ // -----------------------------------------------------
     rule <k> #checkTypeUse ( TDECLS:TypeDecls )
-       => #if   notBool asFuncType(TDECLS) in values(TYPES)
-          #then (type (func TDECLS))
+       => #if   notBool unnameFuncType(asFuncType(TDECLS)) in unnameFuncTypes(values(TYPES))
+          #then (type (func TDECLS)) // One undefined behaviour is how should the identifier declarations get handled?
           #else .K
           #fi
          ...
