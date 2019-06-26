@@ -598,7 +598,7 @@ Finally, we have the conditional and loop instructions.
     syntax BlockInstr  ::= "loop" OptionalId VecType Instrs "end" OptionalId
  // ------------------------------------------------------------------------
     rule <k> ( loop ID FDECLS:VecType IS ) => loop ID FDECLS IS end ... </k>
-    rule <k> loop ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
+    rule <k> loop ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID [ .ValTypes ] { loop ID VTYPE IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
       requires ID ==K ID' orBool notBool isIdentifier(ID')
 ```
