@@ -21,8 +21,6 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
  // ---------------------
 ```
 
-We want to be able to write auxilliary commands outside of module definitions.
-In those cases, the command refers to the last defined module.
 We also add `token` as a value in order to implement some test assertions.
 
 ```k
