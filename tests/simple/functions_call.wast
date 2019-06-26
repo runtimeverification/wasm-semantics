@@ -2,13 +2,13 @@
 
 ;; Simple add function
 
-(type $a-cool-type (func ( param i32 ) ( param $k i32 ) ( result i32 )))
-#assertType $a-cool-type [ i32 i32 ] -> [ i32 ]
-#assertType 0 [ i32 i32 ] -> [ i32 ]
+(type $a-cool-type (func ( param $p1 i32 ) ( param i32 ) ( result i32 )))
+#assertType $a-cool-type [ {$p1 i32} i32 ] -> [ i32 ]
+#assertType 0 [ {$p1 i32} i32 ] -> [ i32 ]
 #assertNextTypeIdx 1
 
 (func $0 (type $a-cool-type)
-    (local.get 0)
+    (local.get $p1)
     (local.get 1)
     (i32.add)
     (return)
@@ -19,18 +19,22 @@
 (i32.const 8)
 (call $0)
 #assertTopStack < i32 > 15 "call function 0"
-#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists"
+#assertFunction 0 [ {$p1 i32} i32 ] -> [ i32 ] [ ] "call function 0 exists"
 
 ;; String-named add function
 
-(func $add (type $a-cool-type) (param i32 i32 ) ( result i32 )
-    (local.get 0)
-    (local.get 1)
+(func $add (type $a-cool-type) (param i32) (param $p2 i32) ( result i32 )
+    (local.get $p1)
+    (local.get $p2)
     (i32.add)
     (return)
 )
 
-#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
+(i32.const 10)
+(i32.const 15)
+(call $add)
+#assertTopStack < i32 > 25 "call function 0"
+#assertFunction $add [ {$p1 i32} {$p2 i32} ] -> [ i32 ] [ ] "function string-named add"
 #assertNextTypeIdx 1
 
 ;; Remove return statement
@@ -50,14 +54,14 @@
 
 ;; More complicated function with locals
 
-(func $1 param i64 i64 i64 result i64 local i64
+(func $1 param i64 i64 i64 result i64 local $l1 i64
         (local.get 2)
           (local.get 0)
           (local.get 1)
         (i64.add)
       (i64.sub)
-    (local.set 3)
-    (local.get 3)
+    (local.set $l1)
+    (local.get $l1)
     (return)
 )
 
@@ -66,7 +70,7 @@
 (i64.const 22)
 (call $1)
 #assertTopStack < i64 > 35 "call function 1"
-#assertFunction $1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
+#assertFunction $1 [ i64 i64 i64 ] -> [ i64 ] [ {$l1 i64} ] "call function 1 exists"
 #assertType 1 [ i64 i64 i64 ] -> [ i64 ]
 #assertNextTypeIdx 2
 
@@ -123,18 +127,18 @@
 
 (module
     (func $add (export "add")
-        (param i32 i32)
+        (param i32)(param $b i32)
         (result i32)
         (local.get 0)
-        (local.get 1)
+        (local.get $b)
         (i32.add)
         (return)
     )
 
     (func $mul (export "mul")
-        (param i32 i32)
+        (param $a i32)(param i32)
         (result i32)
-        (local.get 0)
+        (local.get $a)
         (local.get 1)
         (i32.mul)
         (return)
@@ -151,8 +155,8 @@
 (assert_return (invoke "mul" (i32.const 3) (i32.const 5)) (i32.const 15))
 (assert_return (invoke "xor" (i32.const 3) (i32.const 5)) (i32.const 6))
 
-#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
-#assertFunction $mul [ i32 i32 ] -> [ i32 ] [ ] "mul function typed correctly"
+#assertFunction $add [ i32 {$b i32} ] -> [ i32 ] [ ] "add function typed correctly"
+#assertFunction $mul [ {$a i32} i32 ] -> [ i32 ] [ ] "mul function typed correctly"
 #assertFunction $xor [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
 #assertNextTypeIdx 1
 

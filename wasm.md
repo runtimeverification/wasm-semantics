@@ -18,6 +18,7 @@ Configuration
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals>    .Map </locals>
+        <localIds>  .Map </localIds>
         <curModIdx> 0    </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
@@ -624,24 +625,40 @@ The various `init_local` variants assist in setting up the `locals` cell.
           </k>
 ```
 
+`init_localids` help setting up ids for local indices.
+
+```k
+    syntax Instr ::=  "init_localids" ValTypes
+                   | "#init_localids" Int ValTypes
+ // ----------------------------------------------
+    rule <k> init_localids VTYPES => #init_localids 0 VTYPES ... </k>
+    rule <k> #init_localids I:Int .ValTypes     => .                          ... </k>
+    rule <k> #init_localids I:Int V:AValType VS => #init_localids I +Int 1 VS ... </k>
+    rule <k> #init_localids I:Int { ID V }   VS => #init_localids I +Int 1 VS ... </k>
+         <localIds> LOCALIDS => LOCALIDS [ ID <- I ] </localIds>
+```
+
 The `*_local` instructions are defined here.
 
 ```k
-    syntax PlainInstr ::= "local.get" Int
-                        | "local.set" Int
-                        | "local.tee" Int
- //--------------------------------------
-    rule <k> local.get INDEX => . ... </k>
+    syntax PlainInstr ::= "local.get" TextFormatIdx
+                        | "local.set" TextFormatIdx
+                        | "local.tee" TextFormatIdx
+ //------------------------------------------------
+    rule <k> local.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... INDEX |-> VALUE ... </locals>
+         <locals> ... #ContextLookup(IDS , TFIDX) |-> VALUE ... </locals>
+         <localIds> IDS </localIds>
 
-    rule <k> local.set INDEX => . ... </k>
+    rule <k> local.set TFIDX => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
+         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
+         <localIds> IDS </localIds>
 
-    rule <k> local.tee INDEX => . ... </k>
+    rule <k> local.tee TFIDX => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
-         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
+         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
+         <localIds> IDS </localIds>
 ```
 
 ### Globals
@@ -807,8 +824,8 @@ Currently, in the expanded form, the `export`s will come after the definition of
 It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
 
 ```k
-    syntax Instr ::= #checkTypeUse ( TypeUse ) [function]
- // -----------------------------------------------------
+    syntax Instr ::= #checkTypeUse ( TypeUse )
+ // ------------------------------------------
     rule <k> #checkTypeUse ( TDECLS:TypeDecls )
        => #if   notBool unnameFuncType(asFuncType(TDECLS)) in unnameFuncTypes(values(TYPES))
           #then (type (func TDECLS)) // One undefined behaviour is how should the identifier declarations get handled?
@@ -884,16 +901,17 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Frame      ::= "frame" Int ValTypes ValStack Map
  // -------------------------------------------------------
     rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </k>
-         <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(unnameValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
 
     syntax AdminInstr ::= "(" "invoke" Int ")"
  // ------------------------------------------
     rule <k> ( invoke FADDR )
-          => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
+          => init_locals #take(unnameValTypes(TDOMAIN), VALSTACK) ++ #zero(unnameValTypes(TLOCALS))
+          ~> init_localids TDOMAIN + TLOCALS
           ~> INSTRS
-          ~> frame MODIDX TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
+          ~> frame MODIDX TRANGE #drop(unnameValTypes(TDOMAIN), VALSTACK) LOCAL
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
