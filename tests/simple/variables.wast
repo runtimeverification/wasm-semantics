@@ -1,4 +1,3 @@
-(module)
 ;; Test locals
 
 init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .ValStack
@@ -36,7 +35,6 @@ init_global 1 1
 ;; Test global folded forms
 
 #clearConfig
-(module)
 
 init_global 0 0
 (global.set 0 (i32.const 77))

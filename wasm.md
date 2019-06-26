@@ -18,7 +18,7 @@ Configuration
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals> .Map </locals>
-        <curModIdx> 0 </curModIdx>
+        <curModIdx> .K </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
@@ -77,6 +77,7 @@ Configuration
           </globalInst>
         </globals>
       </mainStore>
+      <lastModIdx> .K </lastModIdx>
 ```
 
 ### Assumptions and invariants
@@ -246,7 +247,6 @@ Test operations consume one operand and produce a bool, which is an `i32` value.
 
 When a comparison operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 Comparisons consume two operands and produce a bool, which is an `i32` value.
-
 
 ```k
     syntax RelOp ::= IRelOp
@@ -1401,7 +1401,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          <nextModuleIdx> NEXT </nextModuleIdx>
 
     rule <k> ( module DEFNS ) => DEFNS ... </k>
-         <curModIdx> _ => NEXT </curModIdx>
+         <curModIdx> CUR => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
          <moduleInstances>
            ( .Bag
@@ -1412,6 +1412,16 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
            )
            ...
          </moduleInstances>
+         <lastModIdx> _ => CUR  </lastModIdx>
+
+
+```
+
+It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
+
+```k
+    rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
+         <curModIdx> .K </curModIdx>
 ```
 
 After a module is instantiated, it should be saved somewhere.

@@ -13,7 +13,7 @@
       .Map
     </locals>
     <curModIdx>
-      0
+      .
     </curModIdx>
   </curFrame>
   <nextFreshId>
@@ -54,4 +54,7 @@
       .GlobalInstCellMap
     </globals>
   </mainStore>
+  <lastModIdx>
+    .
+  </lastModIdx>
 </generatedTop>

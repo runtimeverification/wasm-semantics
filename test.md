@@ -21,6 +21,8 @@ This subsort contains Auxiliary functions that only used in our KWASM semantics 
  // ---------------------
 ```
 
+We want to be able to write auxilliary commands outside of module definitions.
+In those cases, the command refers to the last defined module.
 We also add `token` as a value in order to implement some test assertions.
 
 ```k
@@ -107,6 +109,7 @@ We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level emb
     syntax Auxil ::= Assertion
  // --------------------------
 ```
+
 ### Conformance Assertions
 
 Here we inplement the conformance assertions specified in [spec interpreter] including:
@@ -225,8 +228,8 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 `init_global` is a helper function that helps us to declare a new global variable.
 
 ```k
-    syntax Auxil ::= "init_global" Int Int
- // --------------------------------------
+    syntax Defn ::= "init_global" Int Int
+ // -------------------------------------
     rule <k> init_global INDEX GADDR => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -410,7 +413,7 @@ The modules are cleaned all together after the test file is executed.
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
     rule <k>    #clearConfig => . ...     </k>
-         <curModIdx>       _ => 0         </curModIdx>
+         <curModIdx>       _ => .K        </curModIdx>
          <valstack>        _ => .ValStack </valstack>
          <locals>          _ => .Map      </locals>
          <nextFreshId>     _ => 0         </nextFreshId>
@@ -427,6 +430,7 @@ The modules are cleaned all together after the test file is executed.
            <mems>          _ => .Bag      </mems>
            <globals>       _ => .Bag      </globals>
          </mainStore>
+         <lastModIdx>      _ => .K        </lastModIdx>
 ```
 
 Registry Assertations
