@@ -570,7 +570,15 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> br_if TFIDX => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
-   
+
+    syntax PlainInstr ::= "br_table" ElemSegment
+ // --------------------------------------------
+    rule <k> br_table ES:ElemSegment => br {{ES}:>List [ VAL ]}:>TextFormatIdx ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL <Int #lengthElemSegment(ES)
+    rule <k> br_table ES:ElemSegment => br {{ES}:>List [ #lengthElemSegment(ES) -Int 1 ]}:>TextFormatIdx ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL >=Int #lengthElemSegment(ES)
 ```
 
 Finally, we have the conditional and loop instructions.
