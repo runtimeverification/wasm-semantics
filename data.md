@@ -32,7 +32,8 @@ Also we use `#freshId ( Int )` to generate a fresh identifier based on the eleme
 **TODO**: Unsupported characters: `.:^@`
 
 ```k
-    syntax Identifier ::= #freshId ( Int )
+    syntax Identifier ::= ".Identifier"
+                        | #freshId ( Int )
                         | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
 ```

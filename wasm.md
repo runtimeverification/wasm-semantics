@@ -100,7 +100,7 @@ According to the WebAssembly semantics there are 4 categories of instructions.
 
 -  Plain Instructions (`PlainInstr`): Most instructions are plain instructions. They could be wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
 -  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier. 
--  Administrative Instructions (`AdminInstr`): Administrative instructions are used to experess the reduction of `traps`, `calls`, and `control instructions`.
+-  Administrative Instructions (`AdminInstr`): Administrative instructions are used to experess the reduction of `traps` and `calls`.
 -  Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
 
 Also in our definition, there are some helper instructions not directly used in programs but will help us define the rules, they are directly subsorted into `Instr`.
@@ -528,21 +528,30 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax AdminInstr ::= Label
-    syntax Label      ::= "label" VecType "{" Instrs "}" ValStack
- // -------------------------------------------------------------
-    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
+    syntax Label ::= "label" Identifier VecType "{" Instrs "}" ValStack
+ // -------------------------------------------------------------------
+    rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax FoldedInstr ::= "(" "block" TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "block" VecType Instrs "end"
- // ---------------------------------------------------
+    syntax FoldedInstr ::= "(" "block"            TypeDecls Instrs ")"
+                         | "(" "block" Identifier TypeDecls Instrs ")"
+    syntax BlockInstr  ::= "block"            VecType Instrs "end"
+                         | "block" Identifier VecType Instrs "end"
+                         | "block" Identifier VecType Instrs "end" Identifier
+ // -------------------------------------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
           => block gatherTypes(result, FDECLS) INSTRS end
          ...
          </k>
 
-    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> ( block ID:Identifier FDECLS:TypeDecls INSTRS:Instrs )
+          => block ID gatherTypes(result, FDECLS) INSTRS end
+         ...
+         </k>
+
+    rule <k> block    VTYPE:VecType IS end    => block .Identifier VTYPE IS end ... </k>
+    rule <k> block ID VTYPE:VecType IS end ID => block ID          VTYPE IS end ... </k>
+    rule <k> block ID VTYPE:VecType IS end    => IS ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -552,52 +561,80 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax PlainInstr ::= "br" Int
- // ------------------------------
-    rule <k> br N ~> (SS:Stmts => .) ... </k>
-    rule <k> br N ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    syntax PlainInstr ::= "br" TextFormatIdx
+ // ----------------------------------------
+    rule <k> br TFIDX ~> (SS:Stmts => .) ... </k>
+    rule <k> br 0 ~> label ID [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-      requires N ==Int 0
-    rule <k> br N ~> L:Label => br N -Int 1 ... </k>
+    rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
       requires N >Int 0
 
-    syntax PlainInstr ::= "br_if" Int
- // ---------------------------------
-    rule <k> br_if N => br N ... </k>
+    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
+      requires ID =/=K ID'
+
+    syntax PlainInstr ::= "br_if" TextFormatIdx
+ // -------------------------------------------
+    rule <k> br_if TFIDX => br TFIDX ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <k> br_if N => .    ... </k>
+    rule <k> br_if TFIDX => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
+   
 ```
 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if"         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-    syntax BlockInstr  ::= "if" VecType Instrs "else" Instrs "end"
-                         | "if" VecType Instrs               "end"
- // --------------------------------------------------------------
-    rule <k> ( if VTYPE C:Instrs ( then IS ) )              => C ~> ( if VTYPE IS else .Instrs end ) ... </k>
-    rule <k> ( if VTYPE C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if VTYPE IS else IS'     end ) ... </k>
-    rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if [ .ValTypes ] IS else IS' end ) ... </k>
+    syntax FoldedInstr ::= "(" "if"            VecType Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if"            VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                         | "(" "if"                    Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                         | "(" "if" Identifier VecType Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" Identifier VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                         | "(" "if" Identifier         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+    syntax BlockInstr  ::= "if"            VecType Instrs "else"            Instrs "end"
+                         | "if"            VecType Instrs                          "end"
+                         | "if" Identifier VecType Instrs "else"            Instrs "end"
+                         | "if" Identifier VecType Instrs                          "end"
+                         | "if" Identifier VecType Instrs "else" Identifier Instrs "end"
+                         | "if" Identifier VecType Instrs "else"            Instrs "end" Identifier
+                         | "if" Identifier VecType Instrs "else" Identifier Instrs "end" Identifier
+                         | "if" Identifier VecType Instrs                          "end" Identifier
+ // -----------------------------------------------------------------------------------------------
+    rule <k> ( if VTYPE:VecType C:Instrs ( then IS ) )              => C ~> if VTYPE IS else .Instrs end ... </k>
+    rule <k> ( if VTYPE:VecType C:Instrs ( then IS ) ( else IS' ) ) => C ~> if VTYPE IS else IS'     end ... </k>
+    rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> if [ .ValTypes ] IS else IS' end ... </k>
+    rule <k> ( if ID VTYPE:VecType C:Instrs ( then IS ) )              => C ~> if ID VTYPE IS else .Instrs end ... </k>
+    rule <k> ( if ID VTYPE:VecType C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID VTYPE IS else IS'     end ... </k>
+    rule <k> ( if ID               C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID [ .ValTypes ] IS else IS' end ... </k>
 
-    rule <k> if VTYPE IS          end => if VTYPE IS else .Instrs end ... </k>
-    rule <k> if VTYPE IS else IS' end => IS  ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if ID VTYPE:VecType IS          end => if ID VTYPE IS else .Instrs end ... </k>
+    rule <k> if ID VTYPE:VecType IS else IS' end => IS  ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
-    rule <k> if VTYPE IS else IS' end => IS' ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if ID VTYPE:VecType IS else IS' end => IS' ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
+   
+    rule <k> if ID VTYPE:VecType IS                        end ID => if ID VTYPE:VecType IS end ... </k>
+    rule <k> if ID VTYPE:VecType IS else               IS' end ID => if ID VTYPE:VecType IS else IS' end ... </k>
+    rule <k> if ID VTYPE:VecType IS else ID:Identifier IS' end    => if ID VTYPE:VecType IS else IS' end ... </k>
+    rule <k> if ID VTYPE:VecType IS else ID:Identifier IS' end ID => if ID VTYPE:VecType IS else IS' end ... </k>
 
-    syntax FoldedInstr ::=  "(" "loop" VecType Instrs ")"
-    syntax BlockInstr  ::= "loop" VecType Instrs "end"
- // --------------------------------------------------
-    rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
+    syntax FoldedInstr ::= "(" "loop"            VecType Instrs ")"
+                         | "(" "loop" Identifier VecType Instrs ")"
+    syntax BlockInstr  ::= "loop"            VecType Instrs "end"
+                         | "loop" Identifier VecType Instrs "end"
+                         | "loop" Identifier VecType Instrs "end" Identifier
+ // ------------------------------------------------------------------------
+    rule <k> ( loop    FDECLS:VecType IS ) => loop    FDECLS IS end ... </k>
+    rule <k> ( loop ID FDECLS:VecType IS ) => loop ID FDECLS IS end ... </k>
 
-    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
+    rule <k> loop    VTYPE:VecType IS end    => loop .Identifier VTYPE IS end ... </k>
+    rule <k> loop ID VTYPE:VecType IS end ID => loop ID          VTYPE IS end ... </k>
+    rule <k> loop ID VTYPE:VecType IS end    => IS ~> label ID [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -669,15 +706,15 @@ When globals are declared, they must also be given a constant initialization val
 **TODO**: Import and export.
 
 ```k
-    syntax GlobalType ::= Mut ValType
+    syntax GlobalType ::= Mut AValType
     syntax GlobalType ::= asGMut (TextGlobalType) [function]
-    syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
+    syntax TextGlobalType ::= AValType | "(" "mut" AValType ")"
     syntax Defn ::= "(" "global"               TextGlobalType Instr ")"
                   | "(" "global" TextFormatIdx TextGlobalType Instr ")"
                   |     "global" GlobalType
  // ---------------------------------------
-    rule asGMut ( (mut T:ValType ) ) => var   T
-    rule asGMut (      T:ValType   ) => const T
+    rule asGMut ( (mut T:AValType ) ) => var   T
+    rule asGMut (      T:AValType   ) => const T
     rule <k> ( global ID:TextFormatIdx TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -689,7 +726,7 @@ When globals are declared, they must also be given a constant initialization val
 
     rule <k> ( global TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
 
-    rule <k> global MUT:Mut TYP:ValType => . ... </k>
+    rule <k> global MUT:Mut TYP:AValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -947,9 +984,8 @@ Similar to labels, they sit on the instruction stack (the `<k>` cell), and `retu
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax AdminInstr ::= Frame
-    syntax Frame      ::= "frame" Int ValTypes ValStack Map
- // -------------------------------------------------------
+    syntax Frame ::= "frame" Int ValTypes ValStack Map
+ // --------------------------------------------------
     rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </k>
          <valstack> VALSTACK => #take(unnameValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
