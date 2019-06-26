@@ -50,6 +50,9 @@
     <mems>
       .Map
     </mems>
+    <nextGlobAddr>
+      0
+    </nextGlobAddr>
     <globals>
       .Map
     </globals>

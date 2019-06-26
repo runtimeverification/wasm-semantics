@@ -50,6 +50,9 @@
     <mems>
       .MemInstCellMap
     </mems>
+    <nextGlobAddr>
+      0
+    </nextGlobAddr>
     <globals>
       .GlobalInstCellMap
     </globals>

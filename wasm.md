@@ -26,9 +26,10 @@ Configuration
           <modIdx>        0    </modIdx>
           <typeIds>       .Map </typeIds>
           <funcIds>       .Map </funcIds> //this is mapping from identifier to index
+          <globIds>       .Map </globIds>
           <nextTypeIdx>   0    </nextTypeIdx>
           <nextFuncIdx>   0    </nextFuncIdx>
-          <nextGlobalIdx> 0    </nextGlobalIdx>
+          <nextGlobIdx>   0    </nextGlobIdx>
           <types>         .Map </types>
           <funcIndices>   .Map </funcIndices> //this is mapping from index to address
           <tabIndices>    .Map </tabIndices>
@@ -69,6 +70,7 @@ Configuration
             <mdata>   .Map      </mdata>
           </memInst>
         </mems>
+        <nextGlobAddr> 0 </nextGlobAddr>
         <globals>
           <globalInst multiplicity="*" type="Map">
             <gAddr>  0         </gAddr>
@@ -579,8 +581,8 @@ Finally, we have the conditional and loop instructions.
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
-Memory Operators
-----------------
+Variable Operators
+------------------
 
 ### Locals
 
@@ -627,6 +629,55 @@ The `*_local` instructions are defined here.
 ```
 
 ### Globals
+
+When globals are declared, they must also be given a constant initialization value.
+
+**TODO**: Import and export.
+
+```k
+    syntax GlobalType ::= Mut ValType
+    syntax GlobalType ::= asGMut (TextGlobalType) [function]
+    syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
+    syntax Defn ::= "(" "global"               TextGlobalType Instr ")"
+                  | "(" "global" TextFormatIdx TextGlobalType Instr ")"
+                  |     "global" GlobalType
+ // ---------------------------------------
+    rule asGMut ( (mut T:ValType ) ) => var   T
+    rule asGMut (      T:ValType   ) => const T
+    rule <k> ( global ID:TextFormatIdx TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globIds>     IDS => IDS [ ID <- NEXTIDX ] </globIds>
+           <nextGlobIdx> NEXTIDX                      </nextGlobIdx>
+           ...
+         </moduleInst>
+
+    rule <k> ( global TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
+
+    rule <k> global MUT:Mut TYP:ValType => . ... </k>
+         <valstack> < TYP > VAL : STACK => STACK </valstack>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <nextGlobIdx>   NEXTIDX => NEXTIDX +Int 1                </nextGlobIdx>
+           <globalIndices> GLOBS   => GLOBS [ NEXTIDX <- NEXTADDR ] </globalIndices>
+           ...
+         </moduleInst>
+         <nextGlobAddr> NEXTADDR => NEXTADDR +Int 1 </nextGlobAddr>
+         <globals>
+           ( .Bag
+          => <globalInst>
+               <gAddr>  NEXTADDR  </gAddr>
+               <gValue> <TYP> VAL </gValue>
+               <gMut>   MUT       </gMut>
+             </globalInst>
+           )
+           ...
+         </globals>
+```
+
+The `get` and `set` instructions read and write globals.
 
 ```k
     syntax Instr ::= "(" "global.get" Int       ")"

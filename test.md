@@ -428,6 +428,7 @@ The modules are cleaned all together after the test file is executed.
            <tabs>          _ => .Bag      </tabs>
            <nextMemAddr>   _ => 0         </nextMemAddr>
            <mems>          _ => .Bag      </mems>
+           <nextGlobAddr>  _ => 0         </nextGlobAddr>
            <globals>       _ => .Bag      </globals>
          </mainStore>
          <lastModIdx>      _ => .K        </lastModIdx>
