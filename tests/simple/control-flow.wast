@@ -42,9 +42,9 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ ]
+block $n [ ]
     (i32.const 3)
-    (br 0)
+    (br $n)
     (i32.const 4)
     (br 0)
 end
@@ -52,15 +52,15 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ ]
+block $v [ ]
     (i32.const 3)
-    block [ i32 i32 ]
+    block $k [ i32 i32 ]
         (i32.const 4)
         (i32.const 5)
-        (br 1)
+        (br $k)
     end
     (i32.const 6)
-    (br 0)
+    (br $v)
 end
 #assertStack < i32 > 2 : < i32 > 1 : .ValStack "br 2"
 
@@ -165,7 +165,7 @@ if [ i32 ] i32.const 1 else i32.const -1 end
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
-loop [ ]
+loop $l [ ]
     (local.get 0)
     (local.get 1)
     (i32.add)
@@ -174,14 +174,14 @@ loop [ ]
     (i32.const 1)
     (i32.sub)
     (local.tee 0)
-    (br_if 0)
+    (br_if $l)
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop"
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
 block [ ]
-    ( loop [ ]
+    ( loop $m [ ]
         (local.get 0)
         (local.get 1)
         (i32.add)
@@ -192,7 +192,7 @@ block [ ]
         (local.tee 0)
         (i32.eqz)
         (br_if 1)
-        (br 0)
+        (br $m)
     )
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop concrete syntax"

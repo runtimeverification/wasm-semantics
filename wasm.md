@@ -528,31 +528,19 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax Label ::= "label" Identifier VecType "{" Instrs "}" ValStack
+    syntax Label ::= "label" OptionalId VecType "{" Instrs "}" ValStack
  // -------------------------------------------------------------------
     rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax FoldedInstr ::= "(" "block"            TypeDecls Instrs ")"
-                         | "(" "block" Identifier TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "block"            VecType Instrs "end"
-                         | "block" Identifier VecType Instrs "end"
-                         | "block" Identifier VecType Instrs "end" Identifier
+    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
+    syntax BlockInstr  ::= "block" OptionalId VecType Instrs "end" OptionalId
  // -------------------------------------------------------------------------
-    rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
-          => block gatherTypes(result, FDECLS) INSTRS end
-         ...
-         </k>
+    rule <k> ( block ID:OptionalId FDECLS:TypeDecls INSTRS:Instrs ) => block ID gatherTypes(result, FDECLS) INSTRS end ... </k>
 
-    rule <k> ( block ID:Identifier FDECLS:TypeDecls INSTRS:Instrs )
-          => block ID gatherTypes(result, FDECLS) INSTRS end
-         ...
-         </k>
-
-    rule <k> block    VTYPE:VecType IS end    => block .Identifier VTYPE IS end ... </k>
-    rule <k> block ID VTYPE:VecType IS end ID => block ID          VTYPE IS end ... </k>
-    rule <k> block ID VTYPE:VecType IS end    => IS ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> block ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
+      requires ID ==K ID' orBool notBool isIdentifier(ID')
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -588,54 +576,31 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if"            VecType Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if"            VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if"                    Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if" Identifier VecType Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" Identifier VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if" Identifier         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-    syntax BlockInstr  ::= "if"            VecType Instrs "else"            Instrs "end"
-                         | "if"            VecType Instrs                          "end"
-                         | "if" Identifier VecType Instrs "else"            Instrs "end"
-                         | "if" Identifier VecType Instrs                          "end"
-                         | "if" Identifier VecType Instrs "else" Identifier Instrs "end"
-                         | "if" Identifier VecType Instrs "else"            Instrs "end" Identifier
-                         | "if" Identifier VecType Instrs "else" Identifier Instrs "end" Identifier
-                         | "if" Identifier VecType Instrs                          "end" Identifier
+    syntax FoldedInstr ::= "(" "if" OptionalId VecType Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" OptionalId VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                         | "(" "if" OptionalId         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+    syntax BlockInstr  ::= "if" OptionalId VecType Instrs "else" OptionalId Instrs "end" OptionalId
+                         | "if" OptionalId VecType Instrs                          "end" OptionalId
  // -----------------------------------------------------------------------------------------------
-    rule <k> ( if VTYPE:VecType C:Instrs ( then IS ) )              => C ~> if VTYPE IS else .Instrs end ... </k>
-    rule <k> ( if VTYPE:VecType C:Instrs ( then IS ) ( else IS' ) ) => C ~> if VTYPE IS else IS'     end ... </k>
-    rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> if [ .ValTypes ] IS else IS' end ... </k>
     rule <k> ( if ID VTYPE:VecType C:Instrs ( then IS ) )              => C ~> if ID VTYPE IS else .Instrs end ... </k>
     rule <k> ( if ID VTYPE:VecType C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID VTYPE IS else IS'     end ... </k>
     rule <k> ( if ID               C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID [ .ValTypes ] IS else IS' end ... </k>
 
-    rule <k> if ID VTYPE:VecType IS          end => if ID VTYPE IS else .Instrs end ... </k>
-    rule <k> if ID VTYPE:VecType IS else IS' end => IS  ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if ID VTYPE:VecType IS                         end ID'':OptionalId => if ID VTYPE IS else ID .Instrs end ID ... </k>
+    rule <k> if ID VTYPE:VecType IS else ID':OptionalId IS' end ID'':OptionalId => IS  ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
-    rule <k> if ID VTYPE:VecType IS else IS' end => IS' ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if ID VTYPE:VecType IS else ID':OptionalId IS' end ID'':OptionalId => IS' ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-       requires VAL  ==Int 0
-   
-    rule <k> if ID VTYPE:VecType IS                        end ID => if ID VTYPE:VecType IS end ... </k>
-    rule <k> if ID VTYPE:VecType IS else               IS' end ID => if ID VTYPE:VecType IS else IS' end ... </k>
-    rule <k> if ID VTYPE:VecType IS else ID:Identifier IS' end    => if ID VTYPE:VecType IS else IS' end ... </k>
-    rule <k> if ID VTYPE:VecType IS else ID:Identifier IS' end ID => if ID VTYPE:VecType IS else IS' end ... </k>
+       requires VAL ==Int 0
 
-    syntax FoldedInstr ::= "(" "loop"            VecType Instrs ")"
-                         | "(" "loop" Identifier VecType Instrs ")"
-    syntax BlockInstr  ::= "loop"            VecType Instrs "end"
-                         | "loop" Identifier VecType Instrs "end"
-                         | "loop" Identifier VecType Instrs "end" Identifier
+    syntax FoldedInstr ::= "(" "loop" OptionalId VecType Instrs ")"
+    syntax BlockInstr  ::= "loop" OptionalId VecType Instrs "end" OptionalId
  // ------------------------------------------------------------------------
-    rule <k> ( loop    FDECLS:VecType IS ) => loop    FDECLS IS end ... </k>
     rule <k> ( loop ID FDECLS:VecType IS ) => loop ID FDECLS IS end ... </k>
-
-    rule <k> loop    VTYPE:VecType IS end    => loop .Identifier VTYPE IS end ... </k>
-    rule <k> loop ID VTYPE:VecType IS end ID => loop ID          VTYPE IS end ... </k>
-    rule <k> loop ID VTYPE:VecType IS end    => IS ~> label ID [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
+    rule <k> loop ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
+      requires ID ==K ID' orBool notBool isIdentifier(ID')
 ```
 
 Variable Operators
