@@ -162,7 +162,7 @@ Proper values are numbers annotated with their types.
 ```k
     syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
     syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
-    syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
+    syntax  Val ::= "<" AValType ">" Number [klabel(<_>_)]
                   | IVal | FVal
  // ---------------------------
 ```
@@ -252,10 +252,10 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
     rule #take(.ValTypes,   _)                              => .ValStack
-    rule #take(TYPE:ValType VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
+    rule #take(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
 
     rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
-    rule #drop(TYPE:ValType VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
+    rule #drop(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 ```
 
 Strings
