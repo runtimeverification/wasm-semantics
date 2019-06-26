@@ -536,7 +536,7 @@ It simply executes the block then records a label with an empty continuation.
     syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
     syntax BlockInstr  ::= "block" OptionalId VecType Instrs "end" OptionalId
  // -------------------------------------------------------------------------
-    rule <k> ( block ID:OptionalId FDECLS:TypeDecls INSTRS:Instrs ) => block ID gatherTypes(result, FDECLS) INSTRS end ... </k>
+    rule <k> ( block ID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block ID gatherTypes(result, TDECLS) INSTRS end ... </k>
 
     rule <k> block ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
@@ -576,14 +576,14 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if" OptionalId VecType Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" OptionalId VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if" OptionalId         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+    syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+                         | "(" "if" OptionalId           Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
     syntax BlockInstr  ::= "if" OptionalId VecType Instrs "else" OptionalId Instrs "end" OptionalId
                          | "if" OptionalId VecType Instrs                          "end" OptionalId
  // -----------------------------------------------------------------------------------------------
-    rule <k> ( if ID VTYPE:VecType C:Instrs ( then IS ) )              => C ~> if ID VTYPE IS else .Instrs end ... </k>
-    rule <k> ( if ID VTYPE:VecType C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID VTYPE IS else IS'     end ... </k>
+    rule <k> ( if ID TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if ID gatherTypes(result, TDECLS) IS else .Instrs end ... </k>
+    rule <k> ( if ID TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID gatherTypes(result, TDECLS) IS else IS'     end ... </k>
     rule <k> ( if ID               C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID [ .ValTypes ] IS else IS' end ... </k>
 
     rule <k> if ID VTYPE:VecType IS                         end ID'':OptionalId => if ID VTYPE IS else ID .Instrs end ID ... </k>
@@ -594,10 +594,10 @@ Finally, we have the conditional and loop instructions.
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL ==Int 0
 
-    syntax FoldedInstr ::= "(" "loop" OptionalId VecType Instrs ")"
+    syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
     syntax BlockInstr  ::= "loop" OptionalId VecType Instrs "end" OptionalId
  // ------------------------------------------------------------------------
-    rule <k> ( loop ID FDECLS:VecType IS ) => loop ID FDECLS IS end ... </k>
+    rule <k> ( loop ID TDECLS:TypeDecls IS ) => loop ID gatherTypes(result, TDECLS) IS end ... </k>
     rule <k> loop ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID [ .ValTypes ] { loop ID VTYPE IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
       requires ID ==K ID' orBool notBool isIdentifier(ID')
