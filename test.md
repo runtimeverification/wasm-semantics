@@ -406,7 +406,6 @@ The modules are cleaned all together after the test file is executed.
            <nextGlobAddr>  _ => 0         </nextGlobAddr>
            <globals>       _ => .Bag      </globals>
          </mainStore>
-         <lastModIdx>      _ => .K        </lastModIdx>
 ```
 
 Registry Assertations

@@ -79,7 +79,6 @@ Configuration
           </globalInst>
         </globals>
       </mainStore>
-      <lastModIdx> .K </lastModIdx>
 ```
 
 ### Assumptions and invariants
@@ -1463,9 +1462,6 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
            )
            ...
          </moduleInstances>
-         <lastModIdx> _ => CUR  </lastModIdx>
-
-
 ```
 
 It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
