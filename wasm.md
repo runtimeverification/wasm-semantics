@@ -1373,7 +1373,8 @@ Start Function
 --------------
 
 ```k
-    syntax Defn ::= "(" "start" TextFormatIdx ")"
+    syntax Defn      ::= StartDefn
+    syntax StartDefn ::= "(" "start" TextFormatIdx ")"
  // ---------------------------------------------
     rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1390,6 +1391,12 @@ Module Instantiation
 
 A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
+
+```k
+    syntax Defns ::= gatherAllocs(Defns)
+ // ------------------------------------
+    rule <k> D:Func
+```
 
 ```k
     syntax Stmt       ::= ModuleDecl

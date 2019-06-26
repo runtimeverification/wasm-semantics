@@ -34,3 +34,11 @@
 )
 
 #clearConfig
+
+;; Test ordering of definitions in modules.
+
+(module
+  (elem (i32.const 0) 0)
+  (table 1 funcref)
+  (func)
+)
