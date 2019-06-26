@@ -1,4 +1,3 @@
-(module)
 ;; tests of function identifier names
 
 (func $oeauth

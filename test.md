@@ -107,6 +107,7 @@ We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level emb
     syntax Auxil ::= Assertion
  // --------------------------
 ```
+
 ### Conformance Assertions
 
 Here we inplement the conformance assertions specified in [spec interpreter] including:
@@ -218,29 +219,6 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
              <gValue> VALUE </gValue>
              ...
            </globalInst>
-           ...
-         </globals>
-```
-
-`init_global` is a helper function that helps us to declare a new global variable.
-
-```k
-    syntax Auxil ::= "init_global" Int Int
- // --------------------------------------
-    rule <k> init_global INDEX GADDR => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <globalIndices> GADDRS => GADDRS [ INDEX <- GADDR ] </globalIndices>
-           ...
-         </moduleInst>
-         <globals>
-           ( .Bag
-          => <globalInst>
-               <gAddr> GADDR </gAddr>
-               ...
-             </globalInst>
-           )
            ...
          </globals>
 ```
@@ -410,7 +388,7 @@ The modules are cleaned all together after the test file is executed.
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
     rule <k>    #clearConfig => . ...     </k>
-         <curModIdx>       _ => 0         </curModIdx>
+         <curModIdx>       _ => .K        </curModIdx>
          <valstack>        _ => .ValStack </valstack>
          <locals>          _ => .Map      </locals>
          <nextFreshId>     _ => 0         </nextFreshId>
@@ -425,6 +403,7 @@ The modules are cleaned all together after the test file is executed.
            <tabs>          _ => .Bag      </tabs>
            <nextMemAddr>   _ => 0         </nextMemAddr>
            <mems>          _ => .Bag      </mems>
+           <nextGlobAddr>  _ => 0         </nextGlobAddr>
            <globals>       _ => .Bag      </globals>
          </mainStore>
 ```

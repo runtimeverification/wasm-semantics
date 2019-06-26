@@ -1,4 +1,3 @@
-(module)
 ;; test function export
 
 (func $1 param i64 i64 i64 result i64 local i64

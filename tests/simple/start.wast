@@ -1,5 +1,3 @@
-(module)
-
 (memory 1)
 (func $inc
   (i32.store8
@@ -22,7 +20,6 @@
 #assertMemory 1 .MaxBound ""
 
 #clearConfig
-(module)
 
 (func $foo (unreachable))
 (start $foo)
