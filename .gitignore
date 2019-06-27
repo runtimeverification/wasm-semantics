@@ -1,7 +1,4 @@
 /.build/*
-!/.build/k
-!/.build/kninja
-!/.build/pandoc-tangle
 
 *.pdf
 *.sty

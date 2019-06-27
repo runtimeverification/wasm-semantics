@@ -2,9 +2,10 @@
 # --------
 
 build_dir:=.build
+deps_dir:=deps
 defn_dir:=$(build_dir)/defn
-k_submodule:=$(build_dir)/k
-pandoc_tangle_submodule:=$(build_dir)/pandoc-tangle
+k_submodule:=$(deps_dir)/k
+pandoc_tangle_submodule:=$(deps_dir)/pandoc-tangle
 k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
 tangler:=$(pandoc_tangle_submodule)/tangle.lua
 

@@ -1,12 +1,12 @@
-[submodule ".build/k"]
-	path = .build/k
+[submodule "deps/k"]
+	path = deps/k
 	url = https://github.com/kframework/k
 	ignore = untracked
 [submodule "tests/wasm-tests"]
 	path = tests/wasm-tests
 	url = https://github.com/webassembly/spec
 	ignore = untracked
-[submodule ".build/pandoc-tangle"]
-	path = .build/pandoc-tangle
+[submodule "deps/pandoc-tangle"]
+	path = deps/pandoc-tangle
 	url = https://github.com/ehildenb/pandoc-tangle
 	ignore = untracked
