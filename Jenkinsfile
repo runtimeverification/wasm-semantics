@@ -17,19 +17,22 @@ pipeline {
         }
       }
     }
-    stage('Makefile-based') {
-      stages {
-        stage('Build') {
-          steps {
-            checkout scm
-            sh '''
-              git clean -dffx
-              make clean
-              make deps -B
-              make build -B -j4
-            '''
-          }
-        }
+    stage('Dependencies') {
+      steps {
+        sh '''
+          make deps -B
+        '''
+      }
+    }
+    stage('Build') {
+      steps {
+        sh '''
+          make build -B -j4
+        '''
+      }
+    }
+    stage('Test') {
+      parallel {
         stage('Exec OCaml') {
           steps {
             sh '''
@@ -63,47 +66,6 @@ pipeline {
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
               make test-klab-prove -j"$nprocs"
-            '''
-          }
-        }
-      }
-    }
-    stage('KNinja-based') {
-      stages {
-        stage('Build') {
-          steps {
-            checkout scm
-            sh '''
-              git clean -dffx
-              ./build clean
-              ./build wasm-java wasm-ocaml wasm-haskell
-            '''
-          }
-        }
-        stage('Exec OCaml') {
-          steps {
-            sh '''
-              nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
-              ./build -v test-simple-ocaml -j"$nprocs"
-            '''
-          }
-        }
-        stage('Exec Java') {
-          steps {
-            sh '''
-              nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
-              ./build -v test-simple-java -j"$nprocs"
-            '''
-          }
-        }
-        stage('Proofs Java') {
-          steps {
-            sh '''
-              nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
-              ./build -v test-prove-java -j"$nprocs"
             '''
           }
         }
