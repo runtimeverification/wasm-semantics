@@ -1476,8 +1476,7 @@ The groups are chosen to represent different stages of allocation and instantiat
 
     // Imports (TODO).
  // rule #structureModule(M, (I:ImportDefn DS:Defns))
- //
-      => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+ //   => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
 
     // Allocations.
     rule #structureModule(M, (A:FuncDefn   DS:Defns))
@@ -1487,7 +1486,7 @@ The groups are chosen to represent different stages of allocation and instantiat
     rule #structureModule(M, (A:MemoryDefn DS:Defns))
       => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
  // rule #structureModule(M, (A:GlobalDefn DS:Defns))
-      => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+ //   => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
 
     // Exports.
     rule #structureModule(M, (E:ExportDefn DS:Defns))
