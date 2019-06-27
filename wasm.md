@@ -573,10 +573,10 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 
     syntax PlainInstr ::= "br_table" ElemSegment
  // --------------------------------------------
-    rule <k> br_table ES:ElemSegment => br {{ES}:>List [ VAL ]}:>TextFormatIdx ... </k>
+    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, VAL) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL <Int #lengthElemSegment(ES)
-    rule <k> br_table ES:ElemSegment => br {{ES}:>List [ #lengthElemSegment(ES) -Int 1 ]}:>TextFormatIdx ... </k>
+    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, #lengthElemSegment(ES) -Int 1) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL >=Int #lengthElemSegment(ES)
 ```

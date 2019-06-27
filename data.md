@@ -48,9 +48,12 @@ When we are initializing a table with element segment, we need to define a list 
     syntax TextFormatIdx ::= Int | Identifier
     syntax ElemSegment   ::= List{TextFormatIdx, ""} [klabel(listTextFormatIdx)]
     syntax Int ::= #lengthElemSegment (ElemSegment) [function]
- // ----------------------------------------------------------
+    syntax TextFormatIdx ::= #getElemSegment (ElemSegment, Int) [function]
+ // ----------------------------------------------------------------------
     rule #lengthElemSegment(.ElemSegment) => 0
     rule #lengthElemSegment(TFIDX     ES) => 1 +Int #lengthElemSegment(ES)
+    rule #getElemSegment(E ES, 0) => E
+    rule #getElemSegment(E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
 ```
 
 WebAssembly Types
