@@ -1076,6 +1076,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
 
 ```k
     syntax Defn       ::= MemoryDefn
+<<<<<<< HEAD
     syntax MemoryDefn ::= "(" "memory" OptionalId Limits                     ")"
                         | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
@@ -1083,6 +1084,19 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     rule <k> ( memory ID:OptionalId MIN:Int         ) => memory { ID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
     rule <k> ( memory ID:OptionalId MIN:Int MAX:Int ) => memory { ID MIN MAX       } ... </k>
+=======
+    syntax MemType    ::= "(" "memory"                            ")"
+                        | "(" "memory"     Int                    ")" // Size only
+                        | "(" "memory"     Int Int                ")" // Min and max.
+    syntax MemoryDefn ::= MemType
+                        | "(" "memory" "(" "data" DataStrings ")" ")"
+                        |     "memory" "{" Int MaxBound "}"
+ // -------------------------------------------------------
+    rule <k> ( memory                 ):Defn => memory { 0   .MaxBound } ... </k>
+    rule <k> ( memory MIN:Int         ):Defn => memory { MIN .MaxBound } ... </k>
+      requires MIN <=Int #maxMemorySize()
+    rule <k> ( memory MIN:Int MAX:Int ):Defn => memory { MIN MAX       } ... </k>
+>>>>>>> Extend syntax to allow imports and exports
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
@@ -1445,6 +1459,25 @@ Start Function
            <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
+```
+
+Imports
+-------
+
+Imports need to describe the type of what is imported.
+That an import is really a subtype of the declared import needs to be checked at instantiation time.
+
+```k
+    syntax Import     ::= "(" "import" String String ImportDesc ")"
+    syntax ImportDesc ::= "(" "func"   Identifier TypeUse    ")"
+                        | "(" "func"              TypeUse    ")"
+                        | "(" "table"  Identifier TableType  ")"
+                        | "(" "table"             TableType  ")"
+                        | "(" "memory" Identifier MemType    ")"
+                        | "(" "memory"            MemType    ")"
+                        | "(" "global" Identifier GlobalType ")"
+                        | "(" "global"            GlobalType ")"
+ // ------------------------------------------------------------
 ```
 
 Module Instantiation
