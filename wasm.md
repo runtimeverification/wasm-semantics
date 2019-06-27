@@ -95,11 +95,10 @@ All places in the data with no entry are considered zero bytes.
 Instructions
 ------------
 
-According to the WebAssembly semantics there are 4 categories of instructions.
+According to the WebAssembly semantics there are 3 categories of instructions.
 
 -  Plain Instructions (`PlainInstr`): Most instructions are plain instructions. They could be wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
--  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier. 
--  Administrative Instructions (`AdminInstr`): Administrative instructions are used to experess the reduction of `traps`, `calls`, and `control instructions`.
+-  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier.
 -  Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
 
 Also in our definition, there are some helper instructions not directly used in programs but will help us define the rules, they are directly subsorted into `Instr`.
@@ -107,7 +106,6 @@ Also in our definition, there are some helper instructions not directly used in 
 ```k
     syntax Instr ::= PlainInstr
                    | BlockInstr
-                   | AdminInstr
                    | FoldedInstr
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
@@ -160,8 +158,8 @@ Statements are not part of Wasm semantics, but rather of the embedder, and is wh
 Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") until it reaches a statement which is not an `Instr` or `Def`.
 
 ```k
-    syntax AdminInstr ::= "trap"
- // ----------------------------
+    syntax Instr ::= "trap"
+ // -----------------------
     rule <k> trap ~> (L:Label   => .) ... </k>
     rule <k> trap ~> (F:Frame   => .) ... </k>
     rule <k> trap ~> (I:Instr   => .) ... </k>
@@ -529,9 +527,8 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax AdminInstr ::= Label
-    syntax Label      ::= "label" VecType "{" Instrs "}" ValStack
- // -------------------------------------------------------------
+    syntax Label ::= "label" VecType "{" Instrs "}" ValStack
+ // --------------------------------------------------------
     rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
@@ -917,16 +914,15 @@ Similar to labels, they sit on the instruction stack (the `<k>` cell), and `retu
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax AdminInstr ::= Frame
-    syntax Frame      ::= "frame" Int ValTypes ValStack Map
- // -------------------------------------------------------
+    syntax Frame ::= "frame" Int ValTypes ValStack Map
+ // --------------------------------------------------
     rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </k>
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
 
-    syntax AdminInstr ::= "(" "invoke" Int ")"
- // ------------------------------------------
+    syntax Instr ::= "(" "invoke" Int ")"
+ // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
           ~> INSTRS
