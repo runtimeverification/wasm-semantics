@@ -42,3 +42,5 @@
   (table 1 funcref)
   (func)
 )
+
+#clearConfig
