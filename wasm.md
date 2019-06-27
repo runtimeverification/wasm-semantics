@@ -1406,33 +1406,40 @@ The following functions filters out different definitions so that they can be pr
                  | #structureModule (Map, Defns) [function]
                  | #initialMap ()                [function]
  // -------------------------------------------------------
-    rule #initialMap
+    rule #initialMap ()
       => "typeDecls" |-> .Defns
          "imports"   |-> .Defns
          "allocs"    |-> .Defns
          "exports"   |-> .Defns
          "inits"     |-> .Defns
-      
-    rule structureModule(DS) => #structureModule(#initialMap, DS)
+         "start"     |-> .Defns
 
-    rule #structureModule(M, .Defns       ) => M
-    rule #strucuteModule (M, T:TypeDecl DS:Defns) => T gatherTypeDecls(DS)
+    rule structureModule(DS) => #structureModule(#initialMap (), DS)
 
-    rule gatherAllocs    (             .Defns  ) => .Defns
-    rule gatherAllocs    (F:FuncDefn   DS:Defns) => F gatherAllocs(DS)
-    rule gatherAllocs    (T:Table      DS:Defns) => T gatherAllocs(DS) // There can only be one.
-    rule gatherAllocs    (M:MemoryDefn DS:Defns) => M gatherAllocs(DS) // There can only be one.
-    rule gatherAllocs    (G:GlobalDefn DS:Defns) => G gatherAllocs(DS)
-    
-    rule gatherExports   (             .Defns  ) => .Defns
-    rule gatherExports   (E:ExportDefn DS:Defns) => E gatherExports(DS)
+    rule #structureModule(M, .Defns              ) => M
 
-    rule gatherInits     (             .Defns  ) => .Defns
-    rule gatherInits     (D:DataDefn   DS:Defns) => D gatherInits(DS)
-    rule gatherInits     (E:ElemDefn   DS:Defns) => E gatherInits(DS)
+    // Type declarations.
+    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
 
-    rule gatherInits     (             .Defns  ) => .Defns
-    rule gatherInits     (S:StartDefn  DS:Defns) => S gatherInits(DS) // There can only be one.
+    // Imports (TODO).
+ // rule #structureModule(M, (I:ImportDefn DS:Defns))
+ //   => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+
+    // Allocations.
+    rule #structureModule(M, (A:FuncDefn   DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+ // rule #structureModule(M, (A:GlobalDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+
+    // Exports.
+    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
+
+    // Initializations.
+    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+
+    // Start function.
+    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)], DS) // There can only be one start function.
 ```
 
 A new module instance gets allocated.
@@ -1442,17 +1449,20 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
     syntax Stmt       ::= ModuleDecl
     syntax ModuleDecl ::= "(" "module" Defns ")"
                         | "(" "module" Identifier Defns ")"
- // -------------------------------------------------------
+                        |     "module" Map
+ // --------------------------------------
     rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
 
-    rule <k> ( module DEFNS )
-          => gatherImport    (DEFNS)
-          ~> gatherTypeDecls (DEFNS)
-          ~> gatherAllocs    (DEFNS)
-          ~> gatherExports   (DEFNS)
-          ~> gatherInits     (DEFNS)
+    rule <k> ( module DEFNS ) => module structureModule(DEFNS) ... </k>
+
+    rule <k> module MOD
+          => MOD["typeDecls"]
+          ~> MOD["imports"  ]
+          ~> MOD["allocs"   ]
+          ~> MOD["exports"  ]
+          ~> MOD["inits"    ]
          ...
          </k>
          <curModIdx> _ => NEXT </curModIdx>
