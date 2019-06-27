@@ -637,7 +637,7 @@ When globals are declared, they must also be given a constant initialization val
     syntax GlobalType ::= Mut ValType
     syntax GlobalType ::= asGMut (TextGlobalType) [function]
     syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
-    syntax Defn  ::= GlobalDefn
+    syntax Defn       ::= GlobalDefn
     syntax GlobalDefn ::= "(" "global"               TextGlobalType Instr ")"
                         | "(" "global" TextFormatIdx TextGlobalType Instr ")"
                         |     "global" GlobalType
@@ -723,13 +723,13 @@ Types
 This defines helper functions that gathers function together.
 
 ```k
-    syntax TypeKeyWord  ::= "param" | "result"
- // ------------------------------------------
+    syntax TypeKeyWord ::= "param" | "result"
+ // -----------------------------------------
 
-    syntax TypeDecl      ::= "(" TypeDecl ")"     [bracket]
-                           | TypeKeyWord ValTypes
-    syntax TypeDecls     ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
- // -------------------------------------------------------------------
+    syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
+                       | TypeKeyWord ValTypes
+    syntax TypeDecls ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
+ // ---------------------------------------------------------------
 
     syntax VecType ::=  gatherTypes ( TypeKeyWord , TypeDecls )            [function]
                      | #gatherTypes ( TypeKeyWord , TypeDecls , ValTypes ) [function]
@@ -1349,12 +1349,12 @@ The initialization of a table needs an offset and a list of function indices.
 A table index is optional and will be default to zero.
 
 ```k
-    syntax Defn        ::= ElemDefn
-    syntax ElemDefn    ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
-                         | "(" "elem"                   Offset ElemSegment ")"
-                         |     "elem" "{" TextFormatIdx        ElemSegment "}"
-    syntax Stmt        ::= #initElements ( Int, Int, ElemSegment )
- // --------------------------------------------------------------
+    syntax Defn     ::= ElemDefn
+    syntax ElemDefn ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
+                      | "(" "elem"                   Offset ElemSegment ")"
+                      |     "elem" "{" TextFormatIdx        ElemSegment "}"
+    syntax Stmt     ::= #initElements ( Int, Int, ElemSegment )
+ // -----------------------------------------------------------
     // Default to table with index 0.
     rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
     rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
@@ -1384,7 +1384,7 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax Defn  ::= DataDefn
+    syntax Defn     ::= DataDefn
     syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
                       | "(" "data"                   Offset DataStrings ")"
                       |     "data" "{" TextFormatIdx        DataStrings "}"
