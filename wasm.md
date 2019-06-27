@@ -651,11 +651,13 @@ When globals are declared, they must also be given a constant initialization val
     rule asGMut (      T:ValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalDefn ::= "(" "global"               TextGlobalType Instr ")"
-                        | "(" "global" TextFormatIdx TextGlobalType Instr ")"
+    syntax GlobalDefn ::= "(" "global"            TextGlobalType Instr ")"
+                        | "(" "global" Identifier TextGlobalType Instr ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule <k> ( global ID:TextFormatIdx TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
+    rule asGMut ( (mut T:ValType ) ) => var   T
+    rule asGMut (      T:ValType   ) => const T
+    rule <k> ( global ID:Identifier TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -691,15 +693,16 @@ When globals are declared, they must also be given a constant initialization val
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax PlainInstr ::= "global.get" Int
-                        | "global.set" Int
- // --------------------------------------
-    rule <k> global.get INDEX => . ... </k>
+    syntax PlainInstr ::= "global.get" TextFormatIdx
+                        | "global.set" TextFormatIdx
+ // ------------------------------------------------
+    rule <k> global.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           <globIds> IDS </globIds>
+           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globalInst>
@@ -708,12 +711,13 @@ The `get` and `set` instructions read and write globals.
            ...
          </globalInst>
 
-    rule <k> global.set INDEX => . ... </k>
+    rule <k> global.set TFIDX => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           <globIds> IDS </globIds>
+           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globalInst>

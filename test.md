@@ -201,16 +201,17 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 
 ```k
     syntax Assertion ::= "#assertLocal"  Int Val String
-                       | "#assertGlobal" Int Val String
- // ---------------------------------------------------
+                       | "#assertGlobal" TextFormatIdx Val String
+ // -------------------------------------------------------------
     rule <k> #assertLocal INDEX VALUE _ => . ... </k>
          <locals> ... INDEX |-> VALUE ... </locals>
 
-    rule <k> #assertGlobal INDEX VALUE _ => . ... </k>
+    rule <k> #assertGlobal TFIDX VALUE _ => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           <globIds> IDS </globIds>
+           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globals>
