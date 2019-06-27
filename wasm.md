@@ -523,14 +523,14 @@ It simply executes the block then records a label with an empty continuation.
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax FoldedInstr ::= "(" "block" TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "block" VecType Instrs "end"
+    syntax BlockInstr  ::= "block" TypeDecls Instrs "end"
  // ---------------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
-          => block gatherTypes(result, FDECLS) INSTRS end
+          => block FDECLS INSTRS end
          ...
          </k>
 
-    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> block FDECLS IS end => IS ~> label gatherTypes(result, FDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -562,30 +562,28 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if"         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-    syntax BlockInstr  ::= "if" VecType Instrs "else" Instrs "end"
-                         | "if" VecType Instrs               "end"
+    syntax FoldedInstr ::= "(" "if" TypeDecls Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+    syntax BlockInstr  ::= "if" TypeDecls Instrs "else" Instrs "end"
+                         | "if" TypeDecls Instrs               "end"
  // --------------------------------------------------------------
-    rule <k> ( if VTYPE C:Instrs ( then IS ) )              => C ~> ( if VTYPE IS else .Instrs end ) ... </k>
-    rule <k> ( if VTYPE C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if VTYPE IS else IS'     end ) ... </k>
-    rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if [ .ValTypes ] IS else IS' end ) ... </k>
+    rule <k> ( if TDECLS C:Instrs ( then IS ) )              => C ~> ( if TDECLS IS else .Instrs end ) ... </k>
+    rule <k> ( if TDECLS C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if TDECLS IS else IS'     end ) ... </k>
 
-    rule <k> if VTYPE IS          end => if VTYPE IS else .Instrs end ... </k>
-    rule <k> if VTYPE IS else IS' end => IS  ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if TDECLS IS          end => if TDECLS IS else .Instrs end ... </k>
+    rule <k> if TDECLS IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
-    rule <k> if VTYPE IS else IS' end => IS' ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if TDECLS IS else IS' end => IS' ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
 
-    syntax FoldedInstr ::=  "(" "loop" VecType Instrs ")"
-    syntax BlockInstr  ::= "loop" VecType Instrs "end"
- // --------------------------------------------------
-    rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
+    syntax FoldedInstr ::=  "(" "loop" TypeDecls Instrs ")"
+    syntax BlockInstr  ::= "loop" TypeDecls Instrs "end"
+ // ----------------------------------------------------
+    rule <k> ( loop TDECLS IS ) => loop TDECLS IS end ... </k>
 
-    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
+    rule <k> loop TDECLS IS end => IS ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
