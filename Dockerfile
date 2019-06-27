@@ -8,8 +8,8 @@ RUN    apt update                                                            \
     && apt upgrade --yes                                                     \
     && apt install --yes                                                     \
         autoconf curl flex gcc libffi-dev libmpfr-dev libtool libz3-dev make \
-        maven ninja-build opam openjdk-8-jdk pandoc pkg-config python3       \
-        python-pygments python-recommonmark python-sphinx time zlib1g-dev z3
+        maven opam openjdk-8-jdk pandoc pkg-config python3 python-pygments   \
+        python-recommonmark python-sphinx time zlib1g-dev z3
 
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 

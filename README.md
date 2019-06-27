@@ -31,9 +31,9 @@ The following are needed for building/running KWasm:
 On Ubuntu >= 15.04 (for example):
 
 ```sh
-sudo apt install                                                                 \
-         autoconf curl flex gcc libffi-dev libmpfr-dev libtool maven ninja-build \
-         opam openjdk-8-jdk pandoc pkg-config python3 python-pygments            \
+sudo apt install                                                      \
+         autoconf curl flex gcc libffi-dev libmpfr-dev libtool maven  \
+         opam openjdk-8-jdk pandoc pkg-config python3 python-pygments \
          python-recommonmark python-sphinx time zlib1g-dev
 ```
 
