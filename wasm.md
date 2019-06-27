@@ -1475,6 +1475,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
           ~> MOD["allocs"   ]
           ~> MOD["exports"  ]
           ~> MOD["inits"    ]
+          ~> MOD["start"    ]
          ...
          </k>
          <curModIdx> _ => NEXT </curModIdx>
