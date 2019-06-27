@@ -583,7 +583,7 @@ Finally, we have the conditional and loop instructions.
  // ----------------------------------------------------
     rule <k> ( loop TDECLS IS ) => loop TDECLS IS end ... </k>
 
-    rule <k> loop TDECLS IS end => IS ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
+    rule <k> loop TDECLS IS end => IS ~> label [ .ValTypes ] { loop TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
