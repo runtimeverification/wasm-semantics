@@ -42,11 +42,7 @@ run_kast() {
     local output_mode
 
     output_mode="${1:-kast}" ; shift
-
-    case "$run_file-$output_mode" in
-        *-kore) kast --directory "$backend_dir" "$run_file" --kore                  "$@" ;;
-        *)      kast --directory "$backend_dir" "$run_file" --output "$output_mode" "$@" ;;
-    esac
+    kast --directory "$backend_dir" "$run_file" --output "$output_mode" "$@"
 }
 
 run_prove() {
