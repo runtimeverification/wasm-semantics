@@ -1444,11 +1444,10 @@ There is some dependencies among definitions that require that we do them in a c
 First, functions, tables, memories and globals get *allocated*.
 Then, tables, memories and globals get *instantiated* with elements, data and initialization vectors.
 However, since (currently) globals can only make use of imported globals to be instantiated, we can initialize at allocation time.
-Finally, the start function is evoked.
-Exports may appear anywhere in a function, but can only be performed after what they refer to is allocated.
-Inlined imports and exports are safe to extract as they appear.
-Imports must appear first in a module due to validation.
-Exports only depend on what they are exporting having been allocated, so can appear right after allocation.
+Finally, the start function is invoked.
+Exports may appear anywhere in a module, but can only be performed after what they refer to has been allocated.
+Exports that are inlined in a definition, e.g., `func (export "foo") ...`, are safe to extract as they appear.
+Imports must appear before any allocations in a module, due to validation.
 
 `structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
 The groups are chosen to represent different stages of allocation and instantiation.
@@ -1466,44 +1465,25 @@ The groups are chosen to represent different stages of allocation and instantiat
          "inits"     |-> .Defns
          "start"     |-> .Defns
 
-    rule structureModule(DS)
-    // The sort will build the lists in reverse, so we pre-reverse the definitons.
-      => #structureModule(#initialMap (), #reverse(DS, .Defns))
+    rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
 
-    // Sorts the definitions by type, producing _reversed_ lists of the definitions.
-    rule #structureModule(M, .Defns) => M
+    rule #structureModule(M,                  .Defns) => M
+    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
 
-    // Type declarations.
-    rule #structureModule(M, (T:TypeDefn   DS:Defns))
-      => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
+    // TODO.
+ // rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
 
-    // Imports (TODO).
- // rule #structureModule(M, (I:ImportDefn DS:Defns))
- //   => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+    rule #structureModule(M, (A:FuncDefn   DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:GlobalDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
 
-    // Allocations.
-    rule #structureModule(M, (A:FuncDefn   DS:Defns))
-      => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:TableDefn  DS:Defns))
-      => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:MemoryDefn DS:Defns))
-      => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:GlobalDefn DS:Defns))
-      => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
 
-    // Exports.
-    rule #structureModule(M, (E:ExportDefn DS:Defns))
-      => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
+    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
 
-    // Initializations.
-    rule #structureModule(M, (I:DataDefn   DS:Defns))
-      => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-    rule #structureModule(M, (I:ElemDefn   DS:Defns))
-      => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-
-    // Start function.
-    rule #structureModule(M, (S:StartDefn  DS:Defns))
-      => #structureModule(M ["start"     <- (S .Defns)], DS) // There can only be one start function.
+    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
