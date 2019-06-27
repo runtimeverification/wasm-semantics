@@ -110,8 +110,10 @@ Also in our definition, there are some helper instructions not directly used in 
                    | AdminInstr
                    | FoldedInstr
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
- // ------------------------------------------------
+                         | "(" PlainInstr        ")" [prefer]
+ // ---------------------------------------------------------
     rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
+    rule <k> ( PI:PlainInstr           ):FoldedInstr =>       PI ... </k>
 ```
 
 ### Sequencing
