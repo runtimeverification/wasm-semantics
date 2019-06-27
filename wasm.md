@@ -1076,27 +1076,14 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
 
 ```k
     syntax Defn       ::= MemoryDefn
-<<<<<<< HEAD
-    syntax MemoryDefn ::= "(" "memory" OptionalId Limits                     ")"
+    syntax MemType    ::= "(" "memory" OptionalId Limits                     ")"
+    syntax MemoryDefn ::= MemType
                         | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
  // ------------------------------------------------------------------
     rule <k> ( memory ID:OptionalId MIN:Int         ) => memory { ID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
     rule <k> ( memory ID:OptionalId MIN:Int MAX:Int ) => memory { ID MIN MAX       } ... </k>
-=======
-    syntax MemType    ::= "(" "memory"                            ")"
-                        | "(" "memory"     Int                    ")" // Size only
-                        | "(" "memory"     Int Int                ")" // Min and max.
-    syntax MemoryDefn ::= MemType
-                        | "(" "memory" "(" "data" DataStrings ")" ")"
-                        |     "memory" "{" Int MaxBound "}"
- // -------------------------------------------------------
-    rule <k> ( memory                 ):Defn => memory { 0   .MaxBound } ... </k>
-    rule <k> ( memory MIN:Int         ):Defn => memory { MIN .MaxBound } ... </k>
-      requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory MIN:Int MAX:Int ):Defn => memory { MIN MAX       } ... </k>
->>>>>>> Extend syntax to allow imports and exports
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
@@ -1466,9 +1453,13 @@ Imports
 
 Imports need to describe the type of what is imported.
 That an import is really a subtype of the declared import needs to be checked at instantiation time.
+The value of a global gets copied when it is imported.
+
+**TODO: Check types match at import time.**
 
 ```k
-    syntax Import     ::= "(" "import" String String ImportDesc ")"
+    syntax Defn       ::= ImportDefn
+    syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
     syntax ImportDesc ::= "(" "func"   Identifier TypeUse    ")"
                         | "(" "func"              TypeUse    ")"
                         | "(" "table"  Identifier TableType  ")"
@@ -1478,6 +1469,58 @@ That an import is really a subtype of the declared import needs to be checked at
                         | "(" "global" Identifier GlobalType ")"
                         | "(" "global"            GlobalType ")"
  // ------------------------------------------------------------
+    rule <k> (import MOD NAME ( func   ID:Identifier TU )) => (import MOD NAME ( func   TU )) ... </k>
+         <funcIds> FIDS => FIDS [ID <- NEXT] </funcIds>
+         <nextFuncIdx> NEXT </nextFuncIdx>
+    rule <k> (import MOD NAME ( table  ID:Identifier TT )) => (import MOD NAME ( table  TT )) ... </k>
+         <tabIds> TIDS => TIDS [ ID <- 0 ] </tabIds>
+    rule <k> (import MOD NAME ( memory ID:Identifier MT )) => (import MOD NAME ( memory MT )) ... </k>
+         <memIds> MIDS => MIDS [ ID <- 0 ] </memIds>
+    rule <k> (import MOD NAME ( global ID:Identifier GT )) => (import MOD NAME ( global GT )) ... </k>
+         <globIds> GIDS => GIDS [ID <- NEXT] </globIds>
+         <nextGlobIdx> NEXT </nextGlobIdx>
+
+    rule <k> ( import MOD NAME (func _)) => . ... </k>
+         <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
+         <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
+         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <funcIndices> ... FIDX |-> ADDR ... </funcIndices>
+           <exports>     ... NAME |-> FIDX     ... </exports>
+           ...
+         </moduleInst>
+    rule <k> ( import MOD NAME (table _)) => . ... </k>
+         <tabIndices> _ => 0 |-> ADDR </tabIndices>
+         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <tabIndices> ... TIDX |-> ADDR ... </tabIndices>
+           <exports>    ... NAME |-> TIDX     ... </exports>
+           ...
+         </moduleInst>
+    rule <k> ( import MOD NAME (table _)) => . ... </k>
+         <memIndices> _ => 0 |-> ADDR </memIndices>
+         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <memIndices> ... MIDX |-> ADDR ... </memIndices>
+           <exports>    ... NAME |-> MIDX     ... </exports>
+           ...
+         </moduleInst>
+    rule <k> ( import MOD NAME (global GT)) => VAL ~> global GT ... </k>
+         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <globalIndices> ... GIDX |-> ADDR ... </globalIndices>
+           <exports>     ... NAME |-> GIDX     ... </exports>
+           ...
+         </moduleInst>
+         <globalInst>
+           <gAddr>  ADDR </gAddr>
+           <gValue> VAL  </gValue>
+           ...
+        </globalInst>
 ```
 
 Module Instantiation
