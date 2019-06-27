@@ -654,10 +654,11 @@ When globals are declared, they must also be given a constant initialization val
     syntax GlobalType ::= Mut ValType
     syntax GlobalType ::= asGMut (TextGlobalType) [function]
     syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
-    syntax Defn ::= "(" "global"               TextGlobalType Instr ")"
-                  | "(" "global" TextFormatIdx TextGlobalType Instr ")"
-                  |     "global" GlobalType
- // ---------------------------------------
+    syntax Defn       ::= GlobalDefn
+    syntax GlobalDefn ::= "(" "global"               TextGlobalType Instr ")"
+                        | "(" "global" TextFormatIdx TextGlobalType Instr ")"
+                        |     "global" GlobalType
+ // ---------------------------------------------
     rule asGMut ( (mut T:ValType ) ) => var   T
     rule asGMut (      T:ValType   ) => const T
     rule <k> ( global ID:TextFormatIdx TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
@@ -736,13 +737,13 @@ Types
 This defines helper functions that gathers function together.
 
 ```k
-    syntax TypeKeyWord  ::= "param" | "result"
- // ------------------------------------------
+    syntax TypeKeyWord ::= "param" | "result"
+ // -----------------------------------------
 
-    syntax TypeDecl      ::= "(" TypeDecl ")"     [bracket]
-                           | TypeKeyWord ValTypes
-    syntax TypeDecls     ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
- // -------------------------------------------------------------------
+    syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
+                       | TypeKeyWord ValTypes
+    syntax TypeDecls ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
+ // ---------------------------------------------------------------
 
     syntax VecType ::=  gatherTypes ( TypeKeyWord , TypeDecls )            [function]
                      | #gatherTypes ( TypeKeyWord , TypeDecls , ValTypes ) [function]
@@ -1356,12 +1357,12 @@ The initialization of a table needs an offset and a list of function indices.
 A table index is optional and will be default to zero.
 
 ```k
-    syntax Defn        ::= ElemDefn
-    syntax ElemDefn    ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
-                         | "(" "elem"                   Offset ElemSegment ")"
-                         |     "elem" "{" TextFormatIdx        ElemSegment "}"
-    syntax Stmt        ::= #initElements ( Int, Int, ElemSegment )
- // --------------------------------------------------------------
+    syntax Defn     ::= ElemDefn
+    syntax ElemDefn ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
+                      | "(" "elem"                   Offset ElemSegment ")"
+                      |     "elem" "{" TextFormatIdx        ElemSegment "}"
+    syntax Stmt     ::= #initElements ( Int, Int, ElemSegment )
+ // -----------------------------------------------------------
     // Default to table with index 0.
     rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
     rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
@@ -1391,7 +1392,7 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax Defn  ::= DataDefn
+    syntax Defn     ::= DataDefn
     syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
                       | "(" "data"                   Offset DataStrings ")"
                       |     "data" "{" TextFormatIdx        DataStrings "}"
@@ -1431,8 +1432,9 @@ Start Function
 --------------
 
 ```k
-    syntax Defn ::= "(" "start" TextFormatIdx ")"
- // ---------------------------------------------
+    syntax Defn      ::= StartDefn
+    syntax StartDefn ::= "(" "start" TextFormatIdx ")"
+ // --------------------------------------------------
     rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1446,6 +1448,57 @@ Start Function
 Module Instantiation
 --------------------
 
+There is some dependencies among definitions that require that we do them in a certain order, even though they may appear in many valid orders.
+First, functions, tables, memories and globals get *allocated*.
+Then, tables, memories and globals get *instantiated* with elements, data and initialization vectors.
+However, since (currently) globals can only make use of imported globals to be instantiated, we can initialize at allocation time.
+Finally, the start function is invoked.
+Exports may appear anywhere in a module, but can only be performed after what they refer to has been allocated.
+Exports that are inlined in a definition, e.g., `func (export "foo") ...`, are safe to extract as they appear.
+Imports must appear before any allocations in a module, due to validation.
+
+`structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
+The groups are chosen to represent different stages of allocation and instantiation.
+
+```k
+    syntax Map ::=  structureModule (     Defns) [function]
+                 | #structureModule (Map, Defns) [function]
+                 | #initialMap ()                [function]
+ // -------------------------------------------------------
+    rule #initialMap ()
+      => "typeDecls" |-> .Defns
+         "imports"   |-> .Defns
+         "allocs"    |-> .Defns
+         "exports"   |-> .Defns
+         "inits"     |-> .Defns
+         "start"     |-> .Defns
+
+    rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
+
+    rule #structureModule(M,                  .Defns) => M
+    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
+
+    // TODO.
+ // rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+
+    rule #structureModule(M, (A:FuncDefn   DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:GlobalDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+
+    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
+
+    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+
+    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
+
+    syntax Defns ::= #reverse(Defns, Defns) [function]
+ // --------------------------------------------------
+    rule #reverse(       .Defns  , ACC) => ACC
+    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
+```
+
 A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
@@ -1453,13 +1506,24 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
     syntax Stmt       ::= ModuleDecl
     syntax ModuleDecl ::= "(" "module" Defns ")"
                         | "(" "module" Identifier Defns ")"
- // -------------------------------------------------------
+                        |     "module" Map
+ // --------------------------------------
     rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
          <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
          <nextModuleIdx> NEXT </nextModuleIdx>
 
-    rule <k> ( module DEFNS ) => DEFNS ... </k>
-         <curModIdx> CUR => NEXT </curModIdx>
+    rule <k> ( module DEFNS ) => module structureModule(DEFNS) ... </k>
+
+    rule <k> module MOD
+          => MOD["typeDecls"]
+          ~> MOD["imports"  ]
+          ~> MOD["allocs"   ]
+          ~> MOD["exports"  ]
+          ~> MOD["inits"    ]
+          ~> MOD["start"    ]
+         ...
+         </k>
+         <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
          <moduleInstances>
            ( .Bag
