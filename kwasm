@@ -3,7 +3,7 @@
 set -euo pipefail
 shopt -s extglob
 
-kwasm_dir="${KEVM_DIR:-.}"
+kwasm_dir="${KWASM_DIR:-.}"
 build_dir="$kwasm_dir/.build"
 defn_dir="$build_dir/defn"
 lib_dir="$build_dir/local/lib"
@@ -75,7 +75,7 @@ view_klab() {
 
     klab_log="$(basename "${run_file%-spec.k}")"
 
-    # klab often runs out of stack space when running long-running KEVM programs
+    # klab often runs out of stack space when running long-running KWasm programs
     # klab debug "$klab_log"
     node --stack-size=$KLAB_NODE_STACK_SIZE $(dirname $(which klab))/../libexec/klab-debug "$klab_log"
 }
