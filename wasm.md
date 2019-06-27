@@ -104,9 +104,9 @@ According to the WebAssembly semantics there are 3 categories of instructions.
 Also in our definition, there are some helper instructions not directly used in programs but will help us define the rules, they are directly subsorted into `Instr`.
 
 ```k
-    syntax Instr ::= PlainInstr
-                   | BlockInstr
-                   | FoldedInstr
+    syntax Instr ::= PlainInstr | BlockInstr | FoldedInstr
+ // ------------------------------------------------------
+
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
  // ---------------------------------------------------------
@@ -246,7 +246,7 @@ A `BinOp` operator always produces a result of the same type as its operands.
  //                     | FValType "." FBinOp
  // -----------------------------------------
 
-    syntax Instr ::= IValType "." IBinOp Int Int
+    syntax Instr ::= IValType "." IBinOp Int   Int
  //                | FValType "." FBinOp Float Float
  // ------------------------------------------------
     rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </k>
@@ -284,7 +284,7 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
  //                     | FValType "." FRelOp
  // -----------------------------------------
 
-    syntax Instr ::= IValType "." IRelOp Int Int
+    syntax Instr ::= IValType "." IRelOp Int   Int
  //                | FValType "." FRelOp Float Float
  // ------------------------------------------------
     rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
@@ -341,21 +341,20 @@ Note that we do not need to call `#chop` on the results here.
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
-    rule <k> ITYPE . div_s I1 I2
-          => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . div_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2)) ... </k>
       requires I2 =/=Int 0
        andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
-    // Division by 0.
+
     rule <k> ITYPE . div_s I1 I2 => undefined ... </k>
       requires I2 ==Int 0
-    // Division overflow.
+
     rule <k> ITYPE . div_s I1 I2 => undefined ... </k>
       requires I2 =/=Int 0
        andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) ==Int #pow1(ITYPE)
 
-    rule <k> ITYPE . rem_s I1 I2
-          => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2)) ... </k>
+    rule <k> ITYPE . rem_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2)) ... </k>
       requires I2 =/=Int 0
+
     rule <k> ITYPE . rem_s I1 I2 => undefined ... </k> requires I2 ==Int 0
 ```
 
@@ -654,16 +653,20 @@ When globals are declared, they must also be given a constant initialization val
 **TODO**: Import and export.
 
 ```k
-    syntax GlobalType ::= Mut ValType
-    syntax GlobalType ::= asGMut (TextGlobalType) [function]
     syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
+ // ---------------------------------------------------------
+
+    syntax GlobalType ::= Mut ValType
+                      | asGMut (TextGlobalType) [function]
+ // ------------------------------------------------------
+    rule asGMut ( (mut T:ValType ) ) => var   T
+    rule asGMut (      T:ValType   ) => const T
+
     syntax Defn       ::= GlobalDefn
     syntax GlobalDefn ::= "(" "global"               TextGlobalType Instr ")"
                         | "(" "global" TextFormatIdx TextGlobalType Instr ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule asGMut ( (mut T:ValType ) ) => var   T
-    rule asGMut (      T:ValType   ) => const T
     rule <k> ( global ID:TextFormatIdx TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -821,6 +824,7 @@ Currently, in the expanded form, the `export`s will come after the definition of
 ```k
     syntax FuncExport  ::= "(" "export" String ")"
     syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)]
+ // --------------------------------------------------------------------
 ```
 
 ### Function Local Declaration
@@ -1140,11 +1144,15 @@ The `storeX` operations first wrap the the value to be stored to the bit wdith `
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 
 ```k
+    syntax Instr ::= IValType "." StoreOp Int Int
+ //                | FValType "." StoreOp Int Float
+                   | "store" "{" Int Int Number "}"
+ // -----------------------------------------------
+
     syntax PlainInstr ::= IValType  "." StoreOpM
  //                     | FValType  "." StoreOpM
-    syntax Instr      ::= IValType "." StoreOp Int Int
- //                     | FValType "." StoreOp Int Float
-                        | "store" "{" Int Int Number "}"
+ // --------------------------------------------
+
     syntax StoreOpM ::= StoreOp | StoreOp MemArg
  // --------------------------------------------
     rule <k> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </k>
@@ -1189,13 +1197,19 @@ The `loadX_sx` operations loads `X` bits from memory, and extend it to the right
 The value is fetched from the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax PlainInstr ::= IValType  "." LoadOpM
- //                     | FValType  "." LoadOpM
+    syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
+ // ----------------------------------------------------------
+
+    syntax PlainInstr ::= IValType "." LoadOpM
+ //                     | FValType "." LoadOpM
                         | IValType "." LoadOp Int
-    syntax Instr      ::= "load" "{" IValType Int Int Signedness"}"
-    syntax LoadOpM    ::= LoadOp | LoadOp MemArg
+ // ---------------------------------------------
+
     syntax Signedness ::= "Signed" | "Unsigned"
  // -------------------------------------------
+
+    syntax LoadOpM ::= LoadOp | LoadOp MemArg
+ // -----------------------------------------
     rule <k> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </k>
          <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
     rule <k> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
@@ -1255,6 +1269,8 @@ The `align` parameter is for optimization only and is not allowed to influence t
 
 ```k
     syntax MemArg ::= OffsetArg | AlignArg | OffsetArg AlignArg
+ // -----------------------------------------------------------
+
     syntax OffsetArg ::= "offset=" Int
     syntax AlignArg  ::= "align="  Int
  // ----------------------------------
@@ -1292,9 +1308,11 @@ Success is indicated by pushing the previous memory size to the stack.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
 
 ```k
+    syntax Instr ::= "grow" Int
+ // ---------------------------
+
     syntax PlainInstr ::= "memory.grow"
-    syntax Instr      ::= "grow" Int
- // --------------------------------
+ // -----------------------------------
     rule <k> memory.grow => grow N ... </k>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
@@ -1319,12 +1337,6 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
  // --------------------------------------------------------
     rule #growthAllowed(SIZE, .MaxBound) => SIZE <=Int #maxMemorySize()
     rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MaxBound) andBool SIZE <=Int I
-```
-
-Memories can optionally have a max size which the memory may not grow beyond.
-
-```k
-    syntax MaxBound ::= Int | ".MaxBound"
 ```
 
 However, the absolute max allowed size if 2^16 pages.
