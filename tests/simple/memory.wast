@@ -1,22 +1,17 @@
-(module)
-
 ( memory )
 #assertMemory 0 .MaxBound "memory initial 1"
 
 #clearConfig
-(module)
 
 ( memory 34)
 #assertMemory 34 .MaxBound "memory initial 2"
 
 #clearConfig
-(module)
 
 ( memory 4 10 )
 #assertMemory 4 10 "memory initial 3"
 
 #clearConfig
-(module)
 
 ( memory 0 10 )
 (memory.size)
@@ -24,7 +19,6 @@
 #assertMemory 0 10 "memory ungrown"
 
 #clearConfig
-(module)
 
 ( memory 0 10 )
 (memory.grow (i32.const 10))
@@ -35,7 +29,6 @@
 #assertMemory 10 10 "memory grown"
 
 #clearConfig
-(module)
 
 ( memory #maxMemorySize())
 (memory.grow (i32.const 1))
@@ -43,7 +36,6 @@
 #assertMemory #maxMemorySize() .MaxBound "memory grow max too large"
 
 #clearConfig
-(module)
 
 ( memory )
 (memory.grow (i32.const #maxMemorySize()))
@@ -57,7 +49,6 @@
 ;; Store and load
 
 #clearConfig
-(module)
 
 (memory 1)
 (i32.const 1)
@@ -79,7 +70,6 @@
 #assertMemory 1 .MaxBound ""
 
 #clearConfig
-(module)
 
 (memory 0)
 (i32.const 0)
@@ -89,7 +79,6 @@
 #assertMemory 0 .MaxBound ""
 
 #clearConfig
-(module)
 
 (memory 1)
 (i32.const 65535)
@@ -103,7 +92,6 @@
 #assertMemory 1 .MaxBound ""
 
 #clearConfig
-(module)
 
 (memory 1)
 (i64.store (i32.const 15) (i64.const #pow(i32) -Int 1))
@@ -133,7 +121,6 @@
 ;; Updating
 
 #clearConfig
-(module)
 
 (memory 1)
 (i64.store (i32.const 1) (i64.const #pow(i64) -Int 1))
@@ -144,7 +131,6 @@
 #assertMemory 1 .MaxBound "Zero updates erases memory"
 
 #clearConfig
-(module)
 
 (memory 1)
 (i64.store (i32.const 1) (i64.const #pow(i64) -Int 1))
