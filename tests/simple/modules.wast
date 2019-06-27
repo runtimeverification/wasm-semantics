@@ -34,3 +34,29 @@
 )
 
 #clearConfig
+
+;; Test ordering of definitions in modules.
+
+(module
+  (start $main) ;; Should initialize memory position 1.
+  (elem (i32.const 1) $store)
+  (data (i32.const 100) 100 1)
+  (data (i32.const 100) 5) ;; Should overwrite previous, leaving "5 1" as memory bytes
+  (func)
+  (func $main (call_indirect (i32.const 1))) ;; Should call $store.
+  (func $store (i32.store (i32.const 1) (i32.const 42)))
+  (func $get (export "get") (result i32)
+    (i32.add (i32.load (i32.const 1)) (i32.load (i32.const 100))) ;; For checking both data initialization.
+  )
+  (memory 10 10)
+  (elem (i32.const 0) 0)
+  (table 2 funcref)
+)
+
+(assert_return (invoke "get")
+               (i32.add
+                 (i32.const 42) ;; Stored by $main
+                 (i32.add (i32.const 256) (i32.const 5))) ;; Stored by both data initializers.
+                 )
+
+#clearConfig
