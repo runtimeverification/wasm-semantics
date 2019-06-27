@@ -637,10 +637,11 @@ When globals are declared, they must also be given a constant initialization val
     syntax GlobalType ::= Mut ValType
     syntax GlobalType ::= asGMut (TextGlobalType) [function]
     syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
-    syntax Defn ::= "(" "global"               TextGlobalType Instr ")"
-                  | "(" "global" TextFormatIdx TextGlobalType Instr ")"
-                  |     "global" GlobalType
- // ---------------------------------------
+    syntax Defn  ::= GlobalDefn
+    syntax GlobalDefn ::= "(" "global"               TextGlobalType Instr ")"
+                        | "(" "global" TextFormatIdx TextGlobalType Instr ")"
+                        |     "global" GlobalType
+ // ---------------------------------------------
     rule asGMut ( (mut T:ValType ) ) => var   T
     rule asGMut (      T:ValType   ) => const T
     rule <k> ( global ID:TextFormatIdx TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
@@ -1485,8 +1486,8 @@ The groups are chosen to represent different stages of allocation and instantiat
       => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
     rule #structureModule(M, (A:MemoryDefn DS:Defns))
       => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
- // rule #structureModule(M, (A:GlobalDefn DS:Defns))
- //   => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:GlobalDefn DS:Defns))
+      => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
 
     // Exports.
     rule #structureModule(M, (E:ExportDefn DS:Defns))
