@@ -3,26 +3,14 @@
 set -euo pipefail
 shopt -s extglob
 
-curdir="$(pwd)"
-
-# https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
-kwasm_script="$0"
-while [[ -h "$kwasm_script" ]]; do
-    kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
-    kwasm_script="$(readlink "$kwasm_script")"
-    [[ "$kwasm_script" != /* ]] && kwasm_script="$kwasm_dir/$kwasm_script"
-done
-kwasm_dir="$(cd -P "$(dirname "$kwasm_script")" && pwd)"
-
+kwasm_dir="${KWASM_DIR:-.}"
 build_dir="$kwasm_dir/.build"
 defn_dir="$build_dir/defn"
 lib_dir="$build_dir/local/lib"
+k_release_dir="${K_RELEASE:-$kwasm_dir/deps/k/k-distribution/target/release/k}"
 
-k_submodule="$kwasm_dir/.build/k"
-release_dir="${K_BIN:-$k_submodule/k-distribution/target/release/k}"
-
-export PATH="$release_dir/lib/native/linux:$release_dir/lib/native/linux64:$release_dir/bin/:$PATH"
-export LD_LIBRARY_PATH="$release_dir/lib/native/linux64:$lib_dir:${LD_LIBRARY_PATH:-}"
+export PATH="$k_release_dir/lib/native/linux:$k_release_dir/lib/native/linux64:$k_release_dir/bin/:$PATH"
+export LD_LIBRARY_PATH="$k_release_dir/lib/native/linux64:$lib_dir:${LD_LIBRARY_PATH:-}"
 
 test_logs="$build_dir/logs"
 mkdir -p "$test_logs"
@@ -54,11 +42,7 @@ run_kast() {
     local output_mode
 
     output_mode="${1:-kast}" ; shift
-
-    case "$run_file-$output_mode" in
-        *-kore) kast --directory "$backend_dir" "$run_file" --kore                  "$@" ;;
-        *)      kast --directory "$backend_dir" "$run_file" --output "$output_mode" "$@" ;;
-    esac
+    kast --directory "$backend_dir" "$run_file" --output "$output_mode" "$@"
 }
 
 run_prove() {
@@ -67,13 +51,12 @@ run_prove() {
 }
 
 run_klab() {
-    local run_mode rel_run_file klab_log
+    local run_mode klab_log
 
     run_mode="$1" ; shift
-    rel_run_file="${run_file#$curdir}"
-    klab_log="$(basename "${rel_run_file%-spec.k}")"
+    klab_log="$(basename "${run_file%-spec.k}")"
 
-    "$0" "$run_mode" --backend java "$rel_run_file" \
+    "$0" "$run_mode" --backend java "$run_file" \
         --state-log --state-log-path "$KLAB_OUT/data" --state-log-id "$klab_log" \
         --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
         --output-flatten "_Map_ #And" \
@@ -84,24 +67,26 @@ run_klab() {
 }
 
 view_klab() {
-    local rel_run_file
+    local klab_log
 
-    rel_run_file="${run_file#$curdir}"
-    klab_log="$(basename "${rel_run_file%-spec.k}")"
+    klab_log="$(basename "${run_file%-spec.k}")"
 
-    # klab often runs out of stack space when running long-running KEVM programs
+    # klab often runs out of stack space when running long-running KWasm programs
     # klab debug "$klab_log"
     node --stack-size=$KLAB_NODE_STACK_SIZE $(dirname $(which klab))/../libexec/klab-debug "$klab_log"
 }
 
-function help_and_exit() {
+# Main
+# ----
+
+usage() {
     echo "
-    usage: $0 run              [--backend (ocaml|java|haskell)] <pgm>  <K args>*
-           $0 kast             [--backend (ocaml|java)]         <pgm>  <output format> <K args>*
-           $0 prove            [--backend (java|haskell)]       <spec> <K args>* -m <def_module>
-           $0 klab-run                                          <pgm>  <K arg>*
-           $0 klab-prove                                        <spec> <K arg>* -m <def_module>
-           $0 klab-view                                         [<pgm>|<spec>]
+    usage: $0 run        [--backend (ocaml|java|haskell)] <pgm>  <K args>*
+           $0 kast       [--backend (ocaml|java)]         <pgm>  <output format> <K args>*
+           $0 prove      [--backend (java|haskell)]       <spec> <K args>* -m <def_module>
+           $0 klab-run                                    <pgm>  <K arg>*
+           $0 klab-prove                                  <spec> <K arg>* -m <def_module>
+           $0 klab-view                                   [<pgm>|<spec>]
 
        $0 run   : Run a single WebAssembly program
        $0 kast  : Parse a single WebAssembly program and output it in supported format
@@ -117,18 +102,22 @@ function help_and_exit() {
 
        KLab: Make sure that the 'klab/bin' directory is on your PATH to use this option.
 "
-    exit 0
 }
 
-# Main
-# ----
+usage_fatal() {
+    usage
+    fatal "$@"
+}
 
-
-if [[ -z ${1:-} ]] || [[ -z ${2:-} ]] || [[ "$1" == '--help' ]] || [ "$1" == 'help' ]; then
-    help_and_exit
+[[ ! -z ${1:-} ]] || usage_fatal "Must supply a command to run."
+if [[ "$1" == '--help' ]] || [ "$1" == 'help' ]; then
+    usage
+    exit 0
 fi
 
 run_command="$1"; shift
+
+[[ ! -z ${1:-} ]] || usage_fatal "Must supply a file to work on."
 
 backend="ocaml"
 [[ ! "$run_command" == 'prove' ]] || backend='java'
@@ -141,10 +130,8 @@ backend_dir="$defn_dir/$backend"
 [[ ! "$backend" == "ocaml" ]] || eval $(opam config env)
 
 # get the run file
-if [[ -z ${1:-} ]]; then
-    help_and_exit
-fi
-run_file="$curdir/$1" ; shift
+[[ ! -z ${1:-} ]] || usage_fatal "Must supply a file to run on."
+run_file="$1" ; shift
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
 case "$run_command-$backend" in
@@ -153,5 +140,5 @@ case "$run_command-$backend" in
     prove-@(java|haskell)      ) run_prove                       "$@" ;;
     klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
     klab-view-java             ) view_klab                       "$@" ;;
-    *) $0 help ; fatal "Unknown command on backend: $run_command $backend" ;;
+    *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
 esac
