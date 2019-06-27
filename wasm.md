@@ -224,6 +224,10 @@ A `UnOp` operator always produces a result of the same type as its operand.
     syntax PlainInstr ::= IValType "." IUnOp
  //                     | FValType "." FUnOp
  // ----------------------------------------
+
+    syntax Instr ::= IValType "." IUnOp Int
+ //                | FValType "." FUnOp Float
+ // -----------------------------------------
     rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
@@ -241,6 +245,10 @@ A `BinOp` operator always produces a result of the same type as its operands.
     syntax PlainInstr ::= IValType "." IBinOp
  //                     | FValType "." FBinOp
  // -----------------------------------------
+
+    syntax Instr ::= IValType "." IBinOp Int Int
+ //                | FValType "." FBinOp Float Float
+ // ------------------------------------------------
     rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
@@ -252,7 +260,12 @@ Test operations consume one operand and produce a bool, which is an `i32` value.
 
 ```k
     syntax PlainInstr ::= IValType "." ITestOp
+ //                     | FValType "." FTestOp
  // ------------------------------------------
+
+    syntax Instr ::= IValType "." ITestOp Int
+ //                | FValType "." FTestOp Float
+ // -------------------------------------------
     rule <k> ITYPE . TOP:ITestOp => ITYPE . TOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
@@ -270,6 +283,10 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
     syntax PlainInstr ::= IValType "." IRelOp
  //                     | FValType "." FRelOp
  // -----------------------------------------
+
+    syntax Instr ::= IValType "." IRelOp Int Int
+ //                | FValType "." FRelOp Float Float
+ // ------------------------------------------------
     rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK  </valstack>
 ```
@@ -284,32 +301,18 @@ The target type is before the `.`, and the source type is after the `_`.
 
 ```k
     syntax PlainInstr ::= IValType "." ConvOp
+ //                     | FValType "." ConvOp
  // -----------------------------------------
+
+    syntax Instr ::= IValType "." ConvOp Int
+ //                | FValType "." ConvOp Float
+ // ------------------------------------------
     rule <k> ITYPE . CONVOP:ConvOp => ITYPE . CONVOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
       requires #convSourceType(CONVOP) ==K SRCTYPE
 
     syntax IValType ::= #convSourceType ( ConvOp ) [function]
  // ---------------------------------------------------------
-```
-
-Numeric Operators
------------------
-
-These instructions are reduced to from the plain instructions defined above.
-They take operands as parameters rather than from the `<valstack>` and is used to define the numeric computation rules.
-
-```k
-    syntax Instr  ::= IValType "." IUnOp   Int
-                    | IValType "." IBinOp  Int   Int
-                    | IValType "." ITestOp Int
-                    | IValType "." IRelOp  Int   Int
-                    | IValType "." ConvOp  Int
- //                 | FValType "." FUnOp   Float
- //                 | FValType "." FBinOp  Float Float
- //                 | FValType "." FTestOp Float
- //                 | FValType "." FRelOp  Float Float
- //                 | FValType "." ConvOp  Float
 ```
 
 ### Integer Arithmetic
@@ -699,7 +702,7 @@ The `get` and `set` instructions read and write globals.
 ```k
     syntax PlainInstr ::= "global.get" Int
                         | "global.set" Int
- // --------------------------------------------
+ // --------------------------------------
     rule <k> global.get INDEX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
