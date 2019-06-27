@@ -51,6 +51,14 @@ When we are initializing a table with element segment, we need to define a list 
     rule #lengthElemSegment(TFIDX     ES) => 1 +Int #lengthElemSegment(ES)
 ```
 
+Memories/tables can optionally have a max size which the memory may not grow beyond.
+The sort `MaxBound` provides a potentially "infinite" `Int`.
+
+```k
+    syntax MaxBound ::= Int | ".MaxBound"
+ // -------------------------------------
+```
+
 WebAssembly Types
 -----------------
 

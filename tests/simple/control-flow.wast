@@ -128,11 +128,11 @@ end
 ;; Conditional
 
 (i32.const 1)
-(if [ i32 ] (i32.const 1) else (i32.const -1) end)
+if [ i32 ] i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > 1 "if true"
 
 (i32.const 0)
-(if [ i32 ] (i32.const 1) else (i32.const -1) end)
+if [ i32 ] i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
 
 (i32.const -1)
