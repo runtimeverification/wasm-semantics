@@ -61,13 +61,19 @@ If you haven't already setup K's OCaml dependencies more recently than February 
 **NOTE**: It may prove useful to first do `rm -rf ~/.opam` if you've setup K projcets in the past and are experiencing trouble with the newest opam libraries.
           This is a fairly destructive operation, and will break any other projects that depend on specific locally installed ocaml packages.
 
-Finally, you can install repository specific dependencies and build the semantics:
+Install repository specific dependencies:
 
 ```sh
-./build
+make deps
 ```
 
-To only build specific backends, you can do `./build wasm-java`, `./build wasm-ocaml`, or `./build wasm-haskell`.
+And then build the semantics:
+
+```sh
+make build
+```
+
+To only build specific backends, you can do `make build-java`, `make build-ocaml`, or `make build-haskell`.
 
 ### Media and documents
 
