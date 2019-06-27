@@ -2,7 +2,8 @@ KWasm: Semantics of WebAssembly in K
 ====================================
 
 This repository presents a prototype formal semantics of [WebAssembly].
-Currently only rudimentary opcodes are supported, including simple arithmetic and stack operations.
+It is currently under construction.
+For examples of current capabilities, see the unit tests under the `tests/simple` directory.
 
 Installing/Building
 -------------------
