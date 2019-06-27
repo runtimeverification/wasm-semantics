@@ -1450,7 +1450,7 @@ Inlined imports and exports are safe to extract as they appear.
 Imports must appear first in a module due to validation.
 Exports only depend on what they are exporting having been allocated, so can appear right after allocation.
 
-`structureModule` takes a list of definitions and returns a map with different groups of definitions.
+`structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
@@ -1466,10 +1466,12 @@ The groups are chosen to represent different stages of allocation and instantiat
          "inits"     |-> .Defns
          "start"     |-> .Defns
 
-    rule structureModule(DS) => #structureModule(#initialMap (), DS)
+    rule structureModule(DS)
+    // The sort will build the lists in reverse, so we pre-reverse the definitons.
+      => #structureModule(#initialMap (), #reverse(DS, .Defns))
 
-    rule #structureModule(M, .Defns              )
-      => M
+    // Sorts the definitions by type, producing _reversed_ lists of the definitions.
+    rule #structureModule(M, .Defns) => M
 
     // Type declarations.
     rule #structureModule(M, (T:TypeDefn   DS:Defns))
@@ -1502,6 +1504,11 @@ The groups are chosen to represent different stages of allocation and instantiat
     // Start function.
     rule #structureModule(M, (S:StartDefn  DS:Defns))
       => #structureModule(M ["start"     <- (S .Defns)], DS) // There can only be one start function.
+
+    syntax Defns ::= #reverse(Defns, Defns) [function]
+ // --------------------------------------------------
+    rule #reverse(       .Defns  , ACC) => ACC
+    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
 ```
 
 A new module instance gets allocated.
