@@ -534,11 +534,11 @@ It simply executes the block then records a label with an empty continuation.
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "block" OptionalId VecType Instrs "end" OptionalId
+    syntax BlockInstr  ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
  // -------------------------------------------------------------------------
-    rule <k> ( block ID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block ID gatherTypes(result, TDECLS) INSTRS end ... </k>
+    rule <k> ( block ID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block ID TDECLS INSTRS end ... </k>
 
-    rule <k> block ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> block ID:OptionalId TDECLS:TypeDecls IS end ID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
       requires ID ==K ID' orBool notBool isIdentifier(ID')
 ```
@@ -586,27 +586,25 @@ Finally, we have the conditional and loop instructions.
 ```k
     syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
                          | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if" OptionalId           Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-    syntax BlockInstr  ::= "if" OptionalId VecType Instrs "else" OptionalId Instrs "end" OptionalId
-                         | "if" OptionalId VecType Instrs                          "end" OptionalId
+    syntax BlockInstr  ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
  // -----------------------------------------------------------------------------------------------
-    rule <k> ( if ID TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if ID gatherTypes(result, TDECLS) IS else .Instrs end ... </k>
-    rule <k> ( if ID TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID gatherTypes(result, TDECLS) IS else IS'     end ... </k>
-    rule <k> ( if ID               C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID [ .ValTypes ] IS else IS' end ... </k>
+    rule <k> ( if ID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if ID TDECLS IS else .Instrs end ... </k>
+    rule <k> ( if ID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID TDECLS IS else IS'     end ... </k>
 
-    rule <k> if ID VTYPE:VecType IS                         end ID'':OptionalId => if ID VTYPE IS else ID .Instrs end ID ... </k>
-    rule <k> if ID VTYPE:VecType IS else ID':OptionalId IS' end ID'':OptionalId => IS  ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if ID:OptionalId TDECLS:TypeDecls IS                         end ID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
+    rule <k> if ID:OptionalId TDECLS:TypeDecls IS else ID':OptionalId IS' end ID'':OptionalId => IS  ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
-    rule <k> if ID VTYPE:VecType IS else ID':OptionalId IS' end ID'':OptionalId => IS' ~> label ID VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if ID:OptionalId TDECLS:TypeDecls IS else ID':OptionalId IS' end ID'':OptionalId => IS' ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL ==Int 0
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "loop" OptionalId VecType Instrs "end" OptionalId
+    syntax BlockInstr  ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
  // ------------------------------------------------------------------------
-    rule <k> ( loop ID TDECLS:TypeDecls IS ) => loop ID gatherTypes(result, TDECLS) IS end ... </k>
-    rule <k> loop ID VTYPE:VecType IS end ID':OptionalId => IS ~> label ID [ .ValTypes ] { loop ID VTYPE IS end } VALSTACK ... </k>
+    rule <k> ( loop ID:OptionalId TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
+    rule <k> loop ID:OptionalId TDECLS:TypeDecls IS end ID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { loop ID TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
       requires ID ==K ID' orBool notBool isIdentifier(ID')
 ```

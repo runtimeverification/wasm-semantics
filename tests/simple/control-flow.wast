@@ -4,14 +4,14 @@
 
 ;; Blocks
 
-block [ i32 i32 i32 ]
+block (result  i32 i32 i32)
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
 end
 #assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .ValStack "block 1"
 
-block [ i32 i32 ]
+block (result  i32 i32)
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
@@ -19,7 +19,7 @@ block [ i32 i32 ]
 end
 #assertStack < i32 > 2 : < i32 > 1 : .ValStack "block 2"
 
-block [ i32 i32 ]
+block (result  i32 i32)
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
@@ -42,7 +42,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block $n [ ]
+block $n
     (i32.const 3)
     (br $n)
     (i32.const 4)
@@ -52,9 +52,9 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block $v [ ]
+block $v
     (i32.const 3)
-    block $k [ i32 i32 ]
+    block $k (result  i32 i32)
         (i32.const 4)
         (i32.const 5)
         (br $k)
@@ -66,9 +66,9 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 i32 ]
+block (result  i32 i32)
     (i32.const 3)
-    block [ i32 i32 ]
+    block (result  i32 i32)
         (i32.const 4)
         (i32.const 5)
         (br 1)
@@ -80,9 +80,9 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 i32 ]
+block (result  i32 i32)
     (i32.const 3)
-    block [ ]
+    block
         (i32.const 4)
         (i32.const 5)
         (br 1)
@@ -94,7 +94,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 ]
+block (result i32)
     (i32.const 3)
     (i32.const 0)
     (br_if 0)
@@ -105,7 +105,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 ]
+block (result i32)
     (i32.const 3)
     (i32.const 1)
     (br_if 0)
@@ -116,7 +116,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ ]
+block
     (i32.const 3)
     (i32.const 1)
     (br_if 0)
@@ -128,11 +128,11 @@ end
 ;; Conditional
 
 (i32.const 1)
-if [ i32 ] i32.const 1 else i32.const -1 end
+if (result i32) i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > 1 "if true"
 
 (i32.const 0)
-if [ i32 ] i32.const 1 else i32.const -1 end
+if (result i32) i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
 
 (i32.const -1)
@@ -165,7 +165,7 @@ if [ i32 ] i32.const 1 else i32.const -1 end
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
-loop $l [ ]
+loop $l
     (local.get 0)
     (local.get 1)
     (i32.add)
@@ -180,8 +180,8 @@ end
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
-block [ ]
-    ( loop $m [ ]
+block
+    ( loop $m
         (local.get 0)
         (local.get 1)
         (i32.add)
@@ -202,7 +202,7 @@ end
 ;; TODO: We need to give semantics to stack underflow (though it could not happen with a validated program).
 ;; We need `trap` semantics first.
 ;; (i32.const 0)
-;; block [ i32 i32 ]
+;; block (result i32 i32)
 ;;     (i32.const 7)
 ;; end
 
