@@ -214,13 +214,9 @@ To resolve these `identifiers` into concrete `indices`, some grammar production 
 ### Unary Operators
 
 When a unary operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
-A `UnOp` operator always produces a result of the same type as its operand.
+An `*UnOp` operator always produces a result of the same type as its operand.
 
 ```k
-    syntax UnOp ::= IUnOp
- //               | FUnOp
- // ---------------------
-
     syntax PlainInstr ::= IValType "." IUnOp
  //                     | FValType "." FUnOp
  // ----------------------------------------
@@ -235,13 +231,9 @@ A `UnOp` operator always produces a result of the same type as its operand.
 ### Binary Operators
 
 When a binary operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
-A `BinOp` operator always produces a result of the same type as its operands.
+A `*BinOp` operator always produces a result of the same type as its operands.
 
 ```k
-    syntax BinOp ::= IBinOp
- //                | FBinOp
- // -----------------------
-
     syntax PlainInstr ::= IValType "." IBinOp
  //                     | FValType "." FBinOp
  // -----------------------------------------
@@ -276,10 +268,6 @@ When a comparison operator is the next instruction, the two arguments are loaded
 Comparisons consume two operands and produce a bool, which is an `i32` value.
 
 ```k
-    syntax RelOp ::= IRelOp
- //                | FRelOp
- // -----------------------
-
     syntax PlainInstr ::= IValType "." IRelOp
  //                     | FValType "." FRelOp
  // -----------------------------------------
