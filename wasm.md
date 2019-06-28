@@ -638,8 +638,6 @@ The `*_local` instructions are defined here.
 
 When globals are declared, they must also be given a constant initialization value.
 
-**TODO**: Import and export.
-
 ```k
     syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
  // ---------------------------------------------------------
@@ -651,10 +649,11 @@ When globals are declared, they must also be given a constant initialization val
     rule asGMut (      T:ValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalDefn ::= "(" "global" OptionalId TextGlobalType Instr ")"
+    syntax GlobalDefn ::= "(" "global" OptionalId              InlineExports TextGlobalType Instr ")"
+                        | "(" "global" OptionalId InlineImport InlineExports TextGlobalType ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule <k> ( global ID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
+    rule <k> ( global ID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1020,7 +1019,8 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
 
 ```k
     syntax Defn      ::= TableDefn
-    syntax TableDefn ::= "(" "table"     OptionalId Limits TableElemType ")"
+    syntax TableType ::= "(" "table"     OptionalId Limits TableElemType ")"
+    syntax TableDefn ::= TableType
                        | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
                        |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
@@ -1463,14 +1463,10 @@ The value of a global gets copied when it is imported.
 ```k
     syntax Defn       ::= ImportDefn
     syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
-    syntax ImportDesc ::= "(" "func"   Identifier TypeUse    ")"
-                        | "(" "func"              TypeUse    ")"
-                        | "(" "table"  Identifier TableType  ")"
-                        | "(" "table"             TableType  ")"
-                        | "(" "memory" Identifier MemType    ")"
-                        | "(" "memory"            MemType    ")"
-                        | "(" "global" Identifier GlobalType ")"
-                        | "(" "global"            GlobalType ")"
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse    ")"
+                        | "(" "table"  OptionalId TableType  ")"
+                        | "(" "memory" OptionalId MemType    ")"
+                        | "(" "global" OptionalId GlobalType ")"
  // ------------------------------------------------------------
     rule <k> (import MOD NAME ( func   ID:Identifier TU )) => (import MOD NAME ( func   TU )) ... </k>
          <funcIds> FIDS => FIDS [ID <- NEXT] </funcIds>
