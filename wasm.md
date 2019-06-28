@@ -1021,9 +1021,11 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     rule <k> ( table ID:OptionalId MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-    rule <k> ( table ID funcref ( elem ES ) )
+    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) (elem ES) ) ... </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+    rule <k> ( table ID:Identifier funcref ( elem ES ) )
           =>  table { ID #lengthElemSegment(ES) #lengthElemSegment(ES) }
-          ~> ( elem (i32.const 0) ES )
+          ~> ( elem ID ES )
           ...
          </k>
 
@@ -1080,9 +1082,9 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-    rule <k> ( memory ID ( data DS ) )
+    rule <k> ( memory ID:Identifier ( data DS ) )
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data (i32.const 0) DS ) ... </k>
+          ~> ( data ID DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
        andBool isIdentifier(ID)
 
