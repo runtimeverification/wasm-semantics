@@ -1449,7 +1449,7 @@ This rule handles storing an `OptionalId` in the correct lookup table.
     syntax Instr ::= "saveId" "(" String "," OptionalId "," Int ")"
  // ---------------------------------------------------------------
     rule <k> saveId (_, ID:OptionalId, _) => . ... </k>
-      requires ID ==K ""
+      requires notBool isIdentifier(ID)
     rule <k> saveId ("type", ID:Identifier, IDX) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
