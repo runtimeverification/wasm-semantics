@@ -39,6 +39,17 @@ Also we use `#freshId ( Int )` to generate a fresh identifier based on the eleme
  // --------------------------------
 ```
 
+In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` being an index.
+This rule handles adding an `OptionalId` as a map key, but only when it is a proper identifier.
+
+```k
+    syntax Instr ::= "saveId" "(" Map "," OptionalId "," Int ")" [function]
+ // -----------------------------------------------------------------------
+    rule saveId (MAP, ID:OptionalId, _) => MAP
+      requires notBool isIdentifier(ID)
+    rule saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
+```
+
 ### Text Format Indices
 
 Indices in the text format could be either an `address` or an `identifier.

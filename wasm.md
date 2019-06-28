@@ -868,14 +868,13 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
           ...
          </k>
 
-    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
-          => saveId("func", FNAME, NEXTIDX)
-          ~> #checkTypeUse ( TUSE ) ... </k>
+    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
+           <funcIds> IDS => saveId(IDS, FNAME, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
            ...
@@ -1041,6 +1040,7 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <tabIds> IDS => saveId(IDS, FNAME, 0) </tabIds>
            <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
            ...
          </moduleInst>
@@ -1095,10 +1095,11 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
          </moduleInst>
       requires MAP =/=K .Map
 
-    rule <k> memory { ID MIN MAX } => saveId("mem", ID, 0) ... </k>
+    rule <k> memory { ID MIN MAX } => ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <memIds> IDS => saveId(IDS, FNAME, 0) </memIds>
            <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
            ...
          </moduleInst>
@@ -1435,58 +1436,6 @@ Start Function
            <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
-```
-
-Identifiers
------------
-
-Though each part of a module (each function, global, etc.) primarily has an index, the text format also allows us to refer to them by identifiers.
-We commonly want to store these optional identifiers when allocating something.
-In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` being an index.
-This rule handles storing an `OptionalId` in the correct lookup table.
-
-```k
-    syntax Instr ::= "saveId" "(" String "," OptionalId "," Int ")"
- // ---------------------------------------------------------------
-    rule <k> saveId (_, ID:OptionalId, _) => . ... </k>
-      requires notBool isIdentifier(ID)
-    rule <k> saveId ("type", ID:Identifier, IDX) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <typeIds> IDS => IDS [ ID <- IDX ] </typeIds>
-           ...
-         </moduleInst>
-    rule <k> saveId ("func", ID:Identifier, IDX) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <funcIds> IDS => IDS [ ID <- IDX ] </funcIds>
-           ...
-         </moduleInst>
-    rule <k> saveId ("tab", ID:Identifier, IDX) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <tabIds> IDS => IDS [ ID <- IDX ] </tabIds>
-           ...
-         </moduleInst>
-    rule <k> saveId ("mem", ID:Identifier, IDX) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memIds> IDS => IDS [ ID <- IDX ] </memIds>
-           ...
-         </moduleInst>
-    rule <k> saveId ("glob", ID:Identifier, IDX) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <globIds> IDS => IDS [ ID <- IDX ] </globIds>
-           ...
-         </moduleInst>
-    rule <k> saveId ("module", ID:Identifier, IDX) => . ... </k>
-         <moduleIds> IDS => IDS [ ID <- IDX ] </moduleIds>
 ```
 
 Module Instantiation
