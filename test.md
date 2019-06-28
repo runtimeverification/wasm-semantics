@@ -325,13 +325,14 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory" Int MaxBound String
- // --------------------------------------------------------
-    rule <k> #assertMemory SIZE MAX MSG => . ... </k>
+    syntax Assertion ::= "#assertMemory" TextFormatIdx Int MaxBound String
+ // ----------------------------------------------------------------------
+    rule <k> #assertMemory TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memIds> IDS </memIds>
+           <memIndices> #ContextLookup(IDS, TFIDX) |-> ADDR </memIndices>
            ...
          </moduleInst>
          <mems>

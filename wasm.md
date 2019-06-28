@@ -26,6 +26,7 @@ Configuration
           <modIdx>        0    </modIdx>
           <typeIds>       .Map </typeIds>
           <funcIds>       .Map </funcIds>
+          <memIds>        .Map </memIds>
           <globIds>       .Map </globIds>
           <nextTypeIdx>   0    </nextTypeIdx>
           <nextFuncIdx>   0    </nextFuncIdx>
@@ -1070,24 +1071,25 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
 
 ```k
     syntax Defn       ::= MemoryDefn
-    syntax MemoryDefn ::= "(" "memory"                            ")"
-                        | "(" "memory"     Int                    ")" // Size only
-                        | "(" "memory"     Int Int                ")" // Min and max.
-                        | "(" "memory" "(" "data" DataStrings ")" ")"
-                        |     "memory" "{" Int MaxBound "}"
- // -------------------------------------------------------
-    rule <k> ( memory                 ) => memory { 0   .MaxBound } ... </k>
-    rule <k> ( memory MIN:Int         ) => memory { MIN .MaxBound } ... </k>
+    syntax MemoryDefn ::= "(" "memory" OptionalId Int                        ")" // Size only
+                        | "(" "memory" OptionalId Int Int                    ")" // Min and max.
+                        | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
+                        |     "memory" "{" OptionalId Int MaxBound "}"
+ // ------------------------------------------------------------------
+    rule <k> ( memory ID:OptionalId MIN:Int         ) => memory { ID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory MIN:Int MAX:Int ) => memory { MIN MAX       } ... </k>
+    rule <k> ( memory ID:OptionalId MIN:Int MAX:Int ) => memory { ID MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-    rule <k> ( memory ( data DS ) )
-          =>  memory { #lengthDataPages(DS) #lengthDataPages(DS) }
+    rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+    rule <k> ( memory ID ( data DS ) )
+          =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
           ~> ( data (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
+       andBool isIdentifier(ID)
 
-    rule <k> memory { _ _ } => trap ... </k>
+    rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1096,7 +1098,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
          </moduleInst>
       requires MAP =/=K .Map
 
-    rule <k> memory { MIN MAX } => . ... </k>
+    rule <k> memory { ID MIN MAX } => saveId("mem", ID, 0) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1463,6 +1465,13 @@ This rule handles storing an `OptionalId` in the correct lookup table.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <funcIds> IDS => IDS [ ID <- IDX ] </funcIds>
+           ...
+         </moduleInst>
+    rule <k> saveId ("mem", ID:Identifier, IDX) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIds> IDS => IDS [ ID <- IDX ] </memIds>
            ...
          </moduleInst>
     rule <k> saveId ("glob", ID:Identifier, IDX) => . ... </k>
