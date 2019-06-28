@@ -798,12 +798,6 @@ Function Declaration and Invocation
 This section introduce how we expand the folded form of function export.
 Currently, in the expanded form, the `export`s will come after the definition of function.
 
-```k
-    syntax FuncExport  ::= "(" "export" String ")"
-    syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)]
- // --------------------------------------------------------------------
-```
-
 ### Function Local Declaration
 
 ```k
@@ -852,21 +846,21 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
 ```k
     syntax Defn     ::= FuncDefn
-    syntax FuncDefn ::= "(" "func" OptionalId FuncExports TypeUse LocalDecls Instrs ")"
- // -----------------------------------------------------------------------------------
-    rule <k> ( func FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
+    syntax FuncDefn ::= "(" "func" OptionalId InlineExports TypeUse LocalDecls Instrs ")"
+ // -------------------------------------------------------------------------------------
+    rule <k> ( func FEXPO:InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
-    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
+    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( export ENAME ( func FNAME ) )
           ~> ( func FNAME FEXPO TUSE LDECLS INSTRS )
           ...
          </k>
 
-    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> ( func FNAME:Identifier .InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -998,6 +992,15 @@ Now it contains only Function exports. The exported functions should be able to 
            <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
            ...
          </moduleInst>
+```
+
+Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
+We deal with these in the sections related to functions, memories, etc.
+
+```k
+    syntax InlineExport  ::= "(" "export" String ")"
+    syntax InlineExports ::= List{InlineExport, ""} [klabel(listInlineExport)]
+ // --------------------------------------------------------------------------
 ```
 
 Table
@@ -1521,6 +1524,14 @@ The value of a global gets copied when it is imported.
            <gValue> VAL  </gValue>
            ...
         </globalInst>
+```
+
+Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
+We deal with these in the sections related to functions, memories, etc.
+
+```k
+    syntax InlineImport ::= "(" "import" String String ")"
+ // ------------------------------------------------------
 ```
 
 Module Instantiation
