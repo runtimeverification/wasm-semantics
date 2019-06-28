@@ -782,12 +782,13 @@ Type could be declared explicitly and could optionally bind with an identifier.
     syntax Defn     ::= TypeDefn
     syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
-    rule <k> (type ID (func TDECLS:TypeDecls)) => saveId("type", ID, NEXTIDX) ... </k>
+    rule <k> (type ID (func TDECLS:TypeDecls)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <typeIds> IDS => #saveId(IDS, ID, NEXTIDX) </typeIds>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-           <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
+           <types> TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
            ...
          </moduleInst>
 ```
@@ -875,7 +876,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => saveId(IDS, FNAME, NEXTIDX) </funcIds>
+           <funcIds> IDS => #saveId(IDS, FNAME, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
            ...
@@ -1022,11 +1023,11 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     rule <k> ( table ID:OptionalId MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) (elem ES) ) ... </k>
+    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
     rule <k> ( table ID:Identifier funcref ( elem ES ) )
           =>  table { ID #lengthElemSegment(ES) #lengthElemSegment(ES) }
-          ~> ( elem ID ES )
+          ~> ( elem ID (i32.const 0) ES )
           ...
          </k>
 
@@ -1039,11 +1040,11 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
          </moduleInst>
        requires MAP =/=K .Map
 
-    rule <k> table { ID MIN MAX } => saveId("tab", ID, 0) ... </k>
+    rule <k> table { ID MIN MAX } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIds> IDS => saveId(IDS, FNAME, 0) </tabIds>
+           <tabIds> IDS => #saveId(IDS, ID, 0) </tabIds>
            <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
            ...
          </moduleInst>
@@ -1085,7 +1086,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
     rule <k> ( memory ID:Identifier ( data DS ) )
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data ID DS ) ... </k>
+          ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
        andBool isIdentifier(ID)
 
@@ -1098,11 +1099,11 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
          </moduleInst>
       requires MAP =/=K .Map
 
-    rule <k> memory { ID MIN MAX } => ... </k>
+    rule <k> memory { ID MIN MAX } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS => saveId(IDS, FNAME, 0) </memIds>
+           <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
            <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
            ...
          </moduleInst>
@@ -1369,7 +1370,8 @@ A table index is optional and will be default to zero.
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIndices> TABIDX |-> ADDR </tabIndices>
+           <tabIds> IDS </tabIds>
+           <tabIndices> #ContextLookup(IDS, TABIDX) |-> ADDR </tabIndices>
            ...
          </moduleInst>
 
@@ -1404,7 +1406,8 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> MEMIDX |-> ADDR </memIndices>
+             <memIds> IDS </memIds>
+           <memIndices> #ContextLookup(IDS, MEMIDX) |-> ADDR </memIndices>
            ...
          </moduleInst>
          <memInst>
@@ -1504,9 +1507,9 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
                         |     "module" Map
  // --------------------------------------
     rule <k> ( module ID:OptionalId DEFNS )
-          => saveId("module", ID, NEXT)
-          ~> module structureModule(DEFNS) ... </k>
+          => module structureModule(DEFNS) ... </k>
          <nextModuleIdx> NEXT </nextModuleIdx>
+         <moduleIds> IDS => #saveId(IDS, ID, NEXT) </moduleIds>
 
     rule <k> module MOD
           => MOD["typeDecls"]

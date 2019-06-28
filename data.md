@@ -45,11 +45,11 @@ In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` bein
 This rule handles adding an `OptionalId` as a map key, but only when it is a proper identifier.
 
 ```k
-    syntax Instr ::= "saveId" "(" Map "," OptionalId "," Int ")" [function]
- // -----------------------------------------------------------------------
-    rule saveId (MAP, ID:OptionalId, _) => MAP
+    syntax Map ::= #saveId (Map, OptionalId, Int) [function]
+ // -------------------------------------------------------
+    rule #saveId (MAP, ID:OptionalId, _) => MAP
       requires notBool isIdentifier(ID)
-    rule saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
+    rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
 ```
 
 ### Text Format Indices
