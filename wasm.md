@@ -25,13 +25,13 @@ Configuration
         <moduleInst multiplicity="*" type="Map">
           <modIdx>        0    </modIdx>
           <typeIds>       .Map </typeIds>
-          <funcIds>       .Map </funcIds> //this is mapping from identifier to index
+          <funcIds>       .Map </funcIds>
           <globIds>       .Map </globIds>
           <nextTypeIdx>   0    </nextTypeIdx>
           <nextFuncIdx>   0    </nextFuncIdx>
           <nextGlobIdx>   0    </nextGlobIdx>
           <types>         .Map </types>
-          <funcIndices>   .Map </funcIndices> //this is mapping from index to address
+          <funcIndices>   .Map </funcIndices>
           <tabIndices>    .Map </tabIndices>
           <memIndices>    .Map </memIndices>
           <globalIndices> .Map </globalIndices>
@@ -778,25 +778,14 @@ Type could be declared explicitly and could optionally bind with an identifier.
 
 ```k
     syntax Defn     ::= TypeDefn
-    syntax TypeDefn ::= "(type" "(" "func" TypeDecls ")" ")"
-                      | "(type" Identifier "(" "func" TypeDecls ")" ")"
+    syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
-    rule <k> (type (func TDECLS:TypeDecls)) => . ... </k>
+    rule <k> (type ID (func TDECLS:TypeDecls)) => saveId("type", ID, NEXTIDX) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
            <types>       TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
-           ...
-         </moduleInst>
-
-    rule <k> (type ID:Identifier (func TDECLS:TypeDecls)) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <typeIds>     IDS     => IDS   [ ID <- NEXTIDX ]                 </typeIds>
-           <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1                          </nextTypeIdx>
-           <types>       TYPES   => TYPES [ NEXTIDX <- asFuncType(TDECLS) ] </types>
            ...
          </moduleInst>
 ```
@@ -1444,6 +1433,42 @@ Start Function
            <modIdx> CUR </modIdx>
            <funcIds> IDS </funcIds>
            <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
+```
+
+Identifiers
+-----------
+
+Though each part of a module (each function, global, etc.) primarily has an index, the text format also allows us to refer to them by identifiers.
+We commonly want to store these optional identifiers when allocating something.
+In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` being an index.
+This rule handles storing an `OptionalId` in the correct lookup table.
+
+```k
+    syntax Instr ::= "saveId" "(" String "," OptionalId "," Int ")"
+ // ---------------------------------------------------------------
+    rule <k> saveId (_, ID:OptionalId, _) => . ... </k>
+      requires ID ==K ""
+    rule <k> saveId ("type", ID:Identifier, IDX) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> IDS => IDS [ ID <- IDX ] </typeIds>
+           ...
+         </moduleInst>
+    rule <k> saveId ("func", ID:Identifier, IDX) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS => IDS [ ID <- IDX ] </funcIds>
+           ...
+         </moduleInst>
+    rule <k> saveId ("glob", ID:Identifier, IDX) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globIds> IDS => IDS [ ID <- IDX ] </globIds>
            ...
          </moduleInst>
 ```
