@@ -567,10 +567,10 @@ Finally, we have the conditional and loop instructions.
     syntax BlockInstr  ::= "if" TypeDecls Instrs "else" Instrs "end"
                          | "if" TypeDecls Instrs               "end"
  // ----------------------------------------------------------------
-    rule <k> ( if TDECLS C:Instrs ( then IS ) )              => C ~> ( if TDECLS IS else .Instrs end ) ... </k>
-    rule <k> ( if TDECLS C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if TDECLS IS else IS'     end ) ... </k>
+    rule <k> ( if TDECLS C:Instrs ( then IS ) )              => C ~> ( if TDECLS IS else .Instrs end )  ... </k>
+    rule <k> ( if TDECLS C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if TDECLS IS else IS'     end )  ... </k>
 
-    rule <k> if TDECLS IS          end => if TDECLS IS else .Instrs end ... </k>
+    rule <k> if TDECLS IS          end => if TDECLS IS else .Instrs end                                 ... </k>
     rule <k> if TDECLS IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
