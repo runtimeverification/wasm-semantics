@@ -858,7 +858,7 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
           => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS ) ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-      requires ID ==K ""
+      requires notBool isIdentifier(ID)
 
     rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( export ENAME ( func FNAME ) )
@@ -866,13 +866,14 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
           ...
          </k>
 
-    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
+          => saveId("func", FNAME, NEXTIDX)
+          ~> #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => IDS [ FNAME <- NEXTIDX ] </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
            ...
@@ -1471,6 +1472,8 @@ This rule handles storing an `OptionalId` in the correct lookup table.
            <globIds> IDS => IDS [ ID <- IDX ] </globIds>
            ...
          </moduleInst>
+    rule <k> saveId ("module", ID:Identifier, IDX) => . ... </k>
+         <moduleIds> IDS => IDS [ ID <- IDX ] </moduleIds>
 ```
 
 Module Instantiation
@@ -1532,15 +1535,13 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 
 ```k
     syntax Stmt       ::= ModuleDecl
-    syntax ModuleDecl ::= "(" "module" Defns ")"
-                        | "(" "module" Identifier Defns ")"
+    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
                         |     "module" Map
  // --------------------------------------
-    rule <k> ( module ID:Identifier DEFNS ) => ( module DEFNS ) ... </k>
-         <moduleIds> ... .Map => ID |-> NEXT ... </moduleIds>
+    rule <k> ( module ID:OptionalId DEFNS )
+          => saveId("module", ID, NEXT)
+          ~> module structureModule(DEFNS) ... </k>
          <nextModuleIdx> NEXT </nextModuleIdx>
-
-    rule <k> ( module DEFNS ) => module structureModule(DEFNS) ... </k>
 
     rule <k> module MOD
           => MOD["typeDecls"]
