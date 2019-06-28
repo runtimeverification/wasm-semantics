@@ -137,6 +137,14 @@ The `#width` function returns the bit-width of a given `IValType`.
  // ---------------------------------------
 ```
 
+### Limits
+
+Tables and memories have limits, defined as either a sinlge `Int` or two `Int`s, representing min and max bounds.
+
+```k
+    syntax Limits ::= Int | Int Int
+```
+
 Values
 ------
 

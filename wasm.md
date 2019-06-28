@@ -1013,11 +1013,10 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
 
 ```k
     syntax Defn      ::= TableDefn
-    syntax TableDefn ::= "(" "table"     OptionalId Int          TableElemType ")" // Size only
-                       | "(" "table"     OptionalId Int Int      TableElemType ")" // Min and max.
-                       | "(" "table"     OptionalId              TableElemType "(" "elem" ElemSegment ")" ")"
+    syntax TableDefn ::= "(" "table"     OptionalId Limits TableElemType ")"
+                       | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
                        |     "table" "{" OptionalId Int MaxBound "}"
- // -----------------------------------------------------
+ // ----------------------------------------------------------------
     rule <k> ( table ID:OptionalId MIN:Int         funcref ) => table { ID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
     rule <k> ( table ID:OptionalId MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
@@ -1070,8 +1069,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
 
 ```k
     syntax Defn       ::= MemoryDefn
-    syntax MemoryDefn ::= "(" "memory" OptionalId Int                        ")" // Size only
-                        | "(" "memory" OptionalId Int Int                    ")" // Min and max.
+    syntax MemoryDefn ::= "(" "memory" OptionalId Limits                     ")"
                         | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
  // ------------------------------------------------------------------
