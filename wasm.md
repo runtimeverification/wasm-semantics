@@ -566,7 +566,7 @@ Finally, we have the conditional and loop instructions.
                          | "(" "if" TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
     syntax BlockInstr  ::= "if" TypeDecls Instrs "else" Instrs "end"
                          | "if" TypeDecls Instrs               "end"
- // --------------------------------------------------------------
+ // ----------------------------------------------------------------
     rule <k> ( if TDECLS C:Instrs ( then IS ) )              => C ~> ( if TDECLS IS else .Instrs end ) ... </k>
     rule <k> ( if TDECLS C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if TDECLS IS else IS'     end ) ... </k>
 
@@ -653,8 +653,6 @@ When globals are declared, they must also be given a constant initialization val
                         | "(" "global" Identifier TextGlobalType Instr ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule asGMut ( (mut T:ValType ) ) => var   T
-    rule asGMut (      T:ValType   ) => const T
     rule <k> ( global ID:Identifier TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>

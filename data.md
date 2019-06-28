@@ -108,7 +108,7 @@ Also we can reverse a `ValTypes` with `#revt`
     syntax ValTypes ::= #revt ( ValTypes ) [function]
  // -------------------------------------------------
     rule #revt(.ValTypes) => .ValTypes
-    rule #revt(V VS)    => #revt(VS) + V .ValTypes
+    rule #revt(V VS)      => #revt(VS) + V .ValTypes
 ```
 
 ### Type Information
