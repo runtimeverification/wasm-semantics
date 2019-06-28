@@ -15,13 +15,13 @@
 
 (module
   (func (export "no_dce.i32.div_s") (param i32) (param i32)
-    (drop (i32.div_s (local.get 1) (local.get 0))))
+    (drop (i32.div_s (local.get 0) (local.get 1))))
   (func (export "no_dce.i32.div_u") (param i32) (param i32)
-    (drop (i32.div_u (local.get 1) (local.get 0))))
+    (drop (i32.div_u (local.get 0) (local.get 1))))
   (func (export "no_dce.i64.div_s") (param i64) (param i64)
-    (drop (i64.div_s (local.get 1) (local.get 0))))
+    (drop (i64.div_s (local.get 0) (local.get 1))))
   (func (export "no_dce.i64.div_u") (param i64) (param i64)
-    (drop (i64.div_u (local.get 1) (local.get 0))))
+    (drop (i64.div_u (local.get 0) (local.get 1))))
 )
 
 (assert_trap (invoke "no_dce.i32.div_s" (i32.const 1) (i32.const 0)) "integer divide by zero")

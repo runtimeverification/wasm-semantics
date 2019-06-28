@@ -102,6 +102,18 @@ We can append two `ValTypes`s with the `_+_` operator.
     rule (VT:ValType VTYPES) + VTYPES' => VT (VTYPES + VTYPES')
 ```
 
+Also we can reverse a `ValTypes` with `#revt`
+
+```k
+    syntax ValTypes ::= #revt ( ValTypes )            [function]
+                      | #revt ( ValTypes , ValTypes ) [function, klabel(#revtAux)]
+ // ------------------------------------------------------------------------------
+    rule #revt(VT) => #revt(VT, .ValTypes)
+
+    rule #revt(.ValTypes, VT') => VT'
+    rule #revt(V VT     , VT') => #revt(VT, V VT')
+```
+
 ### Type Information
 
 The `#width` function returns the bit-width of a given `IValType`.
@@ -234,10 +246,12 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 `#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
 
 ```k
-    syntax ValStack ::= #zero ( ValTypes )         [function]
-                   | #take ( ValTypes , ValStack ) [function]
-                   | #drop ( ValTypes , ValStack ) [function]
- // ---------------------------------------------------------
+    syntax ValStack ::= #zero ( ValTypes )            [function]
+                      | #take ( ValTypes , ValStack ) [function]
+                      | #drop ( ValTypes , ValStack ) [function]
+                      | #revs ( ValStack )            [function]
+                      | #revs ( ValStack , ValStack ) [function, klabel(#revsAux)]
+ // ------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
@@ -246,6 +260,11 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 
     rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
+
+    rule #revs(VS) => #revs(VS, .ValStack)
+
+    rule #revs(.ValStack, VS') => VS'
+    rule #revs(V : VS   , VS') => #revs(VS, V : VS')
 ```
 
 Strings

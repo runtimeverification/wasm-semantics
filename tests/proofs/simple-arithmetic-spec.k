@@ -22,8 +22,8 @@ module SIMPLE-ARITHMETIC-SPEC
       requires 0 <=Int X andBool 0 <=Int Y
        andBool (X +Int Y) <Int #pow(ITYPE)
 
-    rule <k> block [ .ValTypes ]
-                 ( loop [ .ValTypes ]
+    rule <k> block .TypeDecls
+                 ( loop .TypeDecls
                      (local.get 0)
                      (local.get 1)
                      (i32.add)

@@ -4,14 +4,14 @@
 
 ;; Blocks
 
-block [ i32 i32 i32 ]
+block (result i32 i32 i32)
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
 end
 #assertStack < i32 > 3 : < i32 > 2 : < i32 > 1 : .ValStack "block 1"
 
-block [ i32 i32 ]
+block (result i32 i32)
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
@@ -19,7 +19,7 @@ block [ i32 i32 ]
 end
 #assertStack < i32 > 2 : < i32 > 1 : .ValStack "block 2"
 
-block [ i32 i32 ]
+block (result i32 i32)
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)
@@ -42,7 +42,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ ]
+block
     (i32.const 3)
     (br 0)
     (i32.const 4)
@@ -52,9 +52,9 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ ]
+block
     (i32.const 3)
-    block [ i32 i32 ]
+    block (result i32 i32)
         (i32.const 4)
         (i32.const 5)
         (br 1)
@@ -66,9 +66,9 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 i32 ]
+block (result i32 i32)
     (i32.const 3)
-    block [ i32 i32 ]
+    block (result i32 i32)
         (i32.const 4)
         (i32.const 5)
         (br 1)
@@ -80,9 +80,9 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 i32 ]
+block (result i32 i32)
     (i32.const 3)
-    block [ ]
+    block
         (i32.const 4)
         (i32.const 5)
         (br 1)
@@ -94,7 +94,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 ]
+block (result i32)
     (i32.const 3)
     (i32.const 0)
     (br_if 0)
@@ -105,7 +105,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ i32 ]
+block (result i32)
     (i32.const 3)
     (i32.const 1)
     (br_if 0)
@@ -116,7 +116,7 @@ end
 
 (i32.const 1)
 (i32.const 2)
-block [ ]
+block
     (i32.const 3)
     (i32.const 1)
     (br_if 0)
@@ -128,44 +128,44 @@ end
 ;; Conditional
 
 (i32.const 1)
-if [ i32 ] i32.const 1 else i32.const -1 end
+if (result i32) i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > 1 "if true"
 
 (i32.const 0)
-if [ i32 ] i32.const 1 else i32.const -1 end
+if (result i32) i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
 
 (i32.const -1)
-(if [ ] (i32.const 0) (then))
+(if (i32.const 0) (then))
 #assertTopStack < i32 > -1 "if folded false empty"
 
 (i32.const -1)
-(if [ i32 ] (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
+(if (result i32) (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
 #assertStack < i32 > 1 : < i32 > -1 : .ValStack "if folded true"
 
 (i32.const -1)
-(if [ i32 ] (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
+(if (result i32) (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
 #assertStack < i32 > 2 : < i32 > -1 : .ValStack "if folded false"
 
-(if [ i32 ] (i32.const 1) (then (unreachable)) (else (i32.const 1)))
+(if (result i32) (i32.const 1) (then (unreachable)) (else (i32.const 1)))
 #assertTrap "if lazy first branch true"
 
-(if [ i32 ] (i32.const 0) (then (unreachable)) (else (i32.const 1)))
+(if (result i32) (i32.const 0) (then (unreachable)) (else (i32.const 1)))
 #assertTopStack < i32 > 1 "if lazy first branch false"
 
-(if [ i32 ] (i32.const 1) (then (i32.const -1)) (else (unreachable)))
+(if (result i32) (i32.const 1) (then (i32.const -1)) (else (unreachable)))
 #assertTopStack < i32 > -1 "if lazy second branch true"
 
-(if [ i32 ] (i32.const 0) (then (i32.const -1)) (else (unreachable)))
+(if (result i32) (i32.const 0) (then (i32.const -1)) (else (unreachable)))
 #assertTrap "if lazy second branch false"
 
-(if [ i32 ] (unreachable) (then (i32.const -1)) (else (unreachable)))
+(if (result i32) (unreachable) (then (i32.const -1)) (else (unreachable)))
 #assertTrap "if strict condition"
 
 ;; Looping
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
-loop [ ]
+loop
     (local.get 0)
     (local.get 1)
     (i32.add)
@@ -180,8 +180,8 @@ end
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop"
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
-block [ ]
-    ( loop [ ]
+block
+    ( loop
         (local.get 0)
         (local.get 1)
         (i32.add)
