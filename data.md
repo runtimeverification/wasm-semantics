@@ -106,9 +106,11 @@ Also we can reverse a `ValTypes` with `#revt`
 
 ```k
     syntax ValTypes ::= #revt ( ValTypes ) [function]
- // -------------------------------------------------
-    rule #revt(.ValTypes) => .ValTypes
-    rule #revt(V VS)      => #revt(VS) + V .ValTypes
+                      | #revt ( ValTypes , ValTypes ) [function, klabel(#revtAux)]
+ // ------------------------------------------------------------------------------
+    rule #revt(VT) => #revt(VT, .ValTypes)
+    rule #revt(.ValTypes, VT') => VT'
+    rule #revt(V VT, VT') => #revt(VT, V VT')
 ```
 
 ### Type Information
@@ -247,7 +249,8 @@ Operator `_++_` implements an append operator for sort `ValStack`.
                       | #take ( ValTypes , ValStack ) [function]
                       | #drop ( ValTypes , ValStack ) [function]
                       | #revs ( ValStack )            [function]
- // ------------------------------------------------------------
+                      | #revs ( ValStack , ValStack ) [function, klabel(#revsAux)]
+ // ------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
@@ -257,8 +260,9 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 
-    rule #revs(.ValStack) => .ValStack
-    rule #revs(V : VS)    => #revs(VS) ++ V : .ValStack
+    rule #revs(VS) => #revs(VS, .ValStack)
+    rule #revs(.ValStack, VS') => VS'
+    rule #revs(V : VS, VS') => #revs(VS, V : VS')
 ```
 
 Strings
