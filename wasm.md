@@ -26,6 +26,7 @@ Configuration
           <modIdx>        0    </modIdx>
           <typeIds>       .Map </typeIds>
           <funcIds>       .Map </funcIds>
+          <tabIds>        .Map </tabIds>
           <memIds>        .Map </memIds>
           <globIds>       .Map </globIds>
           <nextTypeIdx>   0    </nextTypeIdx>
@@ -1012,25 +1013,23 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
 
 ```k
     syntax Defn      ::= TableDefn
-    syntax TableDefn ::= "(" "table"                  TableElemType ")"
-                       | "(" "table"     Int          TableElemType ")" // Size only
-                       | "(" "table"     Int Int      TableElemType ")" // Min and max.
-                       | "(" "table"                  TableElemType "(" "elem" ElemSegment ")" ")"
-                       |     "table" "{" Int MaxBound "}"
+    syntax TableDefn ::= "(" "table"     OptionalId Int          TableElemType ")" // Size only
+                       | "(" "table"     OptionalId Int Int      TableElemType ")" // Min and max.
+                       | "(" "table"     OptionalId              TableElemType "(" "elem" ElemSegment ")" ")"
+                       |     "table" "{" OptionalId Int MaxBound "}"
  // -----------------------------------------------------
-    rule <k> ( table                 funcref )       => table { 0   .MaxBound } ... </k>
-    rule <k> ( table MIN:Int         funcref ):Defn  => table { MIN .MaxBound } ... </k>
+    rule <k> ( table ID:OptionalId MIN:Int         funcref ) => table { ID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table MIN:Int MAX:Int funcref )       => table { MIN MAX       } ... </k>
+    rule <k> ( table ID:OptionalId MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-    rule <k> ( table funcref ( elem ES ) )
-          =>  table { #lengthElemSegment(ES) #lengthElemSegment(ES) }
+    rule <k> ( table ID funcref ( elem ES ) )
+          =>  table { ID #lengthElemSegment(ES) #lengthElemSegment(ES) }
           ~> ( elem (i32.const 0) ES )
           ...
          </k>
 
-    rule <k> table { _ _ } => trap ... </k>
+    rule <k> table { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1039,7 +1038,7 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
          </moduleInst>
        requires MAP =/=K .Map
 
-    rule <k> table { MIN MAX } => . ... </k>
+    rule <k> table { ID MIN MAX } => saveId("tab", ID, 0) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1465,6 +1464,13 @@ This rule handles storing an `OptionalId` in the correct lookup table.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <funcIds> IDS => IDS [ ID <- IDX ] </funcIds>
+           ...
+         </moduleInst>
+    rule <k> saveId ("tab", ID:Identifier, IDX) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIds> IDS => IDS [ ID <- IDX ] </tabIds>
            ...
          </moduleInst>
     rule <k> saveId ("mem", ID:Identifier, IDX) => . ... </k>
