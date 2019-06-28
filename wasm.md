@@ -524,7 +524,7 @@ It simply executes the block then records a label with an empty continuation.
 
     syntax FoldedInstr ::= "(" "block" TypeDecls Instrs ")"
     syntax BlockInstr  ::= "block" TypeDecls Instrs "end"
- // ---------------------------------------------------
+ // -----------------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
           => block FDECLS INSTRS end
          ...
@@ -922,9 +922,9 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
-          => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
+          => init_locals #revs(#take(#revt(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
           ~> INSTRS
-          ~> frame MODIDX TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
+          ~> frame MODIDX TRANGE #drop(#revt(TDOMAIN), VALSTACK) LOCAL
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
