@@ -105,12 +105,13 @@ We can append two `ValTypes`s with the `_+_` operator.
 Also we can reverse a `ValTypes` with `#revt`
 
 ```k
-    syntax ValTypes ::= #revt ( ValTypes ) [function]
+    syntax ValTypes ::= #revt ( ValTypes )            [function]
                       | #revt ( ValTypes , ValTypes ) [function, klabel(#revtAux)]
  // ------------------------------------------------------------------------------
     rule #revt(VT) => #revt(VT, .ValTypes)
+
     rule #revt(.ValTypes, VT') => VT'
-    rule #revt(V VT, VT') => #revt(VT, V VT')
+    rule #revt(V VT     , VT') => #revt(VT, V VT')
 ```
 
 ### Type Information
@@ -261,8 +262,9 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 
     rule #revs(VS) => #revs(VS, .ValStack)
+
     rule #revs(.ValStack, VS') => VS'
-    rule #revs(V : VS, VS') => #revs(VS, V : VS')
+    rule #revs(V : VS   , VS') => #revs(VS, V : VS')
 ```
 
 Strings
