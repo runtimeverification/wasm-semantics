@@ -857,7 +857,8 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax FuncDefn ::= "(" "func" OptionalId FuncExports TypeUse LocalDecls Instrs ")"
  // -----------------------------------------------------------------------------------
     rule <k> ( func ID:OptionalId FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
-          => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS ) ...
+          => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS )
+          ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
       requires notBool isIdentifier(ID)

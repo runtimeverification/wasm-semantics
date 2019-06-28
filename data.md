@@ -34,6 +34,8 @@ Also we use `#freshId ( Int )` to generate a fresh identifier based on the eleme
 ```k
     syntax Identifier ::= #freshId ( Int )
                         | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
+ // ------------------------------------------------------------------------
+
     syntax OptionalId ::= "" [klabel(.Identifier)]
                         | Identifier
  // --------------------------------
@@ -154,6 +156,7 @@ Tables and memories have limits, defined as either a sinlge `Int` or two `Int`s,
 
 ```k
     syntax Limits ::= Int | Int Int
+ // -------------------------------
 ```
 
 Values
