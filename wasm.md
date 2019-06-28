@@ -852,13 +852,13 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
 
 ```k
     syntax Defn     ::= FuncDefn
-    syntax FuncDefn ::= "(" "func"            FuncExports TypeUse LocalDecls Instrs ")"
-                      | "(" "func" Identifier FuncExports TypeUse LocalDecls Instrs ")"
+    syntax FuncDefn ::= "(" "func" OptionalId FuncExports TypeUse LocalDecls Instrs ")"
  // -----------------------------------------------------------------------------------
-    rule <k> ( func FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
+    rule <k> ( func ID:OptionalId FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS ) ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+      requires ID ==K ""
 
     rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( export ENAME ( func FNAME ) )
