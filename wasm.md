@@ -525,14 +525,14 @@ It simply executes the block then records a label with an empty continuation.
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax FoldedInstr ::= "(" "block" TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "block" VecType Instrs "end"
- // ---------------------------------------------------
+    syntax BlockInstr  ::= "block" TypeDecls Instrs "end"
+ // -----------------------------------------------------
     rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
-          => block gatherTypes(result, FDECLS) INSTRS end
+          => block FDECLS INSTRS end
          ...
          </k>
 
-    rule <k> block VTYPE IS end => IS ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> block FDECLS IS end => IS ~> label gatherTypes(result, FDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -564,30 +564,28 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if" VecType Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" VecType Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-                         | "(" "if"         Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-    syntax BlockInstr  ::= "if" VecType Instrs "else" Instrs "end"
-                         | "if" VecType Instrs               "end"
- // --------------------------------------------------------------
-    rule <k> ( if VTYPE C:Instrs ( then IS ) )              => C ~> ( if VTYPE IS else .Instrs end ) ... </k>
-    rule <k> ( if VTYPE C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if VTYPE IS else IS'     end ) ... </k>
-    rule <k> ( if       C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if [ .ValTypes ] IS else IS' end ) ... </k>
+    syntax FoldedInstr ::= "(" "if" TypeDecls Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+    syntax BlockInstr  ::= "if" TypeDecls Instrs "else" Instrs "end"
+                         | "if" TypeDecls Instrs               "end"
+ // ----------------------------------------------------------------
+    rule <k> ( if TDECLS C:Instrs ( then IS ) )              => C ~> ( if TDECLS IS else .Instrs end )  ... </k>
+    rule <k> ( if TDECLS C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if TDECLS IS else IS'     end )  ... </k>
 
-    rule <k> if VTYPE IS          end => if VTYPE IS else .Instrs end ... </k>
-    rule <k> if VTYPE IS else IS' end => IS  ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if TDECLS IS          end => if TDECLS IS else .Instrs end                                 ... </k>
+    rule <k> if TDECLS IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL =/=Int 0
-    rule <k> if VTYPE IS else IS' end => IS' ~> label VTYPE { .Instrs } VALSTACK ... </k>
+    rule <k> if TDECLS IS else IS' end => IS' ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
        requires VAL  ==Int 0
 
-    syntax FoldedInstr ::=  "(" "loop" VecType Instrs ")"
-    syntax BlockInstr  ::= "loop" VecType Instrs "end"
- // --------------------------------------------------
-    rule <k> ( loop FDECLS IS ) => loop FDECLS IS end ... </k>
+    syntax FoldedInstr ::=  "(" "loop" TypeDecls Instrs ")"
+    syntax BlockInstr  ::= "loop" TypeDecls Instrs "end"
+ // ----------------------------------------------------
+    rule <k> ( loop TDECLS IS ) => loop TDECLS IS end ... </k>
 
-    rule <k> loop VTYPE IS end => IS ~> label [ .ValTypes ] { loop VTYPE IS end } VALSTACK ... </k>
+    rule <k> loop TDECLS IS end => IS ~> label [ .ValTypes ] { loop TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -653,11 +651,11 @@ When globals are declared, they must also be given a constant initialization val
     rule asGMut (      T:ValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalDefn ::= "(" "global"               TextGlobalType Instr ")"
-                        | "(" "global" TextFormatIdx TextGlobalType Instr ")"
+    syntax GlobalDefn ::= "(" "global"            TextGlobalType Instr ")"
+                        | "(" "global" Identifier TextGlobalType Instr ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule <k> ( global ID:TextFormatIdx TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
+    rule <k> ( global ID:Identifier TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -693,15 +691,16 @@ When globals are declared, they must also be given a constant initialization val
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax PlainInstr ::= "global.get" Int
-                        | "global.set" Int
- // --------------------------------------
-    rule <k> global.get INDEX => . ... </k>
+    syntax PlainInstr ::= "global.get" TextFormatIdx
+                        | "global.set" TextFormatIdx
+ // ------------------------------------------------
+    rule <k> global.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           <globIds> IDS </globIds>
+           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globalInst>
@@ -710,12 +709,13 @@ The `get` and `set` instructions read and write globals.
            ...
          </globalInst>
 
-    rule <k> global.set INDEX => . ... </k>
+    rule <k> global.set TFIDX => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globalIndices> ... INDEX |-> GADDR ... </globalIndices>
+           <globIds> IDS </globIds>
+           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
            ...
          </moduleInst>
          <globalInst>
@@ -908,13 +908,20 @@ Unlike labels, only one frame can be "broken" through at a time.
          <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
+```
 
+When we invoke a function, the element on the top of the stack will become the last parameter of the function.
+For example, when we call `(invoke "foo" (i64.const 100) (i64.const 43) (i32.const 22))`, `(i32.const 22)` will be on the top of `<valstack>`, but it will be the last parameter of this function invocation if this function takes 3 parameters.
+That is, whenever we want to `#take` or `#drop` an array of `params`, we need to reverse the array of `params` to make the type of the last parameter matching with the type of the valur on the top of stack.
+The `#take` function will return the parameter stack in the reversed order, then we need to reverse the stack again to get the actual parameter array we want.
+
+```k
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
-          => init_locals #take(TDOMAIN, VALSTACK) ++ #zero(TLOCALS)
+          => init_locals #revs(#take(#revt(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
           ~> INSTRS
-          ~> frame MODIDX TRANGE #drop(TDOMAIN, VALSTACK) LOCAL
+          ~> frame MODIDX TRANGE #drop(#revt(TDOMAIN), VALSTACK) LOCAL
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>

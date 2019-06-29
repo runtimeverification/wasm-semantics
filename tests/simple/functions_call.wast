@@ -49,21 +49,15 @@
 ;; More complicated function with locals
 
 (func $1 param i64 i64 i64 result i64 local i64
-        (local.get 2)
-          (local.get 0)
-          (local.get 1)
-        (i64.add)
-      (i64.sub)
+    (i64.sub (local.get 2) (i64.add (local.get 0) (local.get 1)))
     (local.set 3)
     (local.get 3)
     (return)
 )
 
-(i64.const 100)
-(i64.const 43)
-(i64.const 22)
-(call $1)
-#assertTopStack < i64 > 35 "call function 1"
+( export "export-1" (func $1) )
+
+(assert_return (invoke "export-1" (i64.const 100) (i64.const 43) (i64.const 22)) (i64.const -121))
 #assertFunction $1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
 #assertType 1 [ i64 i64 i64 ] -> [ i64 ]
 #assertNextTypeIdx 2
@@ -75,11 +69,11 @@
     (return)
 )
 
-(i64.const 7)
+(i32.const 7)
 (i64.const 8)
-(i32.const 5)
+(i64.const 5)
 (call $2)
-#assertTopStack < i32 > 5 "out of order type declaration"
+#assertTopStack < i32 > 7 "out of order type declaration"
 #assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 #assertNextTypeIdx 3
 
@@ -90,26 +84,19 @@
     (return)
 )
 
-(i64.const 7)
-(i64.const 8)
-(call $1)
-#assertTopStack < i64 > 8 "empty type declaration"
-#assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
-#assertNextTypeIdx 4
-
-;; Function with empty declarations of types, and bracketed in parentheses
-
-(func $1 (param i64 i64) (result) (result i64) (param) (local)
+(func $1 (param i64 i64) (result i64)
     (local.get 0)
     (return)
 )
+(func (export "cool") (result i64)
+     i64.const 10
+     i64.const 11
+     call $1
+)
 
-(i64.const 7)
-(i64.const 8)
-(call $1)
-#assertTopStack < i64 > 8 "empty type declaration + parens"
-#assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations + parens"
-#assertNextTypeIdx 4
+(assert_return (invoke "cool") (i64.const 10))
+#assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
+#assertNextTypeIdx 5
 
 ;; Function with just a name
 
@@ -126,6 +113,15 @@
         (local.get 0)
         (local.get 1)
         (i32.add)
+        (return)
+    )
+
+    (func $sub (export "sub")
+        (param i32 i32)
+        (result i32)
+        (local.get 0)
+        (local.get 1)
+        (i32.sub)
         (return)
     )
 
@@ -147,6 +143,7 @@
 
 (assert_return (invoke "add" (i32.const 3) (i32.const 5)) (i32.const 8))
 (assert_return (invoke "mul" (i32.const 3) (i32.const 5)) (i32.const 15))
+(assert_return (invoke "sub" (i32.const 12) (i32.const 5)) (i32.const 7))
 (assert_return (invoke "xor" (i32.const 3) (i32.const 5)) (i32.const 6))
 
 #assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
@@ -184,22 +181,33 @@
 (i32.const 5)
 (i32.const 8)
 (call $f2)
-#assertTopStack < i32 > 77000 "nested method call"
+#assertTopStack < i32 > 14247936 "nested method call"
 #assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
 #assertFunction $f1 [ i32 i32     ] -> [ i32 ] [ i32     ] "inner calling method"
 
 (module
-    (func $dummy)
+    (func $func (param i32 i32) (result i32) (local.get 0))
+    (func (export "aaa") (result i32)
+    (block (result i32)
+        (call $func
+        (block (result i32) (i32.const 1)) (i32.const 2)
+        )
+    )
+    )
+)
 
-    (func $add (param i32 i32) (result i32)
+(assert_return (invoke "aaa") (i32.const 1))
+
+(module
+    (func $2 (export "cool-align-1") (export "cool-align-2") result i32 param i32 i64 param i64 local i32
         (local.get 0)
-        (local.get 1)
-        (i32.add)
         (return)
     )
 )
 
-#assertFunction $dummy [         ] -> [     ] [ ] "$dummy function in module"
-#assertFunction $add   [ i32 i32 ] -> [ i32 ] [ ] "second function in module"
+(assert_return (invoke "cool-align-1" (i32.const 7) (i64.const 8) (i64.const 3)) (i32.const 7))
+(assert_return (invoke "cool-align-2" (i32.const 1) (i64.const 5) (i64.const 7)) (i32.const 1))
+
+#assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 
 #clearConfig
