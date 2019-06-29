@@ -638,7 +638,7 @@ The `*_local` instructions are defined here.
 
 When globals are declared, they must also be given a constant initialization value.
 
-**TODO**: Import and export. Fix ids.
+**TODO**: Import and export.
 
 ```k
     syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
