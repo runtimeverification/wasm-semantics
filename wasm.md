@@ -788,7 +788,7 @@ Type could be declared explicitly and could optionally bind with an identifier.
            <modIdx> CUR </modIdx>
            <typeIds> IDS => #saveId(IDS, ID, NEXTIDX) </typeIds>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-           <types> TYPES   => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
+           <types> TYPES => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
            ...
          </moduleInst>
 ```
@@ -857,12 +857,11 @@ Here, we allow for an "abstract" function declaration using syntax `func_::___`,
     syntax Defn     ::= FuncDefn
     syntax FuncDefn ::= "(" "func" OptionalId FuncExports TypeUse LocalDecls Instrs ")"
  // -----------------------------------------------------------------------------------
-    rule <k> ( func ID:OptionalId FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
+    rule <k> ( func FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-      requires notBool isIdentifier(ID)
 
     rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
           => ( export ENAME ( func FNAME ) )
@@ -1406,7 +1405,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-             <memIds> IDS </memIds>
+           <memIds> IDS </memIds>
            <memIndices> #ContextLookup(IDS, MEMIDX) |-> ADDR </memIndices>
            ...
          </moduleInst>
