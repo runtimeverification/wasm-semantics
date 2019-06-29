@@ -651,20 +651,17 @@ When globals are declared, they must also be given a constant initialization val
     rule asGMut (      T:ValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalDefn ::= "(" "global"            TextGlobalType Instr ")"
-                        | "(" "global" Identifier TextGlobalType Instr ")"
+    syntax GlobalDefn ::= "(" "global" OptionalId TextGlobalType Instr ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule <k> ( global ID:Identifier TYP:TextGlobalType IS:Instr ) => ( global TYP IS ) ... </k>
+    rule <k> ( global ID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds>     IDS => IDS [ ID <- NEXTIDX ] </globIds>
+           <globIds> IDS => #saveId(IDS, ID, NEXTIDX) </globIds>
            <nextGlobIdx> NEXTIDX                      </nextGlobIdx>
            ...
          </moduleInst>
-
-    rule <k> ( global TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
 
     rule <k> global MUT:Mut TYP:ValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
