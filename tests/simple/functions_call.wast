@@ -1,13 +1,13 @@
 ;; Simple add function
 
-(type $a-cool-type (func (param i32 i32 ) ( result i32 )))
-#assertType $a-cool-type [ i32 i32 ] -> [ i32 ]
-#assertType 0 [ i32 i32 ] -> [ i32 ]
+(type $a-cool-type (func (param i32) (param $b i32) ( result i32 )))
+#assertType $a-cool-type [ i32 { $b i32 } ] -> [ i32 ]
+#assertType 0 [ i32 { $b i32 } ] -> [ i32 ]
 #assertNextTypeIdx 1
 
 (func $0 (type $a-cool-type)
     (local.get 0)
-    (local.get 1)
+    (local.get $b)
     (i32.add)
     (return)
 )
@@ -17,25 +17,25 @@
 (i32.const 8)
 (call $0)
 #assertTopStack < i32 > 15 "call function 0"
-#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists"
+#assertFunction 0 [ i32 { $b i32 } ] -> [ i32 ] [ ] "call function 0 exists"
 
 ;; String-named add function
 
-(func $add (type $a-cool-type) (param i32 i32 ) ( result i32 )
-    (local.get 0)
-    (local.get 1)
+(func $add (type $a-cool-type) (param $a i32) (param i32) ( result i32 )
+    (local.get $a)
+    (local.get $b)
     (i32.add)
     (return)
 )
 
-#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
+#assertFunction $add [ { $a i32 } { $b i32 } ] -> [ i32 ] [ ] "function string-named add"
 #assertNextTypeIdx 1
 
 ;; Remove return statement
 
-(func $0 param i32 i32 result i32
-    (local.get 0)
-    (local.get 1)
+(func $0 (param $a i32) (param $b i32) result i32
+    (local.get $a)
+    (local.get $b)
     (i32.add)
 )
 
@@ -43,7 +43,7 @@
 (i32.const 8)
 (call $0)
 #assertTopStack < i32 > 15 "call function 0 no return"
-#assertFunction $0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
+#assertFunction $0 [ { $a i32 } { $b i32 } ] -> [ i32 ] [ ] "call function 0 exists no return"
 #assertNextTypeIdx 1
 
 ;; More complicated function with locals
@@ -152,13 +152,13 @@
 #assertNextTypeIdx 1
 
 (module
-    (func $f1 (param i32 i32 ) (result i32) (local i32)
-        (local.get 0)
+    (func $f1 (param $a i32) (param i32) (result i32) (local $c i32)
+        (local.get $a)
         (local.get 1)
         (i32.add)
-        (local.set 2)
-        (local.get 0)
-        (local.get 2)
+        (local.set $c)
+        (local.get $a)
+        (local.get $c)
         (i32.mul)
         (return)
     )
@@ -183,7 +183,7 @@
 (call $f2)
 #assertTopStack < i32 > 14247936 "nested method call"
 #assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
-#assertFunction $f1 [ i32 i32     ] -> [ i32 ] [ i32     ] "inner calling method"
+#assertFunction $f1 [ { $a i32 } i32 ] -> [ i32 ] [ { $c i32 } ] "inner calling method"
 
 (module
     (func $func (param i32 i32) (result i32) (local.get 0))
