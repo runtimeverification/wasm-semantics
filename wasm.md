@@ -668,6 +668,8 @@ Globals can either be specified by giving a type and an initializer expression; 
           ...
          </k>
 
+     rule <k> ( global OID:OptionalId .InlineExports (import MOD NAME) TYP ) => ( import MOD NAME (global OID asGMut(TYP)) ) ... </k>
+
     rule <k> ( global OID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -872,6 +874,8 @@ Functions can either be specified by giving a type, what locals it allocates, an
           ~> ( func ID EXPO SPEC )
           ...
          </k>
+
+    rule <k> ( func OID:OptionalId .InlineExports (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
 
     rule <k> ( func OID:OptionalId .InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
