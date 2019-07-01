@@ -1018,7 +1018,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fAddr> FADDR </fAddr>
            <fType> FTYPE </fType>
            ...
-         </funcDef> requires asFuncType(TYPEIDS, TYPES, TUSE) ==K FTYPE
+         </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
 ```
 
 ### Export

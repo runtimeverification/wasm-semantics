@@ -41,7 +41,9 @@
 
 (i32.const 7)
 (i32.const 8)
-(call $0)
+(table funcref (elem $0))
+(i32.const 0)
+(call_indirect (type $a-cool-type))
 #assertTopStack < i32 > 15 "call function 0 no return"
 #assertFunction $0 [ { $a i32 } { $b i32 } ] -> [ i32 ] [ ] "call function 0 exists no return"
 #assertNextTypeIdx 1
