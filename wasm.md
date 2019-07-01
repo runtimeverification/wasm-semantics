@@ -284,10 +284,10 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
                    | FValType "." FRelOp Float Float
  // ------------------------------------------------
     rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
-         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK  </valstack>
+         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 
     rule <k> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </k>
-         <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK  </valstack>
+         <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Conversion Operations
