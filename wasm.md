@@ -990,32 +990,6 @@ The `#take` function will return the parameter stack in the reversed order, then
          </funcDef> requires asFuncType(TYPEIDS, TYPES, TUSE) ==K FTYPE
 ```
 
-### Export
-
-Exports make functions, tables, memories and globals available for importing into other modules.
-
-```k
-    syntax Defn       ::= ExportDefn
-    syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
- // ---------------------------------------------------------------
-    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
-           ...
-         </moduleInst>
-```
-
-Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
-We deal with these in the sections related to functions, memories, etc.
-
-```k
-    syntax InlineExport  ::= "(" "export" String ")"
-    syntax InlineExports ::= List{InlineExport, ""} [klabel(listInlineExport)]
- // --------------------------------------------------------------------------
-```
-
 Table
 -----
 
@@ -1497,6 +1471,34 @@ Start Function
            ...
          </moduleInst>
 ```
+
+Export
+------
+
+Exports make functions, tables, memories and globals available for importing into other modules.
+
+```k
+    syntax Defn       ::= ExportDefn
+    syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
+ // ---------------------------------------------------------------
+    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
+           ...
+         </moduleInst>
+```
+
+Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
+We deal with these in the sections related to functions, memories, etc.
+
+```k
+    syntax InlineExport  ::= "(" "export" String ")"
+    syntax InlineExports ::= List{InlineExport, ""} [klabel(listInlineExport)]
+ // --------------------------------------------------------------------------
+```
+
 
 Imports
 -------
