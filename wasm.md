@@ -852,25 +852,25 @@ Functions can either be specified by giving a type, what locals it allocates, an
                       | InlineImport TypeUse
     syntax FuncDefn ::= "(" "func" OptionalId InlineExports FuncSpec ")"
  // --------------------------------------------------------------------
-    rule <k> ( func FEXPO:InlineExports SPEC:FuncSpec )
-          => ( func #freshId(NEXTID) FEXPO SPEC )
+    rule <k> ( func EXPO:InlineExports SPEC:FuncSpec )
+          => ( func #freshId(NEXTID) EXPO SPEC )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
-    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:InlineExports SPEC:FuncSpec )
-          => ( export ENAME ( func FNAME ) )
-          ~> ( func FNAME FEXPO SPEC )
+    rule <k> ( func ID:Identifier ( export ENAME ) EXPO:InlineExports SPEC:FuncSpec )
+          => ( export ENAME ( func ID ) )
+          ~> ( func ID EXPO SPEC )
           ...
          </k>
 
-    rule <k> ( func FNAME:Identifier .InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> ( func ID:Identifier .InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, FNAME, NEXTIDX) </funcIds>
+           <funcIds> IDS => #saveId(IDS, ID, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
            ...
@@ -1033,6 +1033,7 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
                        |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
     rule <k> ( table ID:OptionalId .InlineExports MIN:Int         funcref ) => table { ID MIN .MaxBound } ... </k>
+
       requires MIN <=Int #maxTableSize()
     rule <k> ( table ID:OptionalId .InlineExports MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
