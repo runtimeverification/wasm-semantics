@@ -55,7 +55,7 @@ git submodule update --init --recursive
 If you haven't already setup K's OCaml dependencies more recently than February 1, 2019, then you also need to setup the K OCaml dependencies:
 
 ```sh
-./.build/k/k-distribution/src/main/scripts/bin/k-configure-opam-dev
+./deps/k/k-distribution/src/main/scripts/bin/k-configure-opam-dev
 ```
 
 **NOTE**: It may prove useful to first do `rm -rf ~/.opam` if you've setup K projcets in the past and are experiencing trouble with the newest opam libraries.
