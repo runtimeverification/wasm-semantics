@@ -283,13 +283,14 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This asserts related operation about tables.
 
 ```k
-    syntax Assertion ::= "#assertTable" Int MaxBound String
- // -------------------------------------------------------
-    rule <k> #assertTable SIZE MAX MSG => . ... </k>
+    syntax Assertion ::= "#assertTable" TextFormatIdx Int MaxBound String
+ // ---------------------------------------------------------------------
+    rule <k> #assertTable TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIndices> 0 |-> ADDR </tabIndices>
+           <tabIds> IDS </tabIds>
+           <tabIndices> #ContextLookup(IDS, TFIDX) |-> ADDR </tabIndices>
            ...
          </moduleInst>
          <tabs>
@@ -326,13 +327,14 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory" Int MaxBound String
- // --------------------------------------------------------
-    rule <k> #assertMemory SIZE MAX MSG => . ... </k>
+    syntax Assertion ::= "#assertMemory" TextFormatIdx Int MaxBound String
+ // ----------------------------------------------------------------------
+    rule <k> #assertMemory TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memIds> IDS </memIds>
+           <memIndices> #ContextLookup(IDS, TFIDX) |-> ADDR </memIndices>
            ...
          </moduleInst>
          <mems>

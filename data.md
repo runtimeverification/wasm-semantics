@@ -35,6 +35,20 @@ Also we use `#freshId ( Int )` to generate a fresh identifier based on the eleme
     syntax Identifier ::= #freshId ( Int )
                         | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
  // ------------------------------------------------------------------------
+
+    syntax OptionalId ::= "" [klabel(.Identifier)]
+                        | Identifier
+ // --------------------------------
+```
+
+In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` being an index.
+This rule handles adding an `OptionalId` as a map key, but only when it is a proper identifier.
+
+```k
+    syntax Map ::= #saveId (Map, OptionalId, Int) [function]
+ // -------------------------------------------------------
+    rule #saveId (MAP, ID:OptionalId, _)   => MAP             requires notBool isIdentifier(ID)
+    rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
 ```
 
 ### Text Format Indices
@@ -145,6 +159,15 @@ The `#width` function returns the bit-width of a given `IValType`.
 ```k
     syntax Mut ::= ".Mut" | "const" | "var"
  // ---------------------------------------
+```
+
+### Limits
+
+Tables and memories have limits, defined as either a sinlge `Int` or two `Int`s, representing min and max bounds.
+
+```k
+    syntax Limits ::= Int | Int Int
+ // -------------------------------
 ```
 
 Values
