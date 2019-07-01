@@ -637,6 +637,7 @@ The `*_local` instructions are defined here.
 ### Globals
 
 When globals are declared, they must also be given a constant initialization value.
+Globals can either be specified by giving a type and an initializer expression; or by an import and it's expected type.
 
 ```k
     syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
@@ -649,8 +650,9 @@ When globals are declared, they must also be given a constant initialization val
     rule asGMut (      T:ValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalDefn ::= "(" "global" OptionalId              InlineExports TextGlobalType Instr ")"
-                        | "(" "global" OptionalId InlineImport InlineExports TextGlobalType ")"
+    syntax GlobalSpec ::= TextGlobalType Instr
+                        | InlineImport TextGlobalType
+    syntax GlobalDefn ::= "(" "global" OptionalId InlineExports GlobalSpec ")"
                         |     "global" GlobalType
  // ---------------------------------------------
     rule <k> ( global ID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
@@ -842,20 +844,23 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+Functions can either be specified by giving a type, what locals it allocates, and a function body; or by an import and it's expected type.
 
 ```k
     syntax Defn     ::= FuncDefn
-    syntax FuncDefn ::= "(" "func" OptionalId InlineExports TypeUse LocalDecls Instrs ")"
- // -------------------------------------------------------------------------------------
-    rule <k> ( func FEXPO:InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
-          => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS )
+    syntax FuncSpec ::= TypeUse LocalDecls Instrs
+                      | InlineImport TypeUse
+    syntax FuncDefn ::= "(" "func" OptionalId InlineExports FuncSpec ")"
+ // --------------------------------------------------------------------
+    rule <k> ( func FEXPO:InlineExports SPEC:FuncSpec )
+          => ( func #freshId(NEXTID) FEXPO SPEC )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
-    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
+    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:InlineExports SPEC:FuncSpec )
           => ( export ENAME ( func FNAME ) )
-          ~> ( func FNAME FEXPO TUSE LDECLS INSTRS )
+          ~> ( func FNAME FEXPO SPEC )
           ...
          </k>
 
@@ -1019,8 +1024,10 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
 
 ```k
     syntax Defn      ::= TableDefn
-    syntax TableType ::= "(" "table"     OptionalId Limits TableElemType ")"
-    syntax TableDefn ::= TableType
+    syntax TableType ::= Limits TableElemType
+    syntax TableSpec ::= TableType
+                      | InlineImport TableType
+    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
                        | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
                        |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
@@ -1079,8 +1086,10 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
 
 ```k
     syntax Defn       ::= MemoryDefn
-    syntax MemType    ::= "(" "memory" OptionalId Limits                     ")"
-    syntax MemoryDefn ::= MemType
+    syntax MemType    ::= Limits
+    syntax MemorySpec ::= MemType
+                        | InlineImport MemType
+    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
  // ------------------------------------------------------------------
@@ -1563,8 +1572,7 @@ The groups are chosen to represent different stages of allocation and instantiat
     rule #structureModule(M,                  .Defns) => M
     rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
 
-    // TODO.
- // rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
 
     rule #structureModule(M, (A:FuncDefn   DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
     rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
