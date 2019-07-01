@@ -60,6 +60,20 @@ We allow 2 kinds of actions:
            <exports> ... ENAME |-> TFIDX ... </exports>
            ...
          </moduleInst>
+    rule <k> ( get NAME:String ) => VAL ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <exports> ... NAME |-> TFIDX ... </exports>
+           <globIds> IDS </globIds>
+           <globalIndices> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalIndices>
+           ...
+         </moduleInst>
+         <globalInst>
+           <gAddr> ADDR </gAddr>
+           <gValue> VAL </gValue>
+           ...
+         </globalInst>
 ```
 
 ### Registering Modules
