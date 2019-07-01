@@ -1509,8 +1509,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
                         |     "module" Map
  // --------------------------------------
-    rule <k> ( module ID:OptionalId DEFNS )
-          => module structureModule(DEFNS) ... </k>
+    rule <k> ( module ID:OptionalId DEFNS ) => module structureModule(DEFNS) ... </k>
          <nextModuleIdx> NEXT </nextModuleIdx>
          <moduleIds> IDS => #saveId(IDS, ID, NEXT) </moduleIds>
 
