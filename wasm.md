@@ -1538,9 +1538,9 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
+           <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
          </moduleInst>
-         <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
