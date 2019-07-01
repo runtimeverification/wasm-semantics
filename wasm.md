@@ -1544,8 +1544,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcIndices> ... FIDX |-> ADDR ... </funcIndices>
-           <exports>     ... NAME |-> FIDX     ... </exports>
+           <funcIndices> ... IDX  |-> ADDR ... </funcIndices>
+           <exports>     ... NAME |-> IDX  ... </exports>
            ...
          </moduleInst>
 
@@ -1559,8 +1559,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <tabIndices> ... TIDX |-> ADDR ... </tabIndices>
-           <exports>    ... NAME |-> TIDX     ... </exports>
+           <tabIndices> ... IDX  |-> ADDR ... </tabIndices>
+           <exports>    ... NAME |-> IDX  ... </exports>
            ...
          </moduleInst>
 
@@ -1574,8 +1574,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <memIndices> ... MIDX |-> ADDR ... </memIndices>
-           <exports>    ... NAME |-> MIDX     ... </exports>
+           <memIndices> ... IDX  |-> ADDR ... </memIndices>
+           <exports>    ... NAME |-> IDX  ... </exports>
            ...
          </moduleInst>
 
@@ -1583,8 +1583,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <globalIndices> ... GIDX |-> ADDR ... </globalIndices>
-           <exports>     ... NAME |-> GIDX     ... </exports>
+           <globalIndices> ... IDX  |-> ADDR ... </globalIndices>
+           <exports>       ... NAME |-> IDX  ... </exports>
            ...
          </moduleInst>
          <globalInst>
