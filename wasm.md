@@ -17,9 +17,9 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals> .Map </locals>
+        <locals>    .Map </locals>
         <localIds>  .Map </localIds>
-        <curModIdx> .K </curModIdx>
+        <curModIdx> .K   </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
@@ -671,14 +671,14 @@ When globals are declared, they must also be given a constant initialization val
 **TODO**: Import and export.
 
 ```k
-    syntax TextGlobalType ::= ValType | "(" "mut" ValType ")"
- // ---------------------------------------------------------
+    syntax TextGlobalType ::= AValType | "(" "mut" AValType ")"
+ // -----------------------------------------------------------
 
-    syntax GlobalType ::= Mut ValType
+    syntax GlobalType ::= Mut AValType
                       | asGMut (TextGlobalType) [function]
  // ------------------------------------------------------
-    rule asGMut ( (mut T:ValType ) ) => var   T
-    rule asGMut (      T:ValType   ) => const T
+    rule asGMut ( (mut T:AValType ) ) => var   T
+    rule asGMut (      T:AValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
     syntax GlobalDefn ::= "(" "global" OptionalId TextGlobalType Instr ")"
@@ -693,7 +693,7 @@ When globals are declared, they must also be given a constant initialization val
            ...
          </moduleInst>
 
-    rule <k> global MUT:Mut TYP:ValType => . ... </k>
+    rule <k> global MUT:Mut TYP:AValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
