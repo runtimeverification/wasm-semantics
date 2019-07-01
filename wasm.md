@@ -18,6 +18,7 @@ Configuration
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals> .Map </locals>
+        <localIds>  .Map </localIds>
         <curModIdx> .K </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
