@@ -653,8 +653,8 @@ Globals can either be specified by giving a type and an initializer expression; 
     syntax GlobalSpec ::= TextGlobalType Instr
                         | InlineImport TextGlobalType
     syntax GlobalDefn ::= "(" "global" OptionalId InlineExports GlobalSpec ")"
-                        |     "global" GlobalType
- // ---------------------------------------------
+                        |     "global" OptionalId GlobalType
+ // --------------------------------------------------------
     rule <k> ( global                  EXPO:InlineExports SPEC:GlobalSpec )
           => ( global #freshId(NEXTID) EXPO               SPEC            )
           ...
@@ -670,20 +670,14 @@ Globals can either be specified by giving a type and an initializer expression; 
 
      rule <k> ( global OID:OptionalId .InlineExports (import MOD NAME) TYP ) => ( import MOD NAME (global OID asGMut(TYP)) ) ... </k>
 
-    rule <k> ( global OID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
-           <nextGlobIdx> NEXTIDX                      </nextGlobIdx>
-           ...
-         </moduleInst>
+    rule <k> ( global OID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
     rule <k> global MUT:Mut TYP:ValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
            <nextGlobIdx>   NEXTIDX => NEXTIDX +Int 1                </nextGlobIdx>
            <globalIndices> GLOBS   => GLOBS [ NEXTIDX <- NEXTADDR ] </globalIndices>
            ...
