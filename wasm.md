@@ -644,8 +644,8 @@ Globals can either be specified by giving a type and an initializer expression; 
  // ---------------------------------------------------------
 
     syntax GlobalType ::= Mut ValType
-                      | asGMut (TextGlobalType) [function]
- // ------------------------------------------------------
+                        | asGMut (TextGlobalType) [function]
+ // --------------------------------------------------------
     rule asGMut ( (mut T:ValType ) ) => var   T
     rule asGMut (      T:ValType   ) => const T
 
