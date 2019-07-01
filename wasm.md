@@ -1547,7 +1547,7 @@ The value of a global gets copied when it is imported.
            <exports>    ... NAME |-> TIDX     ... </exports>
            ...
          </moduleInst>
-    rule <k> ( import MOD NAME (table _)) => . ... </k>
+    rule <k> ( import MOD NAME (memory _)) => . ... </k>
          <memIndices> _ => 0 |-> ADDR </memIndices>
          <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
          <moduleInst>
