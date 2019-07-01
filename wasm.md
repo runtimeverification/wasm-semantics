@@ -628,24 +628,40 @@ The various `init_local` variants assist in setting up the `locals` cell.
           </k>
 ```
 
+`init_localids` help setting up ids for local indices.
+
+```k
+    syntax Instr ::=  "init_localids" ValTypes
+                   | "#init_localids" Int ValTypes
+ // ----------------------------------------------
+    rule <k> init_localids VTYPES => #init_localids 0 VTYPES ... </k>
+    rule <k> #init_localids I:Int .ValTypes     => .                          ... </k>
+    rule <k> #init_localids I:Int V:AValType VS => #init_localids I +Int 1 VS ... </k>
+    rule <k> #init_localids I:Int { ID V }   VS => #init_localids I +Int 1 VS ... </k>
+         <localIds> LOCALIDS => LOCALIDS [ ID <- I ] </localIds>
+```
+
 The `*_local` instructions are defined here.
 
 ```k
-    syntax PlainInstr ::= "local.get" Int
-                        | "local.set" Int
-                        | "local.tee" Int
- //--------------------------------------
-    rule <k> local.get INDEX => . ... </k>
+    syntax PlainInstr ::= "local.get" TextFormatIdx
+                        | "local.set" TextFormatIdx
+                        | "local.tee" TextFormatIdx
+ //------------------------------------------------
+    rule <k> local.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... INDEX |-> VALUE ... </locals>
+         <locals> ... #ContextLookup(IDS , TFIDX) |-> VALUE ... </locals>
+         <localIds> IDS </localIds>
 
-    rule <k> local.set INDEX => . ... </k>
+    rule <k> local.set TFIDX => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
+         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
+         <localIds> IDS </localIds>
 
-    rule <k> local.tee INDEX => . ... </k>
+    rule <k> local.tee TFIDX => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
-         <locals> ... INDEX |-> (_ => VALUE) ... </locals>
+         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
+         <localIds> IDS </localIds>
 ```
 
 ### Globals
@@ -749,6 +765,7 @@ This defines helper functions that gathers function together.
 
     syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
+                       | "param" Identifier AValType
     syntax TypeDecls ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
  // ---------------------------------------------------------------
 
@@ -757,10 +774,13 @@ This defines helper functions that gathers function together.
  // ---------------------------------------------------------------------------------
     rule  gatherTypes(TKW , TDECLS:TypeDecls) => #gatherTypes(TKW, TDECLS, .ValTypes)
 
-    rule #gatherTypes( _  , .TypeDecls                         , TYPES) => [ TYPES ]
-    rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
-    rule #gatherTypes(TKW , TKW TYPES'                  TDECLS , TYPES)
-      => #gatherTypes(TKW ,                             TDECLS , TYPES + TYPES')
+
+    rule #gatherTypes( _  ,                                   .TypeDecls , TYPES) => [ TYPES ]
+    rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS:TypeDecls , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
+    rule #gatherTypes(TKW , TKW         TYPES':ValTypes TDECLS:TypeDecls , TYPES)
+      => #gatherTypes(TKW ,                             TDECLS:TypeDecls , TYPES + TYPES')
+    rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
+    rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + { ID VTYPE } .ValTypes)
 ```
 
 ### Type Use
@@ -775,14 +795,14 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
                      | "(type" TextFormatIdx ")" TypeDecls
  // ------------------------------------------------------
 
-    syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
-                      | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
- // --------------------------------------------------------------------------------------------
-    rule asFuncType(TDECLS:TypeDecls)                      => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
-    rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)      => asFuncType(TDECLS)
-    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))         => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
-    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS ) => { TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] }:>FuncType
-      requires TYPES [ #ContextLookup(TYPEIDS , TFIDX) ] ==K asFuncType(TDECLS)
+    syntax FuncType ::= asFuncType ( TypeDecls )              [function, klabel(TypeDeclsAsFuncType)]
+                      | asFuncType ( Map, Map, TypeUse )      [function, klabel(TypeUseAsFuncType)  ]
+ // -------------------------------------------------------------------------------------------------
+    rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
+    rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
+    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
+    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => mergeFuncType({TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType, asFuncType(TDECLS))
+      requires unnameFuncType({TYPES[#ContextLookup(TYPEIDS, TFIDX)]}:>FuncType) ==K unnameFuncType(asFuncType(TDECLS))
 ```
 
 ### Type Declaration
@@ -822,7 +842,8 @@ Currently, in the expanded form, the `export`s will come after the definition of
 
 ```k
     syntax LocalDecl  ::= "(" LocalDecl ")"    [bracket]
-                        | "local" ValTypes
+                        | "local"            ValTypes
+                        | "local" Identifier AValType
     syntax LocalDecls ::= List{LocalDecl , ""} [klabel(listLocalDecl)]
  // ------------------------------------------------------------------
 
@@ -831,19 +852,21 @@ Currently, in the expanded form, the `export`s will come after the definition of
  // -------------------------------------------------------------------
     rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
 
-    rule #asLocalType(.LocalDecls          , VTYPES) => [ VTYPES ]
-    rule #asLocalType(local VTYPES' LDECLS , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
+    rule #asLocalType(.LocalDecls                                            , VTYPES) => [ VTYPES ]
+    rule #asLocalType(local               VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
+    rule #asLocalType(local ID:Identifier VTYPE:AValType   LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + { ID VTYPE } .ValTypes)
 ```
 
 ### Function Implicit Type Declaration
 
 It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
+One undefined behaviour should we keep the identifiers from unfolded declarations or not?
 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
     rule <k> #checkTypeUse ( TDECLS:TypeDecls )
-       => #if   notBool asFuncType(TDECLS) in values(TYPES)
+       => #if notBool unnameFuncType(asFuncType(TDECLS)) in unnameFuncTypes(values(TYPES))
           #then (type (func TDECLS))
           #else .K
           #fi
@@ -916,7 +939,7 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Frame ::= "frame" Int ValTypes ValStack Map
  // --------------------------------------------------
     rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </k>
-         <valstack> VALSTACK => #take(TRANGE, VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(unnameValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
 ```
@@ -930,9 +953,10 @@ The `#take` function will return the parameter stack in the reversed order, then
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
-          => init_locals #revs(#take(#revt(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
+          => init_locals #revs(#take(#revt(unnameValTypes(TDOMAIN)), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
+          ~> init_localids TDOMAIN + TLOCALS
           ~> INSTRS
-          ~> frame MODIDX TRANGE #drop(#revt(TDOMAIN), VALSTACK) LOCAL
+          ~> frame MODIDX TRANGE #drop(#revt(unnameValTypes(TDOMAIN)), VALSTACK) LOCAL
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
@@ -1043,7 +1067,7 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
     rule <k> ( table ID:Identifier funcref ( elem ES ) )
-          =>  table { ID #lengthElemSegment(ES) #lengthElemSegment(ES) }
+          =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
           ~> ( elem ID (i32.const 0) ES )
           ...
          </k>
