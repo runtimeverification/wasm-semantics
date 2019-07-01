@@ -672,7 +672,7 @@ Globals can either be specified by giving a type and an initializer expression; 
 
     rule <k> ( global OID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
-    rule <k> global MUT:Mut TYP:ValType => . ... </k>
+    rule <k> global OID:OptionalId MUT:Mut TYP:ValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1520,21 +1520,11 @@ The value of a global gets copied when it is imported.
                         | "(" "memory" OptionalId MemType    ")"
                         | "(" "global" OptionalId GlobalType ")"
  // ------------------------------------------------------------
-    rule <k> (import MOD NAME ( func   ID:Identifier TU )) => (import MOD NAME ( func   TU )) ... </k>
-         <funcIds> FIDS => FIDS [ID <- NEXT] </funcIds>
-         <nextFuncIdx> NEXT </nextFuncIdx>
-    rule <k> (import MOD NAME ( table  ID:Identifier TT )) => (import MOD NAME ( table  TT )) ... </k>
-         <tabIds> TIDS => TIDS [ ID <- 0 ] </tabIds>
-    rule <k> (import MOD NAME ( memory ID:Identifier MT )) => (import MOD NAME ( memory MT )) ... </k>
-         <memIds> MIDS => MIDS [ ID <- 0 ] </memIds>
-    rule <k> (import MOD NAME ( global ID:Identifier GT )) => (import MOD NAME ( global GT )) ... </k>
-         <globIds> GIDS => GIDS [ID <- NEXT] </globIds>
-         <nextGlobIdx> NEXT </nextGlobIdx>
-
-    rule <k> ( import MOD NAME (func _)) => . ... </k>
+    rule <k> ( import MOD NAME (func OID:OptionalId _:TypeUse)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <funcIds> IDS => #saveId(IDS, OID, NEXT) </funcIds>
            <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
@@ -1548,10 +1538,11 @@ The value of a global gets copied when it is imported.
            ...
          </moduleInst>
 
-    rule <k> ( import MOD NAME (table _)) => . ... </k>
+    rule <k> ( import MOD NAME (table OID:OptionalId _:TableType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <tabIds> IDS => #saveId(IDS, OID, 0) </tabIds>
            <tabIndices> .Map => 0 |-> ADDR </tabIndices>
            ...
          </moduleInst>
@@ -1564,10 +1555,11 @@ The value of a global gets copied when it is imported.
            ...
          </moduleInst>
 
-    rule <k> ( import MOD NAME (memory _)) => . ... </k>
+    rule <k> ( import MOD NAME (memory OID:OptionalId _:MemType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
            <memIndices> .Map => 0 |-> ADDR </memIndices>
            ...
          </moduleInst>
@@ -1580,7 +1572,7 @@ The value of a global gets copied when it is imported.
            ...
          </moduleInst>
 
-    rule <k> ( import MOD NAME (global GT)) => VAL ~> global GT ... </k>
+    rule <k> ( import MOD NAME (global OID:OptionalId GT:GlobalType)) => VAL ~> global OID GT ... </k>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
