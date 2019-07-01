@@ -1,11 +1,13 @@
 (module
-   (global (export "g") i32 (i32.const 42))
-   (func (export "f"))
+   (global (export "g") (export "glob") i32 (i32.const 42))
+   (memory (export "m") (export "mem") (data 1))
+   (func (export "f") (export "func"))
    )
 
 (register "m")
 
 (module
+ (memory (import "m" "mem"))
  (export "x" (global $x))
  (func (import "m" "f"))
  (global $x (import "m" "g") i32)
