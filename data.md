@@ -372,11 +372,9 @@ An `external value` is the runtime representation of an entity that can be `impo
 It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
 
 ```k
-    syntax Externval ::= "func"   TextFormatIdx
-                       | "table"  TextFormatIdx
-                       | "memory" TextFormatIdx
-                       | "global" TextFormatIdx
- // -------------------------------------------
+    syntax AllocatedKind ::= "func" | "table" | "memory" | "global"
+    syntax Externval     ::= AllocatedKind TextFormatIdx
+ // ----------------------------------------------------
 ```
 
 ```k

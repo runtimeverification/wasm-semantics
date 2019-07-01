@@ -655,11 +655,24 @@ Globals can either be specified by giving a type and an initializer expression; 
     syntax GlobalDefn ::= "(" "global" OptionalId InlineExports GlobalSpec ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule <k> ( global ID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
+    rule <k> ( global                  EXPO:InlineExports SPEC:GlobalSpec )
+          => ( global #freshId(NEXTID) EXPO               SPEC            )
+          ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+      requires EXPO =/=K .InlineExports
+
+    rule <k> ( global ID:Identifier ( export ENAME ) EXPO:InlineExports SPEC:GlobalSpec )
+          => ( export ENAME ( global ID ) )
+          ~> ( global ID EXPO SPEC )
+          ...
+         </k>
+
+    rule <k> ( global OID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS => #saveId(IDS, ID, NEXTIDX) </globIds>
+           <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
            <nextGlobIdx> NEXTIDX                      </nextGlobIdx>
            ...
          </moduleInst>
@@ -794,11 +807,6 @@ Type could be declared explicitly and could optionally bind with an identifier.
 Function Declaration and Invocation
 -----------------------------------
 
-### Function Export Definition
-
-This section introduce how we expand the folded form of function export.
-Currently, in the expanded form, the `export`s will come after the definition of function.
-
 ### Function Local Declaration
 
 ```k
@@ -852,11 +860,12 @@ Functions can either be specified by giving a type, what locals it allocates, an
                       | InlineImport TypeUse
     syntax FuncDefn ::= "(" "func" OptionalId InlineExports FuncSpec ")"
  // --------------------------------------------------------------------
-    rule <k> ( func EXPO:InlineExports SPEC:FuncSpec )
-          => ( func #freshId(NEXTID) EXPO SPEC )
+    rule <k> ( func                  EXPO:InlineExports SPEC:FuncSpec )
+          => ( func #freshId(NEXTID) EXPO               SPEC          )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+      requires EXPO =/=K .InlineExports
 
     rule <k> ( func ID:Identifier ( export ENAME ) EXPO:InlineExports SPEC:FuncSpec )
           => ( export ENAME ( func ID ) )
@@ -864,13 +873,13 @@ Functions can either be specified by giving a type, what locals it allocates, an
           ...
          </k>
 
-    rule <k> ( func ID:Identifier .InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> ( func OID:OptionalId .InlineExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, ID, NEXTIDX) </funcIds>
+           <funcIds> IDS => #saveId(IDS, OID, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
            ...
@@ -983,17 +992,17 @@ The `#take` function will return the parameter stack in the reversed order, then
 
 ### Export
 
-Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
+Exports make functions, tables, memories and globals available for importing into other modules.
 
 ```k
     syntax Defn       ::= ExportDefn
     syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
  // ---------------------------------------------------------------
-    rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
+    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
+           <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
            ...
          </moduleInst>
 ```
@@ -1032,19 +1041,34 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
                        | "(" "table"     OptionalId ")"
                        |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
-    rule <k> ( table ID:OptionalId .InlineExports MIN:Int         funcref ) => table { ID MIN .MaxBound } ... </k>
+    rule <k> ( table                  EXPO:InlineExports SPEC:TableSpec )
+          => ( table #freshId(NEXTID) EXPO               SPEC            )
+          ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+      requires EXPO =/=K .InlineExports
 
-      requires MIN <=Int #maxTableSize()
-    rule <k> ( table ID:OptionalId .InlineExports MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
-      requires MIN <=Int #maxTableSize()
-       andBool MAX <=Int #maxTableSize()
+    rule <k> ( table ID:Identifier ( export ENAME ) EXPO:InlineExports SPEC:TableSpec )
+          => ( export ENAME ( table ID ) )
+          ~> ( table ID EXPO SPEC )
+          ...
+         </k>
+
     rule <k> ( table .InlineExports funcref ( elem ES ) ) => ( table #freshId(NEXTID) .InlineExports funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
     rule <k> ( table ID:Identifier .InlineExports funcref ( elem ES ) )
           =>  table { ID #lengthElemSegment(ES) #lengthElemSegment(ES) }
           ~> ( elem ID (i32.const 0) ES )
           ...
          </k>
+
+    rule <k> ( table OID:OptionalId .InlineExports MIN:Int         funcref ) => table { OID MIN .MaxBound } ... </k>
+
+      requires MIN <=Int #maxTableSize()
+    rule <k> ( table OID:OptionalId .InlineExports MIN:Int MAX:Int funcref ) => table { OID MIN MAX       } ... </k>
+      requires MIN <=Int #maxTableSize()
+       andBool MAX <=Int #maxTableSize()
 
     rule <k> table { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1093,19 +1117,32 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     syntax MemoryDefn ::= "(" "memory" OptionalId InlineExports MemorySpec ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
  // ------------------------------------------------------------------
-    rule <k> ( memory EXPO:InlineExports ( data DS ) ) => ( memory #freshId(NEXTID) EXPO (data DS) ) ... </k>
+    rule <k> ( memory                  EXPO:InlineExports SPEC:MemorySpec )
+          => ( memory #freshId(NEXTID) EXPO               SPEC            )
+          ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+      requires EXPO =/=K .InlineExports
+
+    rule <k> ( memory ID:Identifier ( export ENAME ) EXPO:InlineExports SPEC:MemorySpec )
+          => ( export ENAME ( memory ID ) )
+          ~> ( memory ID EXPO SPEC )
+          ...
+         </k>
+
+    rule <k> ( memory .InlineExports ( data DS ) ) => ( memory #freshId(NEXTID) .InlineExports (data DS) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
-    rule <k> ( memory ID:OptionalId .InlineExports MIN:Int         ) => memory { ID MIN .MaxBound } ... </k>
-      requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory ID:OptionalId .InlineExports MIN:Int MAX:Int ) => memory { ID MIN MAX       } ... </k>
-      requires MIN <=Int #maxMemorySize()
-       andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ID:Identifier .InlineExports ( data DS ) )
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
           ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
-       andBool isIdentifier(ID)
+
+    rule <k> ( memory OID:OptionalId .InlineExports MIN:Int         ) => memory { OID MIN .MaxBound } ... </k>
+      requires MIN <=Int #maxMemorySize()
+    rule <k> ( memory OID:OptionalId .InlineExports MIN:Int MAX:Int ) => memory { OID MIN MAX       } ... </k>
+      requires MIN <=Int #maxMemorySize()
+       andBool MAX <=Int #maxMemorySize()
 
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
