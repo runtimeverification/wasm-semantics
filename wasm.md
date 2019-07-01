@@ -1534,35 +1534,53 @@ The value of a global gets copied when it is imported.
          <nextGlobIdx> NEXT </nextGlobIdx>
 
     rule <k> ( import MOD NAME (func _)) => . ... </k>
-         <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
+           ...
+         </moduleInst>
          <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
-         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <funcIndices> ... FIDX |-> ADDR ... </funcIndices>
            <exports>     ... NAME |-> FIDX     ... </exports>
            ...
          </moduleInst>
+
     rule <k> ( import MOD NAME (table _)) => . ... </k>
-         <tabIndices> _ => 0 |-> ADDR </tabIndices>
-         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> .Map => 0 |-> ADDR </tabIndices>
+           ...
+         </moduleInst>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <tabIndices> ... TIDX |-> ADDR ... </tabIndices>
            <exports>    ... NAME |-> TIDX     ... </exports>
            ...
          </moduleInst>
+
     rule <k> ( import MOD NAME (memory _)) => . ... </k>
-         <memIndices> _ => 0 |-> ADDR </memIndices>
-         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIndices> .Map => 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIndices> ... MIDX |-> ADDR ... </memIndices>
            <exports>    ... NAME |-> MIDX     ... </exports>
            ...
          </moduleInst>
+
     rule <k> ( import MOD NAME (global GT)) => VAL ~> global GT ... </k>
-         <moduleRegistry> ... MOD |-> MODIDX </moduleRegistry>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <globalIndices> ... GIDX |-> ADDR ... </globalIndices>
