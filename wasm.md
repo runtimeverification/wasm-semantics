@@ -532,6 +532,7 @@ It simply executes the block then records a label with an empty continuation.
 
     rule <k> block ID:OptionalId TDECLS IS end ID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
+      requires ID ==K ID' orBool notBool isIdentifier(ID')
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -564,12 +565,8 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 
     syntax PlainInstr ::= "br_table" ElemSegment
  // --------------------------------------------
-    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, VAL) ... </k>
+    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL <Int #lenElemSegment(ES)
-    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, #lenElemSegment(ES) -Int 1) ... </k>
-         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL >=Int #lenElemSegment(ES)
 ```
 
 Finally, we have the conditional and loop instructions.

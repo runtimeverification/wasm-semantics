@@ -118,7 +118,7 @@ We need helper functions to remove the identifiers from `FuncType`, and to merge
     syntax List ::= unnameFuncTypes ( List ) [function]
  // ---------------------------------------------------
     rule unnameFuncTypes ( .List ) => .List
-    rule unnameFuncTypes ( ListItem(F) RS:List ) => ListItem(unnameFuncType({F}:>FuncType)) unnameFuncTypes(RS)
+    rule unnameFuncTypes ( ListItem(F:FuncType) RS:List ) => ListItem(unnameFuncType(F)) unnameFuncTypes(RS)
 ```
 
 We need helper functions to remove all the identifiers from a `ValTypes`, and to merge 2 `ValTypes`.
