@@ -1026,19 +1026,20 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     syntax Defn      ::= TableDefn
     syntax TableType ::= Limits TableElemType
     syntax TableSpec ::= TableType
-                      | InlineImport TableType
-    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
-                       | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
+                       | TableElemType "(" "elem" ElemSegment ")"
+                       | InlineImport TableType
+    syntax TableDefn ::= "(" "table"     OptionalId InlineExports TableSpec ")"
+                       | "(" "table"     OptionalId ")"
                        |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
-    rule <k> ( table ID:OptionalId MIN:Int         funcref ) => table { ID MIN .MaxBound } ... </k>
+    rule <k> ( table ID:OptionalId .InlineExports MIN:Int         funcref ) => table { ID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table ID:OptionalId MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
+    rule <k> ( table ID:OptionalId .InlineExports MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
+    rule <k> ( table .InlineExports funcref ( elem ES ) ) => ( table #freshId(NEXTID) .InlineExports funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-    rule <k> ( table ID:Identifier funcref ( elem ES ) )
+    rule <k> ( table ID:Identifier .InlineExports funcref ( elem ES ) )
           =>  table { ID #lengthElemSegment(ES) #lengthElemSegment(ES) }
           ~> ( elem ID (i32.const 0) ES )
           ...
@@ -1082,25 +1083,24 @@ When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<mAddr>` cell is an array with at most one value, at index 0.
 
-**TODO**: Allow instantiation with an identifier and inline export and import.
-
 ```k
     syntax Defn       ::= MemoryDefn
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
+                        | "(" "data" DataStrings ")"
                         | InlineImport MemType
-    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
-                        | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
+    syntax MemoryDefn ::= "(" "memory" OptionalId InlineExports MemorySpec ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
  // ------------------------------------------------------------------
-    rule <k> ( memory ID:OptionalId MIN:Int         ) => memory { ID MIN .MaxBound } ... </k>
+    rule <k> ( memory EXPO:InlineExports ( data DS ) ) => ( memory #freshId(NEXTID) EXPO (data DS) ) ... </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
+    rule <k> ( memory ID:OptionalId .InlineExports MIN:Int         ) => memory { ID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory ID:OptionalId MIN:Int MAX:Int ) => memory { ID MIN MAX       } ... </k>
+    rule <k> ( memory ID:OptionalId .InlineExports MIN:Int MAX:Int ) => memory { ID MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-    rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-    rule <k> ( memory ID:Identifier ( data DS ) )
+    rule <k> ( memory ID:Identifier .InlineExports ( data DS ) )
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
           ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
@@ -1412,9 +1412,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
                       |     "data" "{" TextFormatIdx        DataStrings "}"
  // -----------------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET      STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
-    rule <k> ( data MEMID IS:Instr    STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
-    rule <k> ( data MEMID (offset IS) STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
+    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
 
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX STRING } => . ... </k>

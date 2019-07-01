@@ -7,7 +7,7 @@
 (register "m")
 
 (module
- (memory (import "m" "mem"))
+ (memory (import "m" "mem") 1)
  (export "x" (global $x))
  (func (import "m" "f"))
  (global $x (import "m" "g") i32)
