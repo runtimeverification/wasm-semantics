@@ -520,20 +520,17 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax Label ::= "label" VecType "{" Instrs "}" ValStack
- // --------------------------------------------------------
-    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
+    syntax Label ::= "label" OptionalId VecType "{" Instrs "}" ValStack
+ // -------------------------------------------------------------------
+    rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax FoldedInstr ::= "(" "block" TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "block" TypeDecls Instrs "end"
- // -----------------------------------------------------
-    rule <k> ( block FDECLS:TypeDecls INSTRS:Instrs )
-          => block FDECLS INSTRS end
-         ...
-         </k>
+    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
+    syntax BlockInstr  ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
+ // ---------------------------------------------------------------------------
+    rule <k> ( block ID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block ID:OptionalId TDECLS INSTRS end ... </k>
 
-    rule <k> block FDECLS IS end => IS ~> label gatherTypes(result, FDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> block ID:OptionalId TDECLS IS end ID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -543,51 +540,67 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax PlainInstr ::= "br" Int
- // ------------------------------
-    rule <k> br N ~> (SS:Stmts => .) ... </k>
-    rule <k> br N ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    syntax PlainInstr ::= "br" TextFormatIdx
+ // ----------------------------------------
+    rule <k> br TFIDX ~> (SS:Stmts => .) ... </k>
+    rule <k> br TFIDX ~> (PI:PlainInstr => .) ... </k>
+    rule <k> br 0     ~> label ID [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-      requires N ==Int 0
-    rule <k> br N ~> L:Label => br N -Int 1 ... </k>
+    rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
       requires N >Int 0
+    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
+      requires ID =/=K ID'
 
-    syntax PlainInstr ::= "br_if" Int
- // ---------------------------------
-    rule <k> br_if N => br N ... </k>
+    syntax PlainInstr ::= "br_if" TextFormatIdx
+ // -------------------------------------------
+    rule <k> br_if TFIDX => br TFIDX ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <k> br_if N => .    ... </k>
+    rule <k> br_if TFIDX => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
+
+    syntax PlainInstr ::= "br_table" ElemSegment
+ // --------------------------------------------
+    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, VAL) ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL <Int #lenElemSegment(ES)
+    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, #lenElemSegment(ES) -Int 1) ... </k>
+         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL >=Int #lenElemSegment(ES)
 ```
 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if" TypeDecls Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-    syntax BlockInstr  ::= "if" TypeDecls Instrs "else" Instrs "end"
-                         | "if" TypeDecls Instrs               "end"
- // ----------------------------------------------------------------
-    rule <k> ( if TDECLS C:Instrs ( then IS ) )              => C ~> ( if TDECLS IS else .Instrs end )  ... </k>
-    rule <k> ( if TDECLS C:Instrs ( then IS ) ( else IS' ) ) => C ~> ( if TDECLS IS else IS'     end )  ... </k>
+    syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+    syntax BlockInstr  ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // -------------------------------------------------------------------------------------------------
+    rule <k> ( if ID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if ID TDECLS IS else .Instrs end ... </k>
+    rule <k> ( if ID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID TDECLS IS else IS'     end ... </k>
 
-    rule <k> if TDECLS IS          end => if TDECLS IS else .Instrs end                                 ... </k>
-    rule <k> if TDECLS IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> if ID:OptionalId TDECLS:TypeDecls IS                         end ID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
+      requires ID ==K ID'' orBool notBool isIdentifier(ID'')
+
+    rule <k> if ID:OptionalId TDECLS:TypeDecls IS else ID':OptionalId IS' end ID'':OptionalId => IS  ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-       requires VAL =/=Int 0
-    rule <k> if TDECLS IS else IS' end => IS' ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+      requires VAL =/=Int 0 andBool ( ID ==K ID' orBool notBool isIdentifier(ID') ) andBool ( ID ==K ID'' orBool notBool isIdentifier(ID'') )
+
+    rule <k> if ID:OptionalId TDECLS:TypeDecls IS else ID':OptionalId IS' end ID'':OptionalId => IS' ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-       requires VAL  ==Int 0
+      requires VAL ==Int 0 andBool ( ID ==K ID' orBool notBool isIdentifier(ID') ) andBool ( ID ==K ID'' orBool notBool isIdentifier(ID'') )
 
-    syntax FoldedInstr ::=  "(" "loop" TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "loop" TypeDecls Instrs "end"
- // ----------------------------------------------------
-    rule <k> ( loop TDECLS IS ) => loop TDECLS IS end ... </k>
-
-    rule <k> loop TDECLS IS end => IS ~> label [ .ValTypes ] { loop TDECLS IS end } VALSTACK ... </k>
+    syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
+    syntax BlockInstr  ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
+ // --------------------------------------------------------------------------
+    rule <k> ( loop ID:OptionalId TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
+    rule <k> loop ID:OptionalId TDECLS:TypeDecls IS end ID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { loop ID TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
+      requires ID ==K ID' orBool notBool isIdentifier(ID')
 ```
 
 Variable Operators
