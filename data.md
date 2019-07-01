@@ -47,8 +47,7 @@ This rule handles adding an `OptionalId` as a map key, but only when it is a pro
 ```k
     syntax Map ::= #saveId (Map, OptionalId, Int) [function]
  // -------------------------------------------------------
-    rule #saveId (MAP, ID:OptionalId, _) => MAP
-      requires notBool isIdentifier(ID)
+    rule #saveId (MAP, ID:OptionalId, _)   => MAP             requires notBool isIdentifier(ID)
     rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
 ```
 
