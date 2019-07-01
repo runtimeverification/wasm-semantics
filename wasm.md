@@ -1507,13 +1507,11 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 ```k
     syntax Stmt       ::= ModuleDecl
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
-                        |     "module" Map
- // --------------------------------------
-    rule <k> ( module ID:OptionalId DEFNS ) => module structureModule(DEFNS) ... </k>
-         <nextModuleIdx> NEXT </nextModuleIdx>
-         <moduleIds> IDS => #saveId(IDS, ID, NEXT) </moduleIds>
+                        |     "module" OptionalId Map
+ // -------------------------------------------------
+    rule <k> ( module OID:OptionalId DEFNS ) => module OID structureModule(DEFNS) ... </k>
 
-    rule <k> module MOD
+    rule <k> module OID:OptionalId MOD
           => MOD["typeDecls"]
           ~> MOD["imports"  ]
           ~> MOD["allocs"   ]
@@ -1524,6 +1522,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          </k>
          <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
+         <moduleIds> IDS => #saveId(IDS, OID, NEXT) </moduleIds>
          <moduleInstances>
            ( .Bag
           => <moduleInst>
