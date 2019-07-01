@@ -1019,6 +1019,20 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fType> FTYPE </fType>
            ...
          </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
+
+    rule <k> call_indirect TUSE:TypeUse => trap ... </k>
+         <curModIdx> CUR </curModIdx>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIndices> 0 |-> ADDR </tabIndices>
+           ...
+         </moduleInst>
+         <tabInst>
+           <tAddr> ADDR  </tAddr>
+           <tdata> TDATA </tdata>
+           ...
+         </tabInst> requires notBool IDX in_keys(TDATA)
 ```
 
 ### Export
