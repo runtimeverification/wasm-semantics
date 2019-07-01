@@ -1118,6 +1118,11 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
+    rule <k> ( memory OID:OptionalId .InlineExports (import MOD NAME) MT:MemType )
+          => (import MOD NAME (memory OID MT))
+         ...
+         </k>
+
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
