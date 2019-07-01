@@ -59,10 +59,14 @@ When we are initializing a table with element segment, we need to define a list 
 ```k
     syntax TextFormatIdx ::= Int | Identifier
     syntax ElemSegment   ::= List{TextFormatIdx, ""} [klabel(listTextFormatIdx)]
-    syntax Int ::= #lengthElemSegment (ElemSegment) [function]
- // ----------------------------------------------------------
-    rule #lengthElemSegment(.ElemSegment) => 0
-    rule #lengthElemSegment(TFIDX     ES) => 1 +Int #lengthElemSegment(ES)
+    syntax Int           ::= #lenElemSegment (ElemSegment)      [function]
+    syntax TextFormatIdx ::= #getElemSegment (ElemSegment, Int) [function]
+ // ----------------------------------------------------------------------
+    rule #lenElemSegment(.ElemSegment) => 0
+    rule #lenElemSegment(TFIDX     ES) => 1 +Int #lenElemSegment(ES)
+
+    rule #getElemSegment(E ES, 0) => E
+    rule #getElemSegment(E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
 ```
 
 Memories/tables can optionally have a max size which the memory may not grow beyond.
@@ -83,7 +87,9 @@ WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 ```k
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
-    syntax  ValType ::= IValType | FValType
+    syntax AValType ::= IValType | FValType
+    syntax NValType ::= "{" Identifier AValType "}"
+    syntax ValType  ::= AValType | NValType
  // ---------------------------------------
 ```
 
@@ -92,12 +98,42 @@ WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax ValTypes ::= List{ValType, ""}
+    syntax ValTypes ::= List{ValType, ""}  [klabel(listValTypes)]
     syntax VecType  ::= "[" ValTypes "]"
  // ------------------------------------
 
     syntax FuncType ::= VecType "->" VecType
  // ----------------------------------------
+```
+
+We need helper functions to remove the identifiers from `FuncType`, and to merge the identifiers of 2 `FuncType` together.
+
+```k
+    syntax FuncType ::= unnameFuncType ( FuncType )           [function]
+                      | mergeFuncType  ( FuncType, FuncType ) [function]
+ // --------------------------------------------------------------------
+    rule unnameFuncType ( [ V1 ]->[ V2 ] )                  => [ unnameValTypes ( V1 )      ]->[ V2 ]
+    rule mergeFuncType  ( [ V1 ]->[ V2 ], [ V1' ]->[ V2 ] ) => [ mergeValTypes  ( V1, V1' ) ]->[ V2 ]
+
+    syntax List ::= unnameFuncTypes ( List ) [function]
+ // ---------------------------------------------------
+    rule unnameFuncTypes ( .List ) => .List
+    rule unnameFuncTypes ( ListItem(F) RS:List ) => ListItem(unnameFuncType({F}:>FuncType)) unnameFuncTypes(RS)
+```
+
+We need helper functions to remove all the identifiers from a `ValTypes`, and to merge 2 `ValTypes`.
+
+```k
+    syntax ValTypes ::= unnameValTypes ( ValTypes )           [function]
+                      | mergeValTypes  ( ValTypes, ValTypes ) [function]
+ // --------------------------------------------------------------------
+    rule unnameValTypes ( .ValTypes     ) => .ValTypes
+    rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
+    rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
+    rule mergeValTypes  ( .ValTypes, .ValTypes ) => .ValTypes
+    rule mergeValTypes  ( V:ValType  VS:ValTypes, V:ValType  VS':ValTypes ) => V        mergeValTypes ( VS, VS' )
+    rule mergeValTypes  ( { ID V }   VS:ValTypes, V:AValType VS':ValTypes ) => { ID V } mergeValTypes ( VS, VS' )
+    rule mergeValTypes  ( V:AValType VS:ValTypes, { ID  V }  VS':ValTypes ) => { ID V } mergeValTypes ( VS, VS' )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
@@ -187,7 +223,7 @@ Proper values are numbers annotated with their types.
 ```k
     syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
     syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
-    syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
+    syntax  Val ::= "<" AValType ">" Number [klabel(<_>_)]
                   | IVal | FVal
  // ---------------------------
 ```
@@ -279,10 +315,10 @@ Operator `_++_` implements an append operator for sort `ValStack`.
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
     rule #take(.ValTypes,   _)                              => .ValStack
-    rule #take(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
+    rule #take(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
 
     rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
-    rule #drop(TYPE VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
+    rule #drop(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
 
     rule #revs(VS) => #revs(VS, .ValStack)
 
