@@ -1544,8 +1544,9 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcIndices> ... IDX  |-> ADDR ... </funcIndices>
-           <exports>     ... NAME |-> IDX  ... </exports>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </funcIndices>
+           <exports>    ... NAME |-> TFIDX                       ... </exports>
            ...
          </moduleInst>
 
@@ -1559,8 +1560,9 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <tabIndices> ... IDX  |-> ADDR ... </tabIndices>
-           <exports>    ... NAME |-> IDX  ... </exports>
+           <tabIds> IDS </tabIds>
+           <tabIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </tabIndices>
+           <exports>    ... NAME |-> TFIDX                       ... </exports>
            ...
          </moduleInst>
 
@@ -1574,8 +1576,9 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <memIndices> ... IDX  |-> ADDR ... </memIndices>
-           <exports>    ... NAME |-> IDX  ... </exports>
+           <memIds> IDS </memIds>
+           <memIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </memIndices>
+           <exports>    ... NAME |-> TFIDX                       ... </exports>
            ...
          </moduleInst>
 
@@ -1583,8 +1586,9 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <globalIndices> ... IDX  |-> ADDR ... </globalIndices>
-           <exports>       ... NAME |-> IDX  ... </exports>
+           <globIds> IDS </globIds>
+           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </globalIndices>
+           <exports>       ... NAME |-> TFIDX                       ... </exports>
            ...
          </moduleInst>
          <globalInst>
