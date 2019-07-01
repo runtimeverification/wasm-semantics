@@ -224,12 +224,12 @@ An `*UnOp` operator always produces a result of the same type as its operand.
  // ----------------------------------------
 
     syntax Instr ::= IValType "." IUnOp Int
-                   | IValType "." IUnOp Float
+                   | IValType "." FUnOp Float
  // -----------------------------------------
     rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 
-    rule <k> FTYPE . UOP:FUnOp => ITYPE . UOP C1 ... </k>
+    rule <k> FTYPE . UOP:FUnOp => FTYPE . UOP C1 ... </k>
          <valstack> < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
