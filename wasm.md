@@ -1502,7 +1502,6 @@ We deal with these in the sections related to functions, memories, etc.
  // --------------------------------------------------------------------------
 ```
 
-
 Imports
 -------
 
@@ -1572,20 +1571,23 @@ The value of a global gets copied when it is imported.
            ...
          </moduleInst>
 
-    rule <k> ( import MOD NAME (global OID:OptionalId GT:GlobalType)) => VAL ~> global OID GT ... </k>
+    rule <k> ( import MOD NAME (global OID:OptionalId _:GlobalType)) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globIds> IDS => #saveId(IDS, OID, NEXT) </globIds>
+           <globalIndices> GS => GS [NEXT <- ADDR] </globalIndices>
+           <nextGlobIdx> NEXT => NEXT +Int 1 </nextGlobIdx>
+           ...
+         </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <globIds> IDS </globIds>
-           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </globalIndices>
-           <exports>       ... NAME |-> TFIDX                       ... </exports>
+           <globIds> IDS' </globIds>
+           <globalIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalIndices>
+           <exports>     ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
-         <globalInst>
-           <gAddr>  ADDR </gAddr>
-           <gValue> VAL  </gValue>
-           ...
-        </globalInst>
 ```
 
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
