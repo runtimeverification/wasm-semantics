@@ -1532,9 +1532,9 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </funcIndices>
-           <exports>    ... NAME |-> TFIDX                       ... </exports>
+           <funcIds> IDS' </funcIds>
+           <funcIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </funcIndices>
+           <exports>     ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
 
@@ -1549,9 +1549,9 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <tabIds> IDS </tabIds>
-           <tabIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </tabIndices>
-           <exports>    ... NAME |-> TFIDX                       ... </exports>
+           <tabIds> IDS' </tabIds>
+           <tabIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </tabIndices>
+           <exports>    ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
 
@@ -1566,9 +1566,9 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <memIds> IDS </memIds>
-           <memIndices> ... #ContextLookup(IDS , TFIDX) |-> ADDR ... </memIndices>
-           <exports>    ... NAME |-> TFIDX                       ... </exports>
+           <memIds> IDS' </memIds>
+           <memIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memIndices>
+           <exports>    ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
 
