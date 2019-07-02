@@ -1509,8 +1509,6 @@ Imports need to describe the type of what is imported.
 That an import is really a subtype of the declared import needs to be checked at instantiation time.
 The value of a global gets copied when it is imported.
 
-**TODO: Check types match at import time.**
-
 ```k
     syntax Defn       ::= ImportDefn
     syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
@@ -1519,10 +1517,12 @@ The value of a global gets copied when it is imported.
                         | "(" "memory" OptionalId MemType    ")"
                         | "(" "global" OptionalId GlobalType ")"
  // ------------------------------------------------------------
-    rule <k> ( import MOD NAME (func OID:OptionalId _:TypeUse)) => . ... </k>
+    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <typeIds> TYPEIDS </typeIds>
+           <types>   TYPES   </types>
            <funcIds> IDS => #saveId(IDS, OID, NEXT) </funcIds>
            <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
@@ -1536,8 +1536,14 @@ The value of a global gets copied when it is imported.
            <exports>     ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
+         <funcDef>
+           <fAddr> ADDR </fAddr>
+           <fType> FTYPE </fType>
+           ...
+         </funcDef>
+      requires FTYPE ==K asFuncType(TYPEIDS, TYPES, TUSE)
 
-    rule <k> ( import MOD NAME (table OID:OptionalId _:TableType)) => . ... </k>
+    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1553,8 +1559,15 @@ The value of a global gets copied when it is imported.
            <exports>    ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
+         <tabInst>
+           <tAddr> ADDR </tAddr>
+           <tmax>  MAX  </tmax>
+           <tsize> SIZE </tsize>
+           ...
+         </tabInst>
+       requires #limitsMatchImport(LIM, SIZE, MAX)
 
-    rule <k> ( import MOD NAME (memory OID:OptionalId _:MemType)) => . ... </k>
+    rule <k> ( import MOD NAME (memory OID:OptionalId (LIM:Limits):MemType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1570,6 +1583,13 @@ The value of a global gets copied when it is imported.
            <exports>    ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mmax>  MAX  </mmax>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+       requires #limitsMatchImport(LIM, SIZE, MAX)
 
     rule <k> ( import MOD NAME (global OID:OptionalId (MUT TYP):GlobalType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1590,9 +1610,22 @@ The value of a global gets copied when it is imported.
          </moduleInst>
          <globalInst>
            <gAddr>  ADDR    </gAddr>
-           <gValue> <TYP> _ </gValue>
-           <gMut>   MUT     </gMut>
+           <gValue> <TYP'> _ </gValue>
+           <gMut>   MUT'     </gMut>
          </globalInst>
+       requires TYP ==K TYP'
+        andBool MUT ==K MUT'
+```
+
+Tables and memories have proper subtyping, unlike globals and functions where a type is only a subtype of itself.
+Subtyping is determined by whether the limits of one table/memory fit in the limits of another.
+The following function checks if the limits in the first parameter *match* the limits in the second, i.e., if the second limits are a subtype of the first limits.
+
+```k
+    syntax Bool ::= #limitsMatchImport(Limits, Int, MaxBound) [function]
+ // -------------------------------------------------------------------
+    rule #limitsMatchImport(L1:Int       , L2, _ ) => L1 >=Int L2
+    rule #limitsMatchImport(L1:Int U1:Int, L2, U2) => L1 >=Int L2 andBool U1 <=Int U2 requires U2 =/=K .MaxBound
 ```
 
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
