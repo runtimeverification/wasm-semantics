@@ -185,6 +185,17 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i64) => 18446744073709551616
 ```
 
+```k
+    syntax HexWord ::= r"0x[0-9a-f]*"                  [token, avoid, klabel(magic)]
+    syntax String  ::= #parseHexWordString ( HexWord ) [function, functional, hook(STRING.token2string)]
+    syntax Int     ::= #parseHex           ( String )  [function]
+                     | HexWord [klabel(magic)]
+ // -------------------------------------------------------------
+    rule #parseHex(S) => 0                                        requires S ==String "0x"
+    rule #parseHex(S) => String2Base(replaceAll(S, "0x", ""), 16) requires S =/=String "0x"
+    rule magic(HEX:HexWord) => #parseHex(#parseHexWordString(HEX)) [macro]
+```
+
 ### Type Mutability
 
 ```k
