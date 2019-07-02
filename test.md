@@ -60,15 +60,17 @@ We allow 2 kinds of actions:
            <exports> ... ENAME |-> TFIDX ... </exports>
            ...
          </moduleInst>
-    rule <k> ( get NAME:String ) => VAL ... </k>
+    rule <k> ( get NAME:String ) => ( get CUR NAME) ... </k>
          <curModIdx> CUR </curModIdx>
+    rule <k> ( get MOD NAME:String ) => VAL ... </k>
          <moduleInst>
-           <modIdx> CUR </modIdx>
+           <modIdx> MODIDX </modIdx>
            <exports> ... NAME |-> TFIDX ... </exports>
            <globIds> IDS </globIds>
            <globalIndices> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalIndices>
            ...
          </moduleInst>
+         <moduleIds> ... MOD |-> MODIDX ... </moduleIds>
          <globalInst>
            <gAddr> ADDR </gAddr>
            <gValue> VAL </gValue>
