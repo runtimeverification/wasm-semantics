@@ -83,6 +83,9 @@ WebAssembly Types
 ### Base Types
 
 WebAssembly has four basic types, for 32 and 64 bit integers and floats.
+Here we define `AValType` which stands for `anonymous valtype`, representing values that doesn't have an identifier associated to it.
+Also we define `NValType` which stands for `named valtype`, representing values that has an identifier associated to it.
+`ValType` is the aggregation of `AValType` and `NValType`.
 
 ```k
     syntax IValType ::= "i32" | "i64"
