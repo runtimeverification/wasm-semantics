@@ -109,34 +109,22 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
  // ----------------------------------------
 ```
 
-We need helper functions to remove the identifiers from `FuncType`, and to merge the identifiers of 2 `FuncType` together.
+We need helper functions to remove the identifiers from `FuncType`.
 
 ```k
-    syntax FuncType ::= unnameFuncType ( FuncType )           [function]
-                      | mergeFuncType  ( FuncType, FuncType ) [function]
- // --------------------------------------------------------------------
-    rule unnameFuncType ( [ V1 ]->[ V2 ] )                  => [ unnameValTypes ( V1 )      ]->[ V2 ]
-    rule mergeFuncType  ( [ V1 ]->[ V2 ], [ V1' ]->[ V2 ] ) => [ mergeValTypes  ( V1, V1' ) ]->[ V2 ]
-
-    syntax List ::= unnameFuncTypes ( List ) [function]
- // ---------------------------------------------------
-    rule unnameFuncTypes ( .List ) => .List
-    rule unnameFuncTypes ( ListItem(F:FuncType) RS:List ) => ListItem(unnameFuncType(F)) unnameFuncTypes(RS)
+    syntax FuncType ::= unnameFuncType ( FuncType ) [function]
+ // ----------------------------------------------------------
+    rule unnameFuncType ( [ V1 ]->[ V2 ] ) => [ unnameValTypes ( V1 ) ]->[ V2 ]
 ```
 
-We need helper functions to remove all the identifiers from a `ValTypes`, and to merge 2 `ValTypes`.
+We need helper functions to remove all the identifiers from a `ValTypes`.
 
 ```k
-    syntax ValTypes ::= unnameValTypes ( ValTypes )           [function]
-                      | mergeValTypes  ( ValTypes, ValTypes ) [function]
- // --------------------------------------------------------------------
+    syntax ValTypes ::= unnameValTypes ( ValTypes ) [function]
+ // ----------------------------------------------------------
     rule unnameValTypes ( .ValTypes     ) => .ValTypes
     rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
     rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
-    rule mergeValTypes  ( .ValTypes, .ValTypes ) => .ValTypes
-    rule mergeValTypes  ( V:ValType  VS:ValTypes, V:ValType  VS':ValTypes ) => V        mergeValTypes ( VS, VS' )
-    rule mergeValTypes  ( { ID V }   VS:ValTypes, V:AValType VS':ValTypes ) => { ID V } mergeValTypes ( VS, VS' )
-    rule mergeValTypes  ( V:AValType VS:ValTypes, { ID  V }  VS':ValTypes ) => { ID V } mergeValTypes ( VS, VS' )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.

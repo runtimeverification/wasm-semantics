@@ -1,13 +1,13 @@
 ;; Simple add function
 
 (type $a-cool-type (func (param i32) (param $b i32) ( result i32 )))
-#assertType $a-cool-type [ i32 { $b i32 } ] -> [ i32 ]
-#assertType 0 [ i32 { $b i32 } ] -> [ i32 ]
+#assertType $a-cool-type [ i32 i32 ] -> [ i32 ] ;; The identifier declared for parameters in type will be ignored.
+#assertType 0 [ i32 i32 ] -> [ i32 ]
 #assertNextTypeIdx 1
 
 (func $0 (type $a-cool-type)
     (local.get 0)
-    (local.get $b)
+    (local.get 1)
     (i32.add)
     (return)
 )
@@ -17,18 +17,18 @@
 (i32.const 8)
 (call $0)
 #assertTopStack < i32 > 15 "call function 0"
-#assertFunction 0 [ i32 { $b i32 } ] -> [ i32 ] [ ] "call function 0 exists"
+#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists"
 
 ;; String-named add function
 
 (func $add (type $a-cool-type) (param $a i32) (param i32) ( result i32 )
     (local.get $a)
-    (local.get $b)
+    (local.get 1)
     (i32.add)
     (return)
 )
 
-#assertFunction $add [ { $a i32 } { $b i32 } ] -> [ i32 ] [ ] "function string-named add"
+#assertFunction $add [ { $a i32 } i32 ] -> [ i32 ] [ ] "function string-named add"
 #assertNextTypeIdx 1
 
 ;; Remove return statement

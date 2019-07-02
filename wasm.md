@@ -798,13 +798,14 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
     rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
     rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
-    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => mergeFuncType({TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType, asFuncType(TDECLS))
-      requires unnameFuncType({TYPES[#ContextLookup(TYPEIDS, TFIDX)]}:>FuncType) ==K unnameFuncType(asFuncType(TDECLS))
+    rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => asFuncType(TDECLS)
+      requires {TYPES[#ContextLookup(TYPEIDS, TFIDX)]}:>FuncType ==K unnameFuncType(asFuncType(TDECLS))
 ```
 
 ### Type Declaration
 
 Type could be declared explicitly and could optionally bind with an identifier.
+The `identifier` for `param` of the keyword will be used 
 
 ```k
     syntax Defn     ::= TypeDefn
@@ -816,7 +817,7 @@ Type could be declared explicitly and could optionally bind with an identifier.
            <modIdx> CUR </modIdx>
            <typeIds> IDS => #saveId(IDS, ID, NEXTIDX) </typeIds>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-           <types> TYPES => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
+           <types> TYPES => TYPES [NEXTIDX <- unnameFuncType(asFuncType(TDECLS))] </types>
            ...
          </moduleInst>
 ```
@@ -857,13 +858,12 @@ Currently, in the expanded form, the `export`s will come after the definition of
 ### Function Implicit Type Declaration
 
 It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
-One undefined behaviour should we keep the identifiers from unfolded declarations or not?
 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
     rule <k> #checkTypeUse ( TDECLS:TypeDecls )
-       => #if notBool unnameFuncType(asFuncType(TDECLS)) in unnameFuncTypes(values(TYPES))
+       => #if notBool unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
           #then (type (func TDECLS))
           #else .K
           #fi
