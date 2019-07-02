@@ -1571,7 +1571,7 @@ The value of a global gets copied when it is imported.
            ...
          </moduleInst>
 
-    rule <k> ( import MOD NAME (global OID:OptionalId _:GlobalType)) => . ... </k>
+    rule <k> ( import MOD NAME (global OID:OptionalId (MUT TYP):GlobalType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1585,9 +1585,14 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <globIds> IDS' </globIds>
            <globalIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalIndices>
-           <exports>     ... NAME |-> TFIDX                        ... </exports>
+           <exports>     ... NAME |-> TFIDX                          ... </exports>
            ...
          </moduleInst>
+         <globalInst>
+           <gAddr>  ADDR    </gAddr>
+           <gValue> <TYP> _ </gValue>
+           <gMut>   MUT     </gMut>
+         </globalInst>
 ```
 
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
