@@ -528,11 +528,12 @@ It simply executes the block then records a label with an empty continuation.
     syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
     syntax BlockInstr  ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
  // ---------------------------------------------------------------------------
-    rule <k> ( block ID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block ID:OptionalId TDECLS INSTRS end ... </k>
+    rule <k> ( block OID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block OID TDECLS INSTRS end ... </k>
 
-    rule <k> block ID:OptionalId TDECLS IS end ID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
-      requires ID ==K ID' orBool notBool isIdentifier(ID')
+      requires OID ==K OID'
+        orBool notBool isIdentifier(OID')
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -577,27 +578,33 @@ Finally, we have the conditional and loop instructions.
     syntax BlockInstr  ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
                          | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
  // -------------------------------------------------------------------------------------------------
-    rule <k> ( if ID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if ID TDECLS IS else .Instrs end ... </k>
-    rule <k> ( if ID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if ID TDECLS IS else IS'     end ... </k>
+    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if OID TDECLS IS else .Instrs end ... </k>
+    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if OID TDECLS IS else IS'     end ... </k>
 
-    rule <k> if ID:OptionalId TDECLS:TypeDecls IS                         end ID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
-      requires ID ==K ID'' orBool notBool isIdentifier(ID'')
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS                         end OID'':OptionalId => if OID TDECLS IS else OID .Instrs end OID ... </k>
+      requires OID ==K OID''
+        orBool notBool isIdentifier(OID'')
 
-    rule <k> if ID:OptionalId TDECLS:TypeDecls IS else ID':OptionalId IS' end ID'':OptionalId => IS  ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS  ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL =/=Int 0 andBool ( ID ==K ID' orBool notBool isIdentifier(ID') ) andBool ( ID ==K ID'' orBool notBool isIdentifier(ID'') )
+      requires VAL =/=Int 0
+       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
 
-    rule <k> if ID:OptionalId TDECLS:TypeDecls IS else ID':OptionalId IS' end ID'':OptionalId => IS' ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS' ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL ==Int 0 andBool ( ID ==K ID' orBool notBool isIdentifier(ID') ) andBool ( ID ==K ID'' orBool notBool isIdentifier(ID'') )
+      requires VAL ==Int 0
+       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
     syntax BlockInstr  ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
  // --------------------------------------------------------------------------
-    rule <k> ( loop ID:OptionalId TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
-    rule <k> loop ID:OptionalId TDECLS:TypeDecls IS end ID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { loop ID TDECLS IS end } VALSTACK ... </k>
+    rule <k> ( loop OID:OptionalId TDECLS:TypeDecls IS ) => loop OID TDECLS IS end ... </k>
+    rule <k> loop OID:OptionalId TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { loop OID TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
-      requires ID ==K ID' orBool notBool isIdentifier(ID')
+      requires OID ==K OID'
+        orBool notBool isIdentifier(OID')
 ```
 
 Variable Operators
@@ -681,11 +688,11 @@ When globals are declared, they must also be given a constant initialization val
     syntax GlobalDefn ::= "(" "global" OptionalId TextGlobalType Instr ")"
                         |     "global" GlobalType
  // ---------------------------------------------
-    rule <k> ( global ID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
+    rule <k> ( global OID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS => #saveId(IDS, ID, NEXTIDX) </globIds>
+           <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
            <nextGlobIdx> NEXTIDX                      </nextGlobIdx>
            ...
          </moduleInst>
@@ -755,6 +762,7 @@ Types
 ### Type Gathering
 
 This defines helper functions that gathers function together.
+function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord` as we need and throws away the `TypeDecl` having different `TypeKeyWord`.
 
 ```k
     syntax TypeKeyWord ::= "param" | "result"
@@ -770,7 +778,6 @@ This defines helper functions that gathers function together.
                      | #gatherTypes ( TypeKeyWord , TypeDecls , ValTypes ) [function]
  // ---------------------------------------------------------------------------------
     rule  gatherTypes(TKW , TDECLS:TypeDecls) => #gatherTypes(TKW, TDECLS, .ValTypes)
-
 
     rule #gatherTypes( _  ,                                   .TypeDecls , TYPES) => [ TYPES ]
     rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS:TypeDecls , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
@@ -792,9 +799,9 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
                      | "(type" TextFormatIdx ")" TypeDecls
  // ------------------------------------------------------
 
-    syntax FuncType ::= asFuncType ( TypeDecls )              [function, klabel(TypeDeclsAsFuncType)]
-                      | asFuncType ( Map, Map, TypeUse )      [function, klabel(TypeUseAsFuncType)  ]
- // -------------------------------------------------------------------------------------------------
+    syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
+                      | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
+ // --------------------------------------------------------------------------------------------
     rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
     rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
@@ -839,11 +846,11 @@ Currently, in the expanded form, the `export`s will come after the definition of
 ### Function Local Declaration
 
 ```k
-    syntax LocalDecl  ::= "(" LocalDecl ")"    [bracket]
+    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
                         | "local"            ValTypes
                         | "local" Identifier AValType
-    syntax LocalDecls ::= List{LocalDecl , ""} [klabel(listLocalDecl)]
- // ------------------------------------------------------------------
+    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
+ // -------------------------------------------------------------------------
 
     syntax VecType ::=  asLocalType ( LocalDecls            ) [function]
                      | #asLocalType ( LocalDecls , ValTypes ) [function]
@@ -1029,7 +1036,8 @@ The `#take` function will return the parameter stack in the reversed order, then
            <tAddr> ADDR  </tAddr>
            <tdata> TDATA </tdata>
            ...
-         </tabInst> requires notBool IDX in_keys(TDATA)
+         </tabInst>
+      requires notBool IDX in_keys(TDATA)
 ```
 
 ### Export
@@ -1070,9 +1078,9 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
                        | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
                        |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
-    rule <k> ( table ID:OptionalId MIN:Int         funcref ) => table { ID MIN .MaxBound } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ) => table { OID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table ID:OptionalId MIN:Int MAX:Int funcref ) => table { ID MIN MAX       } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ) => table { OID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
@@ -1129,9 +1137,9 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
                         | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
  // ------------------------------------------------------------------
-    rule <k> ( memory ID:OptionalId MIN:Int         ) => memory { ID MIN .MaxBound } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int         ) => memory { OID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory ID:OptionalId MIN:Int MAX:Int ) => memory { ID MIN MAX       } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ) => memory { OID MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>

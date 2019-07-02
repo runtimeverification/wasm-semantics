@@ -5,18 +5,15 @@
 #assertType 0 [ i32 i32 ] -> [ i32 ]
 #assertNextTypeIdx 1
 
-(func $0 (type $a-cool-type)
+(func $0 (export "000") (type $a-cool-type)
     (local.get 0)
     (local.get 1)
     (i32.add)
     (return)
 )
-#assertNextTypeIdx 1
 
-(i32.const 7)
-(i32.const 8)
-(call $0)
-#assertTopStack < i32 > 15 "call function 0"
+#assertNextTypeIdx 1
+(assert_return (invoke "000" (i32.const 7) (i32.const 8)) (i32.const 15))
 #assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists"
 
 ;; String-named add function
