@@ -19,19 +19,19 @@
 (assert_return (invoke $Nf "call") (i32.const 3))
 (assert_return (invoke $Nf "call Mf.call") (i32.const 2))
 
-(module
-  (import "spectest" "print_i32" (func $f (param i32)))
-  (export "print" (func $f))
-)
-(register "reexport_f")
-(assert_unlinkable
-  (module (import "reexport_f" "print" (func (param i64))))
-  "incompatible import type"
-)
-(assert_unlinkable
-  (module (import "reexport_f" "print" (func (param i32) (result i32))))
-  "incompatible import type"
-)
+;; (module
+;;   (import "spectest" "print_i32" (func $f (param i32)))
+;;   (export "print" (func $f))
+;; )
+;; (register "reexport_f")
+;; (assert_unlinkable
+;;   (module (import "reexport_f" "print" (func (param i64))))
+;;   "incompatible import type"
+;; )
+;; (assert_unlinkable
+;;   (module (import "reexport_f" "print" (func (param i32) (result i32))))
+;;   "incompatible import type"
+;; )
 
 
 ;; Globals
