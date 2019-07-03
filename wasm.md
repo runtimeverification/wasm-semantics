@@ -18,7 +18,7 @@ Configuration
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals> .Map </locals>
-        <curModIdx> .K </curModIdx>
+        <curModIdx> .NoIdx </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
@@ -1725,8 +1725,10 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
 
 ```k
+    syntax Int ::= ".NoIdx"
+ // -----------------------
     rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
-         <curModIdx> .K </curModIdx>
+         <curModIdx> .NoIdx </curModIdx>
 ```
 
 After a module is instantiated, it should be saved somewhere.
