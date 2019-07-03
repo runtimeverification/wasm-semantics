@@ -65,11 +65,10 @@ We allow 2 kinds of actions:
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... ENAME |-> TFIDX ... </exports>
+           <funcIds> IDS </funcIds>
            <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
-         <moduleIds> IDS </moduleIds>
-
 
     rule <k> ( get NAME:String ) => get CUR NAME  ... </k>
          <curModIdx> CUR </curModIdx>
