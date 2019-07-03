@@ -810,7 +810,7 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
     rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => asFuncType(TDECLS)
-      requires {TYPES[#ContextLookup(TYPEIDS, TFIDX)]}:>FuncType ==K unnameFuncType(asFuncType(TDECLS))
+      requires TYPES[#ContextLookup(TYPEIDS, TFIDX)] ==K unnameFuncType(asFuncType(TDECLS))
 ```
 
 ### Type Declaration
@@ -1026,7 +1026,8 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fAddr> FADDR </fAddr>
            <fType> FTYPE </fType>
            ...
-         </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
+         </funcDef>
+      requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
 
     rule <k> call_indirect TUSE:TypeUse => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1049,7 +1050,8 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fAddr> FADDR </fAddr>
            <fType> FTYPE </fType>
            ...
-         </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) =/=K unnameFuncType(FTYPE)
+         </funcDef>
+      requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) =/=K unnameFuncType(FTYPE)
 
     rule <k> call_indirect TUSE:TypeUse => trap ... </k>
          <curModIdx> CUR </curModIdx>
