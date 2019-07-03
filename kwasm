@@ -3,7 +3,7 @@
 set -euo pipefail
 shopt -s extglob
 
-kwasm_dir="${KWASM_DIR:-.}"
+kwasm_dir="${KWASM_DIR:-$(dirname $0)}"
 build_dir="$kwasm_dir/.build"
 defn_dir="$build_dir/defn"
 lib_dir="$build_dir/local/lib"
