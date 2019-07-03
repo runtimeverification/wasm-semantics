@@ -1014,13 +1014,11 @@ The `#take` function will return the parameter stack in the reversed order, then
            <typeIds> TYPEIDS </typeIds>
            <types> TYPES </types>
            <tabIndices> 0 |-> ADDR </tabIndices>
-           <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> ... IDX |-> TFIDX ... </tdata>
+           <tdata> ... IDX |-> FADDR ... </tdata>
            ...
          </tabInst>
          <funcDef>
@@ -1037,13 +1035,11 @@ The `#take` function will return the parameter stack in the reversed order, then
            <typeIds> TYPEIDS </typeIds>
            <types> TYPES </types>
            <tabIndices> 0 |-> ADDR </tabIndices>
-           <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> ... IDX |-> TFIDX ... </tdata>
+           <tdata> ... IDX |-> FADDR ... </tdata>
            ...
          </tabInst>
          <funcDef>
@@ -1082,6 +1078,7 @@ Currently there is only one possiblt value for it which is "funcref".
 The allocation of a new `tableinst`.
 Currently at most one table may be defined or imported in a single module.
 The only allowed `TableElemType` is "funcref", so we ignore this term in the reducted sort.
+The table values are addresses into the store of functions.
 
 ```k
     syntax Defn      ::= TableDefn
@@ -1474,28 +1471,30 @@ A table index is optional and will be default to zero.
     syntax ElemDefn ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
                       | "(" "elem"                   Offset ElemSegment ")"
                       |     "elem" "{" TextFormatIdx        ElemSegment "}"
-    syntax Stmt     ::= #initElements ( Int, Int, ElemSegment )
- // -----------------------------------------------------------
+    syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
+ // ---------------------------------------------------------------------
     // Default to table with index 0.
     rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
     rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
-    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, ELEMSEGMENT ) ... </k>
+    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FUNCS, FIDS, ELEMSEGMENT ) ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <moduleInst>
-           <modIdx> CUR </modIdx>
-           <tabIds> IDS </tabIds>
-           <tabIndices> #ContextLookup(IDS, TABIDX) |-> ADDR </tabIndices>
+           <modIdx> CUR  </modIdx>
+           <funcIds> FIDS </funcIds>
+           <funcIndices> FUNCS </funcIndices>
+           <tabIds>  TIDS </tabIds>
+           <tabIndices> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabIndices>
            ...
          </moduleInst>
 
-    rule <k> #initElements ( ADDR, OFFSET, .ElemSegment ) => . ... </k>
-    rule <k> #initElements ( ADDR, OFFSET,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, ES ) ... </k>
+    rule <k> #initElements (    _,     _ ,     _,   _, .ElemSegment ) => . ... </k>
+    rule <k> #initElements ( ADDR, OFFSET, FUNCS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FUNCS, IDS, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- E ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- FUNCS[#ContextLookup(IDS, E)] ] </tdata>
            ...
          </tabInst>
 ```
@@ -1732,6 +1731,8 @@ Exports may appear anywhere in a module, but can only be performed after what th
 Exports that are inlined in a definition, e.g., `func (export "foo") ...`, are safe to extract as they appear.
 Imports must appear before any allocations in a module, due to validation.
 
+A subtle point is related to tables with inline `elem` definitions: since these may refer to functions by identifier, we need to make sure that tables definitions come after function definitions.
+
 `structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
 The groups are chosen to represent different stages of allocation and instantiation.
 
@@ -1743,6 +1744,7 @@ The groups are chosen to represent different stages of allocation and instantiat
     rule #initialMap ()
       => "typeDecls" |-> .Defns
          "imports"   |-> .Defns
+         "func/glob" |-> .Defns
          "allocs"    |-> .Defns
          "exports"   |-> .Defns
          "inits"     |-> .Defns
@@ -1755,10 +1757,11 @@ The groups are chosen to represent different stages of allocation and instantiat
 
     rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
 
-    rule #structureModule(M, (A:FuncDefn   DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+
     rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
     rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:GlobalDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
 
     rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
 
@@ -1786,6 +1789,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
     rule <k> module OID:OptionalId MOD
           => MOD["typeDecls"]
           ~> MOD["imports"  ]
+          ~> MOD["func/glob"]
           ~> MOD["allocs"   ]
           ~> MOD["exports"  ]
           ~> MOD["inits"    ]
