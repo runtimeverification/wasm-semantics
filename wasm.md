@@ -1024,6 +1024,29 @@ The `#take` function will return the parameter stack in the reversed order, then
            ...
          </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
 
+    rule <k> call_indirect TUSE:TypeUse => ( invoke FADDR ) ... </k>
+         <curModIdx> CUR </curModIdx>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> TYPEIDS </typeIds>
+           <types> TYPES </types>
+           <tabIndices> 0 |-> ADDR </tabIndices>
+           <funcIds> IDS </funcIds>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           ...
+         </moduleInst>
+         <tabInst>
+           <tAddr> ADDR </tAddr>
+           <tdata> ... IDX |-> TFIDX ... </tdata>
+           ...
+         </tabInst>
+         <funcDef>
+           <fAddr> FADDR </fAddr>
+           <fType> FTYPE </fType>
+           ...
+         </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) =/=K unnameFuncType(FTYPE)
+
     rule <k> call_indirect TUSE:TypeUse => trap ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
