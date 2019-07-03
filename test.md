@@ -47,22 +47,37 @@ We allow 2 kinds of actions:
 
 ```k
     syntax Auxil  ::= Action
-    syntax Action ::= "(" "invoke"         String        ")"
-                    | "(" "invoke"         String Instrs ")"
-                    | "(" "get"            String        ")"
-                    | "(" "get" Identifier String        ")"
- // --------------------------------------------------------
-    rule <k> ( invoke ENAME:String IS:Instrs ) => IS ~> ( invoke ENAME ) ... </k>
-    rule <k> ( invoke ENAME:String )           => ( call TFIDX )         ... </k>
+    syntax Action ::= "(" "invoke" OptionalId String        ")"
+                    | "(" "invoke" OptionalId String Instrs ")"
+                    |     "invoke" Int        String
+                    | "(" "get"    OptionalId String        ")"
+                    |     "get"    Int        String
+ // ------------------------------------------------
+    rule <k> ( invoke OID:OptionalId ENAME:String IS:Instrs ) => IS ~> ( invoke OID ENAME ) ... </k>
+
+    rule <k> ( invoke ENAME:String ) => invoke CUR ENAME ... </k>
          <curModIdx> CUR </curModIdx>
+
+    rule <k> ( invoke ID:Identifier ENAME:String ) => invoke MODIDX ENAME ... </k>
+         <moduleIds> ... ID |-> MODIDX ... </moduleIds>
+
+    rule <k> invoke MODIDX:Int ENAME:String => ( invoke FADDR ):Instr ... </k>
          <moduleInst>
-           <modIdx> CUR </modIdx>
+           <modIdx> MODIDX </modIdx>
            <exports> ... ENAME |-> TFIDX ... </exports>
+           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
-    rule <k> ( get NAME:String ) => ( get CUR NAME) ... </k>
+         <moduleIds> IDS </moduleIds>
+
+
+    rule <k> ( get NAME:String ) => get CUR NAME  ... </k>
          <curModIdx> CUR </curModIdx>
-    rule <k> ( get MOD NAME:String ) => VAL ... </k>
+
+    rule <k> ( get MOD:Identifier NAME:String ) => get MODIDX NAME ... </k>
+         <moduleIds> ... MOD |-> MODIDX ... </moduleIds>
+
+    rule <k> get MODIDX:Int NAME:String => VAL ... </k>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... NAME |-> TFIDX ... </exports>
@@ -70,7 +85,6 @@ We allow 2 kinds of actions:
            <globalIndices> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalIndices>
            ...
          </moduleInst>
-         <moduleIds> ... MOD |-> MODIDX ... </moduleIds>
          <globalInst>
            <gAddr> ADDR </gAddr>
            <gValue> VAL </gValue>
