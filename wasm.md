@@ -1650,7 +1650,7 @@ The value of a global gets copied when it is imported.
            <tsize> SIZE </tsize>
            ...
          </tabInst>
-       requires #limitsMatchImport(LIM, SIZE, MAX)
+       requires #limitsMatchImport(SIZE, MAX, LIM)
 
     rule <k> ( import MOD NAME (memory OID:OptionalId (LIM:Limits):MemType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1674,7 +1674,7 @@ The value of a global gets copied when it is imported.
            <msize> SIZE </msize>
            ...
          </memInst>
-       requires #limitsMatchImport(LIM, SIZE, MAX)
+       requires #limitsMatchImport(SIZE, MAX, LIM)
 
     rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextGlobalType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1703,13 +1703,13 @@ The value of a global gets copied when it is imported.
 
 Tables and memories have proper subtyping, unlike globals and functions where a type is only a subtype of itself.
 Subtyping is determined by whether the limits of one table/memory fit in the limits of another.
-The following function checks if the limits in the first parameter *match* the limits in the second, i.e., if the second limits are a subtype of the first limits.
+The following function checks if the limits in the first parameter *match*, i.e. is a subtype of, the limits in the second.
 
 ```k
-    syntax Bool ::= #limitsMatchImport(Limits, Int, MaxBound) [function]
- // -------------------------------------------------------------------
-    rule #limitsMatchImport(L1:Int       , L2, _ ) => L1 >=Int L2
-    rule #limitsMatchImport(L1:Int U1:Int, L2, U2) => L1 >=Int L2 andBool U1 <=Int U2 requires U2 =/=K .MaxBound
+    syntax Bool ::= #limitsMatchImport(Int, MaxBound, Limits) [function]
+ // --------------------------------------------------------------------
+    rule #limitsMatchImport(L1:Int, .MaxBound, L2   ) => L1 >=Int L2
+    rule #limitsMatchImport(L1:Int,    U1:Int, L2 U2) => L1 >=Int L2 andBool U1 <=Int U2 requires U2 =/=K .MaxBound
 ```
 
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
