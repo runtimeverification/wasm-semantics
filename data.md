@@ -6,6 +6,7 @@ require "domains.k"
 
 module WASM-DATA
     imports DOMAINS
+    imports FLOAT
 ```
 
 Parsing
@@ -243,6 +244,16 @@ The `#wrap` function wraps an integer to a given bit width.
     syntax Int  ::= #wrap(Int, Int) [function]
  // ------------------------------------------
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
+```
+
+In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
+The `#round` function casts a `f64` float to a `f32` float.
+
+```k
+    syntax FVal ::= #round ( FVal ) [function]
+ // ------------------------------------------
+    rule #round(< f64 > N) => < f64 > N [concrete]
+    rule #round(< f32 > N) => < f32 > roundFloat(N, 24, 8) [concrete]
 ```
 
 ### Signed Interpretation
