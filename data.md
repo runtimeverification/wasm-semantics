@@ -5,7 +5,11 @@ WebAssembly Data
 require "domains.k"
 
 module WASM-DATA
-    imports DOMAINS
+    imports INT
+    imports BOOL
+    imports STRING
+    imports LIST
+    imports MAP
     imports FLOAT
 ```
 
