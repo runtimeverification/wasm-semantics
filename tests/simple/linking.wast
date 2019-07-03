@@ -386,3 +386,6 @@
 
 (assert_return (invoke $Ms "get memory[0]") (i32.const 104))  ;; 'h'
 (assert_return (invoke $Ms "get table[0]") (i32.const 57005))
+(assert_return (invoke $Ms "get table[0]") (i32.const 57005))
+
+#clearConfig
