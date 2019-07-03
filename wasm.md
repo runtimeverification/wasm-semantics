@@ -668,7 +668,7 @@ Globals can either be specified by giving a type and an initializer expression; 
           ...
          </k>
 
-     rule <k> ( global OID:OptionalId .InlineExports (import MOD NAME) TYP ) => ( import MOD NAME (global OID asGMut(TYP)) ) ... </k>
+     rule <k> ( global OID:OptionalId .InlineExports (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
 
     rule <k> ( global OID:OptionalId .InlineExports TYP:TextGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
@@ -1512,11 +1512,11 @@ The value of a global gets copied when it is imported.
 ```k
     syntax Defn       ::= ImportDefn
     syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
-    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse    ")"
-                        | "(" "table"  OptionalId TableType  ")"
-                        | "(" "memory" OptionalId MemType    ")"
-                        | "(" "global" OptionalId GlobalType ")"
- // ------------------------------------------------------------
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse        ")"
+                        | "(" "table"  OptionalId TableType      ")"
+                        | "(" "memory" OptionalId MemType        ")"
+                        | "(" "global" OptionalId TextGlobalType ")"
+ // ----------------------------------------------------------------
     rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1591,7 +1591,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(LIM, SIZE, MAX)
 
-    rule <k> ( import MOD NAME (global OID:OptionalId (MUT TYP):GlobalType)) => . ... </k>
+    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextGlobalType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1610,11 +1610,10 @@ The value of a global gets copied when it is imported.
          </moduleInst>
          <globalInst>
            <gAddr>  ADDR    </gAddr>
-           <gValue> <TYP'> _ </gValue>
-           <gMut>   MUT'     </gMut>
+           <gValue> <TYP> _ </gValue>
+           <gMut>   MUT     </gMut>
          </globalInst>
-       requires TYP ==K TYP'
-        andBool MUT ==K MUT'
+       requires asGMut(TGTYP) ==K MUT TYP
 ```
 
 Tables and memories have proper subtyping, unlike globals and functions where a type is only a subtype of itself.

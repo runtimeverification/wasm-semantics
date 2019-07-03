@@ -15,6 +15,7 @@
  (func (import "m" "gunc") (type $t))
  (func (import "m" "f"))
  (global $x (import "m" "g") (mut i32))
+ (import "m" "g" (global (mut i32)))
  (func (export "foo") (result i32) (global.get 0))
  (func (export "mod") (global.set 0 (i32.const 10)))
  )
