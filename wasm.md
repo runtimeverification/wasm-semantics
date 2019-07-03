@@ -1042,6 +1042,11 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
+    rule <k> ( table OID:OptionalId .InlineExports (import MOD NAME) TT:TableType )
+          => (import MOD NAME (table OID TT))
+         ...
+         </k>
+
     rule <k> table { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
