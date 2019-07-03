@@ -21,7 +21,9 @@
 
 (assert_return (invoke "foo") (i32.const 42))
 (invoke "mod")
+(invoke $a "f")
 (assert_return (invoke "foo") (i32.const 10))
 (assert_return (get $a "g") (i32.const 10))
+(assert_return (get "x") (i32.const 10))
 
 #clearConfig
