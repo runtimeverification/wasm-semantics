@@ -762,7 +762,7 @@ Types
 ### Type Gathering
 
 This defines helper functions that gathers function together.
-function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord` as we need and throws away the `TypeDecl` having different `TypeKeyWord`.
+The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord` as we need and throws away the `TypeDecl` having different `TypeKeyWord`.
 
 ```k
     syntax TypeKeyWord ::= "param" | "result"
