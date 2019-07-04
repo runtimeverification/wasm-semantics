@@ -1060,7 +1060,6 @@ The table values are addresses into the store of functions.
     syntax TableType ::= Limits TableElemType
     syntax TableSpec ::= TableType
                        | TableElemType "(" "elem" ElemSegment ")"
-                       | InlineImport TableType
     syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
                        |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
@@ -1078,11 +1077,6 @@ The table values are addresses into the store of functions.
     rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-
-    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType )
-          => (import MOD NAME (table OID TT))
-         ...
-         </k>
 
     rule <k> table { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1127,7 +1121,6 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
                         | "(" "data" DataStrings ")"
-                        | InlineImport MemType
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int MaxBound "}"
  // ------------------------------------------------------------------
@@ -1144,11 +1137,6 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-
-    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType )
-          => (import MOD NAME (memory OID MT))
-         ...
-         </k>
 
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1729,6 +1717,13 @@ Imports can also be declared like regular functions, memories, etc., by giving a
  // --------------------------------------------
     rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
 
+    syntax TableSpec ::= InlineImport TableType
+ // -------------------------------------------
+    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => (import MOD NAME (table OID TT)) ... </k>
+
+    syntax MemorySpec ::= InlineImport MemType
+ // ------------------------------------------
+    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => (import MOD NAME (memory OID MT)) ... </k>
 ```
 
 Module Instantiation
