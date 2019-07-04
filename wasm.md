@@ -1632,7 +1632,7 @@ The value of a global gets copied when it is imported.
            <fType> FTYPE </fType>
            ...
          </funcDef>
-      requires FTYPE ==K asFuncType(TYPEIDS, TYPES, TUSE)
+      requires unnameFuncType(FTYPE) ==K unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE))
 
     rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType)) => . ... </k>
          <curModIdx> CUR </curModIdx>
