@@ -1013,13 +1013,11 @@ The `#take` function will return the parameter stack in the reversed order, then
            <typeIds> TYPEIDS </typeIds>
            <types> TYPES </types>
            <tabIndices> 0 |-> ADDR </tabIndices>
-           <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> ... IDX |-> TFIDX ... </tdata>
+           <tdata> ... IDX |-> FADDR ... </tdata>
            ...
          </tabInst>
          <funcDef>
@@ -1037,13 +1035,11 @@ The `#take` function will return the parameter stack in the reversed order, then
            <typeIds> TYPEIDS </typeIds>
            <types> TYPES </types>
            <tabIndices> 0 |-> ADDR </tabIndices>
-           <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
            ...
          </moduleInst>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> ... IDX |-> TFIDX ... </tdata>
+           <tdata> ... IDX |-> FADDR ... </tdata>
            ...
          </tabInst>
          <funcDef>
