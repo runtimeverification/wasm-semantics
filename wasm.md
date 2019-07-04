@@ -1447,29 +1447,30 @@ A table index is optional and will be default to zero.
     syntax ElemDefn ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
                       | "(" "elem"                   Offset ElemSegment ")"
                       |     "elem" "{" TextFormatIdx        ElemSegment "}"
-    syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
- // ----------------------------------------------------------------
+    syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
+ // ---------------------------------------------------------------------
     // Default to table with index 0.
     rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
     rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
-    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FIDS, ELEMSEGMENT ) ... </k>
+    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, FIDS, ELEMSEGMENT ) ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <moduleInst>
            <modIdx> CUR  </modIdx>
            <funcIds> FIDS </funcIds>
+           <funcIndices> FADDRS </funcIndices>
            <tabIds>  TIDS </tabIds>
            <tabIndices> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabIndices>
            ...
          </moduleInst>
 
-    rule <k> #initElements (    _,     _ ,   _, .ElemSegment ) => . ... </k>
-    rule <k> #initElements ( ADDR, OFFSET, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, IDS, ES ) ... </k>
+    rule <k> #initElements (    _,     _ ,     _,   _, .ElemSegment ) => . ... </k>
+    rule <k> #initElements ( ADDR, OFFSET, FADDRS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, IDS, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- #ContextLookup(IDS, E) ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- FADDRS[#ContextLookup(IDS, E)] ] </tdata>
            ...
          </tabInst>
 ```

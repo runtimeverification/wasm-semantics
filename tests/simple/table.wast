@@ -17,13 +17,13 @@
 #assertTable $named2 3 3 "should be empty now"
 
 (module
+  ( elem 0 (i32.const 1) $f $g)
   ( table 4 funcref)
   (func $f) (func $g)
-  ( elem 0 (i32.const 1) $f $g)
 )
 
-#assertTableElem (1, 0) "table elem 1"
-#assertTableElem (2, 1) "table elem 2"
+#assertTableElem (1, 3) "table elem 1"
+#assertTableElem (2, 4) "table elem 2"
 #assertTable 0 4 .MaxBound "should be empty now"
 
 (module
@@ -57,8 +57,8 @@
 #assertFunction 2 [ ] -> [ i32 ] [ ] "call function 3 exists"
 #assertFunction 3 [ ] -> [ i32 ] [ ] "call function 4 exists"
 #assertFunction 4 [ ] -> [ i32 ] [ ] "call function 5 exists"
-#assertTableElem (8, 0) "table elem 8"
-#assertTableElem (9, 1) "table elem 9"
+#assertTableElem (8, 5) "table elem 8"
+#assertTableElem (9, 6) "table elem 9"
 #assertTable $tab 10 .MaxBound "should be empty now"
 
 #clearConfig
