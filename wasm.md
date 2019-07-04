@@ -690,12 +690,9 @@ Globals can either be specified by giving a type and an initializer expression; 
 
     syntax Defn       ::= GlobalDefn
     syntax GlobalSpec ::= TextGlobalType Instr
-                        | InlineImport TextGlobalType
     syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
                         |     "global" OptionalId GlobalType
  // --------------------------------------------------------
-     rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
-
     rule <k> ( global OID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
     rule <k> global OID:OptionalId MUT:Mut TYP:AValType => . ... </k>
@@ -886,11 +883,8 @@ Functions can either be specified by giving a type, what locals it allocates, an
 ```k
     syntax Defn     ::= FuncDefn
     syntax FuncSpec ::= TypeUse LocalDecls Instrs
-                      | InlineImport TypeUse
     syntax FuncDefn ::= "(" "func" OptionalId FuncSpec ")"
  // ------------------------------------------------------
-    rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
-
     rule <k> ( func OID:OptionalId TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1722,11 +1716,19 @@ The following function checks if the limits in the first parameter *match*, i.e.
 ```
 
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
-We deal with these in the sections related to functions, memories, etc.
 
 ```k
     syntax InlineImport ::= "(" "import" String String ")"
  // ------------------------------------------------------
+
+    syntax GlobalSpec ::= InlineImport TextGlobalType
+ // -------------------------------------------------
+    rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
+
+    syntax FunctionSpec ::= InlineImport TypeUse
+ // --------------------------------------------
+    rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
+
 ```
 
 Module Instantiation
