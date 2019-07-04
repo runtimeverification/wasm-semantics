@@ -22,18 +22,18 @@
   <nextFreshId>
     0
   </nextFreshId>
-  <moduleIds>
-    .Map
-  </moduleIds>
-  <nextModuleIdx>
-    0
-  </nextModuleIdx>
-  <moduleInstances>
-    .Map
-  </moduleInstances>
   <moduleRegistry>
     .Map
   </moduleRegistry>
+  <moduleIds>
+    .Map
+  </moduleIds>
+  <moduleInstances>
+    .Map
+  </moduleInstances>
+  <nextModuleIdx>
+    0
+  </nextModuleIdx>
   <mainStore>
     <nextFuncAddr>
       0
