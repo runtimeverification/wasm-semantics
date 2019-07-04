@@ -212,6 +212,7 @@ To resolve these `identifiers` into concrete `indices`, some grammar production 
  // ----------------------------------------------------------------
     rule #ContextLookup(IDS:Map, I:Int) => I
     rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
 ```
 
 ### Unary Operators
