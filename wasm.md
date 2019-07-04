@@ -1484,23 +1484,23 @@ A table index is optional and will be default to zero.
     rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
-    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FUNCS, FIDS, ELEMSEGMENT ) ... </k>
+    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, FIDS, ELEMSEGMENT ) ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <moduleInst>
            <modIdx> CUR  </modIdx>
            <funcIds> FIDS </funcIds>
-           <funcIndices> FUNCS </funcIndices>
+           <funcIndices> FADDRS </funcIndices>
            <tabIds>  TIDS </tabIds>
            <tabIndices> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabIndices>
            ...
          </moduleInst>
 
-    rule <k> #initElements (    _,     _ ,     _,   _, .ElemSegment ) => . ... </k>
-    rule <k> #initElements ( ADDR, OFFSET, FUNCS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FUNCS, IDS, ES ) ... </k>
+    rule <k> #initElements (    _,     _ ,      _,   _, .ElemSegment ) => . ... </k>
+    rule <k> #initElements ( ADDR, OFFSET, FADDRS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, IDS, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- FUNCS[#ContextLookup(IDS, E)] ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- FADDRS[#ContextLookup(IDS, E)] ] </tdata>
            ...
          </tabInst>
 ```
@@ -1763,6 +1763,9 @@ The groups are chosen to represent different stages of allocation and instantiat
     rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
 
     rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+
+    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
 
     rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
     rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
