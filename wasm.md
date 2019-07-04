@@ -1714,9 +1714,9 @@ The following function checks if the limits in the first parameter *match*, i.e.
 ```k
     syntax Bool ::= #limitsMatchImport(Int, MaxBound, Limits) [function]
  // --------------------------------------------------------------------
-    rule #limitsMatchImport(L1,         _, L2   ) => L1 >=Int L2
-    rule #limitsMatchImport( _, .MaxBound,  _  _) => false
-    rule #limitsMatchImport(L1,    U1:Int, L2 U2) => L1 >=Int L2 andBool U1 <=Int U2
+    rule #limitsMatchImport(L1,         _, L2:Int   ) => L1 >=Int L2
+    rule #limitsMatchImport( _, .MaxBound,  _:Int  _) => false
+    rule #limitsMatchImport(L1,    U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
 ```
 
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
