@@ -1725,7 +1725,7 @@ Imports can also be declared like regular functions, memories, etc., by giving a
  // -------------------------------------------------
     rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
 
-    syntax FunctionSpec ::= InlineImport TypeUse
+    syntax FuncSpec ::= InlineImport TypeUse
  // --------------------------------------------
     rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
 
