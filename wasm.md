@@ -1067,9 +1067,9 @@ The table values are addresses into the store of functions.
     syntax TableSpec ::= TableType
                        | TableElemType "(" "elem" ElemSegment ")"
                        | InlineImport TableType
-    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
-                       | "(" "table"     OptionalId ")"
-                       |     "table" "{" OptionalId Int MaxBound "}"
+    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"    [klabel(TableDefn)]
+                       | "(" "table"     OptionalId ")"              [klabel(TableDefn)]
+                       |     "table" "{" OptionalId Int MaxBound "}" [klabel(TableDefn)]
  // ----------------------------------------------------------------
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
@@ -1080,10 +1080,9 @@ The table values are addresses into the store of functions.
           ...
          </k>
 
-    rule <k> ( table OID MIN     funcref ):TableDefn => table { OID MIN .MaxBound } ... </k>
-
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID MIN MAX funcref ):TableDefn => table { OID MIN MAX       } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX       } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
@@ -1147,9 +1146,9 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
           ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
-    rule <k> ( memory OID MIN     ):MemoryDefn => memory { OID MIN .MaxBound } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .MaxBound } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID MIN MAX ):MemoryDefn => memory { OID MIN MAX       } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX       } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
@@ -1557,7 +1556,7 @@ Note that it is possible to define multiple exports inline, i.e., export a singl
     syntax FuncSpec   ::= InlineExport FuncSpec
  // -------------------------------------------
     rule <k> ( func                  EXPO:InlineExport SPEC:FuncSpec )
-          => ( func #freshId(NEXTID) EXPO               SPEC         )
+          => ( func #freshId(NEXTID) EXPO              SPEC          )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
@@ -1595,7 +1594,6 @@ Note that it is possible to define multiple exports inline, i.e., export a singl
           ~> ( memory ID SPEC )
           ...
          </k>
-
 ```
 
 Imports
