@@ -22,6 +22,8 @@ Configuration
         <curModIdx> .NoIdx </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
+      <moduleRegistry> .Map </moduleRegistry>
+      <moduleIds> .Map </moduleIds>
       <moduleInstances>
         <moduleInst multiplicity="*" type="Map">
           <modIdx>        0    </modIdx>
@@ -41,9 +43,7 @@ Configuration
           <exports>       .Map </exports>
         </moduleInst>
       </moduleInstances>
-      <moduleIds> .Map </moduleIds>
       <nextModuleIdx> 0 </nextModuleIdx>
-      <moduleRegistry> .Map </moduleRegistry>
       <mainStore>
         <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
