@@ -58,7 +58,11 @@ When we are initializing a table with element segment, we need to define a list 
 
 ```k
     syntax TextFormatIdx ::= Int | Identifier
-    syntax ElemSegment   ::= List{TextFormatIdx, ""} [klabel(listTextFormatIdx)]
+ // -----------------------------------------
+
+    syntax ElemSegment ::= List{TextFormatIdx, ""} [klabel(listTextFormatIdx)]
+ // --------------------------------------------------------------------------
+
     syntax Int           ::= #lenElemSegment (ElemSegment)      [function]
     syntax TextFormatIdx ::= #getElemSegment (ElemSegment, Int) [function]
  // ----------------------------------------------------------------------
@@ -294,7 +298,7 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 `#zero` will create a specified stack of zero values in a given type.
 `#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
 `#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
-One need to unname the `ValTypes` first before calling the `#take` or `#drop` function.
+One needs to unname the `ValTypes` first before calling the `#take` or `#drop` function.
 
 ```k
     syntax ValStack ::= #zero ( ValTypes )            [function]

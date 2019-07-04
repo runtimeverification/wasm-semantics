@@ -17,8 +17,8 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals>    .Map </locals>
-        <localIds>  .Map </localIds>
+        <locals>    .Map   </locals>
+        <localIds>  .Map   </localIds>
         <curModIdx> .NoIdx </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
@@ -526,10 +526,11 @@ It simply executes the block then records a label with an empty continuation.
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
- // ---------------------------------------------------------------------------
+ // ------------------------------------------------------------------
     rule <k> ( block OID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block OID TDECLS INSTRS end ... </k>
 
+    syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
+ // --------------------------------------------------------------------------
     rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
       requires OID ==K OID'
@@ -575,12 +576,13 @@ Finally, we have the conditional and loop instructions.
 ```k
     syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
                          | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
-    syntax BlockInstr  ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
-                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
- // -------------------------------------------------------------------------------------------------
+ // -----------------------------------------------------------------------------------------------------------
     rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if OID TDECLS IS else .Instrs end ... </k>
     rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if OID TDECLS IS else IS'     end ... </k>
 
+    syntax BlockInstr ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // ------------------------------------------------------------------------------------------------
     rule <k> if OID:OptionalId TDECLS:TypeDecls IS                         end OID'':OptionalId => if OID TDECLS IS else OID .Instrs end OID ... </k>
       requires OID ==K OID''
         orBool notBool isIdentifier(OID'')
@@ -598,9 +600,11 @@ Finally, we have the conditional and loop instructions.
        andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
-    syntax BlockInstr  ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
- // --------------------------------------------------------------------------
+ // -----------------------------------------------------------------
     rule <k> ( loop OID:OptionalId TDECLS:TypeDecls IS ) => loop OID TDECLS IS end ... </k>
+
+    syntax BlockInstr ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
+ // -------------------------------------------------------------------------
     rule <k> loop OID:OptionalId TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { loop OID TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
       requires OID ==K OID'
@@ -772,7 +776,7 @@ Types
 ### Type Gathering
 
 This defines helper functions that gathers function together.
-function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord` as we need and throws away the `TypeDecl` having different `TypeKeyWord`.
+The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord` as we need and throws away the `TypeDecl` having different `TypeKeyWord`.
 
 ```k
     syntax TypeKeyWord ::= "param" | "result"
@@ -816,7 +820,7 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
     rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => asFuncType(TDECLS)
-      requires {TYPES[#ContextLookup(TYPEIDS, TFIDX)]}:>FuncType ==K unnameFuncType(asFuncType(TDECLS))
+      requires TYPES[#ContextLookup(TYPEIDS, TFIDX)] ==K unnameFuncType(asFuncType(TDECLS))
 ```
 
 ### Type Declaration
@@ -1025,7 +1029,8 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fAddr> FADDR </fAddr>
            <fType> FTYPE </fType>
            ...
-         </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
+         </funcDef>
+      requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
 
     rule <k> call_indirect TUSE:TypeUse => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1046,7 +1051,8 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fAddr> FADDR </fAddr>
            <fType> FTYPE </fType>
            ...
-         </funcDef> requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) =/=K unnameFuncType(FTYPE)
+         </funcDef>
+      requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) =/=K unnameFuncType(FTYPE)
 
     rule <k> call_indirect TUSE:TypeUse => trap ... </k>
          <curModIdx> CUR </curModIdx>
