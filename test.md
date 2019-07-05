@@ -303,8 +303,8 @@ This asserts related operation about tables.
            ...
          </tabs>
 
-    syntax Assertion ::= "#assertTableElem" "(" Int "," TextFormatIdx ")" String
- // ----------------------------------------------------------------------------
+    syntax Assertion ::= "#assertTableElem" "(" Int "," Int ")" String
+ // ------------------------------------------------------------------
     rule <k> #assertTableElem (KEY , VAL) MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
