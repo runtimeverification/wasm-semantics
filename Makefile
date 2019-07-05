@@ -159,12 +159,14 @@ parse-conformance: $(conformance_tests:=.parse)
 ### Proof Tests
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
+slow_proof_tests:=tests/proofs/loops-spec.k
+quick_proof_tests:=$(filter-out $(slow_proof_tests), $(proof_tests))
 
 test-prove: $(proof_tests:=.prove)
 
 ### KLab interactive
 
-test-klab-prove: $(proof_tests:=.klab-prove)
+test-klab-prove: $(quick_proof_tests:=.klab-prove)
 
 # Presentation
 # ------------
