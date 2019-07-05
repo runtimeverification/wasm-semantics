@@ -73,11 +73,11 @@ When we are initializing a table with element segment, we need to define a list 
     rule #getElemSegment(E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
 ```
 
-Memories/tables can optionally have a max size which the memory may not grow beyond.
-The sort `MaxBound` provides a potentially "infinite" `Int`.
+In some cases, an integer is optional, such as when either giving or omitting the max bound when defining a table or memory.
+The sort `OptionalInt` provides this potentially "undefined" `Int`.
 
 ```k
-    syntax MaxBound ::= Int | ".MaxBound"
+    syntax OptionalInt ::= Int | ".NoInt"
  // -------------------------------------
 ```
 

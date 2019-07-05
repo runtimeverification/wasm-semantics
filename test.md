@@ -312,8 +312,8 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This asserts related operation about tables.
 
 ```k
-    syntax Assertion ::= "#assertTable" TextFormatIdx Int MaxBound String
- // ---------------------------------------------------------------------
+    syntax Assertion ::= "#assertTable" TextFormatIdx Int OptionalInt String
+ // ------------------------------------------------------------------------
     rule <k> #assertTable TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -356,8 +356,8 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory" TextFormatIdx Int MaxBound String
- // ----------------------------------------------------------------------
+    syntax Assertion ::= "#assertMemory" TextFormatIdx Int OptionalInt String
+ // -------------------------------------------------------------------------
     rule <k> #assertMemory TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -420,7 +420,7 @@ The modules are cleaned all together after the test file is executed.
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
     rule <k>    #clearConfig => . ...     </k>
-         <curModIdx>       _ => .NoIdx    </curModIdx>
+         <curModIdx>       _ => .NoInt    </curModIdx>
          <valstack>        _ => .ValStack </valstack>
          <locals>          _ => .Map      </locals>
          <localIds>        _ => .Map      </localIds>

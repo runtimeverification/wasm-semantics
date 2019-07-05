@@ -1,10 +1,10 @@
 ( memory 34)
-#assertMemory 0 34 .MaxBound "memory initial 2"
+#assertMemory 0 34 .NoInt "memory initial 2"
 
 #clearConfig
 
 ( memory $a-memory 34)
-#assertMemory $a-memory 34 .MaxBound "memory initial 2"
+#assertMemory $a-memory 34 .NoInt "memory initial 2"
 
 #clearConfig
 
@@ -38,7 +38,7 @@
 ( memory #maxMemorySize())
 (memory.grow (i32.const 1))
 #assertTopStack <i32> -1 "memory grow max too large"
-#assertMemory 0 #maxMemorySize() .MaxBound "memory grow max too large"
+#assertMemory 0 #maxMemorySize() .NoInt "memory grow max too large"
 
 #clearConfig
 
@@ -49,7 +49,7 @@
 (memory.grow (i32.const 1))
 (memory.size)
 #assertStack <i32> #maxMemorySize() : < i32 > -1 : .ValStack "memory grow unbounded"
-#assertMemory 0 #maxMemorySize() .MaxBound "memory grown unbounded"
+#assertMemory 0 #maxMemorySize() .NoInt "memory grown unbounded"
 
 ;; Store and load
 
@@ -72,7 +72,7 @@
 (i64.const #pow(i32) +Int 1)
 (i64.store16 offset=2)
 #assertMemoryData (3, 1) "store32"
-#assertMemory 0 1 .MaxBound ""
+#assertMemory 0 1 .NoInt ""
 
 #clearConfig
 
@@ -81,7 +81,7 @@
 (i32.const 0)
 (i32.store8)
 #assertTrap "store to 0 size memory"
-#assertMemory $foo 0 .MaxBound ""
+#assertMemory $foo 0 .NoInt ""
 
 #clearConfig
 
@@ -94,7 +94,7 @@
 (i32.const 1)
 (i32.store16)
 #assertTrap "store outside of size memory"
-#assertMemory 0 1 .MaxBound ""
+#assertMemory 0 1 .NoInt ""
 
 #clearConfig
 
@@ -121,7 +121,7 @@
 #assertMemoryData (16, 255) ""
 #assertMemoryData (17, 255) ""
 #assertMemoryData (18, 255) ""
-#assertMemory 0 1 .MaxBound ""
+#assertMemory 0 1 .NoInt ""
 
 ;; Updating
 
@@ -133,7 +133,7 @@
 (i32.store16 (i32.const 3) (i32.const 0))
 (i32.store8  (i32.const 1) (i32.const 0))
 (i32.store8  (i32.const 2) (i32.const 0))
-#assertMemory 0 1 .MaxBound "Zero updates erases memory"
+#assertMemory 0 1 .NoInt "Zero updates erases memory"
 
 #clearConfig
 
@@ -144,6 +144,6 @@
 #assertMemoryData (1, 255) ""
 #assertMemoryData (3, 255) ""
 #assertMemoryData (8, 255) ""
-#assertMemory 0 1 .MaxBound "Zero updates don't over-erase"
+#assertMemory 0 1 .NoInt "Zero updates don't over-erase"
 
 #clearConfig
