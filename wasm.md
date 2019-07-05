@@ -1462,7 +1462,7 @@ A table index is optional and will be default to zero.
            ...
          </moduleInst>
 
-    rule <k> #initElements (    _,     _ ,      _,   _, .ElemSegment ) => . ... </k>
+    rule <k> #initElements (    _,      _,      _,   _, .ElemSegment ) => . ... </k>
     rule <k> #initElements ( ADDR, OFFSET, FADDRS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, IDS, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
