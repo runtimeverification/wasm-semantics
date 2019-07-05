@@ -47,18 +47,18 @@ We allow 2 kinds of actions:
 
 ```k
     syntax Auxil  ::= Action
-    syntax Action ::= "(" "invoke" OptionalId String        ")"
-                    | "(" "invoke" OptionalId String Instrs ")"
+    syntax Action ::= "(" "invoke" OptionalId String Instrs ")"
                     |     "invoke" Int        String
                     | "(" "get"    OptionalId String        ")"
                     |     "get"    Int        String
  // ------------------------------------------------
-    rule <k> ( invoke OID:OptionalId ENAME:String IS:Instrs ) => IS ~> ( invoke OID ENAME ) ... </k>
+    rule <k> ( invoke OID:OptionalId ENAME:String IS:Instrs ) => IS ~> ( invoke OID ENAME .Instrs ) ... </k>
+      requires IS =/=K .Instrs
 
-    rule <k> ( invoke ENAME:String ) => invoke CUR ENAME ... </k>
+    rule <k> ( invoke ENAME:String .Instrs ) => invoke CUR ENAME ... </k>
          <curModIdx> CUR </curModIdx>
 
-    rule <k> ( invoke ID:Identifier ENAME:String ) => invoke MODIDX ENAME ... </k>
+    rule <k> ( invoke ID:Identifier ENAME:String .Instrs ) => invoke MODIDX ENAME ... </k>
          <moduleIds> ... ID |-> MODIDX ... </moduleIds>
 
     rule <k> invoke MODIDX:Int ENAME:String => ( invoke FADDR ):Instr ... </k>
