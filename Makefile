@@ -58,7 +58,7 @@ java_kompiled:=$(java_dir)/test-kompiled/compiled.txt
 
 haskell_dir:=$(defn_dir)/haskell
 haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
-haskell_kompiled:=$(haskell_dir)/test-kompiled/kore.txt
+haskell_kompiled:=$(haskell_dir)/test-kompiled/compiled.txt
 
 # Tangle definition from *.md files
 
