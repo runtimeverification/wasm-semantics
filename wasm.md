@@ -1067,9 +1067,8 @@ The table values are addresses into the store of functions.
     syntax TableSpec ::= TableType
                        | TableElemType "(" "elem" ElemSegment ")"
                        | InlineImport TableType
-    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"    [klabel(TableDefn)]
-                       | "(" "table"     OptionalId ")"              [klabel(TableDefn)]
-                       |     "table" "{" OptionalId Int MaxBound "}" [klabel(TableDefn)]
+    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
+                       |     "table" "{" OptionalId Int MaxBound "}"
  // ----------------------------------------------------------------
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
@@ -1606,11 +1605,11 @@ The value of a global gets copied when it is imported.
 ```k
     syntax Defn       ::= ImportDefn
     syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
-    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse        ")"
-                        | "(" "table"  OptionalId TableType      ")"
-                        | "(" "memory" OptionalId MemType        ")"
-                        | "(" "global" OptionalId TextGlobalType ")"
- // ----------------------------------------------------------------
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse        ")" [klabel(funcImportDesc)]
+                        | "(" "table"  OptionalId TableType      ")" [klabel( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType        ")" [klabel( memImportDesc)]
+                        | "(" "global" OptionalId TextGlobalType ")" [klabel(globImportDesc)]
+ // -------------------------------------------------------------------------------------
     rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse)) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
