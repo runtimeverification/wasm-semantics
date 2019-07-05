@@ -17,9 +17,9 @@ Configuration
       <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
-        <locals>    .Map   </locals>
-        <localIds>  .Map   </localIds>
-        <curModIdx> .Int   </curModIdx>
+        <locals>    .Map </locals>
+        <localIds>  .Map </localIds>
+        <curModIdx> .Int </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
