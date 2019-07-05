@@ -19,7 +19,7 @@ Configuration
       <curFrame>
         <locals>    .Map </locals>
         <localIds>  .Map </localIds>
-        <curModIdx> .K   </curModIdx>
+        <curModIdx> .Int </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
@@ -58,19 +58,19 @@ Configuration
         <nextTabAddr> 0 </nextTabAddr>
         <tabs>
           <tabInst multiplicity="*" type="Map">
-            <tAddr>   0         </tAddr>
-            <tmax>    .MaxBound </tmax>
-            <tsize>   0         </tsize>
-            <tdata>   .Map      </tdata>
+            <tAddr> 0    </tAddr>
+            <tmax>  .Int </tmax>
+            <tsize> 0    </tsize>
+            <tdata> .Map </tdata>
           </tabInst>
         </tabs>
         <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <mAddr>   0         </mAddr>
-            <mmax>    .MaxBound </mmax>
-            <msize>   0         </msize>
-            <mdata>   .Map      </mdata>
+            <mAddr> 0    </mAddr>
+            <mmax>  .Int </mmax>
+            <msize> 0    </msize>
+            <mdata> .Map </mdata>
           </memInst>
         </mems>
         <nextGlobAddr> 0 </nextGlobAddr>
@@ -1101,11 +1101,11 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
     syntax Defn      ::= TableDefn
     syntax TableDefn ::= "(" "table"     OptionalId Limits TableElemType ")"
                        | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
-                       |     "table" "{" OptionalId Int MaxBound "}"
- // ----------------------------------------------------------------
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ) => table { OID MIN .MaxBound } ... </k>
+                       |     "table" "{" OptionalId Int OptionalInt "}"
+ // -------------------------------------------------------------------
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ) => table { OID MIN .Int } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ) => table { OID MIN MAX       } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ) => table { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
@@ -1160,11 +1160,11 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     syntax Defn       ::= MemoryDefn
     syntax MemoryDefn ::= "(" "memory" OptionalId Limits                     ")"
                         | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
-                        |     "memory" "{" OptionalId Int MaxBound "}"
- // ------------------------------------------------------------------
-    rule <k> ( memory OID:OptionalId MIN:Int         ) => memory { OID MIN .MaxBound } ... </k>
+                        |     "memory" "{" OptionalId Int OptionalInt "}"
+ // ---------------------------------------------------------------------
+    rule <k> ( memory OID:OptionalId MIN:Int         ) => memory { OID MIN .Int } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ) => memory { OID MIN MAX       } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ) => memory { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
@@ -1400,10 +1400,10 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> grow N => < i32 > #unsigned(i32, -1) </k>
          <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
 
-    syntax Bool ::= #growthAllowed(Int, MaxBound) [function]
- // --------------------------------------------------------
-    rule #growthAllowed(SIZE, .MaxBound) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .MaxBound) andBool SIZE <=Int I
+    syntax Bool ::= #growthAllowed(Int, OptionalInt) [function]
+ // -----------------------------------------------------------
+    rule #growthAllowed(SIZE, .Int ) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int) => #growthAllowed(SIZE, .Int) andBool SIZE <=Int I
 ```
 
 However, the absolute max allowed size if 2^16 pages.
@@ -1627,7 +1627,7 @@ It is permissible to define modules without the `module` keyword, by simply stat
 
 ```k
     rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
-         <curModIdx> .K </curModIdx>
+         <curModIdx> .Int </curModIdx>
 ```
 
 After a module is instantiated, it should be saved somewhere.
