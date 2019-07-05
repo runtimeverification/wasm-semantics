@@ -19,7 +19,7 @@ Configuration
       <curFrame>
         <locals>    .Map   </locals>
         <localIds>  .Map   </localIds>
-        <curModIdx> .NoInt </curModIdx>
+        <curModIdx> .Int   </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleRegistry> .Map </moduleRegistry>
@@ -58,19 +58,19 @@ Configuration
         <nextTabAddr> 0 </nextTabAddr>
         <tabs>
           <tabInst multiplicity="*" type="Map">
-            <tAddr>   0         </tAddr>
-            <tmax>    .NoInt </tmax>
-            <tsize>   0         </tsize>
-            <tdata>   .Map      </tdata>
+            <tAddr> 0    </tAddr>
+            <tmax>  .Int </tmax>
+            <tsize> 0    </tsize>
+            <tdata> .Map </tdata>
           </tabInst>
         </tabs>
         <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <mAddr>   0         </mAddr>
-            <mmax>    .NoInt </mmax>
-            <msize>   0         </msize>
-            <mdata>   .Map      </mdata>
+            <mAddr> 0    </mAddr>
+            <mmax>  .Int </mmax>
+            <msize> 0    </msize>
+            <mdata> .Map </mdata>
           </memInst>
         </mems>
         <nextGlobAddr> 0 </nextGlobAddr>
@@ -1072,9 +1072,9 @@ The table values are addresses into the store of functions.
           ...
          </k>
 
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .NoInt } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .Int } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX       } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
@@ -1132,9 +1132,9 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
           ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
-    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .NoInt } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .Int } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX       } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
@@ -1365,8 +1365,8 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 
     syntax Bool ::= #growthAllowed(Int, OptionalInt) [function]
  // -----------------------------------------------------------
-    rule #growthAllowed(SIZE, .NoInt) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .NoInt) andBool SIZE <=Int I
+    rule #growthAllowed(SIZE, .Int ) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int) => #growthAllowed(SIZE, .Int) andBool SIZE <=Int I
 ```
 
 However, the absolute max allowed size if 2^16 pages.
@@ -1425,7 +1425,7 @@ A table index is optional and will be default to zero.
            ...
          </moduleInst>
 
-    rule <k> #initElements (    _,     _ ,      _,   _, .ElemSegment ) => . ... </k>
+    rule <k> #initElements (    _,      _,      _,   _, .ElemSegment ) => . ... </k>
     rule <k> #initElements ( ADDR, OFFSET, FADDRS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, IDS, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
@@ -1699,7 +1699,7 @@ The following function checks if the limits in the first parameter *match*, i.e.
     syntax Bool ::= #limitsMatchImport(Int, OptionalInt, Limits) [function]
  // -----------------------------------------------------------------------
     rule #limitsMatchImport(L1,      _, L2:Int   ) => L1 >=Int L2
-    rule #limitsMatchImport( _, .NoInt,  _:Int  _) => false
+    rule #limitsMatchImport( _,   .Int,  _:Int  _) => false
     rule #limitsMatchImport(L1, U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
 ```
 
@@ -1767,9 +1767,6 @@ The groups are chosen to represent different stages of allocation and instantiat
     rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
     rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
 
-    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-
     rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
     rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
 
@@ -1824,7 +1821,7 @@ It is permissible to define modules without the `module` keyword, by simply stat
 
 ```k
     rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
-         <curModIdx> .NoInt </curModIdx>
+         <curModIdx> .Int </curModIdx>
 ```
 
 After a module is instantiated, it should be saved somewhere.

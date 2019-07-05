@@ -420,7 +420,7 @@ The modules are cleaned all together after the test file is executed.
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
     rule <k>    #clearConfig => . ...     </k>
-         <curModIdx>       _ => .NoInt    </curModIdx>
+         <curModIdx>       _ => .Int      </curModIdx>
          <valstack>        _ => .ValStack </valstack>
          <locals>          _ => .Map      </locals>
          <localIds>        _ => .Map      </localIds>
