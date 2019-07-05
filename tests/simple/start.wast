@@ -17,7 +17,7 @@
 #assertMemoryData (0, 68) "start inc"
 #assertFunction $inc  [ ] -> [ ] [ ] ""
 #assertFunction $main [ ] -> [ ] [ ] ""
-#assertMemory 0 1 .MaxBound ""
+#assertMemory 0 1 .NoInt ""
 
 #clearConfig
 
