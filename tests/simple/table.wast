@@ -24,7 +24,7 @@
 
 #assertTableElem (1, 3) "table elem 1"
 #assertTableElem (2, 4) "table elem 2"
-#assertTable 0 4 .Int "table three with elements"
+#assertTable 0 4 .Int "table two with elements"
 
 (module
   (type $out-i32 (func (result i32)))
