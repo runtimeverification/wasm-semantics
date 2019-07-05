@@ -490,12 +490,21 @@ Some unimplemented float conversions:
 
 ### Floating Point Arithmetic
 
-**TODO**: Unimplemented
+For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
+
+**TODO**: Unimplemented: `trunc`, `nearest`.
 
 ```k
     syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
  // --------------------------------------------------------------------------------
+    rule <k> FTYPE:FValType . abs     F1 => < FTYPE > absFloat  (F1) ... </k>
+    rule <k> FTYPE:FValType . neg     F1 => < FTYPE > --Float    F1 ... </k>
+    rule <k> FTYPE:FValType . sqrt    F1 => < FTYPE > sqrtFloat (F1) ... </k>
+    rule <k> FTYPE:FValType . floor   F1 => < FTYPE > floorFloat (F1) ... </k>
+    rule <k> FTYPE:FValType . ceil    F1 => < FTYPE > ceilFloat  (F1) ... </k>
+```
 
+```k
     syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
                     | "sub" [klabel(floatSub), symbol]
                     | "mul" [klabel(floatMul), symbol]
@@ -503,7 +512,15 @@ Some unimplemented float conversions:
                     | "min"
                     | "max"
  // -----------------------
+    rule <k> FTYPE:FValType . add F1 F2 => < FTYPE > F1 +Float F2      ... </k>
+    rule <k> FTYPE:FValType . sub F1 F2 => < FTYPE > F1 -Float F2      ... </k>
+    rule <k> FTYPE:FValType . mul F1 F2 => < FTYPE > F1 *Float F2      ... </k>
+    rule <k> FTYPE:FValType . div F1 F2 => < FTYPE > F1 /Float F2      ... </k>
+    rule <k> FTYPE:FValType . min F1 F2 => < FTYPE > minFloat (F1, F2) ... </k>
+    rule <k> FTYPE:FValType . max F1 F2 => < FTYPE > maxFloat (F1, F2) ... </k>
+```
 
+```k
     syntax FRelOp ::= "lt"
                     | "gt"
                     | "le"
@@ -511,7 +528,15 @@ Some unimplemented float conversions:
                     | "eq" [klabel(floatEq), symbol]
                     | "ne" [klabel(floatNe), symbol]
  // ------------------------------------------------
+    rule <k> _:FValType . lt F1 F2 => < i32 > #bool(F1 <Float   F2) ... </k>
+    rule <k> _:FValType . gt F1 F2 => < i32 > #bool(F1 >Float   F2) ... </k>
+    rule <k> _:FValType . le F1 F2 => < i32 > #bool(F1 <=Float  F2) ... </k>
+    rule <k> _:FValType . ge F1 F2 => < i32 > #bool(F1 >=Float  F2) ... </k>
+    rule <k> _:FValType . eq F1 F2 => < i32 > #bool(F1 ==Float  F2) ... </k>
+    rule <k> _:FValType . ne F1 F2 => < i32 > #bool(F1 =/=Float F2) ... </k>
 ```
+
+**TODO**: Unimplemented: `inn.trunc_fmm_sx`, `f32.demote_f64`, `f64.promote_f32`, `fnn.convert_imm_sx`, `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
 
 ValStack Operations
 -------------------
