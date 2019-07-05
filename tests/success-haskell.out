@@ -16,7 +16,7 @@
       .Map
     </localIds>
     <curModIdx>
-      .Map
+      .Int
     </curModIdx>
   </curFrame>
   <nextFreshId>
