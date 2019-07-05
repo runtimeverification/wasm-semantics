@@ -22,18 +22,18 @@
   <nextFreshId>
     0
   </nextFreshId>
-  <moduleRegistry>
-    .Map
-  </moduleRegistry>
-  <moduleIds>
-    .Map
-  </moduleIds>
   <moduleInstances>
     .ModuleInstCellMap
   </moduleInstances>
+  <moduleIds>
+    .Map
+  </moduleIds>
   <nextModuleIdx>
     0
   </nextModuleIdx>
+  <moduleRegistry>
+    .Map
+  </moduleRegistry>
   <mainStore>
     <nextFuncAddr>
       0
