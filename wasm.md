@@ -19,7 +19,7 @@ Configuration
       <curFrame>
         <locals>    .Map   </locals>
         <localIds>  .Map   </localIds>
-        <curModIdx> .NoInt </curModIdx>
+        <curModIdx> .Int   </curModIdx>
       </curFrame>
       <nextFreshId> 0 </nextFreshId>
       <moduleInstances>
@@ -58,19 +58,19 @@ Configuration
         <nextTabAddr> 0 </nextTabAddr>
         <tabs>
           <tabInst multiplicity="*" type="Map">
-            <tAddr>   0         </tAddr>
-            <tmax>    .NoInt </tmax>
-            <tsize>   0         </tsize>
-            <tdata>   .Map      </tdata>
+            <tAddr> 0    </tAddr>
+            <tmax>  .Int </tmax>
+            <tsize> 0    </tsize>
+            <tdata> .Map </tdata>
           </tabInst>
         </tabs>
         <nextMemAddr> 0 </nextMemAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
-            <mAddr>   0         </mAddr>
-            <mmax>    .NoInt </mmax>
-            <msize>   0         </msize>
-            <mdata>   .Map      </mdata>
+            <mAddr> 0    </mAddr>
+            <mmax>  .Int </mmax>
+            <msize> 0    </msize>
+            <mdata> .Map </mdata>
           </memInst>
         </mems>
         <nextGlobAddr> 0 </nextGlobAddr>
@@ -1103,9 +1103,9 @@ The only allowed `TableElemType` is "funcref", so we ignore this term in the red
                        | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
                        |     "table" "{" OptionalId Int OptionalInt "}"
  // -------------------------------------------------------------------
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ) => table { OID MIN .NoInt } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ) => table { OID MIN .Int } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ) => table { OID MIN MAX       } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ) => table { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
@@ -1162,9 +1162,9 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
                         | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
-    rule <k> ( memory OID:OptionalId MIN:Int         ) => memory { OID MIN .NoInt } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int         ) => memory { OID MIN .Int } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ) => memory { OID MIN MAX       } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ) => memory { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
@@ -1402,8 +1402,8 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 
     syntax Bool ::= #growthAllowed(Int, OptionalInt) [function]
  // -----------------------------------------------------------
-    rule #growthAllowed(SIZE, .NoInt) => SIZE <=Int #maxMemorySize()
-    rule #growthAllowed(SIZE, I:Int)     => #growthAllowed(SIZE, .NoInt) andBool SIZE <=Int I
+    rule #growthAllowed(SIZE, .Int ) => SIZE <=Int #maxMemorySize()
+    rule #growthAllowed(SIZE, I:Int) => #growthAllowed(SIZE, .Int) andBool SIZE <=Int I
 ```
 
 However, the absolute max allowed size if 2^16 pages.
@@ -1627,7 +1627,7 @@ It is permissible to define modules without the `module` keyword, by simply stat
 
 ```k
     rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
-         <curModIdx> .NoInt </curModIdx>
+         <curModIdx> .Int </curModIdx>
 ```
 
 After a module is instantiated, it should be saved somewhere.

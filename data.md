@@ -77,8 +77,8 @@ In some cases, an integer is optional, such as when either giving or omitting th
 The sort `OptionalInt` provides this potentially "undefined" `Int`.
 
 ```k
-    syntax OptionalInt ::= Int | ".NoInt"
- // -------------------------------------
+    syntax OptionalInt ::= Int | ".Int"
+ // -----------------------------------
 ```
 
 WebAssembly Types
