@@ -811,7 +811,7 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 ### Type Declaration
 
 Type could be declared explicitly and could optionally bind with an identifier.
-The `identifier` for `param` of the keyword will be used 
+The `identifier` for `param` of the keyword will be used
 
 ```k
     syntax Defn     ::= TypeDefn
