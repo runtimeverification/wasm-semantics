@@ -58,7 +58,7 @@ java_kompiled:=$(java_dir)/test-kompiled/compiled.txt
 
 haskell_dir:=$(defn_dir)/haskell
 haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
-haskell_kompiled:=$(haskell_dir)/test-kompiled/kore.txt
+haskell_kompiled:=$(haskell_dir)/test-kompiled/definition.kore
 
 # Tangle definition from *.md files
 
@@ -159,12 +159,14 @@ parse-conformance: $(conformance_tests:=.parse)
 ### Proof Tests
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
+slow_proof_tests:=tests/proofs/loops-spec.k
+quick_proof_tests:=$(filter-out $(slow_proof_tests), $(proof_tests))
 
 test-prove: $(proof_tests:=.prove)
 
 ### KLab interactive
 
-test-klab-prove: $(proof_tests:=.klab-prove)
+test-klab-prove: $(quick_proof_tests:=.klab-prove)
 
 # Presentation
 # ------------
