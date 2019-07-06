@@ -22,15 +22,15 @@
   <nextFreshId>
     0
   </nextFreshId>
+  <moduleInstances>
+    .Map
+  </moduleInstances>
   <moduleIds>
     .Map
   </moduleIds>
   <nextModuleIdx>
     0
   </nextModuleIdx>
-  <moduleInstances>
-    .Map
-  </moduleInstances>
   <moduleRegistry>
     .Map
   </moduleRegistry>
