@@ -1063,6 +1063,12 @@ The table values are addresses into the store of functions.
     syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
                        |     "table" "{" OptionalId Int OptionalInt "}"
  // -------------------------------------------------------------------
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .Int } ... </k>
+      requires MIN <=Int #maxTableSize()
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
+      requires MIN <=Int #maxTableSize()
+       andBool MAX <=Int #maxTableSize()
+
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
@@ -1071,12 +1077,6 @@ The table values are addresses into the store of functions.
           ~> ( elem ID (i32.const 0) ES )
           ...
          </k>
-
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .Int } ... </k>
-      requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
-      requires MIN <=Int #maxTableSize()
-       andBool MAX <=Int #maxTableSize()
 
     rule <k> table { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1124,6 +1124,12 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
+    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .Int } ... </k>
+      requires MIN <=Int #maxMemorySize()
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
+      requires MIN <=Int #maxMemorySize()
+       andBool MAX <=Int #maxMemorySize()
+
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
@@ -1131,12 +1137,6 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
           ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
-
-    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .Int } ... </k>
-      requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
-      requires MIN <=Int #maxMemorySize()
-       andBool MAX <=Int #maxMemorySize()
 
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
