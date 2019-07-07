@@ -14,38 +14,35 @@ Configuration
 ```k
     configuration
       <k> $PGM:Stmts </k>
-      <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       <valstack> .ValStack </valstack>
       <curFrame>
         <locals>    .Map </locals>
         <localIds>  .Map </localIds>
         <curModIdx> .Int </curModIdx>
       </curFrame>
-      <nextFreshId> 0 </nextFreshId>
       <moduleRegistry> .Map </moduleRegistry>
       <moduleIds> .Map </moduleIds>
       <moduleInstances>
         <moduleInst multiplicity="*" type="Map">
-          <modIdx>        0    </modIdx>
-          <typeIds>       .Map </typeIds>
-          <funcIds>       .Map </funcIds>
-          <tabIds>        .Map </tabIds>
-          <memIds>        .Map </memIds>
-          <globIds>       .Map </globIds>
-          <nextTypeIdx>   0    </nextTypeIdx>
-          <nextFuncIdx>   0    </nextFuncIdx>
+          <modIdx>      0    </modIdx>
+          <exports>     .Map </exports>
+          <typeIds>     .Map </typeIds>
+          <types>       .Map </types>
+          <nextTypeIdx> 0    </nextTypeIdx>
+          <funcIds>     .Map </funcIds>
+          <funcAddrs>   .Map </funcAddrs>
+          <nextFuncIdx> 0    </nextFuncIdx>
+          <tabIds>      .Map </tabIds>
+          <tabAddrs>    .Map </tabAddrs>
+          <memIds>      .Map </memIds>
+          <memAddrs>    .Map </memAddrs>
+          <globIds>     .Map </globIds>
+          <globalAddrs> .Map </globalAddrs>
           <nextGlobIdx>   0    </nextGlobIdx>
-          <types>         .Map </types>
-          <funcIndices>   .Map </funcIndices>
-          <tabIndices>    .Map </tabIndices>
-          <memIndices>    .Map </memIndices>
-          <globalIndices> .Map </globalIndices>
-          <exports>       .Map </exports>
         </moduleInst>
       </moduleInstances>
       <nextModuleIdx> 0 </nextModuleIdx>
       <mainStore>
-        <nextFuncAddr> 0 </nextFuncAddr>
         <funcs>
           <funcDef multiplicity="*" type="Map">
             <fAddr>    0              </fAddr>
@@ -55,7 +52,7 @@ Configuration
             <fModInst> 0              </fModInst>
           </funcDef>
         </funcs>
-        <nextTabAddr> 0 </nextTabAddr>
+        <nextFuncAddr> 0 </nextFuncAddr>
         <tabs>
           <tabInst multiplicity="*" type="Map">
             <tAddr> 0    </tAddr>
@@ -64,7 +61,7 @@ Configuration
             <tdata> .Map </tdata>
           </tabInst>
         </tabs>
-        <nextMemAddr> 0 </nextMemAddr>
+        <nextTabAddr> 0 </nextTabAddr>
         <mems>
           <memInst multiplicity="*" type="Map">
             <mAddr> 0    </mAddr>
@@ -73,7 +70,7 @@ Configuration
             <mdata> .Map </mdata>
           </memInst>
         </mems>
-        <nextGlobAddr> 0 </nextGlobAddr>
+        <nextMemAddr> 0 </nextMemAddr>
         <globals>
           <globalInst multiplicity="*" type="Map">
             <gAddr>  0         </gAddr>
@@ -81,7 +78,10 @@ Configuration
             <gMut>   .Mut      </gMut>
           </globalInst>
         </globals>
+        <nextGlobAddr> 0 </nextGlobAddr>
       </mainStore>
+      <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
+      <nextFreshId> 0 </nextFreshId>
 ```
 
 ### Assumptions and invariants
