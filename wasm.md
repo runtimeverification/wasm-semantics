@@ -204,8 +204,8 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 
 ### Text Format Conventions
 
-The text format allows the use of symbolic `identifiers` in place of `indices`.
-To resolve these `identifiers` into concrete `indices`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
+The text format allows the use of symbolic `identifiers` in place of `addrs`.
+To resolve these `identifiers` into concrete `addrs`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
 
 ```k
     syntax Int ::= #ContextLookup ( Map , TextFormatIdx ) [function]
@@ -701,8 +701,8 @@ Globals can either be specified by giving a type and an initializer expression; 
          <moduleInst>
            <modIdx> CUR </modIdx>
            <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
-           <nextGlobIdx>   NEXTIDX => NEXTIDX +Int 1                </nextGlobIdx>
-           <globalIndices> GLOBS   => GLOBS [ NEXTIDX <- NEXTADDR ] </globalIndices>
+           <nextGlobIdx> NEXTIDX => NEXTIDX +Int 1                </nextGlobIdx>
+           <globalAddrs> GLOBS   => GLOBS [ NEXTIDX <- NEXTADDR ] </globalAddrs>
            ...
          </moduleInst>
          <nextGlobAddr> NEXTADDR => NEXTADDR +Int 1 </nextGlobAddr>
@@ -730,7 +730,7 @@ The `get` and `set` instructions read and write globals.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <globIds> IDS </globIds>
-           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
+           <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>
@@ -745,7 +745,7 @@ The `get` and `set` instructions read and write globals.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <globIds> IDS </globIds>
-           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
+           <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>
@@ -893,7 +893,7 @@ Functions can either be specified by giving a type, what locals it allocates, an
            <types>   TYPES   </types>
            <funcIds> IDS => #saveId(IDS, OID, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-           <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
+           <funcAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </funcAddrs>
            ...
          </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
@@ -971,7 +971,7 @@ The `#take` function will return the parameter stack in the reversed order, then
          <moduleInst>
            <modIdx> CUR </modIdx>
            <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 ```
@@ -986,7 +986,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types> TYPES </types>
-           <tabIndices> 0 |-> ADDR </tabIndices>
+           <tabAddrs> 0 |-> ADDR </tabAddrs>
            ...
          </moduleInst>
          <tabInst>
@@ -1008,7 +1008,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types> TYPES </types>
-           <tabIndices> 0 |-> ADDR </tabIndices>
+           <tabAddrs> 0 |-> ADDR </tabAddrs>
            ...
          </moduleInst>
          <tabInst>
@@ -1028,7 +1028,7 @@ The `#take` function will return the parameter stack in the reversed order, then
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIndices> 0 |-> ADDR </tabIndices>
+           <tabAddrs> 0 |-> ADDR </tabAddrs>
            ...
          </moduleInst>
          <tabInst>
@@ -1082,7 +1082,7 @@ The table values are addresses into the store of functions.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIndices> MAP </tabIndices>
+           <tabAddrs> MAP </tabAddrs>
            ...
          </moduleInst>
        requires MAP =/=K .Map
@@ -1092,7 +1092,7 @@ The table values are addresses into the store of functions.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <tabIds> IDS => #saveId(IDS, ID, 0) </tabIds>
-           <tabIndices> .Map => (0 |-> NEXTADDR) </tabIndices>
+           <tabAddrs> .Map => (0 |-> NEXTADDR) </tabAddrs>
            ...
          </moduleInst>
          <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
@@ -1142,7 +1142,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> MAP </memIndices>
+           <memAddrs> MAP </memAddrs>
            ...
          </moduleInst>
       requires MAP =/=K .Map
@@ -1152,7 +1152,7 @@ Currently, only one memory may be accessible to a module, and thus the `<mAddr>`
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
-           <memIndices> .Map => (0 |-> NEXTADDR) </memIndices>
+           <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
            ...
          </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
@@ -1191,7 +1191,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
-         <memIndices> 0 |-> ADDR </memIndices>
+         <memAddrs> 0 |-> ADDR </memAddrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1204,7 +1204,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1255,7 +1255,7 @@ The value is fetched from the "effective address", which is the address given on
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1270,7 +1270,7 @@ The value is fetched from the "effective address", which is the address given on
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1321,7 +1321,7 @@ The `size` operation returns the size of the memory, measured in pages.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1350,7 +1350,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1398,7 +1398,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ### Element Segments
 
 Tables can be initialized with element and the element type is always `funcref".
-The initialization of a table needs an offset and a list of function indices.
+The initialization of a table needs an offset and a list of functions, given as `TextFormatIdx`s.
 A table index is optional and will be default to zero.
 
 ```k
@@ -1419,9 +1419,9 @@ A table index is optional and will be default to zero.
          <moduleInst>
            <modIdx> CUR  </modIdx>
            <funcIds> FIDS </funcIds>
-           <funcIndices> FADDRS </funcIndices>
+           <funcAddrs> FADDRS </funcAddrs>
            <tabIds>  TIDS </tabIds>
-           <tabIndices> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabIndices>
+           <tabAddrs> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabAddrs>
            ...
          </moduleInst>
 
@@ -1457,7 +1457,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS </memIds>
-           <memIndices> #ContextLookup(IDS, MEMIDX) |-> ADDR </memIndices>
+           <memAddrs> #ContextLookup(IDS, MEMIDX) |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1489,7 +1489,7 @@ Start Function
          <moduleInst>
            <modIdx> CUR </modIdx>
            <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 ```
@@ -1599,7 +1599,7 @@ The value of a global gets copied when it is imported.
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
            <funcIds> IDS => #saveId(IDS, OID, NEXT) </funcIds>
-           <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
+           <funcAddrs> FS => FS [NEXT <- ADDR] </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
          </moduleInst>
@@ -1607,8 +1607,8 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <funcIds> IDS' </funcIds>
-           <funcIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </funcIndices>
-           <exports>     ... NAME |-> TFIDX                        ... </exports>
+           <funcAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </funcAddrs>
+           <exports>   ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
          <funcDef>
@@ -1623,15 +1623,15 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <tabIds> IDS => #saveId(IDS, OID, 0) </tabIds>
-           <tabIndices> .Map => 0 |-> ADDR </tabIndices>
+           <tabAddrs> .Map => 0 |-> ADDR </tabAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <tabIds> IDS' </tabIds>
-           <tabIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </tabIndices>
-           <exports>    ... NAME |-> TFIDX                        ... </exports>
+           <tabAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </tabAddrs>
+           <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
          <tabInst>
@@ -1647,15 +1647,15 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
-           <memIndices> .Map => 0 |-> ADDR </memIndices>
+           <memAddrs> .Map => 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
-           <memIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memIndices>
-           <exports>    ... NAME |-> TFIDX                        ... </exports>
+           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
+           <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
          <memInst>
@@ -1671,7 +1671,7 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <globIds> IDS => #saveId(IDS, OID, NEXT) </globIds>
-           <globalIndices> GS => GS [NEXT <- ADDR] </globalIndices>
+           <globalAddrs> GS => GS [NEXT <- ADDR] </globalAddrs>
            <nextGlobIdx> NEXT => NEXT +Int 1 </nextGlobIdx>
            ...
          </moduleInst>
@@ -1679,8 +1679,8 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <globIds> IDS' </globIds>
-           <globalIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalIndices>
-           <exports>     ... NAME |-> TFIDX                          ... </exports>
+           <globalAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalAddrs>
+           <exports>     ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
          <globalInst>

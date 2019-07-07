@@ -66,7 +66,7 @@ We allow 2 kinds of actions:
            <modIdx> MODIDX </modIdx>
            <exports> ... ENAME |-> TFIDX ... </exports>
            <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 
@@ -81,7 +81,7 @@ We allow 2 kinds of actions:
            <modIdx> MODIDX </modIdx>
            <exports> ... NAME |-> TFIDX ... </exports>
            <globIds> IDS </globIds>
-           <globalIndices> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalIndices>
+           <globalAddrs> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>
@@ -240,7 +240,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <moduleInst>
            <modIdx> CUR </modIdx>
            <globIds> IDS </globIds>
-           <globalIndices> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalIndices>
+           <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globals>
@@ -292,7 +292,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
          <moduleInst>
            <modIdx> CUR </modIdx>
            <funcIds> IDS </funcIds>
-           <funcIndices> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcIndices>
+           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
          <nextFuncAddr> NEXT </nextFuncAddr>
@@ -319,7 +319,7 @@ This asserts related operation about tables.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <tabIds> IDS </tabIds>
-           <tabIndices> #ContextLookup(IDS, TFIDX) |-> ADDR </tabIndices>
+           <tabAddrs> #ContextLookup(IDS, TFIDX) |-> ADDR </tabAddrs>
            ...
          </moduleInst>
          <tabs>
@@ -338,7 +338,7 @@ This asserts related operation about tables.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIndices> 0 |-> ADDR </tabIndices>
+           <tabAddrs> 0 |-> ADDR </tabAddrs>
            ...
          </moduleInst>
          <tabs>
@@ -363,7 +363,7 @@ This checks that the last allocated memory has the given size and max value.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS </memIds>
-           <memIndices> #ContextLookup(IDS, TFIDX) |-> ADDR </memIndices>
+           <memAddrs> #ContextLookup(IDS, TFIDX) |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <mems>
@@ -382,7 +382,7 @@ This checks that the last allocated memory has the given size and max value.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIndices> 0 |-> ADDR </memIndices>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <mems>
