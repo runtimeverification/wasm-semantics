@@ -887,7 +887,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
 The `FuncSpec` production is used to define all ways that a global can specified.
-Functions can either be specified by giving a type, what locals it allocates, and a function body; or by an import and it's expected type.
+A function can either be specified by giving a type, what locals it allocates, and a function body; or by an import and it's expected type.
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
@@ -1066,7 +1066,7 @@ Currently at most one table may be defined or imported in a single module.
 The only allowed `TableElemType` is "funcref", so we ignore this term in the reducted sort.
 The table values are addresses into the store of functions.
 The `TableSpec` production is used to define all ways that a global can specified.
-Table can either be specified by giving its type (limits and `funcref`); by specifying a vector of its initial `elem`ents; or by an import and its expected type.
+A table can either be specified by giving its type (limits and `funcref`); by specifying a vector of its initial `elem`ents; or by an import and its expected type.
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
@@ -1129,7 +1129,7 @@ When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<mAddr>` cell is an array with at most one value, at index 0.
 The `MemorySpec` production is used to define all ways that a global can specified.
-Table can either be specified by giving its type (limits); by specifying a vector of its initial `data`; or by an import and its expected type.
+A memory can either be specified by giving its type (limits); by specifying a vector of its initial `data`; or by an import and its expected type.
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
