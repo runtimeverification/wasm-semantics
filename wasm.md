@@ -1594,7 +1594,7 @@ The value of a global gets copied when it is imported.
                         | "(" "memory" OptionalId MemType        ")" [klabel( memImportDesc)]
                         | "(" "global" OptionalId TextGlobalType ")" [klabel(globImportDesc)]
  // -------------------------------------------------------------------------------------
-    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse)) => . ... </k>
+    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1620,7 +1620,7 @@ The value of a global gets copied when it is imported.
          </funcDef>
       requires unnameFuncType(FTYPE) ==K unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE))
 
-    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType)) => . ... </k>
+    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1644,7 +1644,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (memory OID:OptionalId (LIM:Limits):MemType)) => . ... </k>
+    rule <k> ( import MOD NAME (memory OID:OptionalId (LIM:Limits):MemType) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1668,7 +1668,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextGlobalType)) => . ... </k>
+    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextGlobalType) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1721,11 +1721,11 @@ Imports can also be declared like regular functions, memories, etc., by giving a
 
     syntax TableSpec ::= InlineImport TableType
  // -------------------------------------------
-    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => (import MOD NAME (table OID TT)) ... </k>
+    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table OID TT) ) ... </k>
 
     syntax MemorySpec ::= InlineImport MemType
  // ------------------------------------------
-    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => (import MOD NAME (memory OID MT)) ... </k>
+    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
 ```
 
 Module Instantiation
