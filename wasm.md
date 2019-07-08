@@ -1593,7 +1593,7 @@ The value of a global gets copied when it is imported.
                         | "(" "table"  OptionalId TableType      ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType        ")" [klabel( memImportDesc)]
                         | "(" "global" OptionalId TextGlobalType ")" [klabel(globImportDesc)]
- // -------------------------------------------------------------------------------------
+ // -----------------------------------------------------------------------------------------
     rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
