@@ -214,7 +214,7 @@ These functions make assertions about the state of the `<valstack>` cell.
     rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL' : VALSTACK </valstack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'
     rule <k> #assertTopStack < FTYPE:FValType > VAL _ => . ... </k> <valstack> < FTYPE > VAL' : VALSTACK </valstack>
-      requires #round(< FTYPE:FValType > VAL) ==K < FTYPE > VAL'
+      requires #round( FTYPE:FValType , VAL) ==K < FTYPE > VAL'
 
     rule <k> #assertTopStackExactly < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL : VALSTACK </valstack>
 
