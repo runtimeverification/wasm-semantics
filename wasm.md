@@ -193,6 +193,7 @@ This allows us to give purely functional semantics to many of the opcodes.
 
 Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
+**TODO**: Implemented Float in the format of `nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
     syntax PlainInstr ::= IValType "." "const" Int
