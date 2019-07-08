@@ -501,11 +501,11 @@ For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a
 ```k
     syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
  // --------------------------------------------------------------------------------
-    rule <k> FTYPE:FValType . abs     F1 => < FTYPE > absFloat  (F1) ... </k>
-    rule <k> FTYPE:FValType . neg     F1 => < FTYPE > --Float    F1 ... </k>
-    rule <k> FTYPE:FValType . sqrt    F1 => < FTYPE > sqrtFloat (F1) ... </k>
+    rule <k> FTYPE:FValType . abs     F1 => < FTYPE >   absFloat (F1) ... </k>
+    rule <k> FTYPE:FValType . neg     F1 => < FTYPE >    --Float  F1  ... </k>
+    rule <k> FTYPE:FValType . sqrt    F1 => < FTYPE >  sqrtFloat (F1) ... </k>
     rule <k> FTYPE:FValType . floor   F1 => < FTYPE > floorFloat (F1) ... </k>
-    rule <k> FTYPE:FValType . ceil    F1 => < FTYPE > ceilFloat  (F1) ... </k>
+    rule <k> FTYPE:FValType . ceil    F1 => < FTYPE >  ceilFloat (F1) ... </k>
 ```
 
 ```k
