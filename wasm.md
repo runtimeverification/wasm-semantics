@@ -196,10 +196,10 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 
 ```k
     syntax PlainInstr ::= IValType "." "const" Int
-                        | FValType "." "const" Float
- // ------------------------------------------------
+                        | FValType "." "const" Number
+ // -------------------------------------------------
     rule <k> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </k>
-    rule <k> FTYPE:FValType . const VAL => #round(< FTYPE > VAL) ... </k>
+    rule <k> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </k>
 ```
 
 ### Text Format Conventions
