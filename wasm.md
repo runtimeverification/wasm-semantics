@@ -516,13 +516,16 @@ For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a
                     | "div"
                     | "min"
                     | "max"
- // -----------------------
-    rule <k> FTYPE:FValType . add F1 F2 => < FTYPE > F1 +Float F2      ... </k>
-    rule <k> FTYPE:FValType . sub F1 F2 => < FTYPE > F1 -Float F2      ... </k>
-    rule <k> FTYPE:FValType . mul F1 F2 => < FTYPE > F1 *Float F2      ... </k>
-    rule <k> FTYPE:FValType . div F1 F2 => < FTYPE > F1 /Float F2      ... </k>
-    rule <k> FTYPE:FValType . min F1 F2 => < FTYPE > minFloat (F1, F2) ... </k>
-    rule <k> FTYPE:FValType . max F1 F2 => < FTYPE > maxFloat (F1, F2) ... </k>
+                    | "copysign"
+ // ----------------------------
+    rule <k> FTYPE:FValType . add      F1 F2 => < FTYPE > F1 +Float F2      ... </k>
+    rule <k> FTYPE:FValType . sub      F1 F2 => < FTYPE > F1 -Float F2      ... </k>
+    rule <k> FTYPE:FValType . mul      F1 F2 => < FTYPE > F1 *Float F2      ... </k>
+    rule <k> FTYPE:FValType . div      F1 F2 => < FTYPE > F1 /Float F2      ... </k>
+    rule <k> FTYPE:FValType . min      F1 F2 => < FTYPE > minFloat (F1, F2) ... </k>
+    rule <k> FTYPE:FValType . max      F1 F2 => < FTYPE > maxFloat (F1, F2) ... </k>
+    rule <k> FTYPE:FValType . copysign F1 F2 => < FTYPE > F1                ... </k> requires signFloat (F1) ==Bool  signFloat (F2)
+    rule <k> FTYPE:FValType . copysign F1 F2 => < FTYPE > --Float  F1       ... </k> requires signFloat (F1) =/=Bool signFloat (F2)
 ```
 
 ```k
