@@ -675,24 +675,27 @@ The `*_local` instructions are defined here.
 ### Globals
 
 When globals are declared, they must also be given a constant initialization value.
-
-**TODO**: Import and export.
+The `GlobalSpec` production is used to define all ways that a global can specified.
+Globals can either be specified by giving a type and an initializer expression; or by an import and it's expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TextGlobalType ::= AValType | "(" "mut" AValType ")"
- // -----------------------------------------------------------
+    syntax TextFormatGlobalType ::= AValType | "(" "mut" AValType ")"
+ // -----------------------------------------------------------------
 
     syntax GlobalType ::= Mut AValType
-                      | asGMut (TextGlobalType) [function]
- // ------------------------------------------------------
+                      | asGMut (TextFormatGlobalType) [function]
+ // ------------------------------------------------------------
     rule asGMut ( (mut T:AValType ) ) => var   T
     rule asGMut (      T:AValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalDefn ::= "(" "global" OptionalId TextGlobalType Instr ")"
-                        |     "global" GlobalType
- // ---------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
+    syntax GlobalSpec ::= TextFormatGlobalType Instr
+    syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
+                        |     "global" OptionalId GlobalType
+ // --------------------------------------------------------
+    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -836,17 +839,6 @@ The `identifier` for `param` of the keyword will be used
 Function Declaration and Invocation
 -----------------------------------
 
-### Function Export Definition
-
-This section introduce how we expand the folded form of function export.
-Currently, in the expanded form, the `export`s will come after the definition of function.
-
-```k
-    syntax FuncExport  ::= "(" "export" String ")"
-    syntax FuncExports ::= List{FuncExport, ""} [klabel(listFuncExport)]
- // --------------------------------------------------------------------
-```
-
 ### Function Local Declaration
 
 ```k
@@ -894,30 +886,23 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
+The `FuncSpec` production is used to define all ways that a global can specified.
+A function can either be specified by giving a type, what locals it allocates, and a function body; or by an import and it's expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
     syntax Defn     ::= FuncDefn
-    syntax FuncDefn ::= "(" "func" OptionalId FuncExports TypeUse LocalDecls Instrs ")"
- // -----------------------------------------------------------------------------------
-    rule <k> ( func FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
-          => ( func #freshId(NEXTID) FEXPO TUSE LDECLS INSTRS )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( func FNAME:Identifier ( export ENAME ) FEXPO:FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs )
-          => ( export ENAME ( func FNAME ) )
-          ~> ( func FNAME FEXPO TUSE LDECLS INSTRS )
-          ...
-         </k>
-
-    rule <k> ( func FNAME:Identifier .FuncExports TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
+    syntax FuncSpec ::= TypeUse LocalDecls Instrs
+    syntax FuncDefn ::= "(" "func" OptionalId FuncSpec ")"
+ // ------------------------------------------------------
+    rule <k> ( func OID:OptionalId TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, FNAME, NEXTIDX) </funcIds>
+           <funcIds> IDS => #saveId(IDS, OID, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcIndices> INDICES => INDICES [ NEXTIDX <- NEXTADDR ] </funcIndices>
            ...
@@ -1065,23 +1050,6 @@ The `#take` function will return the parameter stack in the reversed order, then
       requires notBool IDX in_keys(TDATA)
 ```
 
-### Export
-
-Now it contains only Function exports. The exported functions should be able to called using `invoke String` by its assigned name.
-
-```k
-    syntax Defn       ::= ExportDefn
-    syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
- // ---------------------------------------------------------------
-    rule <k> ( export ENAME ( func FUNCIDX ) ) => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <exports> EXPORTS => EXPORTS [ ENAME <- FUNCIDX ] </exports>
-           ...
-         </moduleInst>
-```
-
 Table
 -----
 
@@ -1096,16 +1064,23 @@ Currently there is only one possiblt value for it which is "funcref".
 The allocation of a new `tableinst`.
 Currently at most one table may be defined or imported in a single module.
 The only allowed `TableElemType` is "funcref", so we ignore this term in the reducted sort.
+The table values are addresses into the store of functions.
+The `TableSpec` production is used to define all ways that a global can specified.
+A table can either be specified by giving its type (limits and `funcref`); by specifying a vector of its initial `elem`ents; or by an import and its expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
     syntax Defn      ::= TableDefn
-    syntax TableDefn ::= "(" "table"     OptionalId Limits TableElemType ")"
-                       | "(" "table"     OptionalId        TableElemType "(" "elem" ElemSegment ")" ")"
+    syntax TableType ::= Limits TableElemType
+    syntax TableSpec ::= TableType
+                       | TableElemType "(" "elem" ElemSegment ")"
+    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
                        |     "table" "{" OptionalId Int OptionalInt "}"
  // -------------------------------------------------------------------
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ) => table { OID MIN .Int } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .Int } ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ) => table { OID MIN MAX  } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
@@ -1153,18 +1128,22 @@ Memory
 When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<mAddr>` cell is an array with at most one value, at index 0.
-
-**TODO**: Allow instantiation with an identifier and inline export and import.
+The `MemorySpec` production is used to define all ways that a global can specified.
+A memory can either be specified by giving its type (limits); by specifying a vector of its initial `data`; or by an import and its expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
     syntax Defn       ::= MemoryDefn
-    syntax MemoryDefn ::= "(" "memory" OptionalId Limits                     ")"
-                        | "(" "memory" OptionalId "(" "data" DataStrings ")" ")"
+    syntax MemType    ::= Limits
+    syntax MemorySpec ::= MemType
+                        | "(" "data" DataStrings ")"
+    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
-    rule <k> ( memory OID:OptionalId MIN:Int         ) => memory { OID MIN .Int } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .Int } ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ) => memory { OID MIN MAX  } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
@@ -1483,9 +1462,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
                       |     "data" "{" TextFormatIdx        DataStrings "}"
  // -----------------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET      STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
-    rule <k> ( data MEMID IS:Instr    STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
-    rule <k> ( data MEMID (offset IS) STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
+    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
 
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX STRING } => . ... </k>
@@ -1531,6 +1510,238 @@ Start Function
          </moduleInst>
 ```
 
+Export
+------
+
+Exports make functions, tables, memories and globals available for importing into other modules.
+
+```k
+    syntax Defn       ::= ExportDefn
+    syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
+ // ---------------------------------------------------------------
+    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
+           ...
+         </moduleInst>
+```
+
+Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
+In that case, it simply desugars to an export followed by the definition, after introducing a fresh identifier if no identifier is present.
+Note that it is possible to define multiple exports inline, i.e., export a single entity under many names.
+
+```k
+    syntax InlineExport  ::= "(" "export" String ")"
+ // ------------------------------------------------
+
+    syntax GlobalSpec ::= InlineExport GlobalSpec
+ // ---------------------------------------------
+    rule <k> ( global                  EXPO:InlineExport SPEC:GlobalSpec )
+          => ( global #freshId(NEXTID) EXPO              SPEC            )
+          ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
+    rule <k> ( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec )
+          => ( export ENAME ( global ID ) )
+          ~> ( global ID SPEC )
+          ...
+         </k>
+
+    syntax FuncSpec   ::= InlineExport FuncSpec
+ // -------------------------------------------
+    rule <k> ( func                  EXPO:InlineExport SPEC:FuncSpec )
+          => ( func #freshId(NEXTID) EXPO              SPEC          )
+          ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
+    rule <k> ( func ID:Identifier ( export ENAME ) SPEC:FuncSpec )
+          => ( export ENAME ( func ID ) )
+          ~> ( func ID SPEC )
+          ...
+         </k>
+
+    syntax TableSpec  ::= InlineExport TableSpec
+ // --------------------------------------------
+    rule <k> ( table                  EXPO:InlineExport SPEC:TableSpec )
+          => ( table #freshId(NEXTID) EXPO              SPEC           )
+          ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
+    rule <k> ( table ID:Identifier ( export ENAME ) SPEC:TableSpec )
+          => ( export ENAME ( table ID ) )
+          ~> ( table ID SPEC )
+          ...
+         </k>
+
+    syntax MemorySpec ::= InlineExport MemorySpec
+ // ---------------------------------------------
+    rule <k> ( memory                  EXPO:InlineExport SPEC:MemorySpec )
+          => ( memory #freshId(NEXTID) EXPO              SPEC            )
+          ...
+         </k>
+         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
+    rule <k> ( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec )
+          => ( export ENAME ( memory ID ) )
+          ~> ( memory ID SPEC )
+          ...
+         </k>
+```
+
+Imports
+-------
+
+Imports need to describe the type of what is imported.
+That an import is really a subtype of the declared import needs to be checked at instantiation time.
+The value of a global gets copied when it is imported.
+
+```k
+    syntax Defn       ::= ImportDefn
+    syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
+                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
+                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+ // -----------------------------------------------------------------------------------------------
+    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> TYPEIDS </typeIds>
+           <types>   TYPES   </types>
+           <funcIds> IDS => #saveId(IDS, OID, NEXT) </funcIds>
+           <funcIndices> FS => FS [NEXT <- ADDR] </funcIndices>
+           <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
+           ...
+         </moduleInst>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <funcIds> IDS' </funcIds>
+           <funcIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </funcIndices>
+           <exports>     ... NAME |-> TFIDX                        ... </exports>
+           ...
+         </moduleInst>
+         <funcDef>
+           <fAddr> ADDR </fAddr>
+           <fType> FTYPE </fType>
+           ...
+         </funcDef>
+      requires unnameFuncType(FTYPE) ==K unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE))
+
+    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIds> IDS => #saveId(IDS, OID, 0) </tabIds>
+           <tabIndices> .Map => 0 |-> ADDR </tabIndices>
+           ...
+         </moduleInst>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <tabIds> IDS' </tabIds>
+           <tabIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </tabIndices>
+           <exports>    ... NAME |-> TFIDX                        ... </exports>
+           ...
+         </moduleInst>
+         <tabInst>
+           <tAddr> ADDR </tAddr>
+           <tmax>  MAX  </tmax>
+           <tsize> SIZE </tsize>
+           ...
+         </tabInst>
+       requires #limitsMatchImport(SIZE, MAX, LIM)
+
+    rule <k> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
+           <memIndices> .Map => 0 |-> ADDR </memIndices>
+           ...
+         </moduleInst>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <memIds> IDS' </memIds>
+           <memIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memIndices>
+           <exports>    ... NAME |-> TFIDX                        ... </exports>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mmax>  MAX  </mmax>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+       requires #limitsMatchImport(SIZE, MAX, LIM)
+
+    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextFormatGlobalType) ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globIds> IDS => #saveId(IDS, OID, NEXT) </globIds>
+           <globalIndices> GS => GS [NEXT <- ADDR] </globalIndices>
+           <nextGlobIdx> NEXT => NEXT +Int 1 </nextGlobIdx>
+           ...
+         </moduleInst>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <globIds> IDS' </globIds>
+           <globalIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalIndices>
+           <exports>       ... NAME |-> TFIDX                        ... </exports>
+           ...
+         </moduleInst>
+         <globalInst>
+           <gAddr>  ADDR    </gAddr>
+           <gValue> <TYP> _ </gValue>
+           <gMut>   MUT     </gMut>
+         </globalInst>
+       requires asGMut(TGTYP) ==K MUT TYP
+```
+
+Tables and memories have proper subtyping, unlike globals and functions where a type is only a subtype of itself.
+Subtyping is determined by whether the limits of one table/memory fit in the limits of another.
+The following function checks if the limits in the first parameter *match*, i.e. is a subtype of, the limits in the second.
+
+```k
+    syntax Bool ::= #limitsMatchImport(Int, OptionalInt, Limits) [function]
+ // -----------------------------------------------------------------------
+    rule #limitsMatchImport(L1,      _, L2:Int   ) => L1 >=Int L2
+    rule #limitsMatchImport( _,   .Int,  _:Int  _) => false
+    rule #limitsMatchImport(L1, U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
+```
+
+Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
+
+```k
+    syntax InlineImport ::= "(" "import" String String ")"
+ // ------------------------------------------------------
+
+    syntax GlobalSpec ::= InlineImport TextFormatGlobalType
+ // -------------------------------------------------------
+    rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
+
+    syntax FuncSpec ::= InlineImport TypeUse
+ // ----------------------------------------
+    rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
+
+    syntax TableSpec ::= InlineImport TableType
+ // -------------------------------------------
+    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table OID TT) ) ... </k>
+
+    syntax MemorySpec ::= InlineImport MemType
+ // ------------------------------------------
+    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
+```
+
 Module Instantiation
 --------------------
 
@@ -1567,8 +1778,7 @@ The groups are chosen to represent different stages of allocation and instantiat
     rule #structureModule(M,                  .Defns) => M
     rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
 
-    // TODO.
- // rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
 
     rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
     rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
