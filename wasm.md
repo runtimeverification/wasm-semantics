@@ -1658,7 +1658,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (memory OID:OptionalId (LIM:Limits):MemType) ) => . ... </k>
+    rule <k> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1696,7 +1696,7 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <globIds> IDS' </globIds>
            <globalIndices> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalIndices>
-           <exports>     ... NAME |-> TFIDX                          ... </exports>
+           <exports>       ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
          <globalInst>
