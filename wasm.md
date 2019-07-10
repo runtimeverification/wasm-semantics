@@ -212,6 +212,7 @@ To resolve these `identifiers` into concrete `indices`, some grammar production 
  // ----------------------------------------------------------------
     rule #ContextLookup(IDS:Map, I:Int) => I
     rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
 ```
 
 ### Unary Operators
@@ -685,8 +686,8 @@ The importing and exporting parts of specifications are dealt with in the respec
  // -----------------------------------------------------------------
 
     syntax GlobalType ::= Mut AValType
-                      | asGMut (TextFormatGlobalType) [function]
- // ------------------------------------------------------------
+                        | asGMut (TextFormatGlobalType) [function]
+ // --------------------------------------------------------------
     rule asGMut ( (mut T:AValType ) ) => var   T
     rule asGMut (      T:AValType   ) => const T
 
@@ -695,20 +696,14 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
                         |     "global" OptionalId GlobalType
  // --------------------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global asGMut(TYP) ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
-           <nextGlobIdx> NEXTIDX                      </nextGlobIdx>
-           ...
-         </moduleInst>
+    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
-    rule <k> global MUT:Mut TYP:AValType => . ... </k>
+    rule <k> global OID:OptionalId MUT:Mut TYP:AValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
            <nextGlobIdx>   NEXTIDX => NEXTIDX +Int 1                </nextGlobIdx>
            <globalIndices> GLOBS   => GLOBS [ NEXTIDX <- NEXTADDR ] </globalIndices>
            ...
@@ -819,7 +814,8 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 ### Type Declaration
 
 Type could be declared explicitly and could optionally bind with an identifier.
-The `identifier` for `param` of the keyword will be used 
+`identifier` for `param` will be used only when the function type is declared when defining a function.
+When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
 
 ```k
     syntax Defn     ::= TypeDefn
@@ -1083,8 +1079,10 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
+
     rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
     rule <k> ( table ID:Identifier funcref ( elem ES ) )
           =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
           ~> ( elem ID (i32.const 0) ES )
@@ -1146,13 +1144,14 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
+
     rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+
     rule <k> ( memory ID:Identifier ( data DS ) )
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
           ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
-       andBool isIdentifier(ID)
 
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
