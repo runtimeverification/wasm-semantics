@@ -814,7 +814,8 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 ### Type Declaration
 
 Type could be declared explicitly and could optionally bind with an identifier.
-The `identifier` for `param` of the keyword will be used.
+`identifier` for `param` will be used only when the function type is declared when defining a function.
+When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
 
 ```k
     syntax Defn     ::= TypeDefn
