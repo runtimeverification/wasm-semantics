@@ -679,24 +679,27 @@ The `*_local` instructions are defined here.
 ### Globals
 
 When globals are declared, they must also be given a constant initialization value.
+The `GlobalSpec` production is used to define all ways that a global can specified.
 Globals can either be specified by giving a type and an initializer expression; or by an import and it's expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TextGlobalType ::= AValType | "(" "mut" AValType ")"
- // -----------------------------------------------------------
+    syntax TextFormatGlobalType ::= AValType | "(" "mut" AValType ")"
+ // -----------------------------------------------------------------
 
     syntax GlobalType ::= Mut AValType
-                        | asGMut (TextGlobalType) [function]
- // --------------------------------------------------------
+                        | asGMut (TextFormatGlobalType) [function]
+ // --------------------------------------------------------------
     rule asGMut ( (mut T:AValType ) ) => var   T
     rule asGMut (      T:AValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalSpec ::= TextGlobalType Instr
+    syntax GlobalSpec ::= TextFormatGlobalType Instr
     syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
                         |     "global" OptionalId GlobalType
  // --------------------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
+    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
     rule <k> global OID:OptionalId MUT:Mut TYP:AValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
@@ -814,7 +817,8 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 ### Type Declaration
 
 Type could be declared explicitly and could optionally bind with an identifier.
-The `identifier` for `param` of the keyword will be used
+`identifier` for `param` will be used only when the function type is declared when defining a function.
+When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
 
 ```k
     syntax Defn     ::= TypeDefn
@@ -881,7 +885,10 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
 Here, we allow for an "abstract" function declaration using syntax `func_::___`, and a more concrete one which allows arbitrary order of declaration of parameters, locals, and results.
-Functions can either be specified by giving a type, what locals it allocates, and a function body; or by an import and it's expected type.
+The `FuncSpec` production is used to define all ways that a global can specified.
+A function can either be specified by giving a type, what locals it allocates, and a function body; or by an import and it's expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
     syntax Defn     ::= FuncDefn
@@ -1057,6 +1064,10 @@ The allocation of a new `tableinst`.
 Currently at most one table may be defined or imported in a single module.
 The only allowed `TableElemType` is "funcref", so we ignore this term in the reducted sort.
 The table values are addresses into the store of functions.
+The `TableSpec` production is used to define all ways that a global can specified.
+A table can either be specified by giving its type (limits and `funcref`); by specifying a vector of its initial `elem`ents; or by an import and its expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
     syntax Defn      ::= TableDefn
@@ -1118,6 +1129,10 @@ Memory
 When memory is allocated, it is put into the store at the next available index.
 Memory can only grow in size, so the minimum size is the initial value.
 Currently, only one memory may be accessible to a module, and thus the `<mAddr>` cell is an array with at most one value, at index 0.
+The `MemorySpec` production is used to define all ways that a global can specified.
+A memory can either be specified by giving its type (limits); by specifying a vector of its initial `data`; or by an import and its expected type.
+The specification can also include export directives.
+The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
     syntax Defn       ::= MemoryDefn
@@ -1590,12 +1605,12 @@ The value of a global gets copied when it is imported.
 ```k
     syntax Defn       ::= ImportDefn
     syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
-    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse        ")" [klabel(funcImportDesc)]
-                        | "(" "table"  OptionalId TableType      ")" [klabel( tabImportDesc)]
-                        | "(" "memory" OptionalId MemType        ")" [klabel( memImportDesc)]
-                        | "(" "global" OptionalId TextGlobalType ")" [klabel(globImportDesc)]
- // -------------------------------------------------------------------------------------
-    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse)) => . ... </k>
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
+                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
+                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+ // -----------------------------------------------------------------------------------------------
+    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1621,7 +1636,7 @@ The value of a global gets copied when it is imported.
          </funcDef>
       requires unnameFuncType(FTYPE) ==K unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE))
 
-    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType)) => . ... </k>
+    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1645,7 +1660,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (memory OID:OptionalId (LIM:Limits):MemType)) => . ... </k>
+    rule <k> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1669,7 +1684,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextGlobalType)) => . ... </k>
+    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextFormatGlobalType) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1712,8 +1727,8 @@ Imports can also be declared like regular functions, memories, etc., by giving a
     syntax InlineImport ::= "(" "import" String String ")"
  // ------------------------------------------------------
 
-    syntax GlobalSpec ::= InlineImport TextGlobalType
- // -------------------------------------------------
+    syntax GlobalSpec ::= InlineImport TextFormatGlobalType
+ // -------------------------------------------------------
     rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
 
     syntax FuncSpec ::= InlineImport TypeUse
@@ -1722,11 +1737,11 @@ Imports can also be declared like regular functions, memories, etc., by giving a
 
     syntax TableSpec ::= InlineImport TableType
  // -------------------------------------------
-    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => (import MOD NAME (table OID TT)) ... </k>
+    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table OID TT) ) ... </k>
 
     syntax MemorySpec ::= InlineImport MemType
  // ------------------------------------------
-    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => (import MOD NAME (memory OID MT)) ... </k>
+    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
 ```
 
 Module Instantiation
