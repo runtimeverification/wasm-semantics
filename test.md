@@ -184,7 +184,7 @@ And we implement some helper assertions to help testing.
     syntax Assertion ::= "#assertAndRemoveEqual"
                        | "#assertAndRemoveToken"
  // --------------------------------------------
-    rule <k> #assertAndRemoveEqual   => #assertTopStack V "" ~> ( drop ) ... </k>
+    rule <k> #assertAndRemoveEqual   => #assertTopStackExactly V "" ~> ( drop ) ... </k>
          <valstack> V : VALSTACK     => VALSTACK </valstack>
     rule <k> #assertAndRemoveToken   => . ... </k>
          <valstack> token : VALSTACK => VALSTACK </valstack>
