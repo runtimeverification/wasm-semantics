@@ -494,10 +494,10 @@ Conversion turns a `int` type value to the corresponding `float` type value.
 ```k
     syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
  // --------------------------------------------------------------------------------------
-    rule <k> f32 . convert_i32_s I:Int => #round( f64 , #signed(i32, I) ) ... </k>
-    rule <k> f32 . convert_i32_u I:Int => #round( f64 , I )               ... </k>
-    rule <k> f32 . convert_i64_s I:Int => #round( f64 , #signed(i64, I) ) ... </k>
-    rule <k> f32 . convert_i64_u I:Int => #round( f64 , I )               ... </k>
+    rule <k> f32 . convert_i32_s I:Int => #round( f32 , #signed(i32, I) ) ... </k>
+    rule <k> f32 . convert_i32_u I:Int => #round( f32 , I )               ... </k>
+    rule <k> f32 . convert_i64_s I:Int => #round( f32 , #signed(i64, I) ) ... </k>
+    rule <k> f32 . convert_i64_u I:Int => #round( f32 , I )               ... </k>
     rule <k> f64 . convert_i32_s I:Int => #round( f64 , #signed(i32, I) ) ... </k>
     rule <k> f64 . convert_i32_u I:Int => #round( f64 , I )               ... </k>
     rule <k> f64 . convert_i64_s I:Int => #round( f64 , #signed(i64, I) ) ... </k>
