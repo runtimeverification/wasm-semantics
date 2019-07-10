@@ -696,7 +696,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
                         |     "global" OptionalId GlobalType
  // --------------------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
+    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
     rule <k> global OID:OptionalId MUT:Mut TYP:AValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
