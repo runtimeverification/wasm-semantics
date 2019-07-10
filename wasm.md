@@ -204,8 +204,11 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 
 ### Text Format Conventions
 
-The text format allows the use of symbolic `identifiers` in place of `addrs`.
-To resolve these `identifiers` into concrete `addrs`, some grammar production are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space. We call this operation `ICov`.
+The text format allows the use of symbolic identifiers in place of indices.
+To store these identifiers into concrete indices, some grammar productions are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space.
+To lookup an index from a `TextFormatIdx`, which may be either an identifer or a concrete index, we provide the operation `#ContextLookup`.
+It resolves to a concrete index if the input is a concrete index.
+If the the input is an identifier, the corresponding index is looked up in the supplied Map.
 
 ```k
     syntax Int ::= #ContextLookup ( Map , TextFormatIdx ) [function]
