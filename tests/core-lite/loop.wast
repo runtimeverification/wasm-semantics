@@ -306,7 +306,7 @@
 (assert_return (invoke "singular") (i32.const 7))
 (assert_return (invoke "multi") (i32.const 8))
 (assert_return (invoke "nested") (i32.const 9))
-(assert_return (invoke "deep") (i32.const 150))
+;; (assert_return (invoke "deep") (i32.const 150))
 
 (assert_return (invoke "as-select-first") (i32.const 1))
 (assert_return (invoke "as-select-mid") (i32.const 2))
