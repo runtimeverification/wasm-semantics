@@ -265,7 +265,7 @@ There is no test operation for float numbers.
 
 ```k
     syntax PlainInstr ::= IValType "." TestOp
- // ------------------------------------------
+ // -----------------------------------------
 
     syntax Instr ::= IValType "." TestOp Int
  // ----------------------------------------
@@ -296,28 +296,28 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
 ### Conversion Operations
 
 Conversion operators always take a single argument as input and cast it to another type.
-For each element added to `ConvOp`, functions `#convSourceType` and `#convOp` must be defined over it.
+For each element added to `CvtOp`, functions `#convSourceType` and `#convOp` must be defined over it.
 
 These operators convert constant elements at the top of the stack to another type.
 The target type is before the `.`, and the source type is after the `_`.
 
 ```k
-    syntax PlainInstr ::= IValType "." ConvOp
-                        | FValType "." ConvOp
+    syntax PlainInstr ::= IValType "." CvtOp
+                        | FValType "." CvtOp
+ // ----------------------------------------
+
+    syntax Instr ::= IValType "." CvtOp Int
+                   | FValType "." CvtOp Float
  // -----------------------------------------
-
-    syntax Instr ::= IValType "." ConvOp Int
-                   | FValType "." ConvOp Float
- // ------------------------------------------
-    rule <k> ITYPE:IValType . CONVOP:ConvOp => ITYPE . CONVOP C1  ... </k>
+    rule <k> ITYPE:IValType . CVTOP:CvtOp => ITYPE . CVTOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
-      requires #convSourceType(CONVOP) ==K SRCTYPE
-    rule <k> FTYPE:FValType . CONVOP:ConvOp => FTYPE . CONVOP C1  ... </k>
+      requires #convSourceType(CVTOP) ==K SRCTYPE
+    rule <k> FTYPE:FValType . CVTOP:CvtOp => FTYPE . CVTOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
-      requires #convSourceType(CONVOP) ==K SRCTYPE
+      requires #convSourceType(CVTOP) ==K SRCTYPE
 
-    syntax IValType ::= #convSourceType ( ConvOp ) [function]
- // ---------------------------------------------------------
+    syntax IValType ::= #convSourceType ( CvtOp ) [function]
+ // --------------------------------------------------------
 ```
 
 ### Integer Arithmetic
@@ -465,11 +465,13 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
 Conversions
 -----------
 
+There are 7 kinds of convert operators (`CvtOp`) defined in WASM: `wrap`, `extend`, `trunc`, `convert`, `demote` ,`promote`, `reinterpret`.
+
 Wrapping cuts of the 32 most significant bits of an `i64` value.
 
 ```k
-    syntax ConvOp ::= "wrap_i64"
- // ----------------------------
+    syntax CvtOp ::= "wrap_i64"
+ // ---------------------------
     rule <k> i32 . wrap_i64 I => #chop(< i32 > I) ... </k>
 
     rule #convSourceType(wrap_i64) => i64
@@ -478,8 +480,8 @@ Wrapping cuts of the 32 most significant bits of an `i64` value.
 Extension turns an `i32` type value into the corresponding `i64` type value.
 
 ```k
-    syntax ConvOp ::= "extend_i32_u" | "extend_i32_s"
- // -------------------------------------------------
+    syntax CvtOp ::= "extend_i32_u" | "extend_i32_s"
+ // ------------------------------------------------
     rule <k> i64 . extend_i32_u I => < i64 > I                               ... </k>
     rule <k> i64 . extend_i32_s I => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
 
@@ -490,7 +492,7 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
 Some unimplemented float conversions:
 
 ```k
-    syntax ConvOp ::= "demote_f64" | "promote_f32"
+    syntax CvtOp ::= "demote_f64" | "promote_f32"
 ```
 
 ### Floating Point Arithmetic
