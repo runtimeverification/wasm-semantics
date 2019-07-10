@@ -296,7 +296,7 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
 ### Conversion Operations
 
 Conversion operators always take a single argument as input and cast it to another type.
-For each element added to `CvtOp`, functions `#convSourceType` and `#convOp` must be defined over it.
+For each element added to `CvtOp`, functions `#convSourceType` and `#CvtOp` must be defined over it.
 
 These operators convert constant elements at the top of the stack to another type.
 The target type is before the `.`, and the source type is after the `_`.
@@ -306,9 +306,9 @@ The target type is before the `.`, and the source type is after the `_`.
                         | FValType "." CvtOp
  // ----------------------------------------
 
-    syntax Instr ::= IValType "." CvtOp Int
-                   | FValType "." CvtOp Float
- // -----------------------------------------
+    syntax Instr ::= IValType "." CvtOp Number
+                   | FValType "." CvtOp Number
+ // ------------------------------------------
     rule <k> ITYPE:IValType . CVTOP:CvtOp => ITYPE . CVTOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
       requires #convSourceType(CVTOP) ==K SRCTYPE
@@ -316,7 +316,7 @@ The target type is before the `.`, and the source type is after the `_`.
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
       requires #convSourceType(CVTOP) ==K SRCTYPE
 
-    syntax IValType ::= #convSourceType ( CvtOp ) [function]
+    syntax AValType ::= #convSourceType ( CvtOp ) [function]
  // --------------------------------------------------------
 ```
 
@@ -482,18 +482,46 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
 ```k
     syntax CvtOp ::= "extend_i32_u" | "extend_i32_s"
  // ------------------------------------------------
-    rule <k> i64 . extend_i32_u I => < i64 > I                               ... </k>
-    rule <k> i64 . extend_i32_s I => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
+    rule <k> i64 . extend_i32_u I:Int => < i64 > I                               ... </k>
+    rule <k> i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
 
     rule #convSourceType(extend_i32_u) => i32
     rule #convSourceType(extend_i32_s) => i32
 ```
 
-Some unimplemented float conversions:
+Conversion turns a `int` type value to the corresponding `float` type value.
+
+```k
+    syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
+ // --------------------------------------------------------------------------------------
+    rule <k> f32 . convert_i32_s I:Int => #round( f64 , #signed(i32, I) ) ... </k>
+    rule <k> f32 . convert_i32_u I:Int => #round( f64 , I )               ... </k>
+    rule <k> f32 . convert_i64_s I:Int => #round( f64 , #signed(i64, I) ) ... </k>
+    rule <k> f32 . convert_i64_u I:Int => #round( f64 , I )               ... </k>
+    rule <k> f64 . convert_i32_s I:Int => #round( f64 , #signed(i32, I) ) ... </k>
+    rule <k> f64 . convert_i32_u I:Int => #round( f64 , I )               ... </k>
+    rule <k> f64 . convert_i64_s I:Int => #round( f64 , #signed(i64, I) ) ... </k>
+    rule <k> f64 . convert_i64_u I:Int => #round( f64 , I )               ... </k>
+
+    rule #convSourceType(convert_i32_s) => i32
+    rule #convSourceType(convert_i32_u) => i32
+    rule #convSourceType(convert_i64_s) => i64
+    rule #convSourceType(convert_i64_u) => i64
+```
+
+Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32` type value to `f64` type value:
 
 ```k
     syntax CvtOp ::= "demote_f64" | "promote_f32"
+ // ---------------------------------------------
+    rule <k> f32 . demote_f64  F => #round( f32 , F ) ... </k>
+    rule <k> f64 . promote_f32 F => #round( f64 , F ) ... </k>
+
+    rule #convSourceType(demote_f64)  => f64
+    rule #convSourceType(promote_f32) => f32
 ```
+
+**TODO**: Unimplemented: `inn.trunc_fmm_sx`, `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
 
 ### Floating Point Arithmetic
 
@@ -545,8 +573,6 @@ For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a
     rule <k> _:FValType . eq F1 F2 => < i32 > #bool(F1 ==Float  F2) ... </k>
     rule <k> _:FValType . ne F1 F2 => < i32 > #bool(F1 =/=Float F2) ... </k>
 ```
-
-**TODO**: Unimplemented: `inn.trunc_fmm_sx`, `f32.demote_f64`, `f64.promote_f32`, `fnn.convert_imm_sx`, `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
 
 ValStack Operations
 -------------------
