@@ -16,10 +16,10 @@ The extension simply parses an initial program and puts it in the `<k>` cell.
 ```k
     configuration
       <wasm/>
-      <initial> $PGM:Stmts </initial>
+      <initial> ($PGM:Stmts):K </initial>
 
-    rule <initial> PGM:Stmts => .Stmts </initial>
-         <k> .Stmts => PGM </k>
+    rule <initial> PGM:Stmts => . </initial>
+         <k> .Stmts => PGM  ... </k>
       requires PGM =/=K .Stmts
 ```
 

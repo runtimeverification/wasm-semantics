@@ -14,7 +14,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> . </k>
+        <k> .EmptyStmts </k>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
