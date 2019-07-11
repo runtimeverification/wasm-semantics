@@ -2,9 +2,6 @@
   <k>
     .
   </k>
-  <deterministicMemoryGrowth>
-    true
-  </deterministicMemoryGrowth>
   <valstack>
     .ValStack
   </valstack>
@@ -19,45 +16,48 @@
       .Int
     </curModIdx>
   </curFrame>
-  <nextFreshId>
-    0
-  </nextFreshId>
-  <moduleInstances>
-    .Map
-  </moduleInstances>
-  <moduleIds>
-    .Map
-  </moduleIds>
-  <nextModuleIdx>
-    0
-  </nextModuleIdx>
   <moduleRegistry>
     .Map
   </moduleRegistry>
+  <moduleIds>
+    .Map
+  </moduleIds>
+  <moduleInstances>
+    .Map
+  </moduleInstances>
+  <nextModuleIdx>
+    0
+  </nextModuleIdx>
   <mainStore>
-    <nextFuncAddr>
-      0
-    </nextFuncAddr>
     <funcs>
       .Map
     </funcs>
-    <nextTabAddr>
+    <nextFuncAddr>
       0
-    </nextTabAddr>
+    </nextFuncAddr>
     <tabs>
       .Map
     </tabs>
-    <nextMemAddr>
+    <nextTabAddr>
       0
-    </nextMemAddr>
+    </nextTabAddr>
     <mems>
       .Map
     </mems>
-    <nextGlobAddr>
+    <nextMemAddr>
       0
-    </nextGlobAddr>
+    </nextMemAddr>
     <globals>
       .Map
     </globals>
+    <nextGlobAddr>
+      0
+    </nextGlobAddr>
   </mainStore>
+  <deterministicMemoryGrowth>
+    true
+  </deterministicMemoryGrowth>
+  <nextFreshId>
+    0
+  </nextFreshId>
 </generatedTop>
