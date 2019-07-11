@@ -81,7 +81,7 @@ view_klab() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (ocaml|java|haskell)] <pgm>  <K args>*
+    usage: $0 run        [--backend (ocaml|java|llvm|haskell)] <pgm>  <K args>*
            $0 kast       [--backend (ocaml|java)]         <pgm>  <output format> <K args>*
            $0 prove      [--backend (java|haskell)]       <spec> <K args>* -m <def_module>
            $0 klab-run                                    <pgm>  <K arg>*
@@ -135,7 +135,7 @@ run_file="$1" ; shift
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
 case "$run_command-$backend" in
-    run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
+    run-@(ocaml|java|llvm|haskell)  ) run_krun                        "$@" ;;
     kast-@(ocaml|java)         ) run_kast                        "$@" ;;
     prove-@(java|haskell)      ) run_prove                       "$@" ;;
     klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
