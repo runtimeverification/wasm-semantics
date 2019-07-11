@@ -112,6 +112,7 @@ $(haskell_kompiled): $(haskell_defn)
 # -------
 
 TEST_CONCRETE_BACKEND:=ocaml
+TEST_FLOAT_CONCRETE_BACKEND:=java
 TEST_SYMBOLIC_BACKEND:=java
 TEST:=./kwasm
 KPROVE_MODULE:=KWASM-LEMMAS
@@ -131,6 +132,11 @@ tests/%.run: tests/%
 	$(CHECK) tests/success-$(TEST_CONCRETE_BACKEND).out tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 
+tests/%.frun: tests/%
+	$(TEST) run --backend $(TEST_FLOAT_CONCRETE_BACKEND) $< > tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
+	$(CHECK) tests/success-$(TEST_FLOAT_CONCRETE_BACKEND).out tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
+	rm -rf tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
+
 tests/%.parse: tests/%
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
 	$(CHECK) $@-expected $@-out
@@ -144,11 +150,15 @@ tests/%.klab-prove: tests/%
 
 ### Execution Tests
 
-test-execution: test-simple
+test-execution: test-simple test-simple-float
 
 simple_tests:=$(wildcard tests/simple/*.wast)
 
 test-simple: $(simple_tests:=.run)
+
+simple_tests-float:=$(wildcard tests/simple/float/*.wast)
+
+test-simple-float: $(simple_tests-float:=.frun)
 
 ### Conformance Tests
 
