@@ -184,7 +184,7 @@ And we implement some helper assertions to help testing.
     syntax Assertion ::= "#assertAndRemoveEqual"
                        | "#assertAndRemoveToken"
  // --------------------------------------------
-    rule <k> #assertAndRemoveEqual   => #assertTopStackExactly V "" ~> ( drop ) ... </k>
+    rule <k> #assertAndRemoveEqual   => #assertTopStack V "" ~> ( drop ) ... </k>
          <valstack> V : VALSTACK     => VALSTACK </valstack>
     rule <k> #assertAndRemoveToken   => . ... </k>
          <valstack> token : VALSTACK => VALSTACK </valstack>
@@ -214,9 +214,9 @@ These functions make assertions about the state of the `<valstack>` cell.
     rule <k> #assertTopStack < ITYPE:IValType > VAL _ => . ... </k> <valstack> < ITYPE > VAL' : VALSTACK </valstack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'
     rule <k> #assertTopStack < FTYPE:FValType > VAL _ => . ... </k> <valstack> < FTYPE > VAL' : VALSTACK </valstack>
-      requires #round( FTYPE:FValType , VAL) ==K < FTYPE > VAL'
+      requires signFloat(VAL) ==Bool signFloat(VAL') andBool VAL ==Float VAL'
 
-    rule <k> #assertTopStackExactly < TYPE:AValType > VAL _ => . ... </k> <valstack> < TYPE > VAL : VALSTACK </valstack>
+    rule <k> #assertTopStackExactly A               _ => . ... </k> <valstack> A              : VALSTACK </valstack>
 
     rule <k> #assertStack S1 _ => #assertStackAux S1 S2  ... </k>
          <valstack> S2 </valstack>
