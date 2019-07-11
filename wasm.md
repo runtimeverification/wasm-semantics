@@ -14,7 +14,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> $PGM:Stmts </k>
+        <k> . </k>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>

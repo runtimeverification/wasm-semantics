@@ -10,6 +10,20 @@ module WASM-TEST
     imports WASM
 ```
 
+The test embedder extends the Wasm semantics, which initially holds and empty program in the `<k>` cell.
+The extension simply parses an initial program and puts it in the `<k>` cell.
+
+```k
+    configuration
+      <wasm/>
+      <initial> $PGM:Stmts </initial>
+
+    rule <initial> PGM:Stmts => .Stmts </initial>
+         <k> .Stmts => PGM </k>
+      requires PGM =/=K .Stmts
+```
+
+
 Auxiliary
 ---------
 
