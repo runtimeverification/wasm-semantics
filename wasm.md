@@ -527,9 +527,11 @@ Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32`
 
 For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
 
-**TODO**: Unimplemented: `trunc`, `nearest`.
-
 ```k
+    syntax Bool ::= #nearestShouldReturnSelf ( Float ) [function]
+ // -------------------------------------------------------------
+    rule #nearestShouldReturnSelf ( F ) => (( F ==Float NaN ) orBool ( F ==Float Infinity ) orBool ( F ==Float -Infinity ))
+
     syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
  // --------------------------------------------------------------------------------
     rule <k> FTYPE:FValType . abs     F1 => < FTYPE >   absFloat (F1) ... </k>
@@ -537,6 +539,13 @@ For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a
     rule <k> FTYPE:FValType . sqrt    F1 => < FTYPE >  sqrtFloat (F1) ... </k>
     rule <k> FTYPE:FValType . floor   F1 => < FTYPE > floorFloat (F1) ... </k>
     rule <k> FTYPE:FValType . ceil    F1 => < FTYPE >  ceilFloat (F1) ... </k>
+
+    rule <k> FTYPE:FValType . trunc   F1 => < FTYPE > floorFloat (F1) ... </k> requires signFloat(F1) ==Bool false
+    rule <k> FTYPE:FValType . trunc   F1 => < FTYPE >  ceilFloat (F1) ... </k> requires signFloat(F1) ==Bool true
+    
+    rule <k> FTYPE:FValType . nearest F1 => < FTYPE >  F1             ... </k> requires #nearestShouldReturnSelf(F1)
+    rule <k> FTYPE:FValType . nearest F1 => #round(FTYPE, Float2Int(F1)) ... </k> requires (notBool #nearestShouldReturnSelf(F1)) andBool (Float2Int(F1) =/=Int 0 orBool notBool signFloat(F1))
+    rule <k> FTYPE:FValType . nearest F1 => < FTYPE > -0.0               ... </k> requires (notBool #nearestShouldReturnSelf(F1)) andBool Float2Int(F1) ==Int 0 andBool signFloat(F1)
 ```
 
 ```k
