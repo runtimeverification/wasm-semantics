@@ -494,14 +494,10 @@ Conversion turns a `int` type value to the corresponding `float` type value.
 ```k
     syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
  // --------------------------------------------------------------------------------------
-    rule <k> f32 . convert_i32_s I:Int => #round( f32 , #signed(i32, I) ) ... </k>
-    rule <k> f32 . convert_i32_u I:Int => #round( f32 , I )               ... </k>
-    rule <k> f32 . convert_i64_s I:Int => #round( f32 , #signed(i64, I) ) ... </k>
-    rule <k> f32 . convert_i64_u I:Int => #round( f32 , I )               ... </k>
-    rule <k> f64 . convert_i32_s I:Int => #round( f64 , #signed(i32, I) ) ... </k>
-    rule <k> f64 . convert_i32_u I:Int => #round( f64 , I )               ... </k>
-    rule <k> f64 . convert_i64_s I:Int => #round( f64 , #signed(i64, I) ) ... </k>
-    rule <k> f64 . convert_i64_u I:Int => #round( f64 , I )               ... </k>
+    rule <k> FTYPE:FValType . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) ) ... </k>
+    rule <k> FTYPE:FValType . convert_i32_u I:Int => #round( FTYPE , I )               ... </k>
+    rule <k> FTYPE:FValType . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) ) ... </k>
+    rule <k> FTYPE:FValType . convert_i64_u I:Int => #round( FTYPE , I )               ... </k>
 
     rule #convSourceType(convert_i32_s) => i32
     rule #convSourceType(convert_i32_u) => i32
@@ -521,31 +517,54 @@ Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32`
     rule #convSourceType(promote_f32) => f32
 ```
 
-**TODO**: Unimplemented: `inn.trunc_fmm_sx`, `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
+Float truncation to int first truncate a float, then convert it to an integer.
+
+```k
+    syntax Bool ::= #infinityOrNaN ( Float ) [function]
+ // ---------------------------------------------------
+    rule #infinityOrNaN ( F ) => (isNaN(F) orBool isInfinite(F))
+
+    syntax Float ::= truncFloat ( Float ) [function]
+ // ------------------------------------------------
+    rule truncFloat ( F ) => floorFloat (F) requires notBool signFloat(F)
+    rule truncFloat ( F ) => ceilFloat  (F) requires         signFloat(F)
+
+    syntax CvtOp ::= "trunc_f32_s" | "trunc_f32_u" | "trunc_f64_s" | "trunc_f64_u"
+ // ------------------------------------------------------------------------------
+    rule <k> ITYPE . trunc_f32_s F => undefined ... </k> requires #infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
+    rule <k> ITYPE . trunc_f32_u F => undefined ... </k> requires #infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0 )
+    rule <k> ITYPE . trunc_f64_s F => undefined ... </k> requires #infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
+    rule <k> ITYPE . trunc_f64_u F => undefined ... </k> requires #infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0 )
+    rule <k> ITYPE . trunc_f32_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F))) ... </k> requires notBool (#infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
+    rule <k> ITYPE . trunc_f32_u F => <ITYPE>                  Float2Int(truncFloat(F))  ... </k> requires notBool (#infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0))
+    rule <k> ITYPE . trunc_f64_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F))) ... </k> requires notBool (#infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
+    rule <k> ITYPE . trunc_f64_u F => <ITYPE>                  Float2Int(truncFloat(F))  ... </k> requires notBool (#infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0))
+
+    rule #convSourceType(trunc_f32_s) => f32
+    rule #convSourceType(trunc_f32_u) => f32
+    rule #convSourceType(trunc_f64_s) => f64
+    rule #convSourceType(trunc_f64_u) => f64
+```
+
+**TODO**: Unimplemented: `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
 
 ### Floating Point Arithmetic
 
 For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
 
 ```k
-    syntax Bool ::= #nearestShouldReturnSelf ( Float ) [function]
- // -------------------------------------------------------------
-    rule #nearestShouldReturnSelf ( F ) => (( F ==Float NaN ) orBool ( F ==Float Infinity ) orBool ( F ==Float -Infinity ))
-
     syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
  // --------------------------------------------------------------------------------
-    rule <k> FTYPE:FValType . abs     F1 => < FTYPE >   absFloat (F1) ... </k>
-    rule <k> FTYPE:FValType . neg     F1 => < FTYPE >    --Float  F1  ... </k>
-    rule <k> FTYPE:FValType . sqrt    F1 => < FTYPE >  sqrtFloat (F1) ... </k>
-    rule <k> FTYPE:FValType . floor   F1 => < FTYPE > floorFloat (F1) ... </k>
-    rule <k> FTYPE:FValType . ceil    F1 => < FTYPE >  ceilFloat (F1) ... </k>
-
-    rule <k> FTYPE:FValType . trunc   F1 => < FTYPE > floorFloat (F1) ... </k> requires signFloat(F1) ==Bool false
-    rule <k> FTYPE:FValType . trunc   F1 => < FTYPE >  ceilFloat (F1) ... </k> requires signFloat(F1) ==Bool true
+    rule <k> FTYPE:FValType . abs     F => < FTYPE >   absFloat (F) ... </k>
+    rule <k> FTYPE:FValType . neg     F => < FTYPE >    --Float  F  ... </k>
+    rule <k> FTYPE:FValType . sqrt    F => < FTYPE >  sqrtFloat (F) ... </k>
+    rule <k> FTYPE:FValType . floor   F => < FTYPE > floorFloat (F) ... </k>
+    rule <k> FTYPE:FValType . ceil    F => < FTYPE >  ceilFloat (F) ... </k>
+    rule <k> FTYPE:FValType . trunc   F => < FTYPE > truncFloat (F) ... </k>
     
-    rule <k> FTYPE:FValType . nearest F1 => < FTYPE >  F1             ... </k> requires #nearestShouldReturnSelf(F1)
-    rule <k> FTYPE:FValType . nearest F1 => #round(FTYPE, Float2Int(F1)) ... </k> requires (notBool #nearestShouldReturnSelf(F1)) andBool (Float2Int(F1) =/=Int 0 orBool notBool signFloat(F1))
-    rule <k> FTYPE:FValType . nearest F1 => < FTYPE > -0.0               ... </k> requires (notBool #nearestShouldReturnSelf(F1)) andBool Float2Int(F1) ==Int 0 andBool signFloat(F1)
+    rule <k> FTYPE:FValType . nearest F => < FTYPE >  F                ... </k> requires #infinityOrNaN(F)
+    rule <k> FTYPE:FValType . nearest F => #round(FTYPE, Float2Int(F)) ... </k> requires (notBool #infinityOrNaN(F)) andBool (Float2Int(F) =/=Int 0 orBool notBool signFloat(F))
+    rule <k> FTYPE:FValType . nearest F => < FTYPE > -0.0               ... </k> requires (notBool #infinityOrNaN(F)) andBool Float2Int(F) ==Int 0 andBool signFloat(F)
 ```
 
 ```k
