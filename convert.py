@@ -22,7 +22,7 @@ def main():
     filename = sys.argv[1]
     infile = "tests/wasm-tests/test/core/%s" % filename
     outfile = open("tests/simple/%s-c.%s" % tuple(filename.split(".")), "w")
-    unsupported = ["nan:", "reinterpret",
+    unsupported = ["nan:", "-nan", "reinterpret",
                    "assert_return_canonical_nan", "assert_return_arithmetic_nan", "assert_invalid", "assert_malformed"]
     for line in (open(infile).readlines()):
         if any(x in line for x in unsupported):
