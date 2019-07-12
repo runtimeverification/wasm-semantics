@@ -1140,7 +1140,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn       ::= MemoryDefn
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
-                        | "(" "data" DataStrings ")"
+                        | "(" "data" DataString ")"
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
@@ -1466,17 +1466,17 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Defn     ::= DataDefn
-    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
-                      | "(" "data"                   Offset DataStrings ")"
-                      |     "data" "{" TextFormatIdx        DataStrings "}"
- // -----------------------------------------------------------------------
+    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataString ")"
+                      | "(" "data"                   Offset DataString ")"
+                      |     "data" "{" TextFormatIdx        Bytes      "}"
+ // ----------------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
-    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
-    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data       OFFSET:Offset STRING ) =>     ( data   0     OFFSET   STRING  ) ... </k>
+    rule <k> ( data MEMID IS:Instr      STRING ) => IS ~> data { MEMID #dS2Bytes(STRING) } ... </k>
+    rule <k> ( data MEMID (offset IS)   STRING ) => IS ~> data { MEMID #dS2Bytes(STRING) } ... </k>
 
     // For now, deal only with memory 0.
-    rule <k> data { MEMIDX STRING } => . ... </k>
+    rule <k> data { MEMIDX DSBYTES } => . ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1488,14 +1488,14 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata> DATA
-                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING)) [ OFFSET := #dataStrings2int(STRING)]
+                  => #clearRange(DATA, OFFSET, OFFSET +Int lengthBytes(DSBYTES)) [ OFFSET := Bytes2Int(DSBYTES)]
            </mdata>
            ...
          </memInst>
 
-    syntax Int ::= #lengthDataPages ( DataStrings ) [function]
+    syntax Int ::= #lengthDataPages ( DataString ) [function]
  // ----------------------------------------------------------
-    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) up/Int #pageSize()
+    rule #lengthDataPages(DS:DataString) => lengthBytes(#dS2Bytes(STRING)) up/Int #pageSize()
 
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------

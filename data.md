@@ -6,6 +6,7 @@ require "domains.k"
 
 module WASM-DATA
     imports DOMAINS
+    imports BYTES
 ```
 
 Parsing
@@ -337,23 +338,36 @@ One needs to unname the `ValTypes` first before calling the `#take` or `#drop` f
 Strings
 -------
 
+Wasm use a different character escape rule with K, so we need to define the `unescape` function ourselves.
+This function is copied from https://github.com/runtimeverification/iele-semantics/blob/4477eef671113e49cfbf3214d736643bd02ceef8/well-formedness.md
+
+```k
+    syntax String ::= unescape(String)                    [function]
+                    | unescape(String, Int, StringBuffer) [function, klabel(unescapeAux)]
+ // -------------------------------------------------------------------------------------
+    rule unescape(S) => unescape(S, 1, .StringBuffer)
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 1, SB +String substrString(S, IDX, IDX +Int 1))
+      requires IDX <Int lengthString(S) -Int 1 andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 3, SB +String chrChar(String2Base(substrString(S, IDX +Int 1, IDX +Int 3), 16)))
+      requires IDX <Int lengthString(S) -Int 1 andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+    rule unescape(S, IDX, SB) => StringBuffer2String(SB)
+      requires IDX ==Int lengthString(S) -Int 1
+````
+
 Wasm memories can be initialized with a segment of data, sepcified as a string.
 The string considered to represent the sequence of UTF-8 bytes that encode it.
 The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
-**TODO:** Either convert from strings to integers directly in K or with a pre-processor.
+```k
+    syntax DataString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token]
+    syntax String     ::= #parseDataString ( DataString )                  [function, functional, hook(STRING.token2string)]
+```
 
 ```k
-    syntax DataStrings ::= List{Int, ""}
-    syntax Int ::= #dataStrings2int   (DataStrings) [function]
-    syntax Int ::= #dataStringsLength (DataStrings) [function]
- // ----------------------------------------------------------
-    rule #dataStringsLength(  .DataStrings) => 0
-    rule #dataStringsLength(I DS          ) => 1 +Int #dataStringsLength(DS)
-
-    rule #dataStrings2int(  .DataStrings) => 0
-    rule #dataStrings2int(I DS          ) => I +Int (256 *Int #dataStrings2int(DS))
+    syntax Bytes ::= #dS2Bytes (DataString) [function]
+ // --------------------------------------------------
+    rule #dS2Bytes(DS) => String2Bytes(unescape(#parseDataString(DS)))
 ```
 
 Byte Map
