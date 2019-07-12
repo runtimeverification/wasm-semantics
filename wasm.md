@@ -1488,14 +1488,14 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata> DATA
-                  => #clearRange(DATA, OFFSET, OFFSET +Int lengthBytes(DSBYTES)) [ OFFSET := Bytes2Int(DSBYTES)]
+                  => #clearRange(DATA, OFFSET, OFFSET +Int lengthBytes(DSBYTES)) [ OFFSET := Bytes2Int(DSBYTES, BE, Signed)]
            </mdata>
            ...
          </memInst>
 
     syntax Int ::= #lengthDataPages ( DataString ) [function]
  // ----------------------------------------------------------
-    rule #lengthDataPages(DS:DataString) => lengthBytes(#dS2Bytes(STRING)) up/Int #pageSize()
+    rule #lengthDataPages(DS:DataString) => lengthBytes(#dS2Bytes(DS)) up/Int #pageSize()
 
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------
