@@ -352,7 +352,7 @@ This function is copied from https://github.com/runtimeverification/iele-semanti
       requires IDX <Int lengthString(S) -Int 1 andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
     rule unescape(S, IDX, SB) => StringBuffer2String(SB)
       requires IDX ==Int lengthString(S) -Int 1
-````
+```
 
 Wasm memories can be initialized with a segment of data, sepcified as a string.
 The string considered to represent the sequence of UTF-8 bytes that encode it.
@@ -363,6 +363,8 @@ To avoid dealing with these data strings in K, we use a list of integers as an i
     syntax DataString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token]
     syntax String     ::= #parseDataString ( DataString )                  [function, functional, hook(STRING.token2string)]
 ```
+
+`dS2Bytes` converts a `DataString` to a K builtin `Bytes`.
 
 ```k
     syntax Bytes ::= #dS2Bytes (DataString) [function]
