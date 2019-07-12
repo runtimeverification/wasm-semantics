@@ -1,5 +1,4 @@
-<generatedTop>
-  <wasm>
+  <generatedTop>
     <k>
       .
     </k>
@@ -61,8 +60,4 @@
     <nextFreshId>
       0
     </nextFreshId>
-  </wasm>
-  <initial>
-    .EmptyStmts
-  </initial>
-</generatedTop>
+  </generatedTop>
