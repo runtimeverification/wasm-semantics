@@ -6,7 +6,7 @@ module WASM
 
     configuration
       <wasm>
-        <k> $PGM:Stmts </k>
+        <k> .Stmts </k>
       </wasm>
 
     syntax EmptyStmt
