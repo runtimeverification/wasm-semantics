@@ -5,12 +5,12 @@ WebAssembly Data
 require "domains.k"
 ```
 
-WebAssembly string is defined differently with K built-in strings, so we have to write the definition of WebAssembly `DataString` in a separate module, and use the module just for parsing the program.
+WebAssembly string is defined differently with K built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
 
 ```k
 module WASM-SYNTAX
     imports WASM-DATA
-    syntax DataString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token]
+    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token]
 endmodule
 ```
 
@@ -371,16 +371,16 @@ The exception is for characters that are explicitly escaped which can represent 
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
 ```k
-    syntax DataString
-    syntax String ::= #parseDataString ( DataString ) [function, functional, hook(STRING.token2string)]
+    syntax WasmString
+    syntax String ::= #parseWasmString ( WasmString ) [function, functional, hook(STRING.token2string)]
 ```
 
-`dS2Bytes` converts a `DataString` to a K builtin `Bytes`.
+`wS2Bytes` converts a `WasmString` to a K builtin `Bytes`.
 
 ```k
-    syntax Bytes ::= #dS2Bytes (DataString) [function]
+    syntax Bytes ::= #wS2Bytes (WasmString) [function]
  // --------------------------------------------------
-    rule #dS2Bytes(DS) => String2Bytes(unescape(#parseDataString(DS)))
+    rule #wS2Bytes(WS) => String2Bytes(unescape(#parseWasmString(WS)))
 ```
 
 Byte Map
