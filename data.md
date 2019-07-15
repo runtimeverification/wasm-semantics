@@ -264,6 +264,8 @@ The `#wrap` function wraps an integer to a given bit width.
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
 The `#round` function casts a `f64` float to a `f32` float.
+`f64` floats has 1 bit for the sign, 53 bits for the value and 11 bits for exponent.
+`f32` floats has 1 bit for the sign, 23 bits for the value and 8 bits for exponent.
 
 ```k
     syntax FVal ::= #round ( FValType , Number ) [function]
