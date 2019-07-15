@@ -3,7 +3,18 @@ WebAssembly Data
 
 ```k
 require "domains.k"
+```
 
+WebAssembly string is defined differently with K built-in strings, so we have to write the definition of WebAssembly `DataString` in a separate module, and use the module just for parsing the program.
+
+```k
+module WASM-SYNTAX
+    imports WASM-DATA
+    syntax DataString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token]
+endmodule
+```
+
+```k
 module WASM-DATA
     imports DOMAINS
     imports BYTES
@@ -360,8 +371,8 @@ The exception is for characters that are explicitly escaped which can represent 
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
 ```k
-    syntax DataString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token]
-    syntax String     ::= #parseDataString ( DataString )                  [function, functional, hook(STRING.token2string)]
+    syntax DataString
+    syntax String ::= #parseDataString ( DataString ) [function, functional, hook(STRING.token2string)]
 ```
 
 `dS2Bytes` converts a `DataString` to a K builtin `Bytes`.

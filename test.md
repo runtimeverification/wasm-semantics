@@ -5,6 +5,16 @@ For testing, we augment the semantics with some helpers.
 
 ```k
 require "wasm.k"
+require "data.k"
+```
+
+Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consists of the definitions both for parsing and execution.
+
+```k
+module WASM-TEST-SYNTAX
+    imports WASM-TEST
+    imports WASM-SYNTAX
+endmodule
 
 module WASM-TEST
     imports WASM
