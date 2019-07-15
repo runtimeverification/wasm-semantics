@@ -1488,7 +1488,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata> DATA
-                  => #clearRange(DATA, OFFSET, OFFSET +Int lengthBytes(DSBYTES)) [ OFFSET := Bytes2Int(DSBYTES, BE, Signed)]
+                  => #clearRange(DATA, OFFSET, OFFSET +Int lengthBytes(DSBYTES)) [ OFFSET := Bytes2Int(DSBYTES, LE, Unsigned)]
            </mdata>
            ...
          </memInst>
