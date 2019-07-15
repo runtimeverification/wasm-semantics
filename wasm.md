@@ -193,7 +193,7 @@ This allows us to give purely functional semantics to many of the opcodes.
 
 Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
-**TODO**: Implemented Float in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
+**TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
     syntax PlainInstr ::= IValType "." "const" Int
@@ -296,7 +296,7 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
 ### Conversion Operations
 
 Conversion operators always take a single argument as input and cast it to another type.
-For each element added to `CvtOp`, functions `#convSourceType` and `#CvtOp` must be defined over it.
+For each element added to `CvtOp`, functions `#cvtSourceType` and `#CvtOp` must be defined over it.
 
 These operators convert constant elements at the top of the stack to another type.
 The target type is before the `.`, and the source type is after the `_`.
@@ -311,13 +311,13 @@ The target type is before the `.`, and the source type is after the `_`.
  // ------------------------------------------
     rule <k> ITYPE:IValType . CVTOP:CvtOp => ITYPE . CVTOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
-      requires #convSourceType(CVTOP) ==K SRCTYPE
+      requires #cvtSourceType(CVTOP) ==K SRCTYPE
     rule <k> FTYPE:FValType . CVTOP:CvtOp => FTYPE . CVTOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
-      requires #convSourceType(CVTOP) ==K SRCTYPE
+      requires #cvtSourceType(CVTOP) ==K SRCTYPE
 
-    syntax AValType ::= #convSourceType ( CvtOp ) [function]
- // --------------------------------------------------------
+    syntax AValType ::= #cvtSourceType ( CvtOp ) [function]
+ // -------------------------------------------------------
 ```
 
 ### Integer Arithmetic
@@ -474,7 +474,7 @@ Wrapping cuts of the 32 most significant bits of an `i64` value.
  // ---------------------------
     rule <k> i32 . wrap_i64 I => #chop(< i32 > I) ... </k>
 
-    rule #convSourceType(wrap_i64) => i64
+    rule #cvtSourceType(wrap_i64) => i64
 ```
 
 Extension turns an `i32` type value into the corresponding `i64` type value.
@@ -485,11 +485,11 @@ Extension turns an `i32` type value into the corresponding `i64` type value.
     rule <k> i64 . extend_i32_u I:Int => < i64 > I                               ... </k>
     rule <k> i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
 
-    rule #convSourceType(extend_i32_u) => i32
-    rule #convSourceType(extend_i32_s) => i32
+    rule #cvtSourceType(extend_i32_u) => i32
+    rule #cvtSourceType(extend_i32_s) => i32
 ```
 
-Conversion turns a `int` type value to the corresponding `float` type value.
+Conversion turns an `int` type value to the nearest `float` type value.
 
 ```k
     syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
@@ -499,10 +499,10 @@ Conversion turns a `int` type value to the corresponding `float` type value.
     rule <k> FTYPE:FValType . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) ) ... </k>
     rule <k> FTYPE:FValType . convert_i64_u I:Int => #round( FTYPE , I )               ... </k>
 
-    rule #convSourceType(convert_i32_s) => i32
-    rule #convSourceType(convert_i32_u) => i32
-    rule #convSourceType(convert_i64_s) => i64
-    rule #convSourceType(convert_i64_u) => i64
+    rule #cvtSourceType(convert_i32_s) => i32
+    rule #cvtSourceType(convert_i32_u) => i32
+    rule #cvtSourceType(convert_i64_s) => i64
+    rule #cvtSourceType(convert_i64_u) => i64
 ```
 
 Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32` type value to `f64` type value:
@@ -513,11 +513,11 @@ Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32`
     rule <k> f32 . demote_f64  F => #round( f32 , F ) ... </k>
     rule <k> f64 . promote_f32 F => #round( f64 , F ) ... </k>
 
-    rule #convSourceType(demote_f64)  => f64
-    rule #convSourceType(promote_f32) => f32
+    rule #cvtSourceType(demote_f64)  => f64
+    rule #cvtSourceType(promote_f32) => f32
 ```
 
-Float truncation to int first truncate a float, then convert it to an integer.
+Float truncation to int first truncate a `float`, then convert it to an `int`.
 
 ```k
     syntax Bool ::= #infinityOrNaN ( Float ) [function]
@@ -540,17 +540,17 @@ Float truncation to int first truncate a float, then convert it to an integer.
     rule <k> ITYPE . trunc_f64_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F))) ... </k> requires notBool (#infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
     rule <k> ITYPE . trunc_f64_u F => <ITYPE>                  Float2Int(truncFloat(F))  ... </k> requires notBool (#infinityOrNaN(F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0))
 
-    rule #convSourceType(trunc_f32_s) => f32
-    rule #convSourceType(trunc_f32_u) => f32
-    rule #convSourceType(trunc_f64_s) => f64
-    rule #convSourceType(trunc_f64_u) => f64
+    rule #cvtSourceType(trunc_f32_s) => f32
+    rule #cvtSourceType(trunc_f32_u) => f32
+    rule #cvtSourceType(trunc_f64_s) => f64
+    rule #cvtSourceType(trunc_f64_u) => f64
 ```
 
 **TODO**: Unimplemented: `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
 
 ### Floating Point Arithmetic
 
-For the operators that under both sort `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
+For the operators that defined under both sorts `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
 
 ```k
     syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
