@@ -23,6 +23,8 @@ all: build
 
 clean:
 	rm -rf $(build_dir)
+	rm -f  $(k_submodule)/make.timestamp
+	rm -f  $(pandoc_tangle_submodule)/make.timestamp
 	git submodule update --init --recursive
 
 # Build Dependencies (K Submodule)

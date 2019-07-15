@@ -184,7 +184,7 @@ And we implement some helper assertions to help testing.
     syntax Assertion ::= "#assertAndRemoveEqual"
                        | "#assertAndRemoveToken"
  // --------------------------------------------
-    rule <k> #assertAndRemoveEqual   => #assertTopStack V "" ~> ( drop ) ... </k>
+    rule <k> #assertAndRemoveEqual   => #assertTopStackExactly V "" ~> ( drop ) ... </k>
          <valstack> V : VALSTACK     => VALSTACK </valstack>
     rule <k> #assertAndRemoveToken   => . ... </k>
          <valstack> token : VALSTACK => VALSTACK </valstack>
@@ -376,12 +376,15 @@ This checks that the last allocated memory has the given size and max value.
            ...
          </mems>
 
-    syntax Assertion ::= "#assertMemoryData" "(" Int "," Int ")" String
- // -------------------------------------------------------------------
-    rule <k> #assertMemoryData (KEY , VAL) MSG => . ... </k>
+    syntax Assertion ::= "#assertMemoryData"     "(" Int "," Int ")" String
+    syntax Assertion ::= "#assertMemoryData" Int "(" Int "," Int ")" String
+ // -----------------------------------------------------------------------
+    rule <k> #assertMemoryData (KEY , VAL) MSG => #assertMemoryData CUR (KEY, VAL) MSG ... </k>
          <curModIdx> CUR </curModIdx>
+
+    rule <k> #assertMemoryData MODIDX (KEY , VAL) MSG => . ... </k>
          <moduleInst>
-           <modIdx> CUR </modIdx>
+           <modIdx> MODIDX </modIdx>
            <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
