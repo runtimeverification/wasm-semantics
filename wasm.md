@@ -1494,7 +1494,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          </memInst>
 
     syntax Int ::= #lengthDataPages ( WasmString ) [function]
- // ----------------------------------------------------------
+ // ---------------------------------------------------------
     rule #lengthDataPages(WS:WasmString) => lengthBytes(#wS2Bytes(WS)) up/Int #pageSize()
 
     syntax Int ::= Int "up/Int" Int [function]
@@ -1526,8 +1526,8 @@ Exports make functions, tables, memories and globals available for importing int
 
 ```k
     syntax Defn       ::= ExportDefn
-    syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
- // ---------------------------------------------------------------
+    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
+ // -------------------------------------------------------------------
     rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1542,8 +1542,8 @@ In that case, it simply desugars to an export followed by the definition, after 
 Note that it is possible to define multiple exports inline, i.e., export a single entity under many names.
 
 ```k
-    syntax InlineExport  ::= "(" "export" String ")"
- // ------------------------------------------------
+    syntax InlineExport  ::= "(" "export" WasmString ")"
+ // ----------------------------------------------------
 
     syntax GlobalSpec ::= InlineExport GlobalSpec
  // ---------------------------------------------
@@ -1611,7 +1611,7 @@ The value of a global gets copied when it is imported.
 
 ```k
     syntax Defn       ::= ImportDefn
-    syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
+    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
     syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
                         | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
@@ -1731,8 +1731,8 @@ The following function checks if the limits in the first parameter *match*, i.e.
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
 
 ```k
-    syntax InlineImport ::= "(" "import" String String ")"
- // ------------------------------------------------------
+    syntax InlineImport ::= "(" "import" WasmString WasmString ")"
+ // --------------------------------------------------------------
 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------

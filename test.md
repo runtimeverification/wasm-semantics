@@ -57,21 +57,21 @@ We allow 2 kinds of actions:
 
 ```k
     syntax Auxil  ::= Action
-    syntax Action ::= "(" "invoke" OptionalId String Instrs ")"
-                    |     "invoke" Int        String
-                    | "(" "get"    OptionalId String        ")"
-                    |     "get"    Int        String
- // ------------------------------------------------
-    rule <k> ( invoke OID:OptionalId ENAME:String IS:Instrs ) => IS ~> ( invoke OID ENAME .Instrs ) ... </k>
+    syntax Action ::= "(" "invoke" OptionalId WasmString Instrs ")"
+                    |     "invoke" Int        WasmString
+                    | "(" "get"    OptionalId WasmString        ")"
+                    |     "get"    Int        WasmString
+ // ----------------------------------------------------
+    rule <k> ( invoke OID:OptionalId ENAME:WasmString IS:Instrs ) => IS ~> ( invoke OID ENAME .Instrs ) ... </k>
       requires IS =/=K .Instrs
 
-    rule <k> ( invoke ENAME:String .Instrs ) => invoke CUR ENAME ... </k>
+    rule <k> ( invoke ENAME:WasmString .Instrs ) => invoke CUR ENAME ... </k>
          <curModIdx> CUR </curModIdx>
 
-    rule <k> ( invoke ID:Identifier ENAME:String .Instrs ) => invoke MODIDX ENAME ... </k>
+    rule <k> ( invoke ID:Identifier ENAME:WasmString .Instrs ) => invoke MODIDX ENAME ... </k>
          <moduleIds> ... ID |-> MODIDX ... </moduleIds>
 
-    rule <k> invoke MODIDX:Int ENAME:String => ( invoke FADDR ):Instr ... </k>
+    rule <k> invoke MODIDX:Int ENAME:WasmString => ( invoke FADDR ):Instr ... </k>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... ENAME |-> TFIDX ... </exports>
@@ -80,13 +80,13 @@ We allow 2 kinds of actions:
            ...
          </moduleInst>
 
-    rule <k> ( get NAME:String ) => get CUR NAME  ... </k>
+    rule <k> ( get NAME:WasmString ) => get CUR NAME  ... </k>
          <curModIdx> CUR </curModIdx>
 
-    rule <k> ( get MOD:Identifier NAME:String ) => get MODIDX NAME ... </k>
+    rule <k> ( get MOD:Identifier NAME:WasmString ) => get MODIDX NAME ... </k>
          <moduleIds> ... MOD |-> MODIDX ... </moduleIds>
 
-    rule <k> get MODIDX:Int NAME:String => VAL ... </k>
+    rule <k> get MODIDX:Int NAME:WasmString => VAL ... </k>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... NAME |-> TFIDX ... </exports>
@@ -107,9 +107,9 @@ We will reference modules by name in imports.
 `register` is the instruction that allows us to associate a name with a module.
 
 ```k
-    syntax Auxil ::= "(" "register" String               ")"
-                   | "(" "register" String TextFormatIdx ")"
- // --------------------------------------------------------
+    syntax Auxil ::= "(" "register" WasmString               ")"
+                   | "(" "register" WasmString TextFormatIdx ")"
+ // ------------------------------------------------------------
     rule <k> ( register S ) => ( register S (NEXT -Int 1) )... </k> // Register last instantiated module.
          <nextModuleIdx> NEXT </nextModuleIdx>
       requires NEXT >Int 0
@@ -117,7 +117,7 @@ We will reference modules by name in imports.
     rule <k> ( register S ID:Identifier ) => ( register S IDX ) ... </k>
          <moduleIds> ... ID |-> IDX ... </moduleIds>
 
-    rule <k> ( register S:String IDX:Int ) => . ... </k>
+    rule <k> ( register S:WasmString IDX:Int ) => . ... </k>
          <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
 
@@ -128,7 +128,7 @@ The conformance test cases contain the syntax of declaring modules in the format
 **TODO**: Implement `(module binary <string>*)` and put it into `wasm.md`.
 
 ```k
-    syntax DefnStrings ::= List{String, ""}
+    syntax DefnStrings ::= List{WasmString, ""}
     syntax ModuleDecl  ::= "(" "module" "quote" DefnStrings ")"
  // -----------------------------------------------------------
     rule <k> ( module quote  _ ) => . ... </k>
@@ -169,12 +169,12 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
                        | "(" "assert_return"                Action            ")"
                        | "(" "assert_return_canonical_nan"  Action            ")"
                        | "(" "assert_return_arithmetic_nan" Action            ")"
-                       | "(" "assert_trap"                  Action     String ")"
-                       | "(" "assert_malformed"             ModuleDecl String ")"
-                       | "(" "assert_invalid"               ModuleDecl String ")"
-                       | "(" "assert_unlinkable"            ModuleDecl String ")"
-                       | "(" "assert_trap"                  ModuleDecl String ")"
- // -----------------------------------------------------------------------------
+                       | "(" "assert_trap"                  Action     WasmString ")"
+                       | "(" "assert_malformed"             ModuleDecl WasmString ")"
+                       | "(" "assert_invalid"               ModuleDecl WasmString ")"
+                       | "(" "assert_unlinkable"            ModuleDecl WasmString ")"
+                       | "(" "assert_trap"                  ModuleDecl WasmString ")"
+ // ---------------------------------------------------------------------------------
     rule <k> (assert_return ACT INSTR)               => ACT ~> INSTR ~> #assertAndRemoveEqual ~> #assertAndRemoveToken ... </k>
          <valstack> VALSTACK => token : VALSTACK </valstack>
     rule <k> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </k>
@@ -194,7 +194,7 @@ And we implement some helper assertions to help testing.
     syntax Assertion ::= "#assertAndRemoveEqual"
                        | "#assertAndRemoveToken"
  // --------------------------------------------
-    rule <k> #assertAndRemoveEqual   => #assertTopStackExactly V "" ~> ( drop ) ... </k>
+    rule <k> #assertAndRemoveEqual   => #assertTopStackExactly V .WasmString ~> ( drop ) ... </k>
          <valstack> V : VALSTACK     => VALSTACK </valstack>
     rule <k> #assertAndRemoveToken   => . ... </k>
          <valstack> token : VALSTACK => VALSTACK </valstack>
@@ -205,8 +205,8 @@ And we implement some helper assertions to help testing.
 This asserts that a `trap` was just thrown.
 
 ```k
-    syntax Assertion ::= "#assertTrap" String
- // -----------------------------------------
+    syntax Assertion ::= "#assertTrap" WasmString
+ // ---------------------------------------------
     rule <k> trap ~> #assertTrap _ => . ... </k>
 ```
 
@@ -215,9 +215,9 @@ This asserts that a `trap` was just thrown.
 These functions make assertions about the state of the `<valstack>` cell.
 
 ```k
-    syntax Assertion ::= "#assertTopStack"        Val      String
-                       | "#assertTopStackExactly" Val      String
-                       | "#assertStack"           ValStack String
+    syntax Assertion ::= "#assertTopStack"        Val      WasmString
+                       | "#assertTopStackExactly" Val      WasmString
+                       | "#assertStack"           ValStack WasmString
                        | "#assertStackAux"        ValStack ValStack
  // ---------------------------------------------------------------
     rule <k> #assertTopStack S                      _ => . ... </k> <valstack> S              : VALSTACK </valstack>
@@ -239,9 +239,9 @@ These functions make assertions about the state of the `<valstack>` cell.
 The operator `#assertLocal`/`#assertGlobal` operators perform a check for a local/global variable's value.
 
 ```k
-    syntax Assertion ::= "#assertLocal"  Int Val String
-                       | "#assertGlobal" TextFormatIdx Val String
- // -------------------------------------------------------------
+    syntax Assertion ::= "#assertLocal"  Int Val WasmString
+                       | "#assertGlobal" TextFormatIdx Val WasmString
+ // -----------------------------------------------------------------
     rule <k> #assertLocal INDEX VALUE _ => . ... </k>
          <locals> ... INDEX |-> VALUE ... </locals>
 
@@ -295,8 +295,8 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType String
- // ----------------------------------------------------------------------------
+    syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType WasmString
+ // --------------------------------------------------------------------------------
     rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -322,8 +322,8 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This asserts related operation about tables.
 
 ```k
-    syntax Assertion ::= "#assertTable" TextFormatIdx Int OptionalInt String
- // ------------------------------------------------------------------------
+    syntax Assertion ::= "#assertTable" TextFormatIdx Int OptionalInt WasmString
+ // ----------------------------------------------------------------------------
     rule <k> #assertTable TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -342,8 +342,8 @@ This asserts related operation about tables.
            ...
          </tabs>
 
-    syntax Assertion ::= "#assertTableElem" "(" Int "," Int ")" String
- // ------------------------------------------------------------------
+    syntax Assertion ::= "#assertTableElem" "(" Int "," Int ")" WasmString
+ // ----------------------------------------------------------------------
     rule <k> #assertTableElem (KEY , VAL) MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -366,8 +366,8 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory" TextFormatIdx Int OptionalInt String
- // -------------------------------------------------------------------------
+    syntax Assertion ::= "#assertMemory" TextFormatIdx Int OptionalInt WasmString
+ // -----------------------------------------------------------------------------
     rule <k> #assertMemory TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -386,9 +386,9 @@ This checks that the last allocated memory has the given size and max value.
            ...
          </mems>
 
-    syntax Assertion ::= "#assertMemoryData"     "(" Int "," Int ")" String
-    syntax Assertion ::= "#assertMemoryData" Int "(" Int "," Int ")" String
- // -----------------------------------------------------------------------
+    syntax Assertion ::= "#assertMemoryData"     "(" Int "," Int ")" WasmString
+    syntax Assertion ::= "#assertMemoryData" Int "(" Int "," Int ")" WasmString
+ // ---------------------------------------------------------------------------
     rule <k> #assertMemoryData (KEY , VAL) MSG => #assertMemoryData CUR (KEY, VAL) MSG ... </k>
          <curModIdx> CUR </curModIdx>
 
@@ -414,8 +414,8 @@ These assertions test (and delete) module instances.
 These assertions act on the last module defined.
 
 ```k
-    syntax Assertion ::= "#assertNamedModule" Identifier String
- // -----------------------------------------------------------
+    syntax Assertion ::= "#assertNamedModule" Identifier WasmString
+ // ---------------------------------------------------------------
     rule <k> #assertNamedModule NAME S => . ... </k>
          <moduleIds> ... NAME |-> IDX ... </moduleIds>
          <moduleInstances>
@@ -460,9 +460,9 @@ Registry Assertations
 We also want to be able to test that the embedder's registration function is working.
 
 ```k
-    syntax Assertion ::= "#assertRegistrationUnnamed" String            String
-                       | "#assertRegistrationNamed"   String Identifier String
- // --------------------------------------------------------------------------
+    syntax Assertion ::= "#assertRegistrationUnnamed" WasmString            WasmString
+                       | "#assertRegistrationNamed"   WasmString Identifier WasmString
+ // ----------------------------------------------------------------------------------
     rule <k> #assertRegistrationUnnamed REGNAME _ => . ... </k>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>

@@ -371,8 +371,8 @@ The exception is for characters that are explicitly escaped which can represent 
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
 ```k
-    syntax WasmString
-    syntax String ::= #parseWasmString ( WasmString ) [function, functional, hook(STRING.token2string)]
+    syntax WasmString ::= ".WasmString"
+    syntax String     ::= #parseWasmString ( WasmString ) [function, functional, hook(STRING.token2string)]
 ```
 
 `wS2Bytes` converts a `WasmString` to a K builtin `Bytes`.
