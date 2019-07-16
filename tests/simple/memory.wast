@@ -147,3 +147,24 @@
 #assertMemory 0 1 .Int "Zero updates don't over-erase"
 
 #clearConfig
+
+(module
+  (memory 0)
+)
+
+(module
+  (memory (data 3))
+)
+
+#assertMemoryData (0, 3) ""
+
+(module
+  (memory 1)
+  (func $start (i32.store (i32.const 0) (i32.const 42)))
+  (start $start)
+)
+
+#assertMemoryData 1 (0, 3) "Start didn't modify other memory"
+#assertMemoryData (0, 42) "Start function modified its own memory"
+
+#clearConfig
