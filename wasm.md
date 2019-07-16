@@ -170,7 +170,7 @@ Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") unt
     rule <k> trap ~> (I:Instr   => .) ... </k>
     rule <k> trap ~> (IS:Instrs => .) ... </k>
     rule <k> trap ~> (D:Defn    => .) ... </k>
-    rule <k> trap ~> (WS:Defns  => .) ... </k>
+    rule <k> trap ~> (DS:Defns  => .) ... </k>
 
     rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 ```
@@ -1140,7 +1140,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn       ::= MemoryDefn
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
-                        | "(" "data" WasmString ")"
+                        | "(" "data" DataString ")"
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
@@ -1150,13 +1150,13 @@ The importing and exporting parts of specifications are dealt with in the respec
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
-    rule <k> ( memory ( data WS ) ) => ( memory #freshId(NEXTID) (data WS) ) ... </k>
+    rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
-    rule <k> ( memory ID:Identifier ( data WS ) )
-          =>  memory { ID #lengthDataPages(WS) #lengthDataPages(WS) }
-          ~> ( data ID (i32.const 0) WS ) ... </k>
-      requires #lengthDataPages(WS) <=Int #maxMemorySize()
+    rule <k> ( memory ID:Identifier ( data DS ) )
+          =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
+          ~> ( data ID (i32.const 0) DS ) ... </k>
+      requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1466,14 +1466,14 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Defn     ::= DataDefn
-    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset WasmString ")"
-                      | "(" "data"                   Offset WasmString ")"
+    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataString ")"
+                      | "(" "data"                   Offset DataString ")"
                       |     "data" "{" TextFormatIdx        Bytes      "}"
  // ----------------------------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET:Offset STRING ) =>     ( data   0     OFFSET   STRING  ) ... </k>
-    rule <k> ( data MEMID IS:Instr      STRING ) => IS ~> data { MEMID #wS2Bytes(STRING) } ... </k>
-    rule <k> ( data MEMID (offset IS)   STRING ) => IS ~> data { MEMID #wS2Bytes(STRING) } ... </k>
+    rule <k> ( data MEMID IS:Instr      STRING ) => IS ~> data { MEMID #DS2Bytes(STRING) } ... </k>
+    rule <k> ( data MEMID (offset IS)   STRING ) => IS ~> data { MEMID #DS2Bytes(STRING) } ... </k>
 
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX DSBYTES } => . ... </k>
@@ -1493,9 +1493,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
            ...
          </memInst>
 
-    syntax Int ::= #lengthDataPages ( WasmString ) [function]
+    syntax Int ::= #lengthDataPages ( DataString ) [function]
  // ---------------------------------------------------------
-    rule #lengthDataPages(WS:WasmString) => lengthBytes(#wS2Bytes(WS)) up/Int #pageSize()
+    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
 
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------
@@ -1782,30 +1782,30 @@ The groups are chosen to represent different stages of allocation and instantiat
          "inits"     |-> .Defns
          "start"     |-> .Defns
 
-    rule structureModule(WS) => #structureModule(#initialMap (), #reverse(WS, .Defns))
+    rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
 
     rule #structureModule(M,                  .Defns) => M
-    rule #structureModule(M, (T:TypeDefn   WS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], WS)
+    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
 
-    rule #structureModule(M, (I:ImportDefn WS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], WS)
+    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
 
-    rule #structureModule(M, (X:FuncDefn   WS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], WS)
-    rule #structureModule(M, (X:GlobalDefn WS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], WS)
+    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
 
-    rule #structureModule(M, (A:TableDefn  WS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], WS)
-    rule #structureModule(M, (A:MemoryDefn WS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], WS)
+    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
 
-    rule #structureModule(M, (E:ExportDefn WS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], WS)
+    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
 
-    rule #structureModule(M, (I:DataDefn   WS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], WS)
-    rule #structureModule(M, (I:ElemDefn   WS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], WS)
+    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
 
-    rule #structureModule(M, (S:StartDefn  WS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   WS)
+    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
     rule #reverse(       .Defns  , ACC) => ACC
-    rule #reverse(D:Defn WS:Defns, ACC) => #reverse(WS, D ACC)
+    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
 ```
 
 A new module instance gets allocated.

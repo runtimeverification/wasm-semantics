@@ -1,6 +1,6 @@
 ;; Instantiating with data
 
-(memory $an-ident (data "WASM2\2E0"))
+(memory $an-ident (data "WASM" "2\2E0"))
 (memory.size)
 #assertTopStack < i32 > 1 "size of stack"
 #assertMemoryData (0, 87) "text to ascii W"
@@ -15,12 +15,16 @@
 #clearConfig
 
 (memory 1 1)
-(data (offset (i32.const 100)) "WASM")
+(data (offset (i32.const 100)) "W" "AS" "M")
 #assertMemoryData (100, 87) "text to ascii W"
 #assertMemoryData (101, 65) "text to ascii A"
 #assertMemoryData (102, 83) "text to ascii S"
 #assertMemoryData (103, 77) "text to ascii M"
 #assertMemory 0 1 1 "memorys string length"
+
+#clearConfig
+
+(memory (data))
 
 #clearConfig
 

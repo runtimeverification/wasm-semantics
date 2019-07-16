@@ -373,14 +373,28 @@ To avoid dealing with these data strings in K, we use a list of integers as an i
 ```k
     syntax WasmString ::= ".WasmString"
     syntax String     ::= #parseWasmString ( WasmString ) [function, functional, hook(STRING.token2string)]
+    syntax DataString ::= List{WasmString, ""}            [klabel(listWasmString)]
 ```
 
-`wS2Bytes` converts a `WasmString` to a K builtin `Bytes`.
+`DataString`, as is defined in the wasm semantics, is a list of `WasmString`s.
+`#concatDS` concatenates them together into a single string.
+The strings to connect are unescaped before concatenated, because unescape could remove the quote sign `"` before and after each substring.
 
 ```k
-    syntax Bytes ::= #wS2Bytes (WasmString) [function]
+    syntax String ::= #concatDS ( DataString )         [function]
+                    | #concatDS ( DataString, String ) [function, klabel(#concatDSAux)]
+ // -----------------------------------------------------------------------------------
+    rule #concatDS ( DS ) => #concatDS ( DS, "" )
+    rule #concatDS ( .DataString , S ) => S
+    rule #concatDS (  WS DS      , S ) => #concatDS ( DS , S +String unescape(#parseWasmString(WS)) )
+```
+
+`#DS2Bytes` converts a `DataString` to a K builtin `Bytes`.
+
+```k
+    syntax Bytes ::= #DS2Bytes (DataString) [function]
  // --------------------------------------------------
-    rule #wS2Bytes(WS) => String2Bytes(unescape(#parseWasmString(WS)))
+    rule #DS2Bytes(DS) => String2Bytes(#concatDS(DS))
 ```
 
 Byte Map
