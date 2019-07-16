@@ -1471,9 +1471,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
                       |     "data" "{" TextFormatIdx        Bytes      "}"
  // ----------------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET:Offset STRING ) =>     ( data   0     OFFSET   STRING  ) ... </k>
-    rule <k> ( data MEMID IS:Instr      STRING ) => IS ~> data { MEMID #DS2Bytes(STRING) } ... </k>
-    rule <k> ( data MEMID (offset IS)   STRING ) => IS ~> data { MEMID #DS2Bytes(STRING) } ... </k>
+    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
+    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
+    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
 
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX DSBYTES } => . ... </k>
