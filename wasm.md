@@ -559,7 +559,7 @@ For the operators that defined under both sorts `IXXOp` and `FXXOp`, we need to 
     
     rule <k> FTYPE . nearest F => < FTYPE >  F                ... </k> requires #isInfinityOrNaN (F)
     rule <k> FTYPE . nearest F => #round(FTYPE, Float2Int(F)) ... </k> requires (notBool #isInfinityOrNaN (F)) andBool (Float2Int(F) =/=Int 0 orBool notBool signFloat(F))
-    rule <k> FTYPE . nearest F => < FTYPE > -0.0               ... </k> requires (notBool #isInfinityOrNaN (F)) andBool Float2Int(F) ==Int 0 andBool signFloat(F)
+    rule <k> FTYPE . nearest F => < FTYPE > -0.0              ... </k> requires (notBool #isInfinityOrNaN (F)) andBool Float2Int(F) ==Int 0 andBool signFloat(F)
 ```
 
 ```k
@@ -612,8 +612,9 @@ The `select` operator picks one of the second or third stack values based on the
     syntax PlainInstr ::= "select"
  // ------------------------------
     rule <k> select => . ... </k>
-         <valstack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
-              => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
+         <valstack>
+           < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
+      =>   < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
          </valstack>
 ```
 
