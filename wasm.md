@@ -1329,7 +1329,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <k> store { WIDTH EA VAL } => . ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
