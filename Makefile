@@ -8,6 +8,7 @@ k_submodule:=$(deps_dir)/k
 pandoc_tangle_submodule:=$(deps_dir)/pandoc-tangle
 k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
 tangler:=$(pandoc_tangle_submodule)/tangle.lua
+kompiled_dir_name:=test_kompiled
 
 LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
 export LUA_PATH
@@ -50,15 +51,15 @@ wasm_files:=test.k wasm.k data.k kwasm-lemmas.k
 
 ocaml_dir:=$(defn_dir)/ocaml
 ocaml_defn:=$(patsubst %, $(ocaml_dir)/%, $(wasm_files))
-ocaml_kompiled:=$(ocaml_dir)/test-kompiled/interpreter
+ocaml_kompiled:=$(ocaml_dir)/$(kompiled_dir_name)/interpreter
 
 java_dir:=$(defn_dir)/java
 java_defn:=$(patsubst %, $(java_dir)/%, $(wasm_files))
-java_kompiled:=$(java_dir)/test-kompiled/compiled.txt
+java_kompiled:=$(java_dir)/$(kompiled_dir_name)/compiled.txt
 
 haskell_dir:=$(defn_dir)/haskell
 haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
-haskell_kompiled:=$(haskell_dir)/test-kompiled/definition.kore
+haskell_kompiled:=$(haskell_dir)/$(kompiled_dir_name)/definition.kore
 
 # Tangle definition from *.md files
 
