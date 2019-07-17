@@ -10,7 +10,7 @@ WebAssembly string is defined differently with K built-in strings, so we have to
 ```k
 module WASM-SYNTAX
     imports WASM-DATA
-    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2}))*\\\"" [token]
+    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{4}\\}))*\\\"" [token]
 endmodule
 ```
 
@@ -350,7 +350,6 @@ Strings
 -------
 
 Wasm use a different character escape rule with K, so we need to define the `unescape` function ourselves.
-This function is copied from https://github.com/runtimeverification/iele-semantics/blob/4477eef671113e49cfbf3214d736643bd02ceef8/well-formedness.md
 
 ```k
     syntax String ::= unescape(String)              [function]
@@ -358,11 +357,44 @@ This function is copied from https://github.com/runtimeverification/iele-semanti
  // -------------------------------------------------------------------------------
     rule unescape(S) => unescape(S, 1, "")
     rule unescape(S, IDX, SB) => unescape(S, IDX +Int 1, SB +String substrString(S, IDX, IDX +Int 1))
-      requires IDX <Int lengthString(S) -Int 1 andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
+      requires IDX <Int lengthString(S) -Int 1
+       andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
     rule unescape(S, IDX, SB) => unescape(S, IDX +Int 3, SB +String chrChar(String2Base(substrString(S, IDX +Int 1, IDX +Int 3), 16)))
-      requires IDX <Int lengthString(S) -Int 1 andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+      requires IDX <Int lengthString(S) -Int 3
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool (findChar("0123456789abcdefABCDEF", substrString(S, IDX +Int 1, IDX +Int 2), 0) =/=Int -1 )
     rule unescape(S, IDX, SB) => SB
       requires IDX ==Int lengthString(S) -Int 1
+
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("09", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "t"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("0A", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "n"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("0D", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "r"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("27", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "\""
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("22", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "'"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("5C", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "\\"
+
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 8, SB +String Bytes2String(Int2Bytes(String2Base(substrString(S, IDX +Int 3, IDX +Int 7), 16), LE, Unsigned)))
+      requires IDX <Int lengthString(S) -Int 8
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "u"
 ```
 
 Wasm memories can be initialized with a segment of data, sepcified as a string.
