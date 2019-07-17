@@ -33,3 +33,14 @@
 #assertMemory 0 1 1 "memorys string length"
 
 #clearConfig
+
+(memory (data "\"\t\n\n\t\'\"\r\u{090A}"))
+#assertMemoryData (0, 39) "text to ascii special"
+#assertMemoryData (1, 9) "text to ascii special"
+#assertMemoryData (2, 10) "text to ascii special"
+#assertMemoryData (3, 10) "text to ascii special"
+#assertMemoryData (4, 9) "text to ascii special"
+#assertMemoryData (5, 34) "text to ascii special"
+#assertMemoryData (6, 39) "text to ascii special"
+
+#clearConfig
