@@ -153,12 +153,6 @@
 )
 
 (module
-  (memory (data 3))
-)
-
-#assertMemoryData (0, 3) ""
-
-(module
   (memory 1)
   (func $start (i32.store (i32.const 0) (i32.const 42)))
   (start $start)
