@@ -5,12 +5,15 @@ WebAssembly Data
 require "domains.k"
 ```
 
-WebAssembly string is defined differently with K built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
+`WASM-SYNTAX` module is used to handle the syntax that is used only for parsing programs but not for parsing rules.
+In WebAssembly string is defined differently with K built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
+Note that you cannot use a normal K `String` in any production definitions, because the K tokenizer does not support parsing ambiguity.
 
 ```k
 module WASM-SYNTAX
     imports WASM-DATA
     syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{4}\\}))*\\\"" [token]
+    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [avoid, token]
 endmodule
 ```
 
@@ -41,13 +44,8 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
 As defined in the WebAssembly spec, the syntax of identifiers is as follows.
 Also we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
 
-**TODO**: Unsupported characters: `.:^@`
-
 ```k
     syntax Identifier ::= #freshId ( Int )
-                        | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
- // ------------------------------------------------------------------------
-
     syntax OptionalId ::= "" [klabel(.Identifier)]
                         | Identifier
  // --------------------------------
