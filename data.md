@@ -353,15 +353,15 @@ Wasm use a different character escape rule with K, so we need to define the `une
 This function is copied from https://github.com/runtimeverification/iele-semantics/blob/4477eef671113e49cfbf3214d736643bd02ceef8/well-formedness.md
 
 ```k
-    syntax String ::= unescape(String)                    [function]
-                    | unescape(String, Int, StringBuffer) [function, klabel(unescapeAux)]
- // -------------------------------------------------------------------------------------
-    rule unescape(S) => unescape(S, 1, .StringBuffer)
+    syntax String ::= unescape(String)              [function]
+                    | unescape(String, Int, String) [function, klabel(unescapeAux)]
+ // -------------------------------------------------------------------------------
+    rule unescape(S) => unescape(S, 1, "")
     rule unescape(S, IDX, SB) => unescape(S, IDX +Int 1, SB +String substrString(S, IDX, IDX +Int 1))
       requires IDX <Int lengthString(S) -Int 1 andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
     rule unescape(S, IDX, SB) => unescape(S, IDX +Int 3, SB +String chrChar(String2Base(substrString(S, IDX +Int 1, IDX +Int 3), 16)))
       requires IDX <Int lengthString(S) -Int 1 andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
-    rule unescape(S, IDX, SB) => StringBuffer2String(SB)
+    rule unescape(S, IDX, SB) => SB
       requires IDX ==Int lengthString(S) -Int 1
 ```
 
