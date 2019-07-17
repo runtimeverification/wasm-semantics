@@ -1,6 +1,6 @@
 (module $a
    (global (export "g") (export "glob") (mut i32) (i32.const 42))
-   (memory (export "m") (export "mem") (data 1))
+   (memory (export "m") (export "mem") (data "A"))
    (type $t (func ))
    (func (export "f") (export "func"))
    (func (export "gunc") (param i64) (param i32) (result i32) (local.get 1))
