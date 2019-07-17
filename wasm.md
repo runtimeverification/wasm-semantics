@@ -13,75 +13,77 @@ Configuration
 
 ```k
     configuration
-      <k> $PGM:Stmts </k>
-      <valstack> .ValStack </valstack>
-      <curFrame>
-        <locals>    .Map </locals>
-        <localIds>  .Map </localIds>
-        <curModIdx> .Int </curModIdx>
-      </curFrame>
-      <moduleRegistry> .Map </moduleRegistry>
-      <moduleIds> .Map </moduleIds>
-      <moduleInstances>
-        <moduleInst multiplicity="*" type="Map">
-          <modIdx>      0    </modIdx>
-          <exports>     .Map </exports>
-          <typeIds>     .Map </typeIds>
-          <types>       .Map </types>
-          <nextTypeIdx> 0    </nextTypeIdx>
-          <funcIds>     .Map </funcIds>
-          <funcAddrs>   .Map </funcAddrs>
-          <nextFuncIdx> 0    </nextFuncIdx>
-          <tabIds>      .Map </tabIds>
-          <tabAddrs>    .Map </tabAddrs>
-          <memIds>      .Map </memIds>
-          <memAddrs>    .Map </memAddrs>
-          <globIds>     .Map </globIds>
-          <globalAddrs> .Map </globalAddrs>
-          <nextGlobIdx>   0    </nextGlobIdx>
-        </moduleInst>
-      </moduleInstances>
-      <nextModuleIdx> 0 </nextModuleIdx>
-      <mainStore>
-        <funcs>
-          <funcDef multiplicity="*" type="Map">
-            <fAddr>    0              </fAddr>
-            <fCode>    .Instrs:Instrs </fCode>
-            <fType>    .Type          </fType>
-            <fLocal>   .Type          </fLocal>
-            <fModInst> 0              </fModInst>
-          </funcDef>
-        </funcs>
-        <nextFuncAddr> 0 </nextFuncAddr>
-        <tabs>
-          <tabInst multiplicity="*" type="Map">
-            <tAddr> 0    </tAddr>
-            <tmax>  .Int </tmax>
-            <tsize> 0    </tsize>
-            <tdata> .Map </tdata>
-          </tabInst>
-        </tabs>
-        <nextTabAddr> 0 </nextTabAddr>
-        <mems>
-          <memInst multiplicity="*" type="Map">
-            <mAddr> 0    </mAddr>
-            <mmax>  .Int </mmax>
-            <msize> 0    </msize>
-            <mdata> .Map </mdata>
-          </memInst>
-        </mems>
-        <nextMemAddr> 0 </nextMemAddr>
-        <globals>
-          <globalInst multiplicity="*" type="Map">
-            <gAddr>  0         </gAddr>
-            <gValue> undefined </gValue>
-            <gMut>   .Mut      </gMut>
-          </globalInst>
-        </globals>
-        <nextGlobAddr> 0 </nextGlobAddr>
-      </mainStore>
-      <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
-      <nextFreshId> 0 </nextFreshId>
+      <wasm>
+        <k> $PGM:Stmts </k>
+        <valstack> .ValStack </valstack>
+        <curFrame>
+          <locals>    .Map </locals>
+          <localIds>  .Map </localIds>
+          <curModIdx> .Int </curModIdx>
+        </curFrame>
+        <moduleRegistry> .Map </moduleRegistry>
+        <moduleIds> .Map </moduleIds>
+        <moduleInstances>
+          <moduleInst multiplicity="*" type="Map">
+            <modIdx>      0    </modIdx>
+            <exports>     .Map </exports>
+            <typeIds>     .Map </typeIds>
+            <types>       .Map </types>
+            <nextTypeIdx> 0    </nextTypeIdx>
+            <funcIds>     .Map </funcIds>
+            <funcAddrs>   .Map </funcAddrs>
+            <nextFuncIdx> 0    </nextFuncIdx>
+            <tabIds>      .Map </tabIds>
+            <tabAddrs>    .Map </tabAddrs>
+            <memIds>      .Map </memIds>
+            <memAddrs>    .Map </memAddrs>
+            <globIds>     .Map </globIds>
+            <globalAddrs> .Map </globalAddrs>
+            <nextGlobIdx>   0    </nextGlobIdx>
+          </moduleInst>
+        </moduleInstances>
+        <nextModuleIdx> 0 </nextModuleIdx>
+        <mainStore>
+          <funcs>
+            <funcDef multiplicity="*" type="Map">
+              <fAddr>    0              </fAddr>
+              <fCode>    .Instrs:Instrs </fCode>
+              <fType>    .Type          </fType>
+              <fLocal>   .Type          </fLocal>
+              <fModInst> 0              </fModInst>
+            </funcDef>
+          </funcs>
+          <nextFuncAddr> 0 </nextFuncAddr>
+          <tabs>
+            <tabInst multiplicity="*" type="Map">
+              <tAddr> 0    </tAddr>
+              <tmax>  .Int </tmax>
+              <tsize> 0    </tsize>
+              <tdata> .Map </tdata>
+            </tabInst>
+          </tabs>
+          <nextTabAddr> 0 </nextTabAddr>
+          <mems>
+            <memInst multiplicity="*" type="Map">
+              <mAddr> 0    </mAddr>
+              <mmax>  .Int </mmax>
+              <msize> 0    </msize>
+              <mdata> .Map </mdata>
+            </memInst>
+          </mems>
+          <nextMemAddr> 0 </nextMemAddr>
+          <globals>
+            <globalInst multiplicity="*" type="Map">
+              <gAddr>  0         </gAddr>
+              <gValue> undefined </gValue>
+              <gMut>   .Mut      </gMut>
+            </globalInst>
+          </globals>
+          <nextGlobAddr> 0 </nextGlobAddr>
+        </mainStore>
+        <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
+        <nextFreshId> 0 </nextFreshId>
+      </wasm>
 ```
 
 ### Assumptions and invariants
