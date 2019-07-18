@@ -1371,6 +1371,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
 The assorted load operations take an address of type `i32`.
 The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
 The value is fetched from the "effective address", which is the address given on the stack plus offset.
+Sort `Signedness` is defined in module `BYTES`.
 
 ```k
     syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
@@ -1381,9 +1382,6 @@ The value is fetched from the "effective address", which is the address given on
                         | IValType "." LoadOp Int
  // ---------------------------------------------
 
-    syntax Signedness ::= "SignedI" | "UnsignedI"
- // ---------------------------------------------
-
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
  // -----------------------------------------
     rule <k> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </k>
@@ -1392,7 +1390,7 @@ The value is fetched from the "effective address", which is the address given on
          <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
 
     rule <k> load { ITYPE WIDTH EA SIGN }
-          => < ITYPE > #if SIGN ==K SignedI
+          => < ITYPE > #if SIGN ==K Signed
                            #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH))
                            #else #range(DATA, EA, WIDTH)
                        #fi
@@ -1430,13 +1428,13 @@ The value is fetched from the "effective address", which is the address given on
                     | "load8_u" | "load16_u" | "load32_u"
                     | "load8_s" | "load16_s" | "load32_s"
  // -----------------------------------------------------
-    rule <k> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA UnsignedI } ... </k>
-    rule <k> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA UnsignedI } ... </k>
-    rule <k> ITYPE . load16_u EA:Int => load { ITYPE 2                EA UnsignedI } ... </k>
-    rule <k> i64   . load32_u EA:Int => load { i64   4                EA UnsignedI } ... </k>
-    rule <k> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA SignedI   } ... </k>
-    rule <k> ITYPE . load16_s EA:Int => load { ITYPE 2                EA SignedI   } ... </k>
-    rule <k> i64   . load32_s EA:Int => load { i64   4                EA SignedI   } ... </k>
+    rule <k> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </k>
+    rule <k> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </k>
+    rule <k> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </k>
+    rule <k> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </k>
+    rule <k> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </k>
+    rule <k> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </k>
+    rule <k> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </k>
 ```
 
 `MemArg`s can optionally be passed to `load` and `store` operations.
