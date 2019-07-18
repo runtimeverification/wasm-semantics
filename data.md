@@ -5,7 +5,12 @@ WebAssembly Data
 require "domains.k"
 
 module WASM-DATA
-    imports DOMAINS
+    imports INT
+    imports BOOL
+    imports STRING
+    imports LIST
+    imports MAP
+    imports FLOAT
 ```
 
 Parsing
@@ -255,6 +260,20 @@ The `#wrap` function wraps an integer to a given bit width.
     syntax Int  ::= #wrap(Int, Int) [function]
  // ------------------------------------------
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
+```
+
+In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
+The `#round` function casts a `f64` float to a `f32` float.
+`f64` floats has 1 bit for the sign, 53 bits for the value and 11 bits for exponent.
+`f32` floats has 1 bit for the sign, 23 bits for the value and 8 bits for exponent.
+
+```k
+    syntax FVal ::= #round ( FValType , Number ) [function]
+ // -------------------------------------------------------
+    rule #round( f64 , N:Float) => < f64 > roundFloat(N, 53, 11) [concrete]
+    rule #round( f32 , N:Float) => < f32 > roundFloat(N, 24, 8)  [concrete]
+    rule #round( f64 , N:Int  ) => < f64 >  Int2Float(N, 53, 11) [concrete]
+    rule #round( f32 , N:Int  ) => < f32 >  Int2Float(N, 24, 8)  [concrete]
 ```
 
 ### Signed Interpretation

@@ -195,13 +195,14 @@ This allows us to give purely functional semantics to many of the opcodes.
 
 Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
+**TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
     syntax PlainInstr ::= IValType "." "const" Int
-                        | FValType "." "const" Float
- // ------------------------------------------------
-    rule <k> ITYPE:IValType . const VAL => #chop(< ITYPE > VAL) ... </k>
-    rule <k> FTYPE:FValType . const VAL => < FTYPE > VAL        ... </k>
+                        | FValType "." "const" Number
+ // -------------------------------------------------
+    rule <k> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </k>
+    rule <k> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </k>
 ```
 
 ### Text Format Conventions
@@ -227,14 +228,16 @@ An `*UnOp` operator always produces a result of the same type as its operand.
 
 ```k
     syntax PlainInstr ::= IValType "." IUnOp
- //                     | FValType "." FUnOp
+                        | FValType "." FUnOp
  // ----------------------------------------
 
     syntax Instr ::= IValType "." IUnOp Int
- //                | FValType "." FUnOp Float
+                   | FValType "." FUnOp Float
  // -----------------------------------------
     rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+    rule <k> FTYPE . UOP:FUnOp => FTYPE . UOP C1 ... </k>
+         <valstack> < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Binary Operators
@@ -244,31 +247,32 @@ A `*BinOp` operator always produces a result of the same type as its operands.
 
 ```k
     syntax PlainInstr ::= IValType "." IBinOp
- //                     | FValType "." FBinOp
+                        | FValType "." FBinOp
  // -----------------------------------------
 
     syntax Instr ::= IValType "." IBinOp Int   Int
- //                | FValType "." FBinOp Float Float
+                   | FValType "." FBinOp Float Float
  // ------------------------------------------------
     rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+    rule <k> FTYPE . BOP:FBinOp => FTYPE . BOP C1 C2 ... </k>
+         <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Test Operations
 
 When a test operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
 Test operations consume one operand and produce a bool, which is an `i32` value.
+There is no test operation for float numbers.
 
 ```k
-    syntax PlainInstr ::= IValType "." ITestOp
- //                     | FValType "." FTestOp
- // ------------------------------------------
+    syntax PlainInstr ::= IValType "." TestOp
+ // -----------------------------------------
 
-    syntax Instr ::= IValType "." ITestOp Int
- //                | FValType "." FTestOp Float
- // -------------------------------------------
-    rule <k> ITYPE . TOP:ITestOp => ITYPE . TOP C1 ... </k>
-         <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+    syntax Instr ::= IValType "." TestOp Int
+ // ----------------------------------------
+    rule <k> TYPE . TOP:TestOp => TYPE . TOP C1 ... </k>
+         <valstack> < TYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Comparison Operations
@@ -278,38 +282,39 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
 
 ```k
     syntax PlainInstr ::= IValType "." IRelOp
- //                     | FValType "." FRelOp
+                        | FValType "." FRelOp
  // -----------------------------------------
 
     syntax Instr ::= IValType "." IRelOp Int   Int
- //                | FValType "." FRelOp Float Float
+                   | FValType "." FRelOp Float Float
  // ------------------------------------------------
     rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
-         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK  </valstack>
+         <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
+    rule <k> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </k>
+         <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
+
 ```
 
 ### Conversion Operations
 
 Conversion operators always take a single argument as input and cast it to another type.
-For each element added to `ConvOp`, functions `#convSourceType` and `#convOp` must be defined over it.
+For each element added to `CvtOp`, functions `#cvtSourceType` and `#CvtOp` must be defined over it.
 
 These operators convert constant elements at the top of the stack to another type.
 The target type is before the `.`, and the source type is after the `_`.
 
 ```k
-    syntax PlainInstr ::= IValType "." ConvOp
- //                     | FValType "." ConvOp
- // -----------------------------------------
+    syntax PlainInstr ::= AValType "." CvtOp
+ // ----------------------------------------
 
-    syntax Instr ::= IValType "." ConvOp Int
- //                | FValType "." ConvOp Float
+    syntax Instr ::= AValType "." CvtOp Number
  // ------------------------------------------
-    rule <k> ITYPE . CONVOP:ConvOp => ITYPE . CONVOP C1  ... </k>
+    rule <k> ATYPE:AValType . CVTOP:CvtOp => ATYPE . CVTOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
-      requires #convSourceType(CONVOP) ==K SRCTYPE
+      requires #cvtSourceType(CVTOP) ==K SRCTYPE
 
-    syntax IValType ::= #convSourceType ( ConvOp ) [function]
- // ---------------------------------------------------------
+    syntax AValType ::= #cvtSourceType ( CvtOp ) [function]
+ // -------------------------------------------------------
 ```
 
 ### Integer Arithmetic
@@ -319,9 +324,9 @@ The target type is before the `.`, and the source type is after the `_`.
 ```k
     syntax IBinOp ::= "add" | "sub" | "mul"
  // ---------------------------------------
-    rule <k> ITYPE . add I1 I2 => #chop(< ITYPE > I1 +Int I2) ... </k>
-    rule <k> ITYPE . sub I1 I2 => #chop(< ITYPE > I1 -Int I2) ... </k>
-    rule <k> ITYPE . mul I1 I2 => #chop(< ITYPE > I1 *Int I2) ... </k>
+    rule <k> ITYPE:IValType . add I1 I2 => #chop(< ITYPE > I1 +Int I2) ... </k>
+    rule <k> ITYPE:IValType . sub I1 I2 => #chop(< ITYPE > I1 -Int I2) ... </k>
+    rule <k> ITYPE:IValType . mul I1 I2 => #chop(< ITYPE > I1 *Int I2) ... </k>
 ```
 
 `div_*` and `rem_*` have extra side-conditions about when they are defined or not.
@@ -360,8 +365,8 @@ Note that we do not need to call `#chop` on the results here.
 `eqz` checks wether its operand is 0.
 
 ```k
-    syntax ITestOp ::= "eqz"
- // ------------------------
+    syntax TestOp ::= "eqz"
+ // -----------------------
     rule <k> _ . eqz I => < i32 > #bool(I ==Int 0) ... </k>
 ```
 
@@ -370,8 +375,8 @@ The comparisons test for equality and different types of inequalities between nu
 ```k
     syntax IRelOp ::= "eq" | "ne"
  // -----------------------------
-    rule <k> _ . eq I1 I2 => < i32 > #bool(I1 ==Int   I2) ... </k>
-    rule <k> _ . ne I1 I2 => < i32 > #bool(I1 =/=Int  I2) ... </k>
+    rule <k> _:IValType . eq I1 I2 => < i32 > #bool(I1 ==Int  I2) ... </k>
+    rule <k> _:IValType . ne I1 I2 => < i32 > #bool(I1 =/=Int I2) ... </k>
 
     syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
  // ---------------------------------------------------
@@ -457,26 +462,141 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
 Conversions
 -----------
 
+There are 7 kinds of convert operators (`CvtOp`) defined in WASM: `wrap`, `extend`, `trunc`, `convert`, `demote` ,`promote`, `reinterpret`.
+
 Wrapping cuts of the 32 most significant bits of an `i64` value.
 
 ```k
-    syntax ConvOp ::= "wrap_i64"
- // ----------------------------
+    syntax CvtOp ::= "wrap_i64"
+ // ---------------------------
     rule <k> i32 . wrap_i64 I => #chop(< i32 > I) ... </k>
 
-    rule #convSourceType(wrap_i64) => i64
+    rule #cvtSourceType(wrap_i64) => i64
 ```
 
 Extension turns an `i32` type value into the corresponding `i64` type value.
 
 ```k
-    syntax ConvOp ::= "extend_i32_u" | "extend_i32_s"
- // -------------------------------------------------
-    rule <k> i64 . extend_i32_u I => < i64 > I                               ... </k>
-    rule <k> i64 . extend_i32_s I => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
+    syntax CvtOp ::= "extend_i32_u" | "extend_i32_s"
+ // ------------------------------------------------
+    rule <k> i64 . extend_i32_u I:Int => < i64 > I                               ... </k>
+    rule <k> i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I)) ... </k>
 
-    rule #convSourceType(extend_i32_u) => i32
-    rule #convSourceType(extend_i32_s) => i32
+    rule #cvtSourceType(extend_i32_u) => i32
+    rule #cvtSourceType(extend_i32_s) => i32
+```
+
+Conversion turns an `int` type value to the nearest `float` type value.
+
+```k
+    syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
+ // --------------------------------------------------------------------------------------
+    rule <k> FTYPE . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) ) ... </k>
+    rule <k> FTYPE . convert_i32_u I:Int => #round( FTYPE , I )               ... </k>
+    rule <k> FTYPE . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) ) ... </k>
+    rule <k> FTYPE . convert_i64_u I:Int => #round( FTYPE , I )               ... </k>
+
+    rule #cvtSourceType(convert_i32_s) => i32
+    rule #cvtSourceType(convert_i32_u) => i32
+    rule #cvtSourceType(convert_i64_s) => i64
+    rule #cvtSourceType(convert_i64_u) => i64
+```
+
+Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32` type value to `f64` type value:
+
+```k
+    syntax CvtOp ::= "demote_f64" | "promote_f32"
+ // ---------------------------------------------
+    rule <k> f32 . demote_f64  F => #round( f32 , F ) ... </k>
+    rule <k> f64 . promote_f32 F => #round( f64 , F ) ... </k>
+
+    rule #cvtSourceType(demote_f64)  => f64
+    rule #cvtSourceType(promote_f32) => f32
+```
+
+Float truncation to int first truncate a `float`, then convert it to an `int`.
+
+```k
+    syntax Bool ::= #isInfinityOrNaN ( Float ) [function]
+ // -----------------------------------------------------
+    rule #isInfinityOrNaN   ( F ) => (isNaN(F) orBool isInfinite(F))
+
+    syntax Float ::= truncFloat ( Float ) [function]
+ // ------------------------------------------------
+    rule truncFloat ( F ) => floorFloat (F) requires notBool signFloat(F)
+    rule truncFloat ( F ) => ceilFloat  (F) requires         signFloat(F)
+
+    syntax CvtOp ::= "trunc_f32_s" | "trunc_f32_u" | "trunc_f64_s" | "trunc_f64_u"
+ // ------------------------------------------------------------------------------
+    rule <k> ITYPE . trunc_f32_s F => undefined ... </k> requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
+    rule <k> ITYPE . trunc_f32_u F => undefined ... </k> requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0 )
+    rule <k> ITYPE . trunc_f64_s F => undefined ... </k> requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
+    rule <k> ITYPE . trunc_f64_u F => undefined ... </k> requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0 )
+    rule <k> ITYPE . trunc_f32_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F))) ... </k> requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
+    rule <k> ITYPE . trunc_f32_u F => <ITYPE>                  Float2Int(truncFloat(F))  ... </k> requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0))
+    rule <k> ITYPE . trunc_f64_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F))) ... </k> requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
+    rule <k> ITYPE . trunc_f64_u F => <ITYPE>                  Float2Int(truncFloat(F))  ... </k> requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (       Float2Int(truncFloat(F)) <Int 0))
+
+    rule #cvtSourceType(trunc_f32_s) => f32
+    rule #cvtSourceType(trunc_f32_u) => f32
+    rule #cvtSourceType(trunc_f64_s) => f64
+    rule #cvtSourceType(trunc_f64_u) => f64
+```
+
+**TODO**: Unimplemented: `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
+
+### Floating Point Arithmetic
+
+For the operators that defined under both sorts `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
+
+```k
+    syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
+ // --------------------------------------------------------------------------------
+    rule <k> FTYPE . abs     F => < FTYPE >   absFloat (F) ... </k>
+    rule <k> FTYPE . neg     F => < FTYPE >    --Float  F  ... </k>
+    rule <k> FTYPE . sqrt    F => < FTYPE >  sqrtFloat (F) ... </k>
+    rule <k> FTYPE . floor   F => < FTYPE > floorFloat (F) ... </k>
+    rule <k> FTYPE . ceil    F => < FTYPE >  ceilFloat (F) ... </k>
+    rule <k> FTYPE . trunc   F => < FTYPE > truncFloat (F) ... </k>
+    
+    rule <k> FTYPE . nearest F => < FTYPE >  F                ... </k> requires #isInfinityOrNaN (F)
+    rule <k> FTYPE . nearest F => #round(FTYPE, Float2Int(F)) ... </k> requires (notBool #isInfinityOrNaN (F)) andBool (Float2Int(F) =/=Int 0 orBool notBool signFloat(F))
+    rule <k> FTYPE . nearest F => < FTYPE > -0.0              ... </k> requires (notBool #isInfinityOrNaN (F)) andBool Float2Int(F) ==Int 0 andBool signFloat(F)
+```
+
+```k
+    syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
+                    | "sub" [klabel(floatSub), symbol]
+                    | "mul" [klabel(floatMul), symbol]
+                    | "div"
+                    | "min"
+                    | "max"
+                    | "copysign"
+ // ----------------------------
+    rule <k> FTYPE:FValType . add      F1 F2 => < FTYPE > F1 +Float F2      ... </k>
+    rule <k> FTYPE:FValType . sub      F1 F2 => < FTYPE > F1 -Float F2      ... </k>
+    rule <k> FTYPE:FValType . mul      F1 F2 => < FTYPE > F1 *Float F2      ... </k>
+    rule <k> FTYPE          . div      F1 F2 => < FTYPE > F1 /Float F2      ... </k>
+    rule <k> FTYPE          . min      F1 F2 => < FTYPE > minFloat (F1, F2) ... </k>
+    rule <k> FTYPE          . max      F1 F2 => < FTYPE > maxFloat (F1, F2) ... </k>
+    rule <k> FTYPE          . copysign F1 F2 => < FTYPE > F1                ... </k> requires signFloat (F1) ==Bool  signFloat (F2)
+    rule <k> FTYPE          . copysign F1 F2 => < FTYPE > --Float  F1       ... </k> requires signFloat (F1) =/=Bool signFloat (F2)
+```
+
+```k
+    syntax FRelOp ::= "lt"
+                    | "gt"
+                    | "le"
+                    | "ge"
+                    | "eq" [klabel(floatEq), symbol]
+                    | "ne" [klabel(floatNe), symbol]
+ // ------------------------------------------------
+    rule <k> _          . lt F1 F2 => < i32 > #bool(F1 <Float   F2) ... </k>
+    rule <k> _          . gt F1 F2 => < i32 > #bool(F1 >Float   F2) ... </k>
+    rule <k> _          . le F1 F2 => < i32 > #bool(F1 <=Float  F2) ... </k>
+    rule <k> _          . ge F1 F2 => < i32 > #bool(F1 >=Float  F2) ... </k>
+    rule <k> _:FValType . eq F1 F2 => < i32 > #bool(F1 ==Float  F2) ... </k>
+    rule <k> _:FValType . ne F1 F2 => < i32 > #bool(F1 =/=Float F2) ... </k>
 ```
 
 ValStack Operations
@@ -494,8 +614,9 @@ The `select` operator picks one of the second or third stack values based on the
     syntax PlainInstr ::= "select"
  // ------------------------------
     rule <k> select => . ... </k>
-         <valstack> < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
-              => < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
+         <valstack>
+           < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
+      =>   < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
          </valstack>
 ```
 
