@@ -1963,6 +1963,16 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          </moduleInstances>
 ```
 
+**TODO**: Implement modules represented in binary format.
+
+```k
+    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString ")"
+                        | "module" "binary" Int
+ // -------------------------------------------
+    rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
+    rule <k> module binary I => . ... </k>
+```
+
 It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
 
 ```k
