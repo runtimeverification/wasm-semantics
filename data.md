@@ -5,17 +5,61 @@ WebAssembly Data
 require "domains.k"
 ```
 
-`WASM-SYNTAX` module is used to handle the syntax that is used only for parsing programs but not for parsing rules.
+```k
+module WASM-SYNTAX
+    imports WASM-TOKEN-SYNTAX
+    imports WASM-DATA
+endmodule
+```
+
+`WASM-TOKEN-SYNTAX` module defines the tokens used in parsing programs.
+
+```k
+module WASM-TOKEN-SYNTAX
+```
+
+### Strings
+
 In WebAssembly, strings are defined differently to K's built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
 Note that you cannot use a normal K `String` in any production definitions, because the definitions of `String` and `WasmString` overlap, and the K tokenizer does not support ambiguity.
 
 ```k
-module WASM-SYNTAX
-    imports WASM-DATA
     syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{4}\\}))*\\\"" [token]
-    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [avoid, token]
+```
+
+### Identifiers
+
+In WebAssembly, identifiers are defined by the regular expression below.
+
+```k
+    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
+```
+
+### HexWords
+
+Here we define `Int` represented in the hexadecimal form.
+
+```k
+    syntax HexWord ::= r"0x[0-9a-fA-F]+" [token]
+```
+
+### Layout
+
+WebAssembly allows for block comments using `(;` and `;)`, and line comments using `;;`.
+Additionally, white-space is skipped/ignored.
+Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
+
+```k
+    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
+                     | r";;[^\\n\\r]*"                  [token]
+                     | r"[\\ \\n\\r\\t]"                [token]
+```
+
+```k
 endmodule
 ```
+
+`WASM-DATA` module
 
 ```k
 module WASM-DATA
@@ -28,26 +72,8 @@ module WASM-DATA
     imports BYTES
 ```
 
-Parsing
--------
-
-### Layout
-
-WebAssembly allows for block comments using `(;` and `;)`, and line comments using `;;`.
-Additionally, white-space is skipped/ignored.
-Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
-
-```k
-    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
-                     | r";;[^\\n\\r]*"                  [token]
-                     | r"[\\ \\n\\r\\t]"                [token]
- // -----------------------------------------------------------
-```
-
-### Identifiers
-
-As defined in the WebAssembly spec, the syntax of identifiers is as follows.
-Also we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
+In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
+And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
     syntax Identifier ::= #freshId ( Int )
@@ -200,14 +226,14 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i64) => 18446744073709551616
 ```
 
-Here we define `Int` represented in hexadecimal form.
+Here we define the rules about hex int parsing.
 
 ```k
-    syntax HexWord ::= r"0x[0-9a-fA-F]+"               [token, avoid]
-    syntax String  ::= #parseHexWordString ( HexWord ) [function, functional, hook(STRING.token2string)]
-    syntax Int     ::= #parseHex           ( String )  [function]
-                     | HexWord
- // --------------------------
+    syntax HexWord
+    syntax String ::= #parseHexWordString ( HexWord ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= #parseHex           ( String )  [function]
+                    | HexWord
+ // -------------------------
     rule #parseHex(S) => String2Base(replaceAll(S, "0x", ""), 16)
     rule HEX:HexWord  => #parseHex(#parseHexWordString(HEX))      [macro]
 ```
