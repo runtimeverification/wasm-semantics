@@ -6,8 +6,8 @@ require "domains.k"
 ```
 
 `WASM-SYNTAX` module is used to handle the syntax that is used only for parsing programs but not for parsing rules.
-In WebAssembly string is defined differently with K built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
-Note that you cannot use a normal K `String` in any production definitions, because the K tokenizer does not support parsing ambiguity.
+In WebAssembly, strings are defined differently to K's built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
+Note that you cannot use a normal K `String` in any production definitions, because the definitions of `String` and `WasmString` overlap, and the K tokenizer does not support ambiguity.
 
 ```k
 module WASM-SYNTAX
@@ -366,13 +366,20 @@ One needs to unname the `ValTypes` first before calling the `#take` or `#drop` f
 Strings
 -------
 
-Wasm use a different character escape rule with K, so we need to define the `unescape` function ourselves.
+Wasm uses a different character escape rule with K, so we need to define the `unescape` function ourselves.
 
 ```k
     syntax String ::= unescape(String)              [function]
                     | unescape(String, Int, String) [function, klabel(unescapeAux)]
  // -------------------------------------------------------------------------------
-    rule unescape(S) => unescape(S, 1, "")
+    rule unescape(S         ) => unescape(S, 1, "")
+    rule unescape(S, IDX, SB) => SB                 requires IDX ==Int lengthString(S) -Int 1
+```
+
+Unescaped characters just directly gets added to the output.
+The escaped character starts with a "\" and followed by 2 hexdigits will be converted to a unescaped character before stored.
+
+```k
     rule unescape(S, IDX, SB) => unescape(S, IDX +Int 1, SB +String substrString(S, IDX, IDX +Int 1))
       requires IDX <Int lengthString(S) -Int 1
        andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
@@ -380,9 +387,11 @@ Wasm use a different character escape rule with K, so we need to define the `une
       requires IDX <Int lengthString(S) -Int 3
        andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
        andBool (findChar("0123456789abcdefABCDEF", substrString(S, IDX +Int 1, IDX +Int 2), 0) =/=Int -1 )
-    rule unescape(S, IDX, SB) => SB
-      requires IDX ==Int lengthString(S) -Int 1
+```
 
+The characters "\t", "\n", "\r", """, "'", and "\" are interpreted as regular escaped ascii symbols.
+
+```k
     rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("09", 16)))
       requires IDX <Int lengthString(S) -Int 2
        andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
@@ -407,7 +416,11 @@ Wasm use a different character escape rule with K, so we need to define the `une
       requires IDX <Int lengthString(S) -Int 2
        andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
        andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "\\"
+```
 
+Longer byte sequences can be encoded as escaped "Unicode", with `\u{<hexdigit>+}`.
+
+```k
     rule unescape(S, IDX, SB) => unescape(S, IDX +Int 8, SB +String Bytes2String(Int2Bytes(String2Base(substrString(S, IDX +Int 3, IDX +Int 7), 16), LE, Unsigned)))
       requires IDX <Int lengthString(S) -Int 8
        andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
@@ -427,7 +440,7 @@ To avoid dealing with these data strings in K, we use a list of integers as an i
 
 `DataString`, as is defined in the wasm semantics, is a list of `WasmString`s.
 `#concatDS` concatenates them together into a single string.
-The strings to connect are unescaped before concatenated, because unescape could remove the quote sign `"` before and after each substring.
+The strings to connect needs to be unescaped before concatenated, because the `unescape` function removes the quote sign `"` before and after each substring.
 
 ```k
     syntax String ::= #concatDS ( DataString )         [function]
