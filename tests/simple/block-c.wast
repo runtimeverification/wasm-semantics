@@ -192,12 +192,12 @@
   (func (export "as-test-operand") (result i32)
     (i32.eqz (block (result i32) (call $dummy) (i32.const 13)))
   )
-  ;; (func (export "as-compare-operand") (result i32)
-  ;;   (f32.gt
-  ;;     (block (result f32) (call $dummy) (f32.const 3))
-  ;;     (block (result f32) (call $dummy) (f32.const 3))
-  ;;   )
-  ;; )
+  (func (export "as-compare-operand") (result i32)
+    (f32.gt
+      (block (result f32) (call $dummy) (f32.const 3))
+      (block (result f32) (call $dummy) (f32.const 3))
+    )
+  )
 
   (func (export "break-bare") (result i32)
     (block (br 0) (unreachable))
@@ -297,7 +297,7 @@
 (assert_return (invoke "as-unary-operand") (i32.const 0))
 (assert_return (invoke "as-binary-operand") (i32.const 12))
 (assert_return (invoke "as-test-operand") (i32.const 0))
-;; (assert_return (invoke "as-compare-operand") (i32.const 0))
+(assert_return (invoke "as-compare-operand") (i32.const 0))
 
 (assert_return (invoke "break-bare") (i32.const 19))
 (assert_return (invoke "break-value") (i32.const 18))
