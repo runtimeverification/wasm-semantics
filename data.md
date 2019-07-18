@@ -24,7 +24,7 @@ In WebAssembly, strings are defined differently to K's built-in strings, so we h
 Note that you cannot use a normal K `String` in any production definitions, because the definitions of `String` and `WasmString` overlap, and the K tokenizer does not support ambiguity.
 
 ```k
-    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{4}\\}))*\\\"" [token]
+    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{1,6}\\}))*\\\"" [token]
 ```
 
 ### Identifiers
@@ -445,9 +445,16 @@ The characters "\t", "\n", "\r", """, "'", and "\" are interpreted as regular es
 ```
 
 Longer byte sequences can be encoded as escaped "Unicode", with `\u{<hexdigit>+}`.
+The implementation is not correct for now because the UTF-8 encoding is not implemented.
+**TODO**: Fix the implementation here:
 
 ```k
-    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 8, SB +String Bytes2String(Int2Bytes(String2Base(substrString(S, IDX +Int 3, IDX +Int 7), 16), LE, Unsigned)))
+    syntax Int ::= #idxCloseBracket ( String, Int ) [function]
+ // ----------------------------------------------------------
+    rule #idxCloseBracket ( S, I ) => I                                requires substrString(S, I, I +Int 1)  ==String "}"
+    rule #idxCloseBracket ( S, I ) => #idxCloseBracket ( S, I +Int 1 ) requires substrString(S, I, I +Int 1) =/=String "}"
+
+    rule unescape(S, IDX, SB) => unescape(S, #idxCloseBracket(S, IDX) +Int 1, SB +String Bytes2String(Int2Bytes(String2Base(substrString(S, IDX +Int 3, #idxCloseBracket(S, IDX +Int 3)), 16), LE, Unsigned)))
       requires IDX <Int lengthString(S) -Int 8
        andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
        andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "u"
