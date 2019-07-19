@@ -3,9 +3,11 @@ WebAssembly State and Semantics
 
 ```k
 require "data.k"
+require "numeric.k"
 
 module WASM
     imports WASM-DATA
+    imports WASM-NUMERIC-INSTRUCTIONS
 ```
 
 Configuration
@@ -230,10 +232,6 @@ An `*UnOp` operator always produces a result of the same type as its operand.
     syntax PlainInstr ::= IValType "." IUnOp
                         | FValType "." FUnOp
  // ----------------------------------------
-
-    syntax Val ::= IValType "." IUnOp Int   [klabel(intUnOp)  , function]
-                 | FValType "." FUnOp Float [klabel(floatUnOp), function]
- // ---------------------------------------------------------------------
     rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </k>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <k> FTYPE . UOP:FUnOp => FTYPE . UOP C1 ... </k>
@@ -431,35 +429,6 @@ The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and
     rule ITYPE . rotr I1 I2 => #chop(< ITYPE > (I1 >>Int (I2 %Int #width(ITYPE))) +Int (I1 <<Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE)))))
 ```
 
-The bit counting operators also lack appropriate K builtins, and are implemented by using width-agnostic helper functions.
-
-`clz` counts the number of leading zero-bits, with 0 having all leading zero-bits.
-`ctz` counts the number of trailing zero-bits, with 0 having all trailing zero-bits.
-`popcnt` counts the number of non-zero bits.
-
-Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits, whereas the `#ctz` helper function considers it to have *no* zero-bits, in order for it to be width-agnostic.
-
-```k
-    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
- // -----------------------------------------
-    rule ITYPE . clz    I1 => < ITYPE > #width(ITYPE) -Int #minWidth(I1)
-    rule ITYPE . ctz    I1 => < ITYPE > #if I1 ==Int 0 #then #width(ITYPE) #else #ctz(I1) #fi
-    rule ITYPE . popcnt I1 => < ITYPE > #popcnt(I1)
-
-    syntax Int ::= #minWidth ( Int ) [function]
-                 | #ctz      ( Int ) [function]
-                 | #popcnt   ( Int ) [function]
- // -------------------------------------------
-    rule #minWidth(0) => 0
-    rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)                                 requires N =/=Int 0
-
-    rule #ctz(0) => 0
-    rule #ctz(N) => #if N modInt 2 ==Int 1 #then 0 #else 1 +Int #ctz(N >>Int 1) #fi  requires N =/=Int 0
-
-    rule #popcnt(0) => 0
-    rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N =/=Int 0
-```
-
 Conversions
 -----------
 
@@ -518,15 +487,6 @@ Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32`
 Float truncation to int first truncate a `float`, then convert it to an `int`.
 
 ```k
-    syntax Bool ::= #isInfinityOrNaN ( Float ) [function]
- // -----------------------------------------------------
-    rule #isInfinityOrNaN   ( F ) => (isNaN(F) orBool isInfinite(F))
-
-    syntax Float ::= truncFloat ( Float ) [function]
- // ------------------------------------------------
-    rule truncFloat ( F ) => floorFloat (F) requires notBool signFloat(F)
-    rule truncFloat ( F ) => ceilFloat  (F) requires         signFloat(F)
-
     syntax CvtOp ::= "trunc_f32_s" | "trunc_f32_u" | "trunc_f64_s" | "trunc_f64_u"
  // ------------------------------------------------------------------------------
     rule ITYPE . trunc_f32_s F => undefined
@@ -557,20 +517,6 @@ Float truncation to int first truncate a `float`, then convert it to an `int`.
 ### Floating Point Arithmetic
 
 For the operators that defined under both sorts `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
-
-```k
-    syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
- // --------------------------------------------------------------------------------
-    rule FTYPE . abs     F => < FTYPE >   absFloat (F)
-    rule FTYPE . neg     F => < FTYPE >    --Float  F
-    rule FTYPE . sqrt    F => < FTYPE >  sqrtFloat (F)
-    rule FTYPE . floor   F => < FTYPE > floorFloat (F)
-    rule FTYPE . ceil    F => < FTYPE >  ceilFloat (F)
-    rule FTYPE . trunc   F => < FTYPE > truncFloat (F)
-    rule FTYPE . nearest F => < FTYPE >  F                requires #isInfinityOrNaN (F)
-    rule FTYPE . nearest F => #round(FTYPE, Float2Int(F)) requires (notBool #isInfinityOrNaN (F)) andBool (Float2Int(F) =/=Int 0 orBool notBool signFloat(F))
-    rule FTYPE . nearest F => < FTYPE > -0.0              requires (notBool #isInfinityOrNaN (F)) andBool Float2Int(F) ==Int 0 andBool signFloat(F)
-```
 
 ```k
     syntax FBinOp ::= "add" [klabel(floatAdd), symbol]

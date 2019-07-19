@@ -46,7 +46,7 @@ ocaml-deps:
 # Building Definition
 # -------------------
 
-wasm_files:=test.k wasm.k data.k kwasm-lemmas.k
+wasm_files:=test.k wasm.k data.k numeric.k kwasm-lemmas.k
 
 ocaml_dir:=$(defn_dir)/ocaml
 ocaml_defn:=$(patsubst %, $(ocaml_dir)/%, $(wasm_files))
