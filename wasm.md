@@ -1269,7 +1269,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn       ::= MemoryDefn
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
-                        | "(" "data" DataStrings ")"
+                        | "(" "data" DataString ")"
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
@@ -1379,6 +1379,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
 The assorted load operations take an address of type `i32`.
 The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
 The value is fetched from the "effective address", which is the address given on the stack plus offset.
+Sort `Signedness` is defined in module `BYTES`.
 
 ```k
     syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
@@ -1388,9 +1389,6 @@ The value is fetched from the "effective address", which is the address given on
  //                     | FValType "." LoadOpM
                         | IValType "." LoadOp Int
  // ---------------------------------------------
-
-    syntax Signedness ::= "Signed" | "Unsigned"
- // -------------------------------------------
 
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
  // -----------------------------------------
@@ -1547,6 +1545,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ```k
     syntax Offset ::= "(" "offset" Instr ")"
                     | Instr
+ // -----------------------
 ```
 
 ### Element Segments
@@ -1595,17 +1594,17 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Defn     ::= DataDefn
-    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataStrings ")"
-                      | "(" "data"                   Offset DataStrings ")"
-                      |     "data" "{" TextFormatIdx        DataStrings "}"
- // -----------------------------------------------------------------------
+    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataString ")"
+                      | "(" "data"                   Offset DataString ")"
+                      |     "data" "{" TextFormatIdx        Bytes      "}"
+ // ----------------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data 0 OFFSET STRINGS ) ... </k>
-    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
-    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID  STRINGS } ... </k>
+    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
+    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
+    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
 
     // For now, deal only with memory 0.
-    rule <k> data { MEMIDX STRING } => . ... </k>
+    rule <k> data { MEMIDX DSBYTES } => . ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1617,14 +1616,14 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <memInst>
            <mAddr> ADDR </mAddr>
            <mdata> DATA
-                  => #clearRange(DATA, OFFSET, OFFSET +Int #dataStringsLength(STRING)) [ OFFSET := #dataStrings2int(STRING)]
+                  => #clearRange(DATA, OFFSET, OFFSET +Int lengthBytes(DSBYTES)) [ OFFSET := Bytes2Int(DSBYTES, LE, Unsigned)]
            </mdata>
            ...
          </memInst>
 
-    syntax Int ::= #lengthDataPages ( DataStrings ) [function]
- // ----------------------------------------------------------
-    rule #lengthDataPages(DS:DataStrings) => #dataStringsLength(DS) up/Int #pageSize()
+    syntax Int ::= #lengthDataPages ( DataString ) [function]
+ // ---------------------------------------------------------
+    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
 
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------
@@ -1655,8 +1654,8 @@ Exports make functions, tables, memories and globals available for importing int
 
 ```k
     syntax Defn       ::= ExportDefn
-    syntax ExportDefn ::= "(" "export" String "(" Externval ")" ")"
- // ---------------------------------------------------------------
+    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
+ // -------------------------------------------------------------------
     rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1671,8 +1670,8 @@ In that case, it simply desugars to an export followed by the definition, after 
 Note that it is possible to define multiple exports inline, i.e., export a single entity under many names.
 
 ```k
-    syntax InlineExport  ::= "(" "export" String ")"
- // ------------------------------------------------
+    syntax InlineExport  ::= "(" "export" WasmString ")"
+ // ----------------------------------------------------
 
     syntax GlobalSpec ::= InlineExport GlobalSpec
  // ---------------------------------------------
@@ -1740,7 +1739,7 @@ The value of a global gets copied when it is imported.
 
 ```k
     syntax Defn       ::= ImportDefn
-    syntax ImportDefn ::= "(" "import" String String ImportDesc ")"
+    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
     syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
                         | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
@@ -1860,8 +1859,8 @@ The following function checks if the limits in the first parameter *match*, i.e.
 Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
 
 ```k
-    syntax InlineImport ::= "(" "import" String String ")"
- // ------------------------------------------------------
+    syntax InlineImport ::= "(" "import" WasmString WasmString ")"
+ // --------------------------------------------------------------
 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------
@@ -1969,6 +1968,16 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
            )
            ...
          </moduleInstances>
+```
+
+**TODO**: Implement modules represented in binary format.
+
+```k
+    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString ")"
+                        | "module" "binary" Int
+ // -------------------------------------------
+    rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
+    rule <k> module binary I => . ... </k>
 ```
 
 It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.

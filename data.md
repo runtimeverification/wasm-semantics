@@ -3,17 +3,39 @@ WebAssembly Data
 
 ```k
 require "domains.k"
-
-module WASM-DATA
-    imports INT
-    imports BOOL
-    imports STRING
-    imports LIST
-    imports MAP
-    imports FLOAT
 ```
 
-### Integers
+```k
+module WASM-SYNTAX
+    imports WASM-TOKEN-SYNTAX
+    imports WASM-DATA
+endmodule
+```
+
+`WASM-TOKEN-SYNTAX` module defines the tokens used in parsing programs.
+
+```k
+module WASM-TOKEN-SYNTAX
+```
+
+### Strings
+
+In WebAssembly, strings are defined differently to K's built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
+Note that you cannot use a normal K `String` in any production definitions, because the definitions of `String` and `WasmString` overlap, and the K tokenizer does not support ambiguity.
+
+```k
+    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{1,6}\\}))*\\\"" [token]
+ // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```
+
+### Identifiers
+
+In WebAssembly, identifiers are defined by the regular expression below.
+
+```k
+    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
+ // -----------------------------------------------------------------------
+```
 
 In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
 In both cases, digits can optionally be separated by underscores.
@@ -36,18 +58,28 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
  // -----------------------------------------------------------
 ```
 
-### Identifiers
+```k
+endmodule
+```
 
-As defined in the WebAssembly spec, the syntax of identifiers is as follows.
-Also we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
+`WASM-DATA` module
 
-**TODO**: Unsupported characters: `.:^@`
+```k
+module WASM-DATA
+    imports INT
+    imports BOOL
+    imports STRING
+    imports LIST
+    imports MAP
+    imports FLOAT
+    imports BYTES
+```
+
+In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
+And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
     syntax Identifier ::= #freshId ( Int )
-                        | r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=-]*" [avoid, token]
- // ------------------------------------------------------------------------
-
     syntax OptionalId ::= "" [klabel(.Identifier)]
                         | Identifier
  // --------------------------------
@@ -364,23 +396,114 @@ One needs to unname the `ValTypes` first before calling the `#take` or `#drop` f
 Strings
 -------
 
+Wasm uses a different character escape rule with K, so we need to define the `unescape` function ourselves.
+
+```k
+    syntax String ::= unescape(String)              [function]
+                    | unescape(String, Int, String) [function, klabel(unescapeAux)]
+ // -------------------------------------------------------------------------------
+    rule unescape(S         ) => unescape(S, 1, "")
+    rule unescape(S, IDX, SB) => SB                 requires IDX ==Int lengthString(S) -Int 1
+```
+
+Unescaped characters just directly gets added to the output.
+The escaped character starts with a "\" and followed by 2 hexdigits will be converted to a unescaped character before stored.
+
+```k
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 1, SB +String substrString(S, IDX, IDX +Int 1))
+      requires IDX <Int lengthString(S) -Int 1
+       andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 3, SB +String chrChar(String2Base(substrString(S, IDX +Int 1, IDX +Int 3), 16)))
+      requires IDX <Int lengthString(S) -Int 3
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool (findChar("0123456789abcdefABCDEF", substrString(S, IDX +Int 1, IDX +Int 2), 0) =/=Int -1 )
+```
+
+The characters "\t", "\n", "\r", """, "'", and "\" are interpreted as regular escaped ascii symbols.
+
+```k
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("09", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "t"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("0A", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "n"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("0D", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "r"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("22", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "\""
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("27", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "'"
+    rule unescape(S, IDX, SB) => unescape(S, IDX +Int 2, SB +String chrChar(String2Base("5C", 16)))
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "\\"
+```
+
+Longer byte sequences can be encoded as escaped "Unicode", with `\u{<hexdigit>+}`.
+The implementation is not correct for now because the UTF-8 encoding is not implemented.
+**TODO**: Fix the implementation here:
+
+```k
+    syntax Int ::= #idxCloseBracket ( String, Int ) [function]
+ // ----------------------------------------------------------
+    rule #idxCloseBracket ( S, I ) => I                                requires substrString(S, I, I +Int 1)  ==String "}"
+    rule #idxCloseBracket ( S, I ) => #idxCloseBracket ( S, I +Int 1 ) requires substrString(S, I, I +Int 1) =/=String "}"
+
+    syntax Bytes ::= #encodeUTF8 ( Int, Endianness ) [function]
+ // -----------------------------------------------------------
+    rule #encodeUTF8 (I, E) => Int2Bytes(I, BE, Unsigned) requires I <=Int 127
+    rule #encodeUTF8 (I, E) => Int2Bytes(((((I &Int 1984) >>Int 6) +Int 192) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+      requires I >=Int 128   andBool I <=Int 2047
+    rule #encodeUTF8 (I, E) => Int2Bytes(((((I &Int 61440) >>Int 12) +Int 224) <<Int 16) +Int ((((I &Int 4032) >>Int 6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+      requires I >=Int 2048  andBool I <=Int 65535
+    rule #encodeUTF8 (I, E) => Int2Bytes(((((I &Int 1835008) >>Int 18) +Int 240) <<Int 24) +Int ((((I &Int 258048) >>Int 12) +Int 128) <<Int 16) +Int ((((I &Int 4032) >>Int6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+      requires I >=Int 65536 andBool I <=Int 1114111
+
+    rule unescape(S, IDX, SB) => unescape(S, #idxCloseBracket(S, IDX) +Int 1, SB +String Bytes2String(#encodeUTF8(String2Base(substrString(S, IDX +Int 3, #idxCloseBracket(S, IDX +Int 3)), 16), BE)))
+      requires substrString(S, IDX, IDX +Int 1) ==K "\\"
+       andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "u"
+```
+
 Wasm memories can be initialized with a segment of data, sepcified as a string.
 The string considered to represent the sequence of UTF-8 bytes that encode it.
 The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
-**TODO:** Either convert from strings to integers directly in K or with a pre-processor.
+```k
+    syntax WasmString ::= ".WasmString"
+    syntax String     ::= #parseWasmString ( WasmString ) [function, functional, hook(STRING.token2string)]
+    syntax DataString ::= List{WasmString, ""}            [klabel(listWasmString)]
+ // ------------------------------------------------------------------------------
+```
+
+`DataString`, as is defined in the wasm semantics, is a list of `WasmString`s.
+`#concatDS` concatenates them together into a single string.
+The strings to connect needs to be unescaped before concatenated, because the `unescape` function removes the quote sign `"` before and after each substring.
 
 ```k
-    syntax DataStrings ::= List{Int, ""}
-    syntax Int ::= #dataStrings2int   (DataStrings) [function]
-    syntax Int ::= #dataStringsLength (DataStrings) [function]
- // ----------------------------------------------------------
-    rule #dataStringsLength(  .DataStrings) => 0
-    rule #dataStringsLength(I DS          ) => 1 +Int #dataStringsLength(DS)
+    syntax String ::= #concatDS ( DataString )         [function]
+                    | #concatDS ( DataString, String ) [function, klabel(#concatDSAux)]
+ // -----------------------------------------------------------------------------------
+    rule #concatDS ( DS ) => #concatDS ( DS, "" )
+    rule #concatDS ( .DataString , S ) => S
+    rule #concatDS (  WS DS      , S ) => #concatDS ( DS , S +String unescape(#parseWasmString(WS)) )
+```
 
-    rule #dataStrings2int(  .DataStrings) => 0
-    rule #dataStrings2int(I DS          ) => I +Int (256 *Int #dataStrings2int(DS))
+`#DS2Bytes` converts a `DataString` to a K builtin `Bytes`.
+
+```k
+    syntax Bytes ::= #DS2Bytes (DataString) [function]
+ // --------------------------------------------------
+    rule #DS2Bytes(DS) => String2Bytes(#concatDS(DS))
 ```
 
 Byte Map
