@@ -94,19 +94,19 @@ $(ocaml_kompiled): $(ocaml_defn)
 	eval $$(opam config env)                                 \
 	    $(k_bin)/kompile -O3 --non-strict --backend ocaml    \
 	    --directory $(ocaml_dir) -I $(ocaml_dir)             \
-	    --main-module WASM-TEST --syntax-module WASM-TEST $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
 	$(k_bin)/kompile --backend java                          \
 	    --directory $(java_dir) -I $(java_dir)               \
-	    --main-module WASM-TEST --syntax-module WASM-TEST $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
 	$(k_bin)/kompile --backend haskell                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)         \
-	    --main-module WASM-TEST --syntax-module WASM-TEST $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 # Testing
 # -------

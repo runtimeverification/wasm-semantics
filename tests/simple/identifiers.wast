@@ -66,4 +66,15 @@
 
 #assertFunction $aenuth_ae`st|23~423 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
 
+(func $bioi::..@@?^
+    (param i32 i32)
+    (result i32)
+    (local.get 0)
+    (local.get 1)
+    (i32.add)
+    (return)
+)
+
+#assertFunction $bioi::..@@?^ [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
+
 #clearConfig

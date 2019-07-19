@@ -153,10 +153,10 @@
 )
 
 (module
-  (memory (data 3))
+  (memory (data "A"))
 )
 
-#assertMemoryData (0, 3) ""
+#assertMemoryData (0, 65) ""
 
 (module
   (memory 1)
@@ -164,7 +164,7 @@
   (start $start)
 )
 
-#assertMemoryData 1 (0, 3) "Start didn't modify other memory"
+#assertMemoryData 1 (0, 65) "Start didn't modify other memory"
 #assertMemoryData (0, 42) "Start function modified its own memory"
 
 #clearConfig
