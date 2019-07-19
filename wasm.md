@@ -7,7 +7,7 @@ require "numeric.k"
 
 module WASM
     imports WASM-DATA
-    imports WASM-NUMERIC-INSTRUCTIONS
+    imports WASM-NUMERIC
 ```
 
 Configuration

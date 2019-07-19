@@ -6,7 +6,7 @@ In this file we implement the numeric rules specified in section `4.3 Numerics` 
 ```k
 require "data.k"
 
-module WASM-NUMERIC-INSTRUCTIONS
+module WASM-NUMERIC
     imports WASM-DATA
 
 ```
