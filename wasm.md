@@ -241,16 +241,11 @@ An `*UnOp` operator always produces a result of the same type as its operand.
 ### Binary Operators
 
 When a binary operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
-A `*BinOp` operator always produces a result of the same type as its operands.
 
 ```k
     syntax PlainInstr ::= IValType "." IBinOp
                         | FValType "." FBinOp
  // -----------------------------------------
-
-    syntax Val ::= IValType "." IBinOp Int   Int   [klabel(intBinOp)  , function]
-                 | FValType "." FBinOp Float Float [klabel(floatBinOp), function]
- // -----------------------------------------------------------------------------
     rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <k> FTYPE . BOP:FBinOp => FTYPE . BOP C1 C2 ... </k>
@@ -315,50 +310,6 @@ The target type is before the `.`, and the source type is after the `_`.
  // -------------------------------------------------------
 ```
 
-### Integer Arithmetic
-
-`add`, `sub`, and `mul` are given semantics by lifting the correct K operators through the `#chop` function.
-
-```k
-    syntax IBinOp ::= "add" | "sub" | "mul"
- // ---------------------------------------
-    rule ITYPE:IValType . add I1 I2 => #chop(< ITYPE > I1 +Int I2)
-    rule ITYPE:IValType . sub I1 I2 => #chop(< ITYPE > I1 -Int I2)
-    rule ITYPE:IValType . mul I1 I2 => #chop(< ITYPE > I1 *Int I2)
-```
-
-`div_*` and `rem_*` have extra side-conditions about when they are defined or not.
-Note that we do not need to call `#chop` on the results here.
-
-```k
-    syntax IBinOp ::= "div_u" | "rem_u"
- // -----------------------------------
-    rule ITYPE . div_u I1 I2 => < ITYPE > I1 /Int I2 requires I2 =/=Int 0
-    rule ITYPE . div_u I1 I2 => undefined            requires I2  ==Int 0
-
-    rule ITYPE . rem_u I1 I2 => < ITYPE > I1 %Int I2 requires I2 =/=Int 0
-    rule ITYPE . rem_u I1 I2 => undefined            requires I2  ==Int 0
-
-    syntax IBinOp ::= "div_s" | "rem_s"
- // -----------------------------------
-    rule ITYPE . div_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
-      requires I2 =/=Int 0
-       andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
-
-    rule ITYPE . div_s I1 I2 => undefined
-      requires I2 ==Int 0
-
-    rule ITYPE . div_s I1 I2 => undefined
-      requires I2 =/=Int 0
-       andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) ==Int #pow1(ITYPE)
-
-    rule ITYPE . rem_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
-      requires I2 =/=Int 0
-
-    rule ITYPE . rem_s I1 I2 => undefined
-      requires I2 ==Int 0
-```
-
 ### Predicates
 
 `eqz` checks wether its operand is 0.
@@ -392,41 +343,6 @@ The comparisons test for equality and different types of inequalities between nu
 
     rule ITYPE . le_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2))
     rule ITYPE . ge_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2))
-```
-
-Bitwise Operations
-------------------
-
-Of the bitwise operators, `and` will not overflow, but `or` and `xor` could.
-These simply are the lifted K operators.
-
-```k
-    syntax IBinOp ::= "and" | "or" | "xor"
- // --------------------------------------
-    rule ITYPE . and I1 I2 =>       < ITYPE > I1 &Int   I2
-    rule ITYPE . or  I1 I2 => #chop(< ITYPE > I1 |Int   I2)
-    rule ITYPE . xor I1 I2 => #chop(< ITYPE > I1 xorInt I2)
-```
-
-Similarly, K bitwise shift operators are lifted for `shl` and `shr_u`.
-Careful attention is made for the signed version `shr_s`.
-
-```k
-    syntax IBinOp ::= "shl" | "shr_u" | "shr_s"
- // -------------------------------------------
-    rule ITYPE . shl   I1 I2 => #chop(< ITYPE > I1 <<Int (I2 %Int #width(ITYPE)))
-    rule ITYPE . shr_u I1 I2 =>       < ITYPE > I1 >>Int (I2 %Int #width(ITYPE))
-
-    rule ITYPE . shr_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) >>Int (I2 %Int #width(ITYPE)))
-```
-
-The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and so are built with a series of shifts.
-
-```k
-    syntax IBinOp ::= "rotl" | "rotr"
- // ---------------------------------
-    rule ITYPE . rotl I1 I2 => #chop(< ITYPE > (I1 <<Int (I2 %Int #width(ITYPE))) +Int (I1 >>Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE)))))
-    rule ITYPE . rotr I1 I2 => #chop(< ITYPE > (I1 >>Int (I2 %Int #width(ITYPE))) +Int (I1 <<Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE)))))
 ```
 
 Conversions
@@ -515,27 +431,6 @@ Float truncation to int first truncate a `float`, then convert it to an `int`.
 **TODO**: Unimplemented: `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
 
 ### Floating Point Arithmetic
-
-For the operators that defined under both sorts `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol`.
-
-```k
-    syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
-                    | "sub" [klabel(floatSub), symbol]
-                    | "mul" [klabel(floatMul), symbol]
-                    | "div"
-                    | "min"
-                    | "max"
-                    | "copysign"
- // ----------------------------
-    rule FTYPE:FValType . add      F1 F2 => < FTYPE > F1 +Float F2
-    rule FTYPE:FValType . sub      F1 F2 => < FTYPE > F1 -Float F2
-    rule FTYPE:FValType . mul      F1 F2 => < FTYPE > F1 *Float F2
-    rule FTYPE          . div      F1 F2 => < FTYPE > F1 /Float F2
-    rule FTYPE          . min      F1 F2 => < FTYPE > minFloat (F1, F2)
-    rule FTYPE          . max      F1 F2 => < FTYPE > maxFloat (F1, F2)
-    rule FTYPE          . copysign F1 F2 => < FTYPE > F1                requires signFloat (F1) ==Bool  signFloat (F2)
-    rule FTYPE          . copysign F1 F2 => < FTYPE > --Float  F1       requires signFloat (F1) =/=Bool signFloat (F2)
-```
 
 ```k
     syntax FRelOp ::= "lt"
