@@ -223,7 +223,7 @@ If the the input is an identifier, the corresponding index is looked up in the s
       requires ID in_keys(IDS)
 ```
 
-### Unary Operators
+### Unary Operations
 
 When a unary operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
 An `*UnOp` operator always produces a result of the same type as its operand.
@@ -238,7 +238,7 @@ An `*UnOp` operator always produces a result of the same type as its operand.
          <valstack> < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
-### Binary Operators
+### Binary Operations
 
 When a binary operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 
@@ -255,32 +255,22 @@ When a binary operator is the next instruction, the two arguments are loaded fro
 ### Test Operations
 
 When a test operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
-Test operations consume one operand and produce a bool, which is an `i32` value.
-There is no test operation for float numbers.
 
 ```k
     syntax PlainInstr ::= IValType "." TestOp
  // -----------------------------------------
-
-    syntax Val ::= IValType "." TestOp Int [klabel(intTestOp), function]
- // --------------------------------------------------------------------
     rule <k> TYPE . TOP:TestOp => TYPE . TOP C1 ... </k>
          <valstack> < TYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
-### Comparison Operations
+### Relationship Operations
 
-When a comparison operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
-Comparisons consume two operands and produce a bool, which is an `i32` value.
+When a relationship operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 
 ```k
     syntax PlainInstr ::= IValType "." IRelOp
                         | FValType "." FRelOp
  // -----------------------------------------
-
-    syntax Val ::= IValType "." IRelOp Int   Int   [klabel(intRelOp)  , function]
-                 | FValType "." FRelOp Float Float [klabel(floatRelOp), function]
- // -----------------------------------------------------------------------------
     rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <k> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </k>
@@ -290,162 +280,14 @@ Comparisons consume two operands and produce a bool, which is an `i32` value.
 
 ### Conversion Operations
 
-Conversion operators always take a single argument as input and cast it to another type.
-For each element added to `CvtOp`, functions `#cvtSourceType` and `#CvtOp` must be defined over it.
-
-These operators convert constant elements at the top of the stack to another type.
-The target type is before the `.`, and the source type is after the `_`.
+Conversion Operation convert constant elements at the top of the stack to another type.
 
 ```k
     syntax PlainInstr ::= AValType "." CvtOp
  // ----------------------------------------
-
-    syntax Val ::= AValType "." CvtOp Number [klabel(numberCvtOp), function]
- // ------------------------------------------------------------------------
     rule <k> ATYPE:AValType . CVTOP:CvtOp => ATYPE . CVTOP C1  ... </k>
          <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
       requires #cvtSourceType(CVTOP) ==K SRCTYPE
-
-    syntax AValType ::= #cvtSourceType ( CvtOp ) [function]
- // -------------------------------------------------------
-```
-
-### Predicates
-
-`eqz` checks wether its operand is 0.
-
-```k
-    syntax TestOp ::= "eqz"
- // -----------------------
-    rule _ . eqz I => < i32 > #bool(I ==Int 0)
-```
-
-The comparisons test for equality and different types of inequalities between numbers.
-
-```k
-    syntax IRelOp ::= "eq" | "ne"
- // -----------------------------
-    rule _:IValType . eq I1 I2 => < i32 > #bool(I1 ==Int  I2)
-    rule _:IValType . ne I1 I2 => < i32 > #bool(I1 =/=Int I2)
-
-    syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
- // ---------------------------------------------------
-    rule _     . lt_u I1 I2 => < i32 > #bool(I1 <Int I2)
-    rule _     . gt_u I1 I2 => < i32 > #bool(I1 >Int I2)
-
-    rule ITYPE . lt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2))
-    rule ITYPE . gt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2))
-
-    syntax IRelOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
- // ---------------------------------------------------
-    rule _     . le_u I1 I2 => < i32 > #bool(I1 <=Int I2)
-    rule _     . ge_u I1 I2 => < i32 > #bool(I1 >=Int I2)
-
-    rule ITYPE . le_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2))
-    rule ITYPE . ge_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2))
-```
-
-Conversions
------------
-
-There are 7 kinds of convert operators (`CvtOp`) defined in WASM: `wrap`, `extend`, `trunc`, `convert`, `demote` ,`promote`, `reinterpret`.
-
-Wrapping cuts of the 32 most significant bits of an `i64` value.
-
-```k
-    syntax CvtOp ::= "wrap_i64"
- // ---------------------------
-    rule i32 . wrap_i64 I => #chop(< i32 > I)
-
-    rule #cvtSourceType(wrap_i64) => i64
-```
-
-Extension turns an `i32` type value into the corresponding `i64` type value.
-
-```k
-    syntax CvtOp ::= "extend_i32_u" | "extend_i32_s"
- // ------------------------------------------------
-    rule i64 . extend_i32_u I:Int => < i64 > I
-    rule i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I))
-
-    rule #cvtSourceType(extend_i32_u) => i32
-    rule #cvtSourceType(extend_i32_s) => i32
-```
-
-Conversion turns an `int` type value to the nearest `float` type value.
-
-```k
-    syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
- // --------------------------------------------------------------------------------------
-    rule FTYPE . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) )
-    rule FTYPE . convert_i32_u I:Int => #round( FTYPE , I )
-    rule FTYPE . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) )
-    rule FTYPE . convert_i64_u I:Int => #round( FTYPE , I )
-
-    rule #cvtSourceType(convert_i32_s) => i32
-    rule #cvtSourceType(convert_i32_u) => i32
-    rule #cvtSourceType(convert_i64_s) => i64
-    rule #cvtSourceType(convert_i64_u) => i64
-```
-
-Demotion turns an `f64` type value to `f32` type value, Promotion turns an `f32` type value to `f64` type value:
-
-```k
-    syntax CvtOp ::= "demote_f64" | "promote_f32"
- // ---------------------------------------------
-    rule f32 . demote_f64  F => #round( f32 , F )
-    rule f64 . promote_f32 F => #round( f64 , F )
-
-    rule #cvtSourceType(demote_f64)  => f64
-    rule #cvtSourceType(promote_f32) => f32
-```
-
-Float truncation to int first truncate a `float`, then convert it to an `int`.
-
-```k
-    syntax CvtOp ::= "trunc_f32_s" | "trunc_f32_u" | "trunc_f64_s" | "trunc_f64_u"
- // ------------------------------------------------------------------------------
-    rule ITYPE . trunc_f32_s F => undefined
-      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
-    rule ITYPE . trunc_f32_u F => undefined
-      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0)
-    rule ITYPE . trunc_f64_s F => undefined
-      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
-    rule ITYPE . trunc_f64_u F => undefined
-      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0)
-    rule ITYPE . trunc_f32_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F)))
-      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
-    rule ITYPE . trunc_f32_u F => <ITYPE> Float2Int(truncFloat(F))
-      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0))
-    rule ITYPE . trunc_f64_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F)))
-      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
-    rule ITYPE . trunc_f64_u F => <ITYPE> Float2Int(truncFloat(F))
-      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0))
-
-    rule #cvtSourceType(trunc_f32_s) => f32
-    rule #cvtSourceType(trunc_f32_u) => f32
-    rule #cvtSourceType(trunc_f64_s) => f64
-    rule #cvtSourceType(trunc_f64_u) => f64
-```
-
-**TODO**: Unimplemented: `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
-
-### Floating Point Arithmetic
-
-```k
-    syntax FRelOp ::= "lt"
-                    | "gt"
-                    | "le"
-                    | "ge"
-                    | "eq" [klabel(floatEq), symbol]
-                    | "ne" [klabel(floatNe), symbol]
- // ------------------------------------------------
-    rule _          . lt F1 F2 => < i32 > #bool(F1 <Float   F2)
-    rule _          . gt F1 F2 => < i32 > #bool(F1 >Float   F2)
-    rule _          . le F1 F2 => < i32 > #bool(F1 <=Float  F2)
-    rule _          . ge F1 F2 => < i32 > #bool(F1 >=Float  F2)
-    rule _:FValType . eq F1 F2 => < i32 > #bool(F1 ==Float  F2)
-    rule _:FValType . ne F1 F2 => < i32 > #bool(F1 =/=Float F2)
 ```
 
 ValStack Operations

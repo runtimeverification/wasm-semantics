@@ -3,6 +3,8 @@ Numeric Instructions
 
 In this file we implement the numeric rules specified in section `4.3 Numerics` of the offical WebAssembly specification.
 
+In the notations of some operators, `sx` is the signedness of the operator and could be either `s` (signed) or `u` (unsigned), which indicates whether the operands should be interpreted as signed integer or unsigned integer.
+
 ```k
 require "data.k"
 
@@ -109,8 +111,6 @@ A `*BinOp` operator always produces a result of the same type as its operands.
 
 There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_sx`, `and`, `or`, `xor`, `shl`, `shr_sx`, `rotl`, `rotr`.
 
-In the operators above, `sx` indicates the signedness of the operator and could be either `s` (signed) or `u` (unsigned).
-It decides whether the operands should be interpreted as signed integer or unsigned integer.
 
 - `add` returns the result of adding up the 2 given integers modulo 2^N.
 - `sub` returns the result of substracting the second oprand from the first oprand modulo 2^N.
@@ -235,6 +235,203 @@ Note: For operators that defined under both sorts `IXXOp` and `FXXOp`, we need t
     rule FTYPE          . copysign F1 F2 => < FTYPE > F1                requires signFloat (F1) ==Bool  signFloat (F2)
     rule FTYPE          . copysign F1 F2 => < FTYPE > --Float  F1       requires signFloat (F1) =/=Bool signFloat (F2)
 ```
+
+### Test Operators
+
+Test operations consume one operand and produce a bool, which is an `i32` value.
+There is no test operation for float numbers.
+
+```k
+    syntax Val ::= IValType "." TestOp Int [klabel(intTestOp), function]
+ // --------------------------------------------------------------------
+```
+
+#### Test Operators for Integers
+
+- `eqz` checks wether its operand is 0.
+
+```k
+    syntax TestOp ::= "eqz"
+ // -----------------------
+    rule _ . eqz I => < i32 > #bool(I ==Int 0)
+```
+
+### Relationship Operators
+
+Relationship Operators consume two operands and produce a bool, which is an `i32` value.
+
+```k
+    syntax Val ::= IValType "." IRelOp Int   Int   [klabel(intRelOp)  , function]
+                 | FValType "." FRelOp Float Float [klabel(floatRelOp), function]
+ // -----------------------------------------------------------------------------
+```
+
+### Relationship Operators for Integers
+
+There are 6 relationship operators for integers: `eq`, `ne`, `lt_sx`, `gt_sx`, `le_sx` and `ge_sx`.
+
+- `eq` returns 1 if the 2 given integers are equal, 0 otherwise.
+- `eq` returns 1 if the 2 given integers are not equal, 0 otherwise.
+
+```k
+    syntax IRelOp ::= "eq" | "ne"
+ // -----------------------------
+    rule _:IValType . eq I1 I2 => < i32 > #bool(I1 ==Int  I2)
+    rule _:IValType . ne I1 I2 => < i32 > #bool(I1 =/=Int I2)
+```
+
+- `lt_sx` returns 1 if the first oprand is less than the second opeand, 0 otherwise.
+- `gt_sx` returns 1 if the first oprand is greater than the second opeand, 0 otherwise.
+
+```k
+    syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
+ // ---------------------------------------------------
+    rule _     . lt_u I1 I2 => < i32 > #bool(I1 <Int I2)
+    rule _     . gt_u I1 I2 => < i32 > #bool(I1 >Int I2)
+
+    rule ITYPE . lt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2))
+    rule ITYPE . gt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2))
+```
+
+- `le_sx` returns 1 if the first oprand is less than or equal to the second opeand, 0 otherwise.
+- `ge_sx` returns 1 if the first oprand is greater than or equal to the second opeand, 0 otherwise.
+
+```k
+    syntax IRelOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
+ // ---------------------------------------------------
+    rule _     . le_u I1 I2 => < i32 > #bool(I1 <=Int I2)
+    rule _     . ge_u I1 I2 => < i32 > #bool(I1 >=Int I2)
+
+    rule ITYPE . le_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2))
+    rule ITYPE . ge_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2))
+```
+
+### Relationship Operators for Floats
+
+There are 6 relationship operators for floats: `eq`, `ne`, `lt`, `gt`, `le` and `ge`.
+
+- `eq` returns 1 if the 2 given floats are equal, 0 otherwise.
+- `eq` returns 1 if the 2 given floats are not equal, 0 otherwise.
+- `lt` returns 1 if the first oprand is less than the second opeand, 0 otherwise.
+- `gt` returns 1 if the first oprand is greater than the second opeand, 0 otherwise.
+- `le` returns 1 if the first oprand is less than or equal to the second opeand, 0 otherwise.
+- `ge` returns 1 if the first oprand is greater than or equal to the second opeand, 0 otherwise.
+
+```k
+    syntax FRelOp ::= "lt"
+                    | "gt"
+                    | "le"
+                    | "ge"
+                    | "eq" [klabel(floatEq), symbol]
+                    | "ne" [klabel(floatNe), symbol]
+ // ------------------------------------------------
+    rule _          . lt F1 F2 => < i32 > #bool(F1 <Float   F2)
+    rule _          . gt F1 F2 => < i32 > #bool(F1 >Float   F2)
+    rule _          . le F1 F2 => < i32 > #bool(F1 <=Float  F2)
+    rule _          . ge F1 F2 => < i32 > #bool(F1 >=Float  F2)
+    rule _:FValType . eq F1 F2 => < i32 > #bool(F1 ==Float  F2)
+    rule _:FValType . ne F1 F2 => < i32 > #bool(F1 =/=Float F2)
+```
+
+### Conversion Operators
+
+Conversion operators always take a single argument as input and cast it to another type.
+
+```k
+    syntax Val ::= AValType "." CvtOp Number [klabel(numberCvtOp), function]
+ // ------------------------------------------------------------------------
+```
+
+Function `#cvtSourceType` returns the target value type of every conversion operator.
+For each conversion operator, function `#cvtSourceType` must be defined on it.
+
+```k
+    syntax AValType ::= #cvtSourceType ( CvtOp ) [function]
+ // -------------------------------------------------------
+```
+
+There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote` ,`promote` and `reinterpret`.
+
+- `wrap` takes an `i64` value, cuts of the 32 most significant bits and returns an `i32` value.
+
+```k
+    syntax CvtOp ::= "wrap_i64"
+ // ---------------------------
+    rule i32 . wrap_i64 I => #chop(< i32 > I)
+
+    rule #cvtSourceType(wrap_i64) => i64
+```
+
+- `extend` takes an `i32` type value, converts its type into the `i64` and returns the result.
+
+```k
+    syntax CvtOp ::= "extend_i32_u" | "extend_i32_s"
+ // ------------------------------------------------
+    rule i64 . extend_i32_u I:Int => < i64 > I
+    rule i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I))
+
+    rule #cvtSourceType(extend_i32_u) => i32
+    rule #cvtSourceType(extend_i32_s) => i32
+```
+
+- `convert` takes an `int` type value and convert it to the nearest `float` type value.
+
+```k
+    syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
+ // --------------------------------------------------------------------------------------
+    rule FTYPE . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) )
+    rule FTYPE . convert_i32_u I:Int => #round( FTYPE , I )
+    rule FTYPE . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) )
+    rule FTYPE . convert_i64_u I:Int => #round( FTYPE , I )
+
+    rule #cvtSourceType(convert_i32_s) => i32
+    rule #cvtSourceType(convert_i32_u) => i32
+    rule #cvtSourceType(convert_i64_s) => i64
+    rule #cvtSourceType(convert_i64_u) => i64
+```
+
+- `demote` turns an `f64` type value to the nearest `f32` type value.
+- `promote` turns an `f32` type value to the nearest `f64` type value:
+
+```k
+    syntax CvtOp ::= "demote_f64" | "promote_f32"
+ // ---------------------------------------------
+    rule f32 . demote_f64  F => #round( f32 , F )
+    rule f64 . promote_f32 F => #round( f64 , F )
+
+    rule #cvtSourceType(demote_f64)  => f64
+    rule #cvtSourceType(promote_f32) => f32
+```
+
+- `trunc` first truncates a float value, then convert the result to the nearest ineger value.
+
+```k
+    syntax CvtOp ::= "trunc_f32_s" | "trunc_f32_u" | "trunc_f64_s" | "trunc_f64_u"
+ // ------------------------------------------------------------------------------
+    rule ITYPE . trunc_f32_s F => undefined
+      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
+    rule ITYPE . trunc_f32_u F => undefined
+      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0)
+    rule ITYPE . trunc_f64_s F => undefined
+      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
+    rule ITYPE . trunc_f64_u F => undefined
+      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0)
+    rule ITYPE . trunc_f32_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F)))
+      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
+    rule ITYPE . trunc_f32_u F => <ITYPE> Float2Int(truncFloat(F))
+      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0))
+    rule ITYPE . trunc_f64_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F)))
+      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
+    rule ITYPE . trunc_f64_u F => <ITYPE> Float2Int(truncFloat(F))
+      requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0))
+
+    rule #cvtSourceType(trunc_f32_s) => f32
+    rule #cvtSourceType(trunc_f32_u) => f32
+    rule #cvtSourceType(trunc_f64_s) => f64
+    rule #cvtSourceType(trunc_f64_u) => f64
+```
+
+**TODO**: Unimplemented: `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
 
 ```k
 endmodule
