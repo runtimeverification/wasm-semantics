@@ -37,6 +37,8 @@ In WebAssembly, identifiers are defined by the regular expression below.
  // -----------------------------------------------------------------------
 ```
 
+### Integers
+
 In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
 In both cases, digits can optionally be separated by underscores.
 
