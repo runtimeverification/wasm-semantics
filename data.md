@@ -13,8 +13,15 @@ module WASM-DATA
     imports FLOAT
 ```
 
-Parsing
--------
+### Integers
+
+In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
+In both cases, digits can optionally be separated by underscores.
+
+```k
+    syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
+                     | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
+```
 
 ### Layout
 
@@ -190,16 +197,17 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i64) => 18446744073709551616
 ```
 
-Here we define `Int` represented in hexadecimal form.
+Here we define the rules about integer parsing.
 
 ```k
-    syntax HexWord ::= r"0x[0-9a-fA-F]+"               [token, avoid]
-    syntax String  ::= #parseHexWordString ( HexWord ) [function, functional, hook(STRING.token2string)]
-    syntax Int     ::= #parseHex           ( String )  [function]
-                     | HexWord
- // --------------------------
-    rule #parseHex(S) => String2Base(replaceAll(S, "0x", ""), 16)
-    rule HEX:HexWord  => #parseHex(#parseHexWordString(HEX))      [macro]
+    syntax WasmInt
+    syntax String ::= #parseWasmIntToken ( WasmInt ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= #parseWasmInt      ( String )  [function]
+                    | WasmInt
+ // -------------------------
+    rule #parseWasmInt(S) => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+    rule #parseWasmInt(S) => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+    rule WINT:WasmInt     => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
 ```
 
 ### Type Mutability
