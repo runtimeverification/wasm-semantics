@@ -241,7 +241,7 @@
     (func $f (result i32) (i32.const 0))
     (elem (i32.const 7) $f)
     (memory 1)
-    (data (i32.const 65536) 100) ;; out of bounds
+    (data (i32.const 65536) "knock") ;; out of bounds
   )
   "data segment does not fit"
 )
@@ -252,7 +252,7 @@
 
 (module $Mm
   (memory (export "mem") 1 5)
-  (data (i32.const 10)   0  1  2  3  4  5  6  7  8  9)
+  (data (i32.const 10)   "abcdefgh")
 
   (func (export "load") (param $a i32) (result i32)
     (i32.load8_u (local.get 0))
@@ -264,7 +264,7 @@
   (func $loadM (import "Mm" "load") (param i32) (result i32))
 
   (memory 1)
-  (data (i32.const 10) 240 241 242 243 244 245)
+  (data (i32.const 10) "?!?!?!?!")
 
   (export "Mm.load" (func $loadM))
   (func (export "load") (param $a i32) (result i32)
@@ -272,35 +272,27 @@
   )
 )
 
-(assert_return (invoke $Mm "load" (i32.const 12)) (i32.const 2))
-(assert_return (invoke $Nm "Mm.load" (i32.const 12)) (i32.const 2))
-(assert_return (invoke $Nm "load" (i32.const 12)) (i32.const 242))
+(assert_return (invoke $Mm "load" (i32.const 12)) (i32.const 99))
+(assert_return (invoke $Nm "Mm.load" (i32.const 12)) (i32.const 99))
+(assert_return (invoke $Nm "load" (i32.const 12)) (i32.const 63))
 
 (module $Om
   (memory (import "Mm" "mem") 1)
-  (data (i32.const 5)  160 161 162 163 164 165 166 167)
+  (data (i32.const 5)  "lookingfor")
 
   (func (export "load") (param $a i32) (result i32)
     (i32.load8_u (local.get 0))
   )
 )
 
-(assert_return (invoke $Mm "load" (i32.const 12)) (i32.const  167))
-(assert_return (invoke $Nm "Mm.load" (i32.const 12)) (i32.const  167))
-(assert_return (invoke $Nm "load" (i32.const 12)) (i32.const 242))
-(assert_return (invoke $Om "load" (i32.const 12)) (i32.const 167))
+(assert_return (invoke $Mm "load" (i32.const 12)) (i32.const  102))
+(assert_return (invoke $Nm "Mm.load" (i32.const 12)) (i32.const  102))
+(assert_return (invoke $Nm "load" (i32.const 12)) (i32.const 63))
+(assert_return (invoke $Om "load" (i32.const 12)) (i32.const 102))
 
 (module
   (memory (import "Mm" "mem") 0)
-  (data (i32.const 65535) 97)
-)
-
-(assert_unlinkable
-  (module
-    (memory (import "Mm" "mem") 0)
-    (data (i32.const 65536) 97)
-  )
-  "data segment does not fit"
+  (data (i32.const 65535) "a")
 )
 
 (module $Pm
@@ -320,39 +312,6 @@
 (assert_return (invoke $Pm "grow" (i32.const 1)) (i32.const -1))
 (assert_return (invoke $Pm "grow" (i32.const 0)) (i32.const 5))
 
-(assert_unlinkable
-  (module
-    (func $host (import "spectest" "print"))
-    (memory (import "Mm" "mem") 1)
-    (table (import "Mm" "tab") 0 funcref)  ;; does not exist
-    (data (i32.const 0) 97 98 99)
-  )
-  "unknown import"
-)
-(assert_return (invoke $Mm "load" (i32.const 0)) (i32.const 0))
-
-(assert_unlinkable
-  (module
-    (memory (import "Mm" "mem") 1)
-    (data (i32.const 0) 97 98 99)
-    (data (i32.const 327680) 100) ;; out of bounds
-  )
-  "data segment does not fit"
-)
-(assert_return (invoke $Mm "load" (i32.const 0)) (i32.const 0))
-
-(assert_unlinkable
-  (module
-    (memory (import "Mm" "mem") 1)
-    (data (i32.const 0) 97 98 99)
-    (table 0 funcref)
-    (func)
-    (elem (i32.const 0) 0) ;; out of bounds
-  )
-  "elements segment does not fit"
-)
-(assert_return (invoke $Mm "load" (i32.const 0)) (i32.const 0))
-
 ;; Store is modified if the start function traps.
 (module $Ms
   (type $t (func (result i32)))
@@ -371,7 +330,7 @@
   (module
     (import "Ms" "memory" (memory 1))
     (import "Ms" "table" (table 1 funcref))
-    (data (i32.const 0) 104 101 108 108 111)
+    (data (i32.const 0) "annoy")
     (elem (i32.const 0) $f)
     (func $f (result i32)
       (i32.const 57005)
@@ -384,7 +343,7 @@
   "unreachable"
 )
 
-(assert_return (invoke $Ms "get memory[0]") (i32.const 104))  ;; 'h'
+(assert_return (invoke $Ms "get memory[0]") (i32.const 97))
 (assert_return (invoke $Ms "get table[0]") (i32.const 57005))
 (assert_return (invoke $Ms "get table[0]") (i32.const 57005))
 
