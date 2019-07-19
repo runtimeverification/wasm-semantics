@@ -241,7 +241,7 @@ These functions make assertions about the state of the `<valstack>` cell.
 The operator `#assertLocal`/`#assertGlobal` operators perform a check for a local/global variable's value.
 
 ```k
-    syntax Assertion ::= "#assertLocal"  Int Val WasmString
+    syntax Assertion ::= "#assertLocal"  Int           Val WasmString
                        | "#assertGlobal" TextFormatIdx Val WasmString
  // -----------------------------------------------------------------
     rule <k> #assertLocal INDEX VALUE _ => . ... </k>

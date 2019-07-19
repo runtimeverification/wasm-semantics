@@ -1545,6 +1545,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ```k
     syntax Offset ::= "(" "offset" Instr ")"
                     | Instr
+ // -----------------------
 ```
 
 ### Element Segments
