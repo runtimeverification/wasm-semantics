@@ -25,6 +25,7 @@ Note that you cannot use a normal K `String` in any production definitions, beca
 
 ```k
     syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{1,6}\\}))*\\\"" [token]
+ // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
 
 ### Identifiers
@@ -33,6 +34,7 @@ In WebAssembly, identifiers are defined by the regular expression below.
 
 ```k
     syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
+ // -----------------------------------------------------------------------
 ```
 
 ### HexWords
@@ -41,6 +43,7 @@ Here we define `Int` represented in the hexadecimal form.
 
 ```k
     syntax HexWord ::= r"0x[0-9a-fA-F]+" [token]
+ // --------------------------------------------
 ```
 
 ### Layout
@@ -53,6 +56,7 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
     syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
                      | r";;[^\\n\\r]*"                  [token]
                      | r"[\\ \\n\\r\\t]"                [token]
+ // -----------------------------------------------------------
 ```
 
 ```k
