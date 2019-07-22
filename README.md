@@ -5,8 +5,8 @@ This repository presents a prototype formal semantics of [WebAssembly].
 It is currently under construction.
 For examples of current capabilities, see the unit tests under the `tests/simple` directory.
 
-This Repository
----------------
+Repository Structure
+--------------------
 
 ### Semantics Layout
 
