@@ -125,6 +125,11 @@ If the the input is an identifier, the corresponding index is looked up in the s
       requires ID in_keys(IDS)
 ```
 
+### ElemSegment
+
+Element Segment is a list of indices.
+It is used when initializing a WebAssembly table, or used as the parameter of the `br_table` function.
+
 ```k
     syntax ElemSegment ::= List{TextFormatIdx, ""} [klabel(listTextFormatIdx)]
  // --------------------------------------------------------------------------
