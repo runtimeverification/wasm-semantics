@@ -1216,7 +1216,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
  // -----------------------
 ```
 
-### Element Segments
+### Table initialization
 
 Tables can be initialized with element and the element type is always `funcref".
 The initialization of a table needs an offset and a list of functions, given as `TextFormatIdx`s.
@@ -1255,7 +1255,7 @@ A table index is optional and will be default to zero.
          </tabInst>
 ```
 
-### Data Segments
+### Memory initialization
 
 Memories can be initialized with data, specified as a list of bytes together with an offset.
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
