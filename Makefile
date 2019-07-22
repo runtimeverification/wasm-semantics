@@ -123,7 +123,7 @@ $(llvm_kompiled): $(llvm_defn)
 	@echo "== kompile: $@"
 	$(k_bin)/kompile --backend llvm                          \
 	    --directory $(llvm_dir) -I $(llvm_dir)               \
-	    --main-module WASM-TEST --syntax-module WASM-TEST $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 # Testing
 # -------
