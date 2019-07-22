@@ -851,7 +851,7 @@ Table
 -----
 
 When implementing a table, we first need to define the `TableElemType` type to define the type of elements inside a `tableinst`.
-Currently there is only one possiblt value for it which is "funcref".
+Currently there is only one possible value for it which is "funcref".
 
 ```k
     syntax TableElemType ::= "funcref"
