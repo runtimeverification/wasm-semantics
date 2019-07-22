@@ -5,6 +5,46 @@ This repository presents a prototype formal semantics of [WebAssembly].
 It is currently under construction.
 For examples of current capabilities, see the unit tests under the `tests/simple` directory.
 
+This Repository
+---------------
+
+### Semantics Layout
+
+The following files constitute the KWasm semantics:
+
+-   [data.md](data.md) provides the (functional) data of WebAssembly (basic types, type constructors, and values).
+-   [numeric.md](numeric.md) provides the functional rules for numeric operators.
+-   [wasm.md](wasm.md) is the main KWasm semantics, containing the configuration and transition rules of WebAssembly.
+
+These additional files extend the semantics to make the repository more useful:
+
+-   [test.md](test.md) is an execution harness for KWasm, providing a simple language for describing tests/programs.
+
+### Example usage: `./kwasm` runner script
+
+After building the definition, you can run the definition using `./kwasm`.
+The most up-to-date documentation will always be in `./kwasm help`.
+
+Run the file `tests/simple/arithmetic.wast`:
+
+```sh
+./kwasm run tests/simple/arithmetic.wast
+```
+
+To run proofs, you can similarly use `./kwasm`, but must specify the module to use for proving.
+For example, to prove the specification `tests/proofs/simple-arithmetic-spec.k`:
+
+```sh
+./kwasm prove tests/proofs/simple-arithmetic-spec.k -m KWASM-LEMMAS
+```
+
+You can optionally override the default backend using the `--backend BACKEND` flag:
+
+```sh
+./kwasm run   --backend java    tests/simple/arithmetic.wast
+./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k -m KWASM-LEMMAS
+```
+
 Installing/Building
 -------------------
 
@@ -90,45 +130,6 @@ To build all documents in the media file:
 
 ```sh
 make media
-```
-
-This Repository
----------------
-
-### Semantics Layout
-
-The following files constitute the KWasm semantics:
-
--   [data.md](data.md) provides the (functional) data of WebAssembly (basic types, type constructors, and values).
--   [wasm.md](wasm.md) is the main KWasm semantics, containing the configuration and transition rules of WebAssembly.
-
-These additional files extend the semantics to make the repository more useful:
-
--   [test.md](test.md) is an execution harness for KWasm, providing a simple language for describing tests/programs.
-
-### Example usage: `./kwasm` runner script
-
-After building the definition, you can run the definition using `./kwasm`.
-The most up-to-date documentation will always be in `./kwasm help`.
-
-Run the file `tests/simple/arithmetic.wast`:
-
-```sh
-./kwasm run tests/simple/arithmetic.wast
-```
-
-To run proofs, you can similarly use `./kwasm`, but must specify the module to use for proving.
-For example, to prove the specification `tests/proofs/simple-arithmetic-spec.k`:
-
-```sh
-./kwasm prove tests/proofs/simple-arithmetic-spec.k -m KWASM-LEMMAS
-```
-
-You can optionally override the default backend using the `--backend BACKEND` flag:
-
-```sh
-./kwasm run   --backend java    tests/simple/arithmetic.wast
-./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k -m KWASM-LEMMAS
 ```
 
 Testing
