@@ -1301,6 +1301,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 Start Function
 --------------
 
+The `start` component of a module declares the function index of a `start function` that is automatically invoked when
+the module is instantiated, after `tables` and `memories` have been initialized.
+
 ```k
     syntax Defn      ::= StartDefn
     syntax StartDefn ::= "(" "start" TextFormatIdx ")"
