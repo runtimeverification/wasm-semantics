@@ -259,7 +259,6 @@ When a relationship operator is the next instruction, the two arguments are load
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <k> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </k>
          <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
-
 ```
 
 ### Conversion Operations
