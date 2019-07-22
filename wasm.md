@@ -1643,6 +1643,10 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 **TODO**: Implement modules represented in binary format.
 
 ```k
+    syntax BUnit ::= r"B[0-9a-fA-F]{2}" [token]
+```
+
+```k
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString ")"
                         | "module" "binary" Int
  // -------------------------------------------
