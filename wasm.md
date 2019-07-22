@@ -1204,6 +1204,8 @@ The maximum of table size is 2^32 bytes.
 Initializers
 ------------
 
+### Offset
+
 The `elem` and `data` initializers take an offset, which is an instruction.
 This is not optional.
 The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
