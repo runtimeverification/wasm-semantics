@@ -107,6 +107,30 @@ When we are initializing a table with element segment, we need to define a list 
     syntax TextFormatIdx ::= Int | Identifier
  // -----------------------------------------
 
+```
+
+### Text Format Conventions
+
+The text format allows the use of symbolic identifiers in place of indices.
+To store these identifiers into concrete indices, some grammar productions are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space.
+To lookup an index from a `TextFormatIdx`, which may be either an identifer or a concrete index, we provide the operation `#ContextLookup`.
+It resolves to a concrete index if the input is a concrete index.
+If the the input is an identifier, the corresponding index is looked up in the supplied Map.
+
+```k
+    syntax Int ::= #ContextLookup ( Map , TextFormatIdx ) [function]
+ // ----------------------------------------------------------------
+    rule #ContextLookup(IDS:Map, I:Int) => I
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
+```
+
+### ElemSegment
+
+Element Segment is a list of indices.
+It is used when initializing a WebAssembly table, or used as the parameter of the `br_table` function.
+
+```k
     syntax ElemSegment ::= List{TextFormatIdx, ""} [klabel(listTextFormatIdx)]
  // --------------------------------------------------------------------------
 
@@ -454,7 +478,6 @@ The characters "\t", "\n", "\r", """, "'", and "\" are interpreted as regular es
 
 Longer byte sequences can be encoded as escaped "Unicode", with `\u{<hexdigit>+}`.
 The implementation is not correct for now because the UTF-8 encoding is not implemented.
-**TODO**: Fix the implementation here:
 
 ```k
     syntax Int ::= #idxCloseBracket ( String, Int ) [function]

@@ -207,22 +207,6 @@ Function `#unsigned` is called on integers to allow programs to use negative num
     rule <k> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </k>
 ```
 
-### Text Format Conventions
-
-The text format allows the use of symbolic identifiers in place of indices.
-To store these identifiers into concrete indices, some grammar productions are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space.
-To lookup an index from a `TextFormatIdx`, which may be either an identifer or a concrete index, we provide the operation `#ContextLookup`.
-It resolves to a concrete index if the input is a concrete index.
-If the the input is an identifier, the corresponding index is looked up in the supplied Map.
-
-```k
-    syntax Int ::= #ContextLookup ( Map , TextFormatIdx ) [function]
- // ----------------------------------------------------------------
-    rule #ContextLookup(IDS:Map, I:Int) => I
-    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
-      requires ID in_keys(IDS)
-```
-
 ### Unary Operations
 
 When a unary operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
@@ -275,7 +259,6 @@ When a relationship operator is the next instruction, the two arguments are load
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <k> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </k>
          <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
-
 ```
 
 ### Conversion Operations
@@ -867,7 +850,7 @@ Table
 -----
 
 When implementing a table, we first need to define the `TableElemType` type to define the type of elements inside a `tableinst`.
-Currently there is only one possiblt value for it which is "funcref".
+Currently there is only one possible value for it which is "funcref".
 
 ```k
     syntax TableElemType ::= "funcref"
@@ -1221,6 +1204,8 @@ The maximum of table size is 2^32 bytes.
 Initializers
 ------------
 
+### Offset
+
 The `elem` and `data` initializers take an offset, which is an instruction.
 This is not optional.
 The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
@@ -1231,7 +1216,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
  // -----------------------
 ```
 
-### Element Segments
+### Table initialization
 
 Tables can be initialized with element and the element type is always `funcref".
 The initialization of a table needs an offset and a list of functions, given as `TextFormatIdx`s.
@@ -1270,7 +1255,7 @@ A table index is optional and will be default to zero.
          </tabInst>
 ```
 
-### Data Segments
+### Memory initialization
 
 Memories can be initialized with data, specified as a list of bytes together with an offset.
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
@@ -1315,6 +1300,8 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 Start Function
 --------------
+
+The `start` component of a module declares the function index of a `start function` that is automatically invoked when the module is instantiated, after `tables` and `memories` have been initialized.
 
 ```k
     syntax Defn      ::= StartDefn
