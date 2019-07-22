@@ -45,6 +45,7 @@ In both cases, digits can optionally be separated by underscores.
 ```k
     syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
                      | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
+ // -------------------------------------------------------------------
 ```
 
 ### Layout
@@ -232,6 +233,7 @@ The `#width` function returns the bit-width of a given `IValType`.
 ```
 
 Here we define the rules about integer parsing.
+**TODO**: Symbolic reasoning for sort `WasmInt` not tested yet. In the future should investigate which direction the subsort should go. (`WasmInt` under `Int`/`Int` under `WasmInt`)
 
 ```k
     syntax WasmInt
