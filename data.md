@@ -454,7 +454,6 @@ The characters "\t", "\n", "\r", """, "'", and "\" are interpreted as regular es
 
 Longer byte sequences can be encoded as escaped "Unicode", with `\u{<hexdigit>+}`.
 The implementation is not correct for now because the UTF-8 encoding is not implemented.
-**TODO**: Fix the implementation here:
 
 ```k
     syntax Int ::= #idxCloseBracket ( String, Int ) [function]
