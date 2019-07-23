@@ -1640,11 +1640,18 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          </moduleInstances>
 ```
 
+----------------------------
+
+Here I will try to implement the binary modules:
+
 **TODO**: Implement modules represented in binary format.
 
 ```k
-    syntax BUnit ::= r"B[0-9a-fA-F]{2}" [token]
+    syntax BUnit  ::= r"B[0-9a-fA-F]{2}" [token]
+    syntax BUnits ::= List{BUnit, ""}    [token]
 ```
+
+----------------------------
 
 ```k
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString ")"
