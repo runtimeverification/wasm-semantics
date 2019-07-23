@@ -43,7 +43,7 @@ In WebAssembly, integers could be represented in either the decimal form or hexa
 In both cases, digits can optionally be separated by underscores.
 
 ```k
-    syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
+    syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)+"               [token]
                      | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
  // -------------------------------------------------------------------
 ```
@@ -267,7 +267,7 @@ Here we define the rules about integer parsing.
  // -------------------------
     rule #parseWasmInt(S) => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
     rule #parseWasmInt(S) => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-    rule WINT:WasmInt     => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
+    rule WINT:WasmInt     => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", "")) [macro]
 ```
 
 ### Type Mutability
