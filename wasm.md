@@ -1648,7 +1648,7 @@ Here I will try to implement the binary modules:
 
 ```k
     syntax BUnit  ::= r"B[0-9a-fA-F]{2}" [token]
-    syntax BUnits ::= List{BUnit, ""}    [token]
+    syntax BUnits ::= List{BUnit, ""}    [klabel(listBUnit)]
 ```
 
 ----------------------------
