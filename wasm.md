@@ -1647,25 +1647,28 @@ Here I will try to implement the binary modules:
 **TODO**: Implement modules represented in binary format.
 
 ```k
-    syntax BUnit  ::= r"B[0-9a-fA-F]{2}"                          [token]
-    syntax BUnits ::= List{BUnit, ""}                             [klabel(listBUnit)]
-                    | parseBinaryModule (WasmString, Int)         [function]
- // ------------------------------------------------------------------------
-    rule parseBinaryModule (WS) => parseBinaryModule (WS, 0)
-    rule parseBinaryModule (WS, IDX, BU) => BU                        requires IDX ==Int lengthString(WS) -Int 1
-    rule parseBinaryModule (WS, IDX, BU) => parseBinaryModule(WS, IDX +Int 3, BU)
-      requires IDX <Int lengthString(S) -Int 3
+    syntax BUnit  ::= "[" Int "]"
+    syntax BUnits ::= List{BUnit, ""}                 [klabel(listBUnit)]
+                    | parseBinaryModule (String)      [function]
+                    | parseBinaryModule (String, Int) [function, klabel(auxParseBinaryModule)]
+ // ------------------------------------------------------------------------------------------
+    rule parseBinaryModule (S) => parseBinaryModule (S, 0)
+    rule parseBinaryModule (S, IDX) => .BUnits requires IDX ==Int lengthString(S)
+    rule parseBinaryModule (S, IDX) => [ String2Base(substrString(S, IDX +Int 1, IDX +Int 3), 16) ] parseBinaryModule(S, IDX +Int 3)
+      requires IDX <Int lengthString(S) -Int 2
        andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+    rule parseBinaryModule (S, IDX) => [ ordChar    (substrString(S, IDX       , IDX +Int 1)    ) ] parseBinaryModule(S, IDX +Int 1)
+      requires IDX <Int lengthString(S)
+       andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
 ```
 
 ----------------------------
 
 ```k
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString ")"
-                        | "module" "binary" Int
- // -------------------------------------------
-    rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
-    rule <k> module binary I => . ... </k>
+                        | "module" "binary" BUnits
+ // ----------------------------------------------
+    rule <k> ( module OID binary DS ) => module binary parseBinaryModule(#concatDS(DS)) ... </k>
 ```
 
 It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
