@@ -50,8 +50,8 @@ Installing/Building
 
 ### K Backends
 
-There are three backends of K available, the OCAML backend for concrete execution, the Java backend for symbolic reasoning and proofs, and the experimental Haskell backend for developers.
-This repository generates the build-products for both backends in `.build/defn/java/` and `.build/defn/ocaml/`.
+There are four backends of K available, the OCAML and LLVM backend for concrete execution, the Java backend for symbolic reasoning and proofs, and the experimental Haskell backend for developers.
+The OCAML backend has a known issue about float number precisions, so if there is float number computation in the program, it is better to prevent using the LLVM backend for execution.
 
 ### System Dependencies
 
