@@ -1647,8 +1647,15 @@ Here I will try to implement the binary modules:
 **TODO**: Implement modules represented in binary format.
 
 ```k
-    syntax BUnit  ::= r"B[0-9a-fA-F]{2}" [token]
-    syntax BUnits ::= List{BUnit, ""}    [klabel(listBUnit)]
+    syntax BUnit  ::= r"B[0-9a-fA-F]{2}"                          [token]
+    syntax BUnits ::= List{BUnit, ""}                             [klabel(listBUnit)]
+                    | parseBinaryModule (WasmString, Int)         [function]
+ // ------------------------------------------------------------------------
+    rule parseBinaryModule (WS) => parseBinaryModule (WS, 0)
+    rule parseBinaryModule (WS, IDX, BU) => BU                        requires IDX ==Int lengthString(WS) -Int 1
+    rule parseBinaryModule (WS, IDX, BU) => parseBinaryModule(WS, IDX +Int 3, BU)
+      requires IDX <Int lengthString(S) -Int 3
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
 ```
 
 ----------------------------
