@@ -4,7 +4,7 @@
 
 (assert_return (invoke "add0" (i32.const 123)) (i32.const 123))
 (assert_return (invoke "add0" (i32.const +123)) (i32.const 1_2_3))
-(assert_return (invoke "add0" (i32.const +123)) (i32.const 1_2_3))
+(assert_return (invoke "add0" (i32.const +12_3)) (i32.const 1_2_3))
 (assert_return (invoke "add0" (i32.const -1_23)) (i32.const -12_3))
 (assert_return (invoke "add0" (i32.const -0x11)) (i32.const -17))
 (assert_return (invoke "add0" (i32.const -0x1_1)) (i32.const -1_7))
