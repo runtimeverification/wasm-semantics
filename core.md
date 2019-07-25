@@ -25,6 +25,7 @@ Configuration
         </curFrame>
         <bmodule> .BUnits </bmodule>
         <bstatus> "idle"  </bstatus>
+        <blength> 0       </blength>
         <bbuffer> .BUnits </bbuffer>
         <moduleRegistry> .Map </moduleRegistry>
         <moduleIds> .Map </moduleIds>
