@@ -16,6 +16,15 @@
       .Int
     </curModIdx>
   </curFrame>
+  <bmodule>
+    .BUnits
+  </bmodule>
+  <bstatus>
+    "idle"
+  </bstatus>
+  <bbuffer>
+    .BUnits
+  </bbuffer>
   <moduleRegistry>
     .Map
   </moduleRegistry>

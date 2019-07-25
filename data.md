@@ -586,6 +586,27 @@ The function interprets the range of bytes as little-endian.
       requires START <Int  END
 ```
 
+Binary Module
+-------------
+
+Here we define the rules that parses the string representation of binary module into special byte units defined by us, which is called `BUnits`
+
+```k
+    syntax BUnit  ::= "[" Int "]"
+    syntax BUnits ::= List{BUnit, ""}                 [klabel(listBUnit)]
+                    | parseBinaryModule (String)      [function]
+                    | parseBinaryModule (String, Int) [function, klabel(auxParseBinaryModule)]
+ // ------------------------------------------------------------------------------------------
+    rule parseBinaryModule (S) => parseBinaryModule (S, 0)
+    rule parseBinaryModule (S, IDX) => .BUnits requires IDX ==Int lengthString(S)
+    rule parseBinaryModule (S, IDX) => [ String2Base(substrString(S, IDX +Int 1, IDX +Int 3), 16) ] parseBinaryModule(S, IDX +Int 3)
+      requires IDX <Int lengthString(S) -Int 2
+       andBool substrString(S, IDX, IDX +Int 1) ==K "\\"
+    rule parseBinaryModule (S, IDX) => [ ordChar    (substrString(S, IDX       , IDX +Int 1)    ) ] parseBinaryModule(S, IDX +Int 1)
+      requires IDX <Int lengthString(S)
+       andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
+```
+
 External Values
 ---------------
 
