@@ -593,10 +593,10 @@ Here we define the rules that parses the string representation of binary module 
 
 ```k
     syntax BUnit  ::= "[" Int "]"
-    syntax BUnits ::= List{BUnit, ""}                 [klabel(listBUnit)]
-                    | parseBinaryModule (String)      [function]
-                    | parseBinaryModule (String, Int) [function, klabel(auxParseBinaryModule)]
- // ------------------------------------------------------------------------------------------
+    syntax BUnits ::= List{BUnit, ""}                   [klabel(listBUnit)]
+                    | parseBinaryModule ( String )      [function]
+                    | parseBinaryModule ( String, Int ) [function, klabel(auxParseBinaryModule)]
+ // --------------------------------------------------------------------------------------------
     rule parseBinaryModule (S) => parseBinaryModule (S, 0)
     rule parseBinaryModule (S, IDX) => .BUnits requires IDX ==Int lengthString(S)
     rule parseBinaryModule (S, IDX) => [ String2Base(substrString(S, IDX +Int 1, IDX +Int 3), 16) ] parseBinaryModule(S, IDX +Int 3)
@@ -605,6 +605,18 @@ Here we define the rules that parses the string representation of binary module 
     rule parseBinaryModule (S, IDX) => [ ordChar    (substrString(S, IDX       , IDX +Int 1)    ) ] parseBinaryModule(S, IDX +Int 1)
       requires IDX <Int lengthString(S)
        andBool substrString(S, IDX, IDX +Int 1) =/=K "\\"
+```
+
+We also need helper functions that takes the first `k` elements from a `BUnits` or drop the first `k` elements from a `BUnits`.
+
+```k
+    syntax BUnits ::= takek ( BUnits, Int ) [function]
+                    | dropk ( BUnits, Int ) [function]
+ // --------------------------------------------------
+    rule takek(   BU, 0 ) => .BUnits
+    rule takek( B BU, I ) => B takek( BU, I -Int 1 ) requires I >Int 0
+    rule dropk(   BU, 0 ) => BU
+    rule dropk( B BU, I ) =>   dropk( BU, I -Int 1 ) requires I >Int 0
 ```
 
 External Values

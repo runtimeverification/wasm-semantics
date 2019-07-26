@@ -74,14 +74,30 @@ Then we take the custom section out.
 
 ```k
     rule <k> ( module OID binary DS:Defns )  ... </k>
-         <bmodule> BU:BUnit BS => BS </bmodule>
-         <blength> I => I -Int 1     </blength>
-         <bbuffer> B => B (BU .BUnits) </bbuffer>
-         <bstatus> "custom"          </bstatus>
+         <bmodule> BU => dropk (BU, I) </bmodule>
+         <blength> I  => 0             </blength>
+         <bbuffer> _  => takek (BU, I) </bbuffer>
+         <bstatus> "custom"            </bstatus>
       requires I >Int 0
 ```
 
 Custom sections do not contribute to the WebAssembly semantics and is ignored by an implementation.
+
+```k
+    rule <k> ( module OID binary DS:Defns )  ... </k>
+         <blength> 0                   </blength>
+         <bbuffer> _        => .BUnits </bbuffer>
+         <bstatus> "custom" => "ready" </bstatus>
+```
+
+If the corresponding `<bmodule>` cell of a binary module is empty, convert it to a ordinary module.
+
+```k
+    rule <k> ( module OID binary DS:Defns ) => ( module OID DS:Defns ) ... </k>
+         <bmodule> .BUnits           </bmodule>
+         <blength> 0                 </blength>
+         <bstatus> "ready" => "idle" </bstatus>
+```
 
 ```k
 endmodule
