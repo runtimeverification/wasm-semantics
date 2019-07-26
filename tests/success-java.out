@@ -22,6 +22,9 @@
   <bstatus>
     "idle"
   </bstatus>
+  <blength>
+    0
+  </blength>
   <bbuffer>
     .BUnits
   </bbuffer>
