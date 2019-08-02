@@ -1336,7 +1336,7 @@ Exports make functions, tables, memories and globals available for importing int
 ```
 
 Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
-In that case, it simply desugars to an export followed by the definition, after introducing a fresh identifier if no identifier is present.
+In that case, it simply desugars to an export following the definition, after introducing a fresh identifier if no identifier is present.
 Note that it is possible to define multiple exports inline, i.e., export a single entity under many names.
 
 ```k
