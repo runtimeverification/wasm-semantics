@@ -108,11 +108,10 @@ According to the WebAssembly semantics there are 3 categories of instructions.
 -  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier.
 -  Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
 
-Also in our definition, there are some helper instructions not directly used in programs but will help us define the rules, they are directly subsorted into `Instr`.
-
 ```k
     syntax Instr ::= PlainInstr | BlockInstr | FoldedInstr
  // ------------------------------------------------------
+    rule P:PlainInstr => 
 
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
