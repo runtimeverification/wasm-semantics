@@ -851,7 +851,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn      ::= TableDefn
     syntax TableType ::= Limits TableElemType
     syntax TableSpec ::= TableType
-                       | TableElemType "(" "elem" ElemSegment ")"
     syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
                        |     "table" "{" OptionalId Int OptionalInt "}"
  // -------------------------------------------------------------------
@@ -860,15 +859,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-
-    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( table ID:Identifier funcref ( elem ES ) )
-          =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
-          ~> ( elem ID (i32.const 0) ES )
-          ...
-         </k>
 
     rule <k> table { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -916,7 +906,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn       ::= MemoryDefn
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
-                        | "(" "data" DataString ")"
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
@@ -925,14 +914,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-
-    rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( memory ID:Identifier ( data DS ) )
-          =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data ID (i32.const 0) DS ) ... </k>
-      requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1316,71 +1297,6 @@ Exports make functions, tables, memories and globals available for importing int
          </moduleInst>
 ```
 
-Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
-In that case, it simply desugars to an export followed by the definition, after introducing a fresh identifier if no identifier is present.
-Note that it is possible to define multiple exports inline, i.e., export a single entity under many names.
-
-```k
-    syntax InlineExport  ::= "(" "export" WasmString ")"
- // ----------------------------------------------------
-
-    syntax GlobalSpec ::= InlineExport GlobalSpec
- // ---------------------------------------------
-    rule <k> ( global                  EXPO:InlineExport SPEC:GlobalSpec )
-          => ( global #freshId(NEXTID) EXPO              SPEC            )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec )
-          => ( export ENAME ( global ID ) )
-          ~> ( global ID SPEC )
-          ...
-         </k>
-
-    syntax FuncSpec   ::= InlineExport FuncSpec
- // -------------------------------------------
-    rule <k> ( func                  EXPO:InlineExport SPEC:FuncSpec )
-          => ( func #freshId(NEXTID) EXPO              SPEC          )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( func ID:Identifier ( export ENAME ) SPEC:FuncSpec )
-          => ( export ENAME ( func ID ) )
-          ~> ( func ID SPEC )
-          ...
-         </k>
-
-    syntax TableSpec  ::= InlineExport TableSpec
- // --------------------------------------------
-    rule <k> ( table                  EXPO:InlineExport SPEC:TableSpec )
-          => ( table #freshId(NEXTID) EXPO              SPEC           )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( table ID:Identifier ( export ENAME ) SPEC:TableSpec )
-          => ( export ENAME ( table ID ) )
-          ~> ( table ID SPEC )
-          ...
-         </k>
-
-    syntax MemorySpec ::= InlineExport MemorySpec
- // ---------------------------------------------
-    rule <k> ( memory                  EXPO:InlineExport SPEC:MemorySpec )
-          => ( memory #freshId(NEXTID) EXPO              SPEC            )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec )
-          => ( export ENAME ( memory ID ) )
-          ~> ( memory ID SPEC )
-          ...
-         </k>
-```
-
 Imports
 -------
 
@@ -1505,29 +1421,6 @@ The following function checks if the limits in the first parameter *match*, i.e.
     rule #limitsMatchImport(L1,      _, L2:Int   ) => L1 >=Int L2
     rule #limitsMatchImport( _,   .Int,  _:Int  _) => false
     rule #limitsMatchImport(L1, U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
-```
-
-Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
-
-```k
-    syntax InlineImport ::= "(" "import" WasmString WasmString ")"
- // --------------------------------------------------------------
-
-    syntax GlobalSpec ::= InlineImport TextFormatGlobalType
- // -------------------------------------------------------
-    rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
-
-    syntax FuncSpec ::= InlineImport TypeUse
- // ----------------------------------------
-    rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
-
-    syntax TableSpec ::= InlineImport TableType
- // -------------------------------------------
-    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table OID TT) ) ... </k>
-
-    syntax MemorySpec ::= InlineImport MemType
- // ------------------------------------------
-    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
 ```
 
 Module Instantiation
