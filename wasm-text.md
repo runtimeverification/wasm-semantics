@@ -42,32 +42,8 @@ Folded Instructions describes the rules of desugaring plain instructions and blo
     rule <k> ( loop OID:OptionalId TDECLS:TypeDecls IS ) => loop OID TDECLS IS end ... </k>
 ```
 
-Block Instructions and Control
+Block Instructions
 ------------------
-
-In the abstract Wasm syntax, indices are always integers.
-In the text format, we extend indices to incorporate identifiers.
-
-```k
-    syntax Index ::= Identifier
- // ---------------------------
-```
-
-First, we enable context lookups with identifiers.
-
-```k
-    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
-      requires ID in_keys(IDS)
-```
-
-Then, we define how to branch to identifiers.
-
-```k
-    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
-      requires ID =/=K ID'
-```
 
 Structured control instructions are used to control the program flow.
 
@@ -111,6 +87,33 @@ Finally, we have the conditional and loop instructions.
          <valstack> VALSTACK => .ValStack </valstack>
       requires OID ==K OID'
         orBool notBool isIdentifier(OID')
+```
+
+Looking up Indices
+------------------
+
+In the abstract Wasm syntax, indices are always integers.
+In the text format, we extend indices to incorporate identifiers.
+
+```k
+    syntax Index ::= Identifier
+ // ---------------------------
+```
+
+First, we enable context lookups with identifiers.
+
+```k
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
+```
+
+Then, we define how to branch to identifiers.
+
+```k
+    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
+      requires ID =/=K ID'
 ```
 
 Memory and Tables
