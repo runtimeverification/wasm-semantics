@@ -42,6 +42,77 @@ Folded Instructions describes the rules of desugaring plain instructions and blo
     rule <k> ( loop OID:OptionalId TDECLS:TypeDecls IS ) => loop OID TDECLS IS end ... </k>
 ```
 
+Block Instructions and Control
+------------------
+
+In the abstract Wasm syntax, indices are always integers.
+In the text format, we extend indices to incorporate identifiers.
+
+```k
+    syntax Index ::= Identifier
+ // ---------------------------
+```
+
+First, we enable context lookups with identifiers.
+
+```k
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
+```
+
+Then, we define how to branch to identifiers.
+
+```k
+    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
+      requires ID =/=K ID'
+```
+
+Structured control instructions are used to control the program flow.
+
+```k
+    syntax Instr ::= BlockInstr
+ // ---------------------------
+
+    syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
+ // --------------------------------------------------------------------------
+    rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
+      requires OID ==K OID'
+        orBool notBool isIdentifier(OID')
+```
+
+Finally, we have the conditional and loop instructions.
+
+```k
+    syntax BlockInstr ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // ------------------------------------------------------------------------------------------------
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS                         end OID'':OptionalId => if OID TDECLS IS else OID .Instrs end OID ... </k>
+      requires OID ==K OID''
+        orBool notBool isIdentifier(OID'')
+
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS  ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL =/=Int 0
+       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
+
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS' ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL ==Int 0
+       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
+
+    syntax BlockInstr ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
+ // -------------------------------------------------------------------------
+    rule <k> loop OID:OptionalId TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { loop OID TDECLS IS end } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
+      requires OID ==K OID'
+        orBool notBool isIdentifier(OID')
+```
+
 Memory and Tables
 -----------------
 

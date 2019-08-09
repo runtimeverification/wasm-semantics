@@ -109,11 +109,10 @@ TODO: Break out into its own module.
 According to the WebAssembly semantics there are 3 categories of instructions.
 
 -  Plain Instructions (`PlainInstr`): Most instructions are plain instructions. They could be wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
--  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier.
 
 ```k
-    syntax Instr ::= PlainInstr | BlockInstr
- // ----------------------------------------
+    syntax Instr ::= PlainInstr
+ // ---------------------------
 ```
 
 ### Sequencing
@@ -320,13 +319,6 @@ It simply executes the block then records a label with an empty continuation.
  // -------------------------------------------------------------------
     rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-
-    syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
- // --------------------------------------------------------------------------
-    rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
-         <valstack> VALSTACK => .ValStack </valstack>
-      requires OID ==K OID'
-        orBool notBool isIdentifier(OID')
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -343,10 +335,6 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
     rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
       requires N >Int 0
-    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
-      requires ID =/=K ID'
 
     syntax PlainInstr ::= "br_if" Index
  // -----------------------------------
@@ -361,36 +349,6 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
  // --------------------------------------------
     rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
-```
-
-Finally, we have the conditional and loop instructions.
-
-```k
-    syntax BlockInstr ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
-                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
- // ------------------------------------------------------------------------------------------------
-    rule <k> if OID:OptionalId TDECLS:TypeDecls IS                         end OID'':OptionalId => if OID TDECLS IS else OID .Instrs end OID ... </k>
-      requires OID ==K OID''
-        orBool notBool isIdentifier(OID'')
-
-    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS  ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
-         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL =/=Int 0
-       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
-       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
-
-    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS' ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
-         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL ==Int 0
-       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
-       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
-
-    syntax BlockInstr ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
- // -------------------------------------------------------------------------
-    rule <k> loop OID:OptionalId TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { loop OID TDECLS IS end } VALSTACK ... </k>
-         <valstack> VALSTACK => .ValStack </valstack>
-      requires OID ==K OID'
-        orBool notBool isIdentifier(OID')
 ```
 
 Variable Operators
