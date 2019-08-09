@@ -106,9 +106,9 @@ We will reference modules by name in imports.
 `register` is the instruction that allows us to associate a name with a module.
 
 ```k
-    syntax Auxil ::= "(" "register" WasmString               ")"
-                   | "(" "register" WasmString TextFormatIdx ")"
- // ------------------------------------------------------------
+    syntax Auxil ::= "(" "register" WasmString       ")"
+                   | "(" "register" WasmString Index ")"
+ // ----------------------------------------------------
     rule <k> ( register S ) => ( register S (NEXT -Int 1) )... </k> // Register last instantiated module.
          <nextModuleIdx> NEXT </nextModuleIdx>
       requires NEXT >Int 0
@@ -240,9 +240,9 @@ These functions make assertions about the state of the `<valstack>` cell.
 The operator `#assertLocal`/`#assertGlobal` operators perform a check for a local/global variable's value.
 
 ```k
-    syntax Assertion ::= "#assertLocal"  Int           Val WasmString
-                       | "#assertGlobal" TextFormatIdx Val WasmString
- // -----------------------------------------------------------------
+    syntax Assertion ::= "#assertLocal"  Int   Val WasmString
+                       | "#assertGlobal" Index Val WasmString
+ // ---------------------------------------------------------
     rule <k> #assertLocal INDEX VALUE _ => . ... </k>
          <locals> ... INDEX |-> VALUE ... </locals>
 
@@ -270,7 +270,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 `#assertNextTypeIdx` checks whether the number of types are allocated correctly.
 
 ```k
-    syntax Assertion ::= "#assertType" TextFormatIdx FuncType
+    syntax Assertion ::= "#assertType" Index FuncType
                        | "#assertNextTypeIdx" Int
  // ---------------------------------------------
     rule <k> #assertType TFIDX FTYPE => . ... </k>
@@ -296,8 +296,8 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Assertion ::= "#assertFunction" TextFormatIdx FuncType VecType WasmString
- // --------------------------------------------------------------------------------
+    syntax Assertion ::= "#assertFunction" Index FuncType VecType WasmString
+ // ------------------------------------------------------------------------
     rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -323,8 +323,8 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This asserts related operation about tables.
 
 ```k
-    syntax Assertion ::= "#assertTable" TextFormatIdx Int OptionalInt WasmString
- // ----------------------------------------------------------------------------
+    syntax Assertion ::= "#assertTable" Index Int OptionalInt WasmString
+ // --------------------------------------------------------------------
     rule <k> #assertTable TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -367,8 +367,8 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory" TextFormatIdx Int OptionalInt WasmString
- // -----------------------------------------------------------------------------
+    syntax Assertion ::= "#assertMemory" Index Int OptionalInt WasmString
+ // ---------------------------------------------------------------------
     rule <k> #assertMemory TFIDX SIZE MAX MSG => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>

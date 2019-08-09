@@ -335,8 +335,8 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax PlainInstr ::= "br" TextFormatIdx
- // ----------------------------------------
+    syntax PlainInstr ::= "br" Index
+ // --------------------------------
     rule <k> br TFIDX ~> (SS:Stmts => .) ... </k>
     rule <k> br TFIDX ~> (PI:PlainInstr => .) ... </k>
     rule <k> br 0     ~> label ID [ TYPES ] { IS } VALSTACK' => IS ... </k>
@@ -348,8 +348,8 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
       requires ID =/=K ID'
 
-    syntax PlainInstr ::= "br_if" TextFormatIdx
- // -------------------------------------------
+    syntax PlainInstr ::= "br_if" Index
+ // -----------------------------------
     rule <k> br_if TFIDX => br TFIDX ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
@@ -434,10 +434,10 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax PlainInstr ::= "local.get" TextFormatIdx
-                        | "local.set" TextFormatIdx
-                        | "local.tee" TextFormatIdx
- //------------------------------------------------
+    syntax PlainInstr ::= "local.get" Index
+                        | "local.set" Index
+                        | "local.tee" Index
+ //----------------------------------------
     rule <k> local.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... #ContextLookup(IDS , TFIDX) |-> VALUE ... </locals>
@@ -505,9 +505,9 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax PlainInstr ::= "global.get" TextFormatIdx
-                        | "global.set" TextFormatIdx
- // ------------------------------------------------
+    syntax PlainInstr ::= "global.get" Index
+                        | "global.set" Index
+ // ----------------------------------------
     rule <k> global.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
@@ -578,9 +578,9 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 
 ```k
     syntax TypeUse ::= TypeDecls
-                     | "(type" TextFormatIdx ")"           [prefer]
-                     | "(type" TextFormatIdx ")" TypeDecls
- // ------------------------------------------------------
+                     | "(type" Index ")"           [prefer]
+                     | "(type" Index ")" TypeDecls
+ // ----------------------------------------------
 
     syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                       | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
@@ -752,8 +752,8 @@ The `#take` function will return the parameter stack in the reversed order, then
 `call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
 
 ```k
-    syntax PlainInstr ::= "call" TextFormatIdx
- // ------------------------------------------
+    syntax PlainInstr ::= "call" Index
+ // ----------------------------------
     rule <k> call TFIDX => ( invoke FADDR:Int ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1200,14 +1200,14 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ### Table initialization
 
 Tables can be initialized with element and the element type is always `funcref".
-The initialization of a table needs an offset and a list of functions, given as `TextFormatIdx`s.
+The initialization of a table needs an offset and a list of functions, given as `Index`s.
 A table index is optional and will be default to zero.
 
 ```k
     syntax Defn     ::= ElemDefn
-    syntax ElemDefn ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
+    syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
                       | "(" "elem"                   Offset ElemSegment ")"
-                      |     "elem" "{" TextFormatIdx        ElemSegment "}"
+                      |     "elem" "{" Index        ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
  // ---------------------------------------------------------------------
     // Default to table with index 0.
@@ -1243,10 +1243,10 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Defn     ::= DataDefn
-    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataString ")"
+    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
                       | "(" "data"                   Offset DataString ")"
-                      |     "data" "{" TextFormatIdx        Bytes      "}"
- // ----------------------------------------------------------------------
+                      |     "data" "{" Index        Bytes      "}"
+ // --------------------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
     rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
@@ -1286,8 +1286,8 @@ The `start` component of a module declares the function index of a `start functi
 
 ```k
     syntax Defn      ::= StartDefn
-    syntax StartDefn ::= "(" "start" TextFormatIdx ")"
- // --------------------------------------------------
+    syntax StartDefn ::= "(" "start" Index ")"
+ // ------------------------------------------
     rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1307,7 +1307,7 @@ Exports make functions, tables, memories and globals available for importing int
     syntax Defn       ::= ExportDefn
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
  // -------------------------------------------------------------------
-    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
+    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
