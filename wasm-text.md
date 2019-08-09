@@ -17,7 +17,7 @@ module WASM-TEXT
 Folded Instructions
 -------------------
 
-Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
+Folded Instructions describes the rules of desugaring plain instructions and block instructions.
 
 ```k
     syntax Instr ::= FoldedInstr
