@@ -1,7 +1,7 @@
 requires "kwasm-lemmas.k"
 
 module LOOPS-SPEC
-    imports WASM
+    imports WASM-TEXT
     imports KWASM-LEMMAS
 
     rule <k> block .TypeDecls

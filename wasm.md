@@ -102,22 +102,18 @@ All places in the data with no entry are considered zero bytes.
 Instructions
 ------------
 
+### Text Format
+
+TODO: Break out into its own module.
+
 According to the WebAssembly semantics there are 3 categories of instructions.
 
 -  Plain Instructions (`PlainInstr`): Most instructions are plain instructions. They could be wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
 -  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier.
--  Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
 
 ```k
-    syntax Instr ::= PlainInstr | BlockInstr | FoldedInstr
- // ------------------------------------------------------
-    rule P:PlainInstr => 
-
-    syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
-                         | "(" PlainInstr        ")" [prefer]
- // ---------------------------------------------------------
-    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
-    rule <k> ( PI:PlainInstr           ):FoldedInstr =>       PI ... </k>
+    syntax Instr ::= PlainInstr | BlockInstr
+ // ----------------------------------------
 ```
 
 ### Sequencing
@@ -325,10 +321,6 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
- // ------------------------------------------------------------------
-    rule <k> ( block OID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block OID TDECLS INSTRS end ... </k>
-
     syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
  // --------------------------------------------------------------------------
     rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
@@ -374,12 +366,6 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
- // -----------------------------------------------------------------------------------------------------------
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if OID TDECLS IS else .Instrs end ... </k>
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if OID TDECLS IS else IS'     end ... </k>
-
     syntax BlockInstr ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
  // ------------------------------------------------------------------------------------------------
@@ -398,10 +384,6 @@ Finally, we have the conditional and loop instructions.
       requires VAL ==Int 0
        andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
        andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
-
-    syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
- // -----------------------------------------------------------------
-    rule <k> ( loop OID:OptionalId TDECLS:TypeDecls IS ) => loop OID TDECLS IS end ... </k>
 
     syntax BlockInstr ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
  // -------------------------------------------------------------------------

@@ -6,7 +6,7 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k
 module KWASM-LEMMAS
-    imports WASM
+    imports WASM-TEXT
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
