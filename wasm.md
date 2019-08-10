@@ -456,28 +456,19 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TextFormatGlobalType ::= AValType | "(" "mut" AValType ")"
- // -----------------------------------------------------------------
-
-    syntax GlobalType ::= Mut AValType
-                        | asGMut (TextFormatGlobalType) [function]
- // --------------------------------------------------------------
-    rule asGMut ( (mut T:AValType ) ) => var   T
-    rule asGMut (      T:AValType   ) => const T
-
     syntax Defn       ::= GlobalDefn
-    syntax GlobalSpec ::= TextFormatGlobalType Instr
-    syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
-                        |     "global" OptionalId GlobalType
- // --------------------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
+    syntax GlobalType ::= Mut AValType
+    syntax GlobalDefn ::= "global" GlobalType Instr
+ // -----------------------------------------------
+    rule <k> global TYP:GlobalType IS:Instr => IS ~> #storeGlobal TYP ... </k>
 
-    rule <k> global OID:OptionalId MUT:Mut TYP:AValType => . ... </k>
+    syntax Defn ::= "#storeGlobal" GlobalType
+ // -----------------------------------------
+    rule <k> #storeGlobal MUT:Mut TYP:AValType => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS => #saveId(IDS, OID, NEXTIDX) </globIds>
            <nextGlobIdx> NEXTIDX => NEXTIDX +Int 1                </nextGlobIdx>
            <globalAddrs> GLOBS   => GLOBS [ NEXTIDX <- NEXTADDR ] </globalAddrs>
            ...
@@ -1307,7 +1298,7 @@ The value of a global gets copied when it is imported.
     syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
                         | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
-                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+                        | "(" "global" GlobalType ")" [klabel(globImportDesc)]
  // -----------------------------------------------------------------------------------------------
     rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1383,11 +1374,10 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextFormatGlobalType) ) => . ... </k>
+    rule <k> ( import MOD NAME (global MUT:Mut TYP:AValType) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS => #saveId(IDS, OID, NEXT) </globIds>
            <globalAddrs> GS => GS [NEXT <- ADDR] </globalAddrs>
            <nextGlobIdx> NEXT => NEXT +Int 1 </nextGlobIdx>
            ...
@@ -1405,7 +1395,6 @@ The value of a global gets copied when it is imported.
            <gValue> <TYP> _ </gValue>
            <gMut>   MUT     </gMut>
          </globalInst>
-       requires asGMut(TGTYP) ==K MUT TYP
 ```
 
 Tables and memories have proper subtyping, unlike globals and functions where a type is only a subtype of itself.

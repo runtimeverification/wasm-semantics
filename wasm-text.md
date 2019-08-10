@@ -161,6 +161,46 @@ Intitial memory data, and initial table elements can be given inline in the text
          </k>
 ```
 
+Definitions
+-----------
+
+```k
+    syntax DefinitionType ::= "type" | "func" | "table" | "memory" | "global"
+    syntax Instr ::= "#saveIdentifier" DefinitionType OptionalId
+ // ------------------------------------------------------------
+    rule <k> #saveIdentifier _:DefinitionType => . ... </k>
+    rule <k> #saveIdentifier global ID:Identifier => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globIds> IDS => IDS [ID <- NEXTIDX -Int 1] </globIds>
+           <nextGlobIdx> NEXTIDX </nextGlobIdx>
+           ...
+         </moduleInst>
+```
+
+### Globals
+
+The declaration of mutable/immutable globals differ between text format and abstract syntax.
+In the abstract syntax, types are tagged with `var` or `const`, whereas in the text format, contants types are untagged and mutable types are tagged with `mut`.
+
+```k
+    syntax TextFormatGlobalType ::= AValType | "(" "mut" AValType ")"
+    syntax GlobalType ::= asGMut (TextFormatGlobalType) [function]
+ // --------------------------------------------------------------
+    rule asGMut ( (mut T:AValType ) ) => var   T
+    rule asGMut (      T:AValType   ) => const T
+
+    syntax GlobalSpec ::= TextFormatGlobalType Instr
+    syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
+ // ------------------------------------------------------------
+    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr )
+          => global asGMut(TYP) IS
+          ~> #saveIdentifier global OID
+          ...
+         </k>
+```
+
 Exports
 -------
 
@@ -232,6 +272,14 @@ Note that it is possible to define multiple exports inline, i.e. export a single
 
 Imports
 -------
+
+Imports can optionally have identifiers.
+
+```k
+    syntax ImportDesc ::= "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globTextFormatImportDesc)]
+ // ---------------------------------------------------------------------------------------------------------
+    rule <k> ( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType) ) => ( import MOD NAME (global asGMut(TYP))) ~> #saveIdentifier global OID ... </k>
+```
 
 Imports can be declared like regular functions, memories, etc., by giving an inline import declaration.
 
