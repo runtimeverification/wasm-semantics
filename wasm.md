@@ -315,10 +315,15 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax Label ::= "label" OptionalId VecType "{" Instrs "}" ValStack
- // -------------------------------------------------------------------
-    rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
+    syntax Label ::= "label" VecType "{" Instrs "}" ValStack
+ // --------------------------------------------------------
+    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+
+    syntax Instr ::= "block" TypeDecls Instrs "end"
+ // ---------------------------------------------------------------------
+    rule <k> block TDECLS IS end => IS ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -331,7 +336,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
  // --------------------------------
     rule <k> br TFIDX ~> (SS:Stmts => .) ... </k>
     rule <k> br TFIDX ~> (PI:PlainInstr => .) ... </k>
-    rule <k> br 0     ~> label ID [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    rule <k> br 0     ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
     rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
       requires N >Int 0
@@ -349,6 +354,25 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
  // --------------------------------------------
     rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+```
+
+Finally, we have the conditional and loop instructions.
+
+```k
+    syntax Instr ::= "if" TypeDecls Instrs "else" OptionalId Instrs "end"
+ // ---------------------------------------------------------------------
+    rule <k> if TDECLS:TypeDecls IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL =/=Int 0
+
+    rule <k> if TDECLS:TypeDecls IS else IS' end => IS' ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL ==Int 0
+
+    syntax Instr ::= "loop" TypeDecls Instrs "end"
+ // ----------------------------------------------
+    rule <k> loop TDECLS:TypeDecls IS end => IS ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
 ```
 
 Variable Operators
