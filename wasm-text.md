@@ -136,6 +136,17 @@ In the text format, it is also allowed to have a conditional without the `else` 
 Memory and Tables
 -----------------
 
+```k
+    syntax MemorySpec ::= MemType
+    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
+ // ------------------------------------------------------------
+    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { MIN .Int } ~> #saveIdentifier memory OID ... </k>
+      requires MIN <=Int #maxMemorySize()
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { MIN MAX  } ~> #saveIdentifier memory OID ... </k>
+      requires MIN <=Int #maxMemorySize()
+       andBool MAX <=Int #maxMemorySize()
+```
+
 Intitial memory data, and initial table elements can be given inline in the text format.
 
 ```k
@@ -145,7 +156,7 @@ Intitial memory data, and initial table elements can be given inline in the text
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
     rule <k> ( memory ID:Identifier ( data DS ) )
-          =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
+          => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
           ~> ( data ID (i32.const 0) DS ) ... </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
 

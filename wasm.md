@@ -892,31 +892,13 @@ The importing and exporting parts of specifications are dealt with in the respec
 
 ```k
     syntax Defn       ::= MemoryDefn
-    syntax MemType    ::= Limits
-    syntax MemorySpec ::= MemType
-    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
-                        |     "memory" "{" OptionalId Int OptionalInt "}"
- // ---------------------------------------------------------------------
-    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .Int } ... </k>
-      requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
-      requires MIN <=Int #maxMemorySize()
-       andBool MAX <=Int #maxMemorySize()
-
-    rule <k> memory { _ _ _ } => trap ... </k>
+    syntax MemType    ::= Limits | ".MemType"
+    syntax MemoryDefn ::= "memory" "{" Int OptionalInt "}"
+ // ---------------------------------------------------
+    rule <k> memory { MIN MAX } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> MAP </memAddrs>
-           ...
-         </moduleInst>
-      requires MAP =/=K .Map
-
-    rule <k> memory { ID MIN MAX } => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
            <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
            ...
          </moduleInst>
