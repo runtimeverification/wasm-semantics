@@ -359,8 +359,8 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= "if" TypeDecls Instrs "else" OptionalId Instrs "end"
- // ---------------------------------------------------------------------
+    syntax Instr ::= "if" TypeDecls Instrs "else" Instrs "end"
+ // ----------------------------------------------------------
     rule <k> if TDECLS:TypeDecls IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
