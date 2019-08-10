@@ -375,33 +375,30 @@ The groups are chosen to represent different stages of allocation and instantiat
                  | #initialMap ()                [function]
  // -------------------------------------------------------
     rule #initialMap ()
-      => "typeDecls" |-> .Defns
+      => "types"     |-> .Defns
          "imports"   |-> .Defns
-         "func/glob" |-> .Defns
-         "allocs"    |-> .Defns
+         "functions" |-> .Defns
+         "tables"    |-> .Defns
+         "memories"  |-> .Defns
+         "globals"   |-> .Defns
          "exports"   |-> .Defns
-         "inits"     |-> .Defns
          "start"     |-> .Defns
+         "elem"      |-> .Defns
+         "data"      |-> .Defns
 
     rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
 
     rule #structureModule(M,                  .Defns) => M
-    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
-
-    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
-
-    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-
-    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-
-    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
-
-    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-
-    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
+    rule #structureModule(M, (T:TypeDefn    DS:Defns)) => #structureModule(M ["types"     <- (T  {M ["types"    ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ImportDefn  DS:Defns)) => #structureModule(M ["imports"   <- (I  {M ["imports"  ]}:>Defns)], DS)
+    rule #structureModule(M, (F:FuncDefn    DS:Defns)) => #structureModule(M ["functions" <- (F  {M ["functions"]}:>Defns)], DS)
+    rule #structureModule(M, (T:TableDefn   DS:Defns)) => #structureModule(M ["tables"    <- (T  {M ["tables"   ]}:>Defns)], DS)
+    rule #structureModule(M, (MM:MemoryDefn DS:Defns)) => #structureModule(M ["memories"  <- (MM {M ["memories" ]}:>Defns)], DS)
+    rule #structureModule(M, (G:GlobalDefn  DS:Defns)) => #structureModule(M ["globals"   <- (G  {M ["globals"  ]}:>Defns)], DS)
+    rule #structureModule(M, (E:ExportDefn  DS:Defns)) => #structureModule(M ["exports"   <- (E  {M ["exports"  ]}:>Defns)], DS)
+    rule #structureModule(M, (S:StartDefn   DS:Defns)) => #structureModule(M ["start"     <- (S  .Defns                  )], DS)
+    rule #structureModule(M, (E:ElemDefn    DS:Defns)) => #structureModule(M ["elem"      <- (E  {M ["elem"     ]}:>Defns)], DS)
+    rule #structureModule(M, (D:DataDefn    DS:Defns)) => #structureModule(M ["data"      <- (D  {M ["data"     ]}:>Defns)], DS)
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
@@ -416,6 +413,17 @@ It is permissible to define modules without the `module` keyword, by simply stat
          <curModIdx> .Int </curModIdx>
 ```
 
+### Binary Modules
+
+**TODO**: Implement modules represented in binary format.
+
+```k
+    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString ")"
+                        | "module" "binary" Int
+ // -------------------------------------------
+    rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
+    rule <k> module binary I => . ... </k>
+```
 
 ```k
 endmodule

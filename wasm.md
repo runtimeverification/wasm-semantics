@@ -1420,13 +1420,15 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
  // ----------------------------------
 
     rule <k> module MOD
-          => MOD["typeDecls"]
-          => MOD["typeDecls"]
+          => MOD["types"    ]
           ~> MOD["imports"  ]
-          ~> MOD["func/glob"]
-          ~> MOD["allocs"   ]
+          ~> MOD["functions"]
+          ~> MOD["tables"   ]
+          ~> MOD["memories" ]
+          ~> MOD["globals"  ]
           ~> MOD["exports"  ]
-          ~> MOD["inits"    ]
+          ~> MOD["elem"     ]
+          ~> MOD["data"     ]
           ~> MOD["start"    ]
          ...
          </k>
@@ -1441,16 +1443,6 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
            )
            ...
          </moduleInstances>
-```
-
-**TODO**: Implement modules represented in binary format.
-
-```k
-    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString ")"
-                        | "module" "binary" Int
- // -------------------------------------------
-    rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
-    rule <k> module binary I => . ... </k>
 ```
 
 After a module is instantiated, it should be saved somewhere.
