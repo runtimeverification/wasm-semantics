@@ -1409,71 +1409,18 @@ The following function checks if the limits in the first parameter *match*, i.e.
 Module Instantiation
 --------------------
 
-There is some dependencies among definitions that require that we do them in a certain order, even though they may appear in many valid orders.
-First, functions, tables, memories and globals get *allocated*.
-Then, tables, memories and globals get *instantiated* with elements, data and initialization vectors.
-However, since (currently) globals can only make use of imported globals to be instantiated, we can initialize at allocation time.
-Finally, the start function is invoked.
-Exports may appear anywhere in a module, but can only be performed after what they refer to has been allocated.
-Exports that are inlined in a definition, e.g., `func (export "foo") ...`, are safe to extract as they appear.
-Imports must appear before any allocations in a module, due to validation.
-
-A subtle point is related to tables with inline `elem` definitions: since these may refer to functions by identifier, we need to make sure that tables definitions come after function definitions.
-
-`structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
-The groups are chosen to represent different stages of allocation and instantiation.
-
-```k
-    syntax Map ::=  structureModule (     Defns) [function]
-                 | #structureModule (Map, Defns) [function]
-                 | #initialMap ()                [function]
- // -------------------------------------------------------
-    rule #initialMap ()
-      => "typeDecls" |-> .Defns
-         "imports"   |-> .Defns
-         "func/glob" |-> .Defns
-         "allocs"    |-> .Defns
-         "exports"   |-> .Defns
-         "inits"     |-> .Defns
-         "start"     |-> .Defns
-
-    rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
-
-    rule #structureModule(M,                  .Defns) => M
-    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
-
-    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
-
-    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-
-    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-
-    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
-
-    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-
-    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
-
-    syntax Defns ::= #reverse(Defns, Defns) [function]
- // --------------------------------------------------
-    rule #reverse(       .Defns  , ACC) => ACC
-    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
-```
-
+Modules are divided into sections that get processed in order.
+The module is instantiated with a map, mapping each section to its definitions.
 A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
     syntax Stmt       ::= ModuleDecl
-    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
-                        |     "module" OptionalId Map
- // -------------------------------------------------
-    rule <k> ( module OID:OptionalId DEFNS ) => module OID structureModule(DEFNS) ... </k>
+    syntax ModuleDecl ::= "module" Map
+ // ----------------------------------
 
-    rule <k> module OID:OptionalId MOD
+    rule <k> module MOD
+          => MOD["typeDecls"]
           => MOD["typeDecls"]
           ~> MOD["imports"  ]
           ~> MOD["func/glob"]
@@ -1485,7 +1432,6 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          </k>
          <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
-         <moduleIds> IDS => #saveId(IDS, OID, NEXT) </moduleIds>
          <moduleInstances>
            ( .Bag
           => <moduleInst>
@@ -1505,13 +1451,6 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
  // -------------------------------------------
     rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
     rule <k> module binary I => . ... </k>
-```
-
-It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
-
-```k
-    rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
-         <curModIdx> .Int </curModIdx>
 ```
 
 After a module is instantiated, it should be saved somewhere.

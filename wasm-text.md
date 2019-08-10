@@ -167,7 +167,7 @@ Definitions
 TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it should be more functional.
 
 ```k
-    syntax DefinitionType ::= "type" | "func" | "table" | "memory" | "global"
+    syntax DefinitionType ::= "type" | "func" | "table" | "memory" | "global" | "module"
     syntax Instr ::= "#saveIdentifier" DefinitionType OptionalId
  // ------------------------------------------------------------
     rule <k> #saveIdentifier _:DefinitionType => . ... </k>
@@ -205,6 +205,10 @@ TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it
            <nextGlobIdx> NEXTIDX </nextGlobIdx>
            ...
          </moduleInst>
+
+    rule <k> #saveIdentifier module ID:Identifier => . ... </k>
+         <moduleIds> IDS => IDS [ID <- NEXTIDX -Int 1 ] </moduleIds>
+         <nextModuleIdx> NEXTIDX </nextModuleIdx>
 ```
 
 ### Globals
@@ -338,6 +342,80 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // ------------------------------------------
     rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
 ```
+
+Modules
+-------
+
+In the text format, a module may have an identifier.
+The definitions may appear in any order, so before starting module instantiation, the defintions must be structured.
+
+```k
+    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
+ // -------------------------------------------------------
+    rule <k> ( module OID:OptionalId DEFNS ) => module structureModule(DEFNS) ~> #saveIdentifier module OID ... </k>
+```
+
+However, there are some dependencies among definitions that require that we do them in a certain order, even though they may appear in many valid orders.
+First, functions, tables, memories and globals get *allocated*.
+Then, tables, memories and globals get *instantiated* with elements, data and initialization vectors.
+However, since (currently) globals can only make use of imported globals to be instantiated, we can initialize at allocation time.
+Finally, the start function is invoked.
+Exports may appear anywhere in a module, but can only be performed after what they refer to has been allocated.
+Exports that are inlined in a definition, e.g., `func (export "foo") ...`, are safe to extract as they appear.
+Imports must appear before any allocations in a module, due to validation.
+
+A subtle point is related to tables with inline `elem` definitions: since these may refer to functions by identifier, we need to make sure that tables definitions come after function definitions.
+
+`structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
+The groups are chosen to represent different stages of allocation and instantiation.
+
+```k
+    syntax Map ::=  structureModule (     Defns) [function]
+                 | #structureModule (Map, Defns) [function]
+                 | #initialMap ()                [function]
+ // -------------------------------------------------------
+    rule #initialMap ()
+      => "typeDecls" |-> .Defns
+         "imports"   |-> .Defns
+         "func/glob" |-> .Defns
+         "allocs"    |-> .Defns
+         "exports"   |-> .Defns
+         "inits"     |-> .Defns
+         "start"     |-> .Defns
+
+    rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
+
+    rule #structureModule(M,                  .Defns) => M
+    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
+
+    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+
+    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+
+    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+
+    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
+
+    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+
+    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
+
+    syntax Defns ::= #reverse(Defns, Defns) [function]
+ // --------------------------------------------------
+    rule #reverse(       .Defns  , ACC) => ACC
+    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
+```
+
+It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
+
+```k
+    rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
+         <curModIdx> .Int </curModIdx>
+```
+
 
 ```k
 endmodule
