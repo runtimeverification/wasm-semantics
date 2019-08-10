@@ -136,6 +136,8 @@ In the text format, it is also allowed to have a conditional without the `else` 
 Memory and Tables
 -----------------
 
+The `MemorySpec` and `TableSpec` productions are used to define all ways that a memory and table can specified.
+
 ```k
     syntax MemorySpec ::= MemType
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
@@ -145,6 +147,16 @@ Memory and Tables
     rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { MIN MAX  } ~> #saveIdentifier memory OID ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
+
+    syntax TableSpec ::= TableType
+    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
+ // ---------------------------------------------------------
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { MIN .Int } ~> #saveIdentifier table OID ... </k>
+      requires MIN <=Int #maxTableSize()
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { MIN MAX  } ~> #saveIdentifier table OID... </k>
+      requires MIN <=Int #maxTableSize()
+       andBool MAX <=Int #maxTableSize()
+
 ```
 
 Intitial memory data, and initial table elements can be given inline in the text format.
@@ -166,7 +178,7 @@ Intitial memory data, and initial table elements can be given inline in the text
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
     rule <k> ( table ID:Identifier funcref ( elem ES ) )
-          =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
+          => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
           ~> ( elem ID (i32.const 0) ES )
           ...
          </k>
