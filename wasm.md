@@ -1294,19 +1294,18 @@ The value of a global gets copied when it is imported.
 
 ```k
     syntax Defn       ::= ImportDefn
-    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
-    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
-                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
-                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
-                        | "(" "global" GlobalType ")" [klabel(globImportDesc)]
- // -----------------------------------------------------------------------------------------------
-    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
+    syntax ImportDefn ::= "import" "{" WasmString WasmString ImportDesc "}"
+    syntax ImportDesc ::= "func"   TypeUse
+                        | "table"  TableType
+                        | "memory" MemType
+                        | "global" GlobalType
+ // -----------------------------------------
+    rule <k> import { MOD NAME func TUSE:TypeUse } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, OID, NEXT) </funcIds>
            <funcAddrs> FS => FS [NEXT <- ADDR] </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
@@ -1326,11 +1325,10 @@ The value of a global gets copied when it is imported.
          </funcDef>
       requires unnameFuncType(FTYPE) ==K unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE))
 
-    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </k>
+    rule <k> import { MOD NAME table LIM _:TableElemType } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIds> IDS => #saveId(IDS, OID, 0) </tabIds>
            <tabAddrs> .Map => 0 |-> ADDR </tabAddrs>
            ...
          </moduleInst>
@@ -1350,11 +1348,10 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </k>
+    rule <k> import { MOD NAME memory LIM:Limits } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
            <memAddrs> .Map => 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
@@ -1374,7 +1371,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (global MUT:Mut TYP:AValType) ) => . ... </k>
+    rule <k> import { MOD NAME global MUT:Mut TYP:AValType } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>

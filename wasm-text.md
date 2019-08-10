@@ -164,11 +164,39 @@ Intitial memory data, and initial table elements can be given inline in the text
 Definitions
 -----------
 
+TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it should be more functional.
+
 ```k
     syntax DefinitionType ::= "type" | "func" | "table" | "memory" | "global"
     syntax Instr ::= "#saveIdentifier" DefinitionType OptionalId
  // ------------------------------------------------------------
     rule <k> #saveIdentifier _:DefinitionType => . ... </k>
+
+    rule <k> #saveIdentifier func ID:Identifier => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> IDS => IDS [ID <- NEXTIDX -Int 1] </funcIds>
+           <nextFuncIdx> NEXTIDX </nextFuncIdx>
+           ...
+         </moduleInst>
+
+    rule <k> #saveIdentifier table ID:Identifier => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tabIds> IDS => IDS [ ID <- 0] </tabIds>
+           ...
+         </moduleInst>
+
+    rule <k> #saveIdentifier memory ID:Identifier => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memIds> IDS => IDS [ ID <- 0] </memIds>
+           ...
+         </moduleInst>
+
     rule <k> #saveIdentifier global ID:Identifier => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -276,9 +304,16 @@ Imports
 Imports can optionally have identifiers.
 
 ```k
-    syntax ImportDesc ::= "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globTextFormatImportDesc)]
- // ---------------------------------------------------------------------------------------------------------
-    rule <k> ( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType) ) => ( import MOD NAME (global asGMut(TYP))) ~> #saveIdentifier global OID ... </k>
+    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
+                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
+                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+ // -----------------------------------------------------------------------------------------------
+    rule <k> ( import MOD NAME (func   OID:OptionalId TUSE) ) => import { MOD NAME func   TUSE         } ~> #saveIdentifier func   OID ... </k>
+    rule <k> ( import MOD NAME (table  OID:OptionalId TTYP) ) => import { MOD NAME table  TTYP         } ~> #saveIdentifier table  OID ... </k>
+    rule <k> ( import MOD NAME (memory OID:OptionalId MTYP) ) => import { MOD NAME memory MTYP         } ~> #saveIdentifier memory OID ... </k>
+    rule <k> ( import MOD NAME (global OID:OptionalId GTYP) ) => import { MOD NAME global asGMut(GTYP) } ~> #saveIdentifier global OID ... </k>
 ```
 
 Imports can be declared like regular functions, memories, etc., by giving an inline import declaration.
