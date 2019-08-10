@@ -825,30 +825,12 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax Defn      ::= TableDefn
     syntax TableType ::= Limits TableElemType
-    syntax TableSpec ::= TableType
-    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
-                       |     "table" "{" OptionalId Int OptionalInt "}"
- // -------------------------------------------------------------------
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .Int } ... </k>
-      requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
-      requires MIN <=Int #maxTableSize()
-       andBool MAX <=Int #maxTableSize()
-
-    rule <k> table { _ _ _ } => trap ... </k>
+    syntax TableDefn ::= "table" "{" Int OptionalInt "}"
+ // ----------------------------------------------------
+    rule <k> table { MIN MAX } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabAddrs> MAP </tabAddrs>
-           ...
-         </moduleInst>
-       requires MAP =/=K .Map
-
-    rule <k> table { ID MIN MAX } => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <tabIds> IDS => #saveId(IDS, ID, 0) </tabIds>
            <tabAddrs> .Map => (0 |-> NEXTADDR) </tabAddrs>
            ...
          </moduleInst>
