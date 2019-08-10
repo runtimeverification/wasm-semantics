@@ -104,11 +104,11 @@ Instructions
 
 ### Text Format
 
-TODO: Break out into its own module.
+WebAssmebly code consists of instruction sequences.
+The basic abstract syntax contains only the `instr` syntax production.
+The text format also specifies the `plaininstr`, which corresponds almost exactly to the the `instr` production.
 
-According to the WebAssembly semantics there are 3 categories of instructions.
-
--  Plain Instructions (`PlainInstr`): Most instructions are plain instructions. They could be wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
+Most instructions are plain instructions.
 
 ```k
     syntax Instr ::= PlainInstr

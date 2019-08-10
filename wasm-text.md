@@ -14,19 +14,33 @@ module WASM-TEXT
     imports WASM
 ```
 
+The text format is a concrete syntax for Wasm.
+It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
+Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
+
 Folded Instructions
 -------------------
 
-Folded Instructions describes the rules of desugaring plain instructions and block instructions.
+Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
 
 ```k
     syntax Instr ::= FoldedInstr
+ // ----------------------------
+```
+
+One type of folded instruction are `PlainInstr`s wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
+
+```k
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
  // ---------------------------------------------------------
     rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
     rule <k> ( PI:PlainInstr           ):FoldedInstr =>       PI ... </k>
+```
 
+Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
+
+```k
     syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
  // ------------------------------------------------------------------
     rule <k> ( block               TDECLS:TypeDecls INSTRS:Instrs ) => block    TDECLS INSTRS end ... </k>
@@ -45,28 +59,29 @@ Folded Instructions describes the rules of desugaring plain instructions and blo
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
-Block Instructions
+Looking up Indices
 ------------------
 
-Structured control instructions are used to control the program flow.
+In the abstract Wasm syntax, indices are always integers.
+In the text format, we extend indices to incorporate identifiers.
 
 ```k
     syntax Index ::= Identifier
  // ---------------------------
 ```
 
-Finally, we have the conditional and loop instructions.
+We enable context lookups with identifiers.
 
 ```k
     rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
       requires ID in_keys(IDS)
 ```
 
-Looking up Indices
+Block Instructions
 ------------------
 
-In the abstract Wasm syntax, indices are always integers.
-In the text format, we extend indices to incorporate identifiers.
+In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
+First, we allow identifiers on labels.
 
 ```k
     syntax Label ::= "label" Identifier VecType "{" Instrs "}" ValStack
@@ -75,7 +90,7 @@ In the text format, we extend indices to incorporate identifiers.
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 ```
 
-First, we enable context lookups with identifiers.
+Then, we define how to branch to identifiers, and how the branches using integers still match on named labels.
 
 ```k
     rule <k> br 0     ~> ( label _:Identifier [ TYPES ] { IS } VALSTACK' => label [ TYPES ] { IS } VALSTACK' ) ... </k>
@@ -166,9 +181,10 @@ Intitial memory data, and initial table elements can be given inline in the text
 Exports
 -------
 
-Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
-In that case, it simply desugars to an export followed by the definition, after introducing a fresh identifier if no identifier is present.
-Note that it is possible to define multiple exports inline, i.e., export a single entity under many names.
+Exports can be declared like regular functions, memories, etc., by giving an inline export declaration.
+In that case, it simply desugars to the definition followed by an export of it.
+If no identifer is present, one must be introduced so that the export can refer to it.
+Note that it is possible to define multiple exports inline, i.e. export a single entity under many names.
 
 ```k
     syntax InlineExport  ::= "(" "export" WasmString ")"
@@ -234,7 +250,7 @@ Note that it is possible to define multiple exports inline, i.e., export a singl
 Imports
 -------
 
-Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
+Imports can be declared like regular functions, memories, etc., by giving an inline import declaration.
 
 ```k
     syntax InlineImport ::= "(" "import" WasmString WasmString ")"
