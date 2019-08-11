@@ -42,6 +42,10 @@ module WASM-TEXT
 ```
 
 The text format is a concrete syntax for Wasm.
+It introduces several syntactic sugars, such as
+- grouping expressions with parentheses,
+- allowing identifiers for indices,
+- inlining imports and exprts.
 Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
 
 Values
