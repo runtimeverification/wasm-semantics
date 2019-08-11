@@ -195,6 +195,15 @@ TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it
  // ------------------------------------------------------------
     rule <k> #saveIdentifier _:DefinitionType => . ... </k>
 
+    rule <k> #saveIdentifier type ID:Identifier => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <typeIds> IDS => IDS [ID <- NEXTIDX -Int 1] </typeIds>
+           <nextTypeIdx> NEXTIDX </nextTypeIdx>
+           ...
+         </moduleInst>
+
     rule <k> #saveIdentifier func ID:Identifier => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -232,6 +241,40 @@ TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it
     rule <k> #saveIdentifier module ID:Identifier => . ... </k>
          <moduleIds> IDS => IDS [ID <- NEXTIDX -Int 1 ] </moduleIds>
          <nextModuleIdx> NEXTIDX </nextModuleIdx>
+```
+
+### Types
+
+Type could be declared explicitly and could optionally bind with an identifier.
+`identifier` for `param` will be used only when the function type is declared when defining a function.
+When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
+
+```k
+    syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
+                       | "param" Identifier AValType
+ // ------------------------------------------------
+    rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
+    rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + { ID VTYPE } .ValTypes)
+
+    syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
+ // ----------------------------------------------------------------------
+    rule <k> (type OID:OptionalId ( func TDECLS ) ) => ftype { TDECLS } ~> #saveIdentifier type OID ... </k>
+```
+
+### Functions
+
+```k
+    syntax FuncDefn ::= "(" "func" OptionalId FuncSpec ")"
+ // ------------------------------------------------------
+    rule <k> ( func OID:OptionalId TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => func { TUSE LDECLS INSTRS } ~> #saveIdentifier func OID ... </k>
+```
+
+#### Locals
+
+```k
+    syntax LocalDecl ::= "local" Identifier AValType
+ // ------------------------------------------------
+    rule #asLocalType(local ID:Identifier VTYPE:AValType   LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + { ID VTYPE } .ValTypes)
 ```
 
 ### Globals
