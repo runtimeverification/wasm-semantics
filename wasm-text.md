@@ -62,8 +62,38 @@ We define `NValType` which stands for `named valtype`, representing values that 
          <localIds> LOCALIDS => LOCALIDS [ ID <- I ] </localIds>
 ```
 
-Folded Instructions
--------------------
+Identifiers
+-----------
+
+In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
+And we use `OptionalId` to handle the case where an identifier could be omitted.
+
+```k
+    syntax Identifier ::= #freshId ( Int )
+    syntax OptionalId ::= "" [klabel(.Identifier)]
+                        | Identifier
+ // --------------------------------
+```
+
+In the abstract Wasm syntax, indices are always integers.
+In the text format, we extend indices to incorporate identifiers.
+
+```k
+    syntax Index ::= Identifier
+ // ---------------------------
+```
+
+We enable context lookups with identifiers.
+
+```k
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
+```
+
+Instructions
+------------
+
+### Folded Instructions
 
 Folded instructions are a syntactic sugar where expressions can be grouped using parentheses, like S-expressions, for higher readability.
 
@@ -101,34 +131,6 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
  // -----------------------------------------------------------------
     rule <k> ( loop               TDECLS:TypeDecls IS ) => loop    TDECLS IS end ... </k>
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
-```
-
-Identifiers
------------
-
-In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
-And we use `OptionalId` to handle the case where an identifier could be omitted.
-
-```k
-    syntax Identifier ::= #freshId ( Int )
-    syntax OptionalId ::= "" [klabel(.Identifier)]
-                        | Identifier
- // --------------------------------
-```
-
-In the abstract Wasm syntax, indices are always integers.
-In the text format, we extend indices to incorporate identifiers.
-
-```k
-    syntax Index ::= Identifier
- // ---------------------------
-```
-
-We enable context lookups with identifiers.
-
-```k
-    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
-      requires ID in_keys(IDS)
 ```
 
 Block Instructions
