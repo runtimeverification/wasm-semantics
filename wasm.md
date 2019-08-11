@@ -1102,16 +1102,10 @@ A table index is optional and will be default to zero.
 
 ```k
     syntax Defn     ::= ElemDefn
-    syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
-                      | "(" "elem"           Offset ElemSegment ")"
-                      |     "elem" "{" Index        ElemSegment "}"
+    syntax ElemDefn ::= "elem" "{" Index ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
  // ---------------------------------------------------------------------
-    // Default to table with index 0.
-    rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
-    rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
-    rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
-
+    // For now, deal only with table 0.
     rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, FIDS, ELEMSEGMENT ) ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
@@ -1119,8 +1113,7 @@ A table index is optional and will be default to zero.
            <modIdx> CUR  </modIdx>
            <funcIds> FIDS </funcIds>
            <funcAddrs> FADDRS </funcAddrs>
-           <tabIds>  TIDS </tabIds>
-           <tabAddrs> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabAddrs>
+           <tabAddrs> TABIDX |-> ADDR </tabAddrs>
            ...
          </moduleInst>
 
@@ -1140,23 +1133,15 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Defn     ::= DataDefn
-    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
-                      | "(" "data"           Offset DataString ")"
-                      |     "data" "{" Index        Bytes      "}"
- // --------------------------------------------------------------
-    // Default to memory 0.
-    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
-    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
-    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
-
+    syntax DataDefn ::= "data" "{" Index Bytes "}"
+ // ----------------------------------------------
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX DSBYTES } => . ... </k>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS </memIds>
-           <memAddrs> #ContextLookup(IDS, MEMIDX) |-> ADDR </memAddrs>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>

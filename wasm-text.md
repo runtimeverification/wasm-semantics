@@ -418,6 +418,40 @@ Intitial memory data, and initial table elements can be given inline in the text
          </k>
 ```
 
+#### Elem and Data
+
+```k
+    syntax ElemDefn ::= "(" "elem" Index Offset ElemSegment ")"
+                      | "(" "elem"       Offset ElemSegment ")"
+ // -----------------------------------------------------------
+    // Default to table with index 0.
+    rule <k> ( elem               OFFSET      ELEMSEGMENT ) =>     ( elem   0      OFFSET      ELEMSEGMENT ) ... </k>
+    rule <k> ( elem TABIDX        IS:Instr    ELEMSEGMENT ) =>     ( elem   TABIDX (offset IS) ELEMSEGMENT ) ... </k>
+    rule <k> ( elem IDX:Int       (offset IS) ELEMSEGMENT ) => IS ~> elem { IDX                ELEMSEGMENT } ... </k>
+    rule <k> ( elem ID:Identifier (offset IS) ELEMSEGMENT ) => IS ~> elem { IDX                ELEMSEGMENT } ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR  </modIdx>
+           <tabIds> ... ID |-> IDX ... </tabIds>
+           ...
+         </moduleInst>
+
+    syntax DataDefn ::= "(" "data" Index Offset DataString ")"
+                      | "(" "data"       Offset DataString ")"
+ // ----------------------------------------------------------
+    // Default to memory 0.
+    rule <k> ( data               OFFSET:Offset STRINGS ) =>     ( data   0      OFFSET      STRINGS            ) ... </k>
+    rule <k> ( data MEMIDX        IS:Instr      STRINGS ) =>     ( data   MEMIDX (offset IS) STRINGS            ) ... </k>
+    rule <k> ( data IDX:Int       (offset IS)   STRINGS ) => IS ~> data { IDX               #DS2Bytes(STRINGS) } ... </k>
+    rule <k> ( data ID:Identifier (offset IS)   STRINGS ) => IS ~> data { IDX               #DS2Bytes(STRINGS) } ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR  </modIdx>
+           <memIds> ... TABIDX |-> IDX ... </memIds>
+           ...
+         </moduleInst>
+```
+
 Exports
 -------
 
