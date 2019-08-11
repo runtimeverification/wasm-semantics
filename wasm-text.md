@@ -8,20 +8,60 @@ require "data.k"
 module WASM-TEXT-SYNTAX
     imports WASM-TEXT
     imports WASM-SYNTAX
-endmodule
+```
 
+Identifiers
+-----------
+
+In WebAssembly, identifiers are defined by the regular expression below.
+
+```k
+    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
+ // -----------------------------------------------------------------------
+```
+
+Integers
+--------
+
+In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
+In both cases, digits can optionally be separated by underscores.
+
+```k
+    syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
+                     | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
+ // -------------------------------------------------------------------
+```
+
+```k
+endmodule
+```
+
+```k
 module WASM-TEXT
     imports WASM
 ```
 
 The text format is a concrete syntax for Wasm.
-It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
 Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
+
+Values
+------
+
+We define `NValType` which stands for `named valtype`, representing values that has an identifier associated to it.
+
+```k
+    syntax NValType ::= "{" Identifier AValType "}"
+    syntax ValType ::= NValType
+ // ---------------------------
+    rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
+    rule <k> #init_localids I:Int { ID V }   VS => #init_localids I +Int 1 VS ... </k>
+         <localIds> LOCALIDS => LOCALIDS [ ID <- I ] </localIds>
+```
 
 Folded Instructions
 -------------------
 
-Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
+Folded instructions are a syntactic sugar where expressions can be grouped using parentheses, like S-expressions, for higher readability.
 
 ```k
     syntax Instr ::= FoldedInstr
@@ -59,8 +99,18 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
-Looking up Indices
-------------------
+Identifiers
+-----------
+
+In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
+And we use `OptionalId` to handle the case where an identifier could be omitted.
+
+```k
+    syntax Identifier ::= #freshId ( Int )
+    syntax OptionalId ::= "" [klabel(.Identifier)]
+                        | Identifier
+ // --------------------------------
+```
 
 In the abstract Wasm syntax, indices are always integers.
 In the text format, we extend indices to incorporate identifiers.

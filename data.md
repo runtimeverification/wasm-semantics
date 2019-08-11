@@ -28,26 +28,6 @@ Note that you cannot use a normal K `String` in any production definitions, beca
  // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ```
 
-### Identifiers
-
-In WebAssembly, identifiers are defined by the regular expression below.
-
-```k
-    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
- // -----------------------------------------------------------------------
-```
-
-### Integers
-
-In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
-In both cases, digits can optionally be separated by underscores.
-
-```k
-    syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
-                     | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
- // -------------------------------------------------------------------
-```
-
 ### Layout
 
 WebAssembly allows for block comments using `(;` and `;)`, and line comments using `;;`.
@@ -77,19 +57,6 @@ module WASM-DATA
     imports FLOAT
     imports BYTES
 ```
-
-In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
-And we use `OptionalId` to handle the case where an identifier could be omitted.
-
-```k
-    syntax Identifier ::= #freshId ( Int )
-    syntax OptionalId ::= "" [klabel(.Identifier)]
-                        | Identifier
- // --------------------------------
-```
-
-In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` being an index.
-This rule handles adding an `OptionalId` as a map key, but only when it is a proper identifier.
 
 ### Indices
 
@@ -149,16 +116,14 @@ WebAssembly Types
 
 WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 Here we define `AValType` which stands for `anonymous valtype`, representing values that doesn't have an identifier associated to it.
-Also we define `NValType` which stands for `named valtype`, representing values that has an identifier associated to it.
-`ValType` is the aggregation of `AValType` and `NValType`.
+`ValType` is the aggregation of all representations of values (the text format extends it with a named value type).
 
 ```k
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
     syntax AValType ::= IValType | FValType
-    syntax NValType ::= "{" Identifier AValType "}"
-    syntax ValType  ::= AValType | NValType
- // ---------------------------------------
+    syntax ValType  ::= AValType
+ // ----------------------------
 ```
 
 ### Type Constructors
@@ -189,7 +154,6 @@ We need helper functions to remove all the identifiers from a `ValTypes`.
  // ----------------------------------------------------------
     rule unnameValTypes ( .ValTypes     ) => .ValTypes
     rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
-    rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.

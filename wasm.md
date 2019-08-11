@@ -411,8 +411,6 @@ The various `init_local` variants assist in setting up the `locals` cell.
     rule <k> init_localids VTYPES => #init_localids 0 VTYPES ... </k>
     rule <k> #init_localids I:Int .ValTypes     => .                          ... </k>
     rule <k> #init_localids I:Int V:AValType VS => #init_localids I +Int 1 VS ... </k>
-    rule <k> #init_localids I:Int { ID V }   VS => #init_localids I +Int 1 VS ... </k>
-         <localIds> LOCALIDS => LOCALIDS [ ID <- I ] </localIds>
 ```
 
 The `*_local` instructions are defined here.
