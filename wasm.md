@@ -459,9 +459,9 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax Defn       ::= GlobalDefn
     syntax GlobalType ::= Mut AValType
-    syntax GlobalDefn ::= "global" GlobalType Instr
- // -----------------------------------------------
-    rule <k> global TYP:GlobalType IS:Instr => IS ~> #storeGlobal TYP ... </k>
+    syntax GlobalDefn ::= "global" "{" GlobalType Instr "}"
+ // -------------------------------------------------------
+    rule <k> global { TYP:GlobalType IS:Instr } => IS ~> #storeGlobal TYP ... </k>
 
     syntax Defn ::= "#storeGlobal" GlobalType
  // -----------------------------------------

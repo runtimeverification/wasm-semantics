@@ -250,7 +250,7 @@ In the abstract syntax, types are tagged with `var` or `const`, whereas in the t
     syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
  // ------------------------------------------------------------
     rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr )
-          => global asGMut(TYP) IS
+          => global { asGMut(TYP) IS }
           ~> #saveIdentifier global OID
           ...
          </k>
