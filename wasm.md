@@ -525,9 +525,7 @@ The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord
     syntax TypeKeyWord ::= "param" | "result"
  // -----------------------------------------
 
-    syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
-                       | TypeKeyWord ValTypes
-                       | "param" Identifier AValType
+    syntax TypeDecl  ::= TypeKeyWord ValTypes
     syntax TypeDecls ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
  // ---------------------------------------------------------------
 
@@ -540,8 +538,6 @@ The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord
     rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS:TypeDecls , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
     rule #gatherTypes(TKW , TKW         TYPES':ValTypes TDECLS:TypeDecls , TYPES)
       => #gatherTypes(TKW ,                             TDECLS:TypeDecls , TYPES + TYPES')
-    rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
-    rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + { ID VTYPE } .ValTypes)
 ```
 
 ### Type Use
@@ -568,19 +564,14 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 
 ### Type Declaration
 
-Type could be declared explicitly and could optionally bind with an identifier.
-`identifier` for `param` will be used only when the function type is declared when defining a function.
-When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
-
 ```k
     syntax Defn     ::= TypeDefn
-    syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
- // -------------------------------------------------------------------
-    rule <k> (type ID (func TDECLS:TypeDecls)) => . ... </k>
+    syntax TypeDefn ::= "ftype" "{" TypeDecls "}"
+ // --------------------------------------------
+    rule <k> ftype { TDECLS:TypeDecls } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <typeIds> IDS => #saveId(IDS, ID, NEXTIDX) </typeIds>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
            <types> TYPES => TYPES [NEXTIDX <- unnameFuncType(asFuncType(TDECLS))] </types>
            ...
@@ -593,20 +584,18 @@ Function Declaration and Invocation
 ### Function Local Declaration
 
 ```k
-    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
-                        | "local"            ValTypes
-                        | "local" Identifier AValType
-    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
- // -------------------------------------------------------------------------
+    syntax LocalDecl  ::= "(" LocalDecl ")"    [bracket]
+                        | "local" ValTypes
+    syntax LocalDecls ::= List{LocalDecl , ""} [klabel(listLocalDecl)]
+ // ------------------------------------------------------------------
 
     syntax VecType ::=  asLocalType ( LocalDecls            ) [function]
                      | #asLocalType ( LocalDecls , ValTypes ) [function]
  // -------------------------------------------------------------------
     rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
 
-    rule #asLocalType(.LocalDecls                                            , VTYPES) => [ VTYPES ]
-    rule #asLocalType(local               VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
-    rule #asLocalType(local ID:Identifier VTYPE:AValType   LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + { ID VTYPE } .ValTypes)
+    rule #asLocalType(.LocalDecls                              , VTYPES) => [ VTYPES ]
+    rule #asLocalType(local VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
 ```
 
 ### Function Implicit Type Declaration
@@ -618,7 +607,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
  // ------------------------------------------
     rule <k> #checkTypeUse ( TDECLS:TypeDecls )
        => #if notBool unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
-          #then (type (func TDECLS))
+          #then ftype { TDECLS }
           #else .K
           #fi
          ...
@@ -645,15 +634,14 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax Defn     ::= FuncDefn
     syntax FuncSpec ::= TypeUse LocalDecls Instrs
-    syntax FuncDefn ::= "(" "func" OptionalId FuncSpec ")"
- // ------------------------------------------------------
-    rule <k> ( func OID:OptionalId TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
+    syntax FuncDefn ::= "func" "{" FuncSpec "}"
+ // -------------------------------------------
+    rule <k> func { TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs } => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, OID, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </funcAddrs>
            ...
