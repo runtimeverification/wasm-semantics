@@ -37,9 +37,9 @@ TODO: Move Ids out of this configuration completely.
             <funcIds>     .Map </funcIds>
             <funcAddrs>   .Map </funcAddrs>
             <nextFuncIdx> 0    </nextFuncIdx>
-            <tabIds>      .Map </tabIds>
+            <tableIds>    .Map </tableIds>
             <tabAddrs>    .Map </tabAddrs>
-            <memIds>      .Map </memIds>
+            <memoryIds>   .Map </memoryIds>
             <memAddrs>    .Map </memAddrs>
             <globalIds>   .Map </globalIds>
             <globalAddrs> .Map </globalAddrs>
@@ -1186,13 +1186,13 @@ Exports make functions, tables, memories and globals available for importing int
 
 ```k
     syntax Defn       ::= ExportDefn
-    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
- // -------------------------------------------------------------------
-    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </k>
+    syntax ExportDefn ::= "export" "{" WasmString Externval "}"
+ // -----------------------------------------------------------
+    rule <k> export { ENAME  _:AllocatedKind IDX:Int } => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
+           <exports> EXPORTS => EXPORTS [ ENAME <- IDX ] </exports>
            ...
          </moduleInst>
 ```
@@ -1225,9 +1225,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcIds> IDS' </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </funcAddrs>
-           <exports>   ... NAME |-> TFIDX                        ... </exports>
+           <exports>   ... NAME |-> IDX  ... </exports>
+           <funcAddrs> ... IDX  |-> ADDR ... </funcAddrs>
            ...
          </moduleInst>
          <funcDef>
@@ -1247,9 +1246,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <tabIds> IDS' </tabIds>
-           <tabAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </tabAddrs>
-           <exports>  ... NAME |-> TFIDX                        ... </exports>
+           <exports>   ... NAME |-> IDX  ... </exports>
+           <tabAddrs>  ... IDX  |-> ADDR ... </tabAddrs>
            ...
          </moduleInst>
          <tabInst>
@@ -1270,9 +1268,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <memIds> IDS' </memIds>
-           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
-           <exports>  ... NAME |-> TFIDX                        ... </exports>
+           <exports>   ... NAME |-> IDX  ... </exports>
+           <memAddrs>  ... IDX  |-> ADDR ... </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1294,9 +1291,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <globalIds> IDS' </globalIds>
-           <globalAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalAddrs>
-           <exports>     ... NAME |-> TFIDX                        ... </exports>
+           <exports>      ... NAME |-> IDX  ... </exports>
+           <globalAddrs>  ... IDX  |-> ADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>

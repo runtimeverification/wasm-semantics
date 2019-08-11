@@ -286,7 +286,7 @@ TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIds> IDS => IDS [ ID <- 0] </tabIds>
+           <tableIds> IDS => IDS [ ID <- 0] </tableIds>
            ...
          </moduleInst>
 
@@ -294,7 +294,7 @@ TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS => IDS [ ID <- 0] </memIds>
+           <memoryIds> IDS => IDS [ ID <- 0] </memoryIds>
            ...
          </moduleInst>
 
@@ -432,7 +432,7 @@ Intitial memory data, and initial table elements can be given inline in the text
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR  </modIdx>
-           <tabIds> ... ID |-> IDX ... </tabIds>
+           <tableIds> ... ID |-> IDX ... </tableIds>
            ...
          </moduleInst>
 
@@ -447,7 +447,8 @@ Intitial memory data, and initial table elements can be given inline in the text
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR  </modIdx>
-           <memIds> ... TABIDX |-> IDX ... </memIds>
+           <memoryIds> ... TABIDX |-> IDX ... </memoryIds>
+
            ...
          </moduleInst>
 ```
@@ -470,6 +471,44 @@ Intitial memory data, and initial table elements can be given inline in the text
 Exports
 -------
 
+```k
+    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
+ // -------------------------------------------------------------------
+    rule <k> ( export ENAME ( A:AllocatedKind IDX:Int       ) ) => export { ENAME A IDX }... </k>
+
+    rule <k> ( export ENAME ( func ID:Identifier ) ) => export { ENAME func IDX }... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> ... ID |-> IDX ... </funcIds>
+           ...
+         </moduleInst>
+
+    rule <k> ( export ENAME ( table ID:Identifier ) ) => export { ENAME table IDX }... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <tableIds> ... ID |-> IDX ... </tableIds>
+           ...
+         </moduleInst>
+
+    rule <k> ( export ENAME ( memory ID:Identifier ) ) => export { ENAME memory IDX }... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memoryIds> ... ID |-> IDX ... </memoryIds>
+           ...
+         </moduleInst>
+
+    rule <k> ( export ENAME ( global ID:Identifier ) ) => export { ENAME global IDX }... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIds> ... ID |-> IDX ... </globalIds>
+           ...
+         </moduleInst>
+```
+
 Exports can be declared like regular functions, memories, etc., by giving an inline export declaration.
 In that case, it simply desugars to the definition followed by an export of it.
 If no identifer is present, one must be introduced so that the export can refer to it.
@@ -488,8 +527,8 @@ Note that it is possible to define multiple exports inline, i.e. export a single
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
     rule <k> ( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec )
-          => ( export ENAME ( global ID ) )
-          ~> ( global ID SPEC )
+          => ( global ID SPEC )
+          ~> ( export ENAME ( global ID ) )
           ...
          </k>
 
@@ -502,8 +541,8 @@ Note that it is possible to define multiple exports inline, i.e. export a single
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
     rule <k> ( func ID:Identifier ( export ENAME ) SPEC:FuncSpec )
-          => ( export ENAME ( func ID ) )
-          ~> ( func ID SPEC )
+          => ( func ID SPEC )
+          ~> ( export ENAME ( func ID ) )
           ...
          </k>
 
@@ -516,8 +555,8 @@ Note that it is possible to define multiple exports inline, i.e. export a single
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
     rule <k> ( table ID:Identifier ( export ENAME ) SPEC:TableSpec )
-          => ( export ENAME ( table ID ) )
-          ~> ( table ID SPEC )
+          => ( table ID SPEC )
+          ~> ( export ENAME ( table ID ) )
           ...
          </k>
 
@@ -530,8 +569,8 @@ Note that it is possible to define multiple exports inline, i.e. export a single
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
 
     rule <k> ( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec )
-          => ( export ENAME ( memory ID ) )
-          ~> ( memory ID SPEC )
+          => ( memory ID SPEC )
+          ~> ( export ENAME ( memory ID ) )
           ...
          </k>
 ```

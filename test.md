@@ -329,7 +329,7 @@ This asserts related operation about tables.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIds> IDS </tabIds>
+           <tableIds> IDS </tableIds>
            <tabAddrs> #ContextLookup(IDS, TFIDX) |-> ADDR </tabAddrs>
            ...
          </moduleInst>
@@ -373,7 +373,7 @@ This checks that the last allocated memory has the given size and max value.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS </memIds>
+           <memoryIds> IDS </memoryIds>
            <memAddrs> #ContextLookup(IDS, TFIDX) |-> ADDR </memAddrs>
            ...
          </moduleInst>
