@@ -91,13 +91,6 @@ And we use `OptionalId` to handle the case where an identifier could be omitted.
 In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` being an index.
 This rule handles adding an `OptionalId` as a map key, but only when it is a proper identifier.
 
-```k
-    syntax Map ::= #saveId (Map, OptionalId, Int) [function]
- // -------------------------------------------------------
-    rule #saveId (MAP, ID:OptionalId, _)   => MAP             requires notBool isIdentifier(ID)
-    rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
-```
-
 ### Indices
 
 Many constructions in Wasm, such a functions, labels, locals, types, etc., are referred to by their index.
