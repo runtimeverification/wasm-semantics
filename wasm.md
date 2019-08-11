@@ -709,12 +709,11 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```k
     syntax PlainInstr ::= "call" Index
  // ----------------------------------
-    rule <k> call TFIDX => ( invoke FADDR:Int ) ... </k>
+    rule <k> call I => ( invoke FADDR:Int ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcIds> IDS </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... I |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 ```

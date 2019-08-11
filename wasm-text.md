@@ -241,6 +241,18 @@ In the text format, it is also allowed to have a conditional without the `else` 
          </moduleInst>
 ```
 
+#### Function call
+
+```k
+    rule <k> call ID:Identifier => call I:Int ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> ... ID |-> I ... </funcIds>
+           ...
+         </moduleInst>
+```
+
 Definitions
 -----------
 
