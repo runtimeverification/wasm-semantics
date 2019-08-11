@@ -206,6 +206,23 @@ In the text format, it is also allowed to have a conditional without the `else` 
        andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
 ```
 
+### Plain Instructions
+
+```k
+    syntax PlainInstr ::= "local.get" Identifier
+                        | "local.set" Identifier
+                        | "local.tee" Identifier
+ //---------------------------------------------
+    rule <k> local.get ID:Identifier => local.get I:Int ... </k>
+         <localIds> ... ID |-> I ... </localIds>
+
+    rule <k> local.set ID:Identifier => local.set I:Int ... </k>
+         <localIds> ... ID |-> I ... </localIds>
+
+    rule <k> local.tee ID:Identifier => local.tee I:Int ... </k>
+         <localIds> ... ID |-> I ... </localIds>
+```
+
 Definitions
 -----------
 

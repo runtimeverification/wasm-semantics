@@ -413,27 +413,24 @@ The various `init_local` variants assist in setting up the `locals` cell.
     rule <k> #init_localids I:Int V:AValType VS => #init_localids I +Int 1 VS ... </k>
 ```
 
-The `*_local` instructions are defined here.
+The `local.*` instructions are defined here.
 
 ```k
-    syntax PlainInstr ::= "local.get" Index
-                        | "local.set" Index
-                        | "local.tee" Index
- //----------------------------------------
-    rule <k> local.get TFIDX => . ... </k>
+    syntax PlainInstr ::= "local.get" Int
+                        | "local.set" Int
+                        | "local.tee" Int
+ //--------------------------------------
+    rule <k> local.get I => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> VALUE ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> VALUE ... </locals>
 
-    rule <k> local.set TFIDX => . ... </k>
+    rule <k> local.set I => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> (_ => VALUE) ... </locals>
 
-    rule <k> local.tee TFIDX => . ... </k>
+    rule <k> local.tee I => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> (_ => VALUE) ... </locals>
 ```
 
 ### Globals
