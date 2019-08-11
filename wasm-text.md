@@ -211,10 +211,6 @@ In the text format, it is also allowed to have a conditional without the `else` 
 #### Locals
 
 ```k
-    syntax PlainInstr ::= "local.get" Identifier
-                        | "local.set" Identifier
-                        | "local.tee" Identifier
- //---------------------------------------------
     rule <k> local.get ID:Identifier => local.get I:Int ... </k>
          <localIds> ... ID |-> I ... </localIds>
 
@@ -228,9 +224,6 @@ In the text format, it is also allowed to have a conditional without the `else` 
 #### Globals
 
 ```k
-    syntax PlainInstr ::= "global.get" Identifier
-                        | "global.set" Identifier
- //----------------------------------------------
     rule <k> global.get ID:Identifier => global.get I:Int ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>

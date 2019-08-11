@@ -416,10 +416,10 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `local.*` instructions are defined here.
 
 ```k
-    syntax PlainInstr ::= "local.get" Int
-                        | "local.set" Int
-                        | "local.tee" Int
- //--------------------------------------
+    syntax PlainInstr ::= "local.get" Index
+                        | "local.set" Index
+                        | "local.tee" Index
+ //----------------------------------------
     rule <k> local.get I => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... I |-> VALUE ... </locals>
@@ -474,9 +474,9 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax PlainInstr ::= "global.get" Int
-                        | "global.set" Int
- // --------------------------------------
+    syntax PlainInstr ::= "global.get" Index
+                        | "global.set" Index
+ // ----------------------------------------
     rule <k> global.get I => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
