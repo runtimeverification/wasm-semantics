@@ -1169,7 +1169,7 @@ A table index is optional and will be default to zero.
 ```k
     syntax Defn     ::= ElemDefn
     syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
-                      | "(" "elem"                   Offset ElemSegment ")"
+                      | "(" "elem"           Offset ElemSegment ")"
                       |     "elem" "{" Index        ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
  // ---------------------------------------------------------------------
@@ -1207,7 +1207,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 ```k
     syntax Defn     ::= DataDefn
     syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
-                      | "(" "data"                   Offset DataString ")"
+                      | "(" "data"           Offset DataString ")"
                       |     "data" "{" Index        Bytes      "}"
  // --------------------------------------------------------------
     // Default to memory 0.
