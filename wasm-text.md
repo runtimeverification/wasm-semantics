@@ -452,6 +452,21 @@ Intitial memory data, and initial table elements can be given inline in the text
          </moduleInst>
 ```
 
+### Start Function
+
+```k
+    syntax StartDefn ::= "(" "start" Index ")"
+ // ------------------------------------------
+    rule <k> ( start IDX:Int       ) => start { IDX } ... </k>
+    rule <k> ( start ID:Identifier ) => start { IDX } ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <funcIds> ... ID |-> IDX ... </funcIds>
+           ...
+         </moduleInst>
+```
+
 Exports
 -------
 
