@@ -89,7 +89,7 @@ We allow 2 kinds of actions:
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... NAME |-> TFIDX ... </exports>
-           <globIds> IDS </globIds>
+           <globalIds> IDS </globalIds>
            <globalAddrs> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalAddrs>
            ...
          </moduleInst>
@@ -250,7 +250,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS </globIds>
+           <globalIds> IDS </globalIds>
            <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>

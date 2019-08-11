@@ -41,7 +41,7 @@ TODO: Move Ids out of this configuration completely.
             <tabAddrs>    .Map </tabAddrs>
             <memIds>      .Map </memIds>
             <memAddrs>    .Map </memAddrs>
-            <globIds>     .Map </globIds>
+            <globalIds>   .Map </globalIds>
             <globalAddrs> .Map </globalAddrs>
             <nextGlobIdx>   0    </nextGlobIdx>
           </moduleInst>
@@ -474,16 +474,15 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax PlainInstr ::= "global.get" Index
-                        | "global.set" Index
- // ----------------------------------------
-    rule <k> global.get TFIDX => . ... </k>
+    syntax PlainInstr ::= "global.get" Int
+                        | "global.set" Int
+ // --------------------------------------
+    rule <k> global.get I => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS </globIds>
-           <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
+           <globalAddrs> ... I |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>
@@ -492,13 +491,12 @@ The `get` and `set` instructions read and write globals.
            ...
          </globalInst>
 
-    rule <k> global.set TFIDX => . ... </k>
+    rule <k> global.set I => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS </globIds>
-           <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
+           <globalAddrs> ... I |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>
@@ -1313,7 +1311,7 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <globIds> IDS' </globIds>
+           <globalIds> IDS' </globalIds>
            <globalAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalAddrs>
            <exports>     ... NAME |-> TFIDX                        ... </exports>
            ...

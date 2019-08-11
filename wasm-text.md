@@ -208,6 +208,8 @@ In the text format, it is also allowed to have a conditional without the `else` 
 
 ### Plain Instructions
 
+#### Locals
+
 ```k
     syntax PlainInstr ::= "local.get" Identifier
                         | "local.set" Identifier
@@ -221,6 +223,29 @@ In the text format, it is also allowed to have a conditional without the `else` 
 
     rule <k> local.tee ID:Identifier => local.tee I:Int ... </k>
          <localIds> ... ID |-> I ... </localIds>
+```
+
+#### Globals
+
+```k
+    syntax PlainInstr ::= "global.get" Identifier
+                        | "global.set" Identifier
+ //----------------------------------------------
+    rule <k> global.get ID:Identifier => global.get I:Int ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIds> ... ID |-> I ... </globalIds>
+           ...
+         </moduleInst>
+
+    rule <k> global.set ID:Identifier => global.set I:Int ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <globalIds> ... ID |-> I ... </globalIds>
+           ...
+         </moduleInst>
 ```
 
 Definitions
@@ -272,7 +297,7 @@ TODO: It's pretty ugly to access `NEXTIDX` the way we are doing here, ideally it
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS => IDS [ID <- NEXTIDX -Int 1] </globIds>
+           <globalIds> IDS => IDS [ID <- NEXTIDX -Int 1] </globalIds>
            <nextGlobIdx> NEXTIDX </nextGlobIdx>
            ...
          </moduleInst>
