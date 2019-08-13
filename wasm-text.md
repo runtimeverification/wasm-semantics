@@ -77,33 +77,29 @@ Block Instructions
 ------------------
 
 In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
-First, we allow identifiers on labels.
+First, we allow identifiers on labels, by allowing us to drop an identifier annotations right after a label.
 Encountering a label with an identifier is exactly like encontering a regular label, i.e. the identifier is ignored.
 
 ```k
-    syntax Label ::= "label" Identifier VecType "{" Instrs "}" ValStack
- // -------------------------------------------------------------------
-    rule <k> label _:Identifier [ TYPES ] { _ } VALSTACK' => . ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+    syntax Label ::= "labelId" Identifier
+ // -------------------------------------
+    rule <k>         labelId _ => . ... </k>
 ```
 
 Branching with an identifier is the same as branching to the label with that identifier.
 The correct label index is looked up by looking through the stack until a label with a matching identifier is encountered, counting the number of encountered labels along the way.
 
 ```k
-    rule <k> br N:Int ~> ( label _:Identifier [ TYPES ] { IS } VALSTACK'
-          => br N     ~>   label              [ TYPES ] { IS } VALSTACK' )
-          ...
-         </k>
+    rule <k> br N:Int ~> labelId _ => br N ... </k>
 
     rule <k> br ID:Identifier ~> CONT => br #getLabelIdx(CONT, ID) ~> CONT </k>
 
     syntax Int ::= #getLabelIdx(K, Identifier) [function]
  // -----------------------------------------------------
-    rule #getLabelIdx(label ID  [ _ ] { _ } _ ~> _   , ID) => 0
-    rule #getLabelIdx(label     [ _ ] { _ } _ ~> CONT, ID) => 1 +Int #getLabelIdx(CONT, ID)
-    rule #getLabelIdx(label ID' [ _ ] { _ } _ ~> CONT, ID) => 1 +Int #getLabelIdx(CONT, ID)
+    rule #getLabelIdx(labelId ID          ~> _   , ID) => -1
+    rule #getLabelIdx(labelId ID'         ~> CONT, ID) => #getLabelIdx(CONT, ID)
       requires ID' =/=K ID
+    rule #getLabelIdx(label [ _ ] { _ } _ ~> CONT, ID) => #getLabelIdx(CONT, ID) +Int 1
     rule #getLabelIdx(I:Instr   ~> CONT, ID) => #getLabelIdx(CONT, ID)
     rule #getLabelIdx(IS:Instrs ~> CONT, ID) => #getLabelIdx(CONT, ID)
 ```
@@ -118,15 +114,13 @@ If identifiers are used, one must occur after the initial keyword (`block`, `if`
 
     syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
  // --------------------------------------------------------------------------
-    rule <k> block ID:Identifier TDECLS IS end OID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
-         <valstack> VALSTACK => .ValStack </valstack>
+    rule <k> block ID:Identifier TDECLS IS end OID':OptionalId => block TDECLS IS end ~> labelId ID ... </k>
       requires ID ==K OID'
         orBool notBool isIdentifier(OID')
 
     syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
  // -------------------------------------------------------------------------
-    rule <k> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { loop ID TDECLS IS end } VALSTACK ... </k>
-         <valstack> VALSTACK => .ValStack </valstack>
+    rule <k> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => loop TDECLS IS end ~> labelId ID ... </k>
       requires ID ==K OID'
         orBool notBool isIdentifier(OID')
 ```
@@ -143,16 +137,8 @@ In the text format, it is also allowed to have a conditional without the `else` 
       requires ID ==K OID''
         orBool notBool isIdentifier(OID'')
 
-    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS  ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
-         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL =/=Int 0
-       andBool ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
-       andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
-
-    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS' ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
-         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-      requires VAL ==Int 0
-       andBool ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => if TDECLS:TypeDecls IS else IS' end ~> labelId ID ... </k>
+      requires ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
        andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
 ```
 
