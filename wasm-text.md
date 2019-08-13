@@ -64,15 +64,11 @@ Looking up Indices
 
 In the abstract Wasm syntax, indices are always integers.
 In the text format, we extend indices to incorporate identifiers.
+We also enable context lookups with identifiers.
 
 ```k
     syntax Index ::= Identifier
  // ---------------------------
-```
-
-We enable context lookups with identifiers.
-
-```k
     rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
       requires ID in_keys(IDS)
 ```
@@ -86,7 +82,7 @@ Encountering a label with an identifier is exactly like encontering a regular la
 
 ```k
     syntax Label ::= "label" Identifier VecType "{" Instrs "}" ValStack
- // --------------------------------------------------------------------
+ // -------------------------------------------------------------------
     rule <k> label _:Identifier [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 ```
