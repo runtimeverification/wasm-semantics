@@ -105,21 +105,25 @@ In the abstract syntax of Wasm, indicies are 32 bit unsigned integers.
 However, we extend the `Index` sort with another subsort, `Identifier`, in the text format.
 
 ```k
-    syntax Index ::= Int
- // --------------------
+    syntax Index ::= Int | Identifier
+ // ---------------------------------
+
 ```
 
-`Int` is the basic form of index, and indices always need to resolve to integers.
-In the text format, `Index` is extended with the `Identifier` subsort, and there needs to be a way to resolve it to an `Int`.
-In Wasm, the current "context" contains a mapping from identifiers to indices.
-The `#ContextLookup` function provides an extensible way to get an `Int` from an index.
-Any extension of the `Index` type requires that the function `#ContextLookup` is suitably extended.
-For `Int`, however, a the context is irrelevant and the index always just resolves to the integer.
+### Text Format Conventions
+
+The text format allows the use of symbolic identifiers in place of indices.
+To store these identifiers into concrete indices, some grammar productions are indexed by an identifier context `I` as a synthesized attribute that records the declared identifiers in each index space.
+To lookup an index from an `Index`, which may be either an identifer or a concrete index, we provide the operation `#ContextLookup`.
+It resolves to a concrete index if the input is a concrete index.
+If the the input is an identifier, the corresponding index is looked up in the supplied Map.
 
 ```k
     syntax Int ::= #ContextLookup ( Map , Index ) [function]
  // --------------------------------------------------------
     rule #ContextLookup(IDS:Map, I:Int) => I
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
 ```
 
 ### ElemSegment

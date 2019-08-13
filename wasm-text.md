@@ -59,50 +59,10 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
-Looking up Indices
-------------------
-
-In the abstract Wasm syntax, indices are always integers.
-In the text format, we extend indices to incorporate identifiers.
-
-```k
-    syntax Index ::= Identifier
- // ---------------------------
-```
-
-We enable context lookups with identifiers.
-
-```k
-    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
-      requires ID in_keys(IDS)
-```
-
 Block Instructions
 ------------------
 
-In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
-First, we allow identifiers on labels.
-
-```k
-    syntax Label ::= "label" Identifier VecType "{" Instrs "}" ValStack
- // --------------------------------------------------------------------
-    rule <k> label _:Identifier [ TYPES ] { _ } VALSTACK' => . ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-```
-
-Then, we define how to branch to identifiers, and how the branches using integers still match on named labels.
-
-```k
-    rule <k> br 0     ~> ( label _:Identifier [ TYPES ] { IS } VALSTACK' => label [ TYPES ] { IS } VALSTACK' ) ... </k>
-
-    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-    rule <k> br ID:Identifier ~> label [ TYPES ] { IS } VALSTACK' => br ID ... </k>
-    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
-      requires ID =/=K ID'
-```
-
-Finally, we introduce the text format block instructions, which may have identifiers after each keyword.
+Block instructions may have identifiers after each keyword.
 If more than one identifier is present, they all have to agree (they are just there to make clear what if-block they belong to).
 If identifiers are used, one must occur after the initial keyword (`block`, `if` or `loop`).
 
