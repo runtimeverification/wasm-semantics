@@ -59,10 +59,60 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
+Looking up Indices
+------------------
+
+In the abstract Wasm syntax, indices are always integers.
+In the text format, we extend indices to incorporate identifiers.
+
+```k
+    syntax Index ::= Identifier
+ // ---------------------------
+```
+
+We enable context lookups with identifiers.
+
+```k
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
+```
+
 Block Instructions
 ------------------
 
-Block instructions may have identifiers after each keyword.
+In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
+First, we allow identifiers on labels.
+Encountering a label with an identifier is exactly like encontering a regular label, i.e. the identifier is ignored.
+
+```k
+    syntax Label ::= "label" Identifier VecType "{" Instrs "}" ValStack
+ // --------------------------------------------------------------------
+    rule <k> label _:Identifier [ TYPES ] { _ } VALSTACK' => . ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+```
+
+Branching with an identifier is the same as branching to the label with that identifier.
+The correct label index is looked up by looking through the stack until a label with a matching identifier is encountered, counting the number of encountered labels along the way.
+
+```k
+    rule <k> br N:Int ~> ( label _:Identifier [ TYPES ] { IS } VALSTACK'
+          => br N     ~>   label              [ TYPES ] { IS } VALSTACK' )
+          ...
+         </k>
+
+    rule <k> br ID:Identifier ~> CONT => br #getLabelIdx(CONT, ID) ~> CONT </k>
+
+    syntax Int ::= #getLabelIdx(K, Identifier) [function]
+ // -----------------------------------------------------
+    rule #getLabelIdx(label ID  [ _ ] { _ } _ ~> _   , ID) => 0
+    rule #getLabelIdx(label     [ _ ] { _ } _ ~> CONT, ID) => 1 +Int #getLabelIdx(CONT, ID)
+    rule #getLabelIdx(label ID' [ _ ] { _ } _ ~> CONT, ID) => 1 +Int #getLabelIdx(CONT, ID)
+      requires ID' =/=K ID
+    rule #getLabelIdx(I:Instr   ~> CONT, ID) => #getLabelIdx(CONT, ID)
+    rule #getLabelIdx(IS:Instrs ~> CONT, ID) => #getLabelIdx(CONT, ID)
+```
+
+Finally, we introduce the text format block instructions, which may have identifiers after each keyword.
 If more than one identifier is present, they all have to agree (they are just there to make clear what if-block they belong to).
 If identifiers are used, one must occur after the initial keyword (`block`, `if` or `loop`).
 
