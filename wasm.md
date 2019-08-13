@@ -315,9 +315,9 @@ A block is the simplest way to create targets for break instructions (ie. jump d
 It simply executes the block then records a label with an empty continuation.
 
 ```k
-    syntax Label ::= "label" OptionalId VecType "{" Instrs "}" ValStack
- // -------------------------------------------------------------------
-    rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
+    syntax Label ::= "label" VecType "{" Instrs "}" ValStack
+ // --------------------------------------------------------
+    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
@@ -334,23 +334,19 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 ```k
     syntax PlainInstr ::= "br" Index
  // --------------------------------
-    rule <k> br TFIDX ~> (SS:Stmts => .) ... </k>
-    rule <k> br TFIDX ~> (PI:PlainInstr => .) ... </k>
-    rule <k> br 0     ~> label ID [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    rule <k> br IDX   ~> (SS:Stmts => .) ... </k>
+    rule <k> br IDX   ~> (PI:PlainInstr => .) ... </k>
+    rule <k> br 0     ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
     rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
       requires N >Int 0
-    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
-      requires ID =/=K ID'
 
     syntax PlainInstr ::= "br_if" Index
  // -----------------------------------
-    rule <k> br_if TFIDX => br TFIDX ... </k>
+    rule <k> br_if IDX => br IDX ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <k> br_if TFIDX => .    ... </k>
+    rule <k> br_if IDX => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
