@@ -77,15 +77,11 @@ And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 In the abstract Wasm syntax, indices are always integers.
 In the text format, we extend indices to incorporate identifiers.
+We enable context lookups with identifiers.
 
 ```k
     syntax Index ::= Identifier
  // ---------------------------
-```
-
-We enable context lookups with identifiers.
-
-```k
     rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
       requires ID in_keys(IDS)
 ```
