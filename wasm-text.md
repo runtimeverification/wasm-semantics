@@ -59,6 +59,57 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
+Block Instructions
+------------------
+
+Block instructions may have identifiers after each keyword.
+If more than one identifier is present, they all have to agree (they are just there to make clear what if-block they belong to).
+If identifiers are used, one must occur after the initial keyword (`block`, `if` or `loop`).
+
+```k
+    syntax Instr ::= BlockInstr
+ // ---------------------------
+
+    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
+ // --------------------------------------------------------------------------
+    rule <k> block ID:Identifier TDECLS IS end OID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
+      requires ID ==K OID'
+        orBool notBool isIdentifier(OID')
+
+    syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
+ // -------------------------------------------------------------------------
+    rule <k> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label ID gatherTypes(result, TDECLS) { loop ID TDECLS IS end } VALSTACK ... </k>
+         <valstack> VALSTACK => .ValStack </valstack>
+      requires ID ==K OID'
+        orBool notBool isIdentifier(OID')
+```
+
+In the text format, it is also allowed to have a conditional without the `else` branch.
+
+```k
+    syntax BlockInstr ::= "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // ------------------------------------------------------------------------------------------------
+    rule <k> if TDECLS:TypeDecls IS end => if TDECLS IS else .Instrs end ... </k>
+
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS                         end OID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
+      requires ID ==K OID''
+        orBool notBool isIdentifier(OID'')
+
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS  ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL =/=Int 0
+       andBool ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
+
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS' ~> label ID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+         <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+      requires VAL ==Int 0
+       andBool ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
+```
+
 Memory and Tables
 -----------------
 
