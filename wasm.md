@@ -326,7 +326,7 @@ We keep track of the number of labels on the stack, incrementing and decrementin
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
- // ---------------------------------------------------------------------
+ // -----------------------------------------------
     rule <k> block TDECLS IS end => IS ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
