@@ -14,8 +14,8 @@ export LUA_PATH
 
 .PHONY: all clean \
         deps ocaml-deps haskell-deps \
-        defn defn-ocaml defn-java defn-haskell \
-        build build-ocaml defn-haskell build-haskell \
+        defn defn-ocaml defn-java defn-haskell defn-llvm \
+        build build-ocaml defn-haskell build-haskell build-llvm \
         test test-execution test-simple test-prove test-klab-prove \
         media presentations reports
 
@@ -32,7 +32,7 @@ deps: $(K_SUBMODULE)/make.timestamp $(PANDOC_TANGLE_SUBMODULE)/make.timestamp oc
 
 $(K_SUBMODULE)/make.timestamp:
 	git submodule update --init --recursive
-	cd $(K_SUBMODULE) && mvn package -DskipTests -Dllvm.backend.skip
+	cd $(K_SUBMODULE) && mvn package -DskipTests
 	touch $(K_SUBMODULE)/make.timestamp
 
 $(PANDOC_TANGLE_SUBMODULE)/make.timestamp:
@@ -60,12 +60,17 @@ haskell_dir:=$(DEFN_DIR)/haskell
 haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
 haskell_kompiled:=$(haskell_dir)/test-kompiled/definition.kore
 
+llvm_dir:=$(DEFN_DIR)/llvm
+llvm_defn:=$(patsubst %, $(llvm_dir)/%, $(wasm_files))
+llvm_kompiled:=$(llvm_dir)/test-kompiled/definition.kore
+
 # Tangle definition from *.md files
 
 defn: defn-ocaml defn-java defn-haskell
 defn-ocaml: $(ocaml_defn)
 defn-java: $(java_defn)
 defn-haskell: $(haskell_defn)
+defn-llvm: $(llvm_defn)
 
 $(ocaml_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 	@echo "==  tangle: $@"
@@ -82,30 +87,42 @@ $(haskell_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 	mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
+$(llvm_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
+	@echo "==  tangle: $@"
+	mkdir -p $(dir $@)
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
+
 # Build definitions
 
-build: build-ocaml build-java build-haskell
+build: build-ocaml build-java build-haskell build-llvm
 build-ocaml: $(ocaml_kompiled)
 build-java: $(java_kompiled)
 build-haskell: $(haskell_kompiled)
+build-llvm: $(llvm_kompiled)
 
 $(ocaml_kompiled): $(ocaml_defn)
 	@echo "== kompile: $@"
-	eval $$(opam config env)                                 \
-	    $(K_BIN)/kompile -O3 --non-strict --backend ocaml    \
-	    --directory $(ocaml_dir) -I $(ocaml_dir)             \
+	eval $$(opam config env)                                        \
+	    $(K_BIN)/kompile -O3 --non-strict --backend ocaml           \
+	    --directory $(ocaml_dir) -I $(ocaml_dir)                    \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
-	$(K_BIN)/kompile --backend java                          \
-	    --directory $(java_dir) -I $(java_dir)               \
+	$(K_BIN)/kompile --backend java                                 \
+	    --directory $(java_dir) -I $(java_dir)                      \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
-	$(K_BIN)/kompile --backend haskell                       \
-	    --directory $(haskell_dir) -I $(haskell_dir)         \
+	$(K_BIN)/kompile --backend haskell                              \
+	    --directory $(haskell_dir) -I $(haskell_dir)                \
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+
+$(llvm_kompiled): $(llvm_defn)
+	@echo "== kompile: $@"
+	$(K_BIN)/kompile --backend llvm                                 \
+	    --directory $(llvm_dir) -I $(llvm_dir)                      \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 # Testing
