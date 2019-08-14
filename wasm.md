@@ -102,13 +102,16 @@ All places in the data with no entry are considered zero bytes.
 Instructions
 ------------
 
-### Text Format
+According to the WebAssembly semantics there are 3 categories of instructions.
 
-WebAssmebly code consists of instruction sequences.
-The basic abstract syntax contains only the `instr` syntax production.
-The text format also specifies the `plaininstr`, which corresponds almost exactly to the the `instr` production.
+-  Plain Instructions (`PlainInstr`): Most instructions are plain instructions. They could be wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
+-  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier.
+-  Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
 
-Most instructions are plain instructions.
+The core semantics deals with plain instructions and block instructions.
+Folded instructions are part of the text format only.
+
+Also in our definition, there are some helper instructions not directly used in programs but will help us define the rules, they are directly subsorted into `Instr`.
 
 ```k
     syntax Instr ::= PlainInstr | BlockInstr
