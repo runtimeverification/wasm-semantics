@@ -77,31 +77,16 @@ Block Instructions
 ------------------
 
 In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
-First, we allow identifiers on labels, by allowing us to drop an identifier annotations right after a label.
-Encountering a label with an identifier is exactly like encontering a regular label, i.e. the identifier is ignored.
-
-```k
-    syntax Label ::= "labelId" Identifier
- // -------------------------------------
-    rule <k>         labelId _ => . ... </k>
-```
+The `<labelIds>` cell maps labels to the depth at which they occur.
+To ensure the bookkeeping mapping in `<labelIds>` is properly updated when branching, we don't make a new `Label` production, but instead a different one: `IdLabel`.
 
 Branching with an identifier is the same as branching to the label with that identifier.
-The correct label index is looked up by looking through the stack until a label with a matching identifier is encountered, counting the number of encountered labels along the way.
+The correct label index is calculated by looking at whih depth the index occured and what depth execution is currently at.
 
 ```k
-    rule <k> br N:Int ~> labelId _ => br N ... </k>
-
-    rule <k> br ID:Identifier ~> CONT => br #getLabelIdx(CONT, ID) ~> CONT </k>
-
-    syntax Int ::= #getLabelIdx(K, Identifier) [function]
- // -----------------------------------------------------
-    rule #getLabelIdx(labelId ID          ~> _   , ID) => -1
-    rule #getLabelIdx(labelId ID'         ~> CONT, ID) => #getLabelIdx(CONT, ID)
-      requires ID' =/=K ID
-    rule #getLabelIdx(label [ _ ] { _ } _ ~> CONT, ID) => #getLabelIdx(CONT, ID) +Int 1
-    rule #getLabelIdx(I:Instr   ~> CONT, ID) => #getLabelIdx(CONT, ID)
-    rule #getLabelIdx(IS:Instrs ~> CONT, ID) => #getLabelIdx(CONT, ID)
+    rule <k> br ID:Identifier => br DEPTH -Int DEPTH' -Int 1 ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> ... ID |-> DEPTH' ... </labelIds>
 ```
 
 Finally, we introduce the text format block instructions, which may have identifiers after each keyword.
@@ -114,13 +99,17 @@ If identifiers are used, one must occur after the initial keyword (`block`, `if`
 
     syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
  // --------------------------------------------------------------------------
-    rule <k> block ID:Identifier TDECLS IS end OID':OptionalId => block TDECLS IS end ~> labelId ID ... </k>
+    rule <k> block ID:Identifier TDECLS IS end OID':OptionalId => block TDECLS IS end ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
       requires ID ==K OID'
         orBool notBool isIdentifier(OID')
 
     syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
  // -------------------------------------------------------------------------
-    rule <k> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => loop TDECLS IS end ~> labelId ID ... </k>
+    rule <k> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => loop TDECLS IS end ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
       requires ID ==K OID'
         orBool notBool isIdentifier(OID')
 ```
@@ -133,11 +122,13 @@ In the text format, it is also allowed to have a conditional without the `else` 
  // ------------------------------------------------------------------------------------------------
     rule <k> if TDECLS:TypeDecls IS end => if TDECLS IS else .Instrs end ... </k>
 
-    rule <k> if ID:Identifier TDECLS:TypeDecls IS                         end OID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
       requires ID ==K OID''
         orBool notBool isIdentifier(OID'')
 
-    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => if TDECLS:TypeDecls IS else IS' end ~> labelId ID ... </k>
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => if TDECLS:TypeDecls IS else IS' end ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
       requires ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
        andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
 ```

@@ -209,4 +209,24 @@
 
 #assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 
+(module
+  (func (export "foo") (result i32)
+    (block $a (result i32)
+      (block $b (result i32)
+        (call $bar)
+        (i32.const 0)
+        (br $b)
+      )
+      (drop)
+      (i32.const 1)
+    )
+  )
+
+ (func $bar
+   (block $b (block $a (br $a)))
+ )
+)
+
+(assert_return (invoke "foo") (i32.const 1))
+
 #clearConfig

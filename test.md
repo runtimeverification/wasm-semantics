@@ -456,6 +456,8 @@ The modules are cleaned all together after the test file is executed.
          <valstack>        _ => .ValStack </valstack>
          <locals>          _ => .Map      </locals>
          <localIds>        _ => .Map      </localIds>
+         <labelDepth>      _ => 0         </labelDepth>
+         <labelIds>        _ => .Map      </labelIds>
          <nextFreshId>     _ => 0         </nextFreshId>
          <moduleInstances> _ => .Bag      </moduleInstances>
          <moduleIds>       _ => .Map      </moduleIds>
