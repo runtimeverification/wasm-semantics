@@ -1,15 +1,15 @@
 # Settings
 # --------
 
-build_dir:=.build
-deps_dir:=deps
-defn_dir:=$(build_dir)/defn
-k_submodule:=$(deps_dir)/k
-pandoc_tangle_submodule:=$(deps_dir)/pandoc-tangle
-k_bin:=$(k_submodule)/k-distribution/target/release/k/bin
-tangler:=$(pandoc_tangle_submodule)/tangle.lua
+BUILD_DIR:=.build
+DEPS_DIR:=deps
+DEFN_DIR:=$(BUILD_DIR)/defn
+K_SUBMODULE:=$(DEPS_DIR)/k
+PANDOC_TANGLE_SUBMODULE:=$(DEPS_DIR)/pandoc-tangle
+K_BIN:=$(K_SUBMODULE)/k-distribution/target/release/k/bin
+TANGLER:=$(PANDOC_TANGLE_SUBMODULE)/tangle.lua
 
-LUA_PATH=$(pandoc_tangle_submodule)/?.lua;;
+LUA_PATH=$(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
 .PHONY: all clean \
@@ -22,22 +22,22 @@ export LUA_PATH
 all: build
 
 clean:
-	rm -rf $(build_dir)
+	rm -rf $(BUILD_DIR)
 	git submodule update --init --recursive
 
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(k_submodule)/make.timestamp $(pandoc_tangle_submodule)/make.timestamp ocaml-deps
+deps: $(K_SUBMODULE)/make.timestamp $(PANDOC_TANGLE_SUBMODULE)/make.timestamp ocaml-deps
 
-$(k_submodule)/make.timestamp:
+$(K_SUBMODULE)/make.timestamp:
 	git submodule update --init --recursive
-	cd $(k_submodule) && mvn package -DskipTests -Dllvm.backend.skip
-	touch $(k_submodule)/make.timestamp
+	cd $(K_SUBMODULE) && mvn package -DskipTests -Dllvm.backend.skip
+	touch $(K_SUBMODULE)/make.timestamp
 
-$(pandoc_tangle_submodule)/make.timestamp:
-	git submodule update --init -- $(pandoc_tangle_submodule)
-	touch $(pandoc_tangle_submodule)/make.timestamp
+$(PANDOC_TANGLE_SUBMODULE)/make.timestamp:
+	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
+	touch $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 
 ocaml-deps:
 	eval $$(opam config env) \
@@ -48,15 +48,15 @@ ocaml-deps:
 
 wasm_files:=test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k
 
-ocaml_dir:=$(defn_dir)/ocaml
+ocaml_dir:=$(DEFN_DIR)/ocaml
 ocaml_defn:=$(patsubst %, $(ocaml_dir)/%, $(wasm_files))
 ocaml_kompiled:=$(ocaml_dir)/test-kompiled/interpreter
 
-java_dir:=$(defn_dir)/java
+java_dir:=$(DEFN_DIR)/java
 java_defn:=$(patsubst %, $(java_dir)/%, $(wasm_files))
 java_kompiled:=$(java_dir)/test-kompiled/compiled.txt
 
-haskell_dir:=$(defn_dir)/haskell
+haskell_dir:=$(DEFN_DIR)/haskell
 haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
 haskell_kompiled:=$(haskell_dir)/test-kompiled/definition.kore
 
@@ -67,20 +67,20 @@ defn-ocaml: $(ocaml_defn)
 defn-java: $(java_defn)
 defn-haskell: $(haskell_defn)
 
-$(ocaml_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
+$(ocaml_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
-	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(java_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
+$(java_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
-	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(haskell_dir)/%.k: %.md $(pandoc_tangle_submodule)/make.timestamp
+$(haskell_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 	@echo "==  tangle: $@"
 	mkdir -p $(dir $@)
-	pandoc --from markdown --to $(tangler) --metadata=code:.k $< > $@
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 # Build definitions
 
@@ -92,19 +92,19 @@ build-haskell: $(haskell_kompiled)
 $(ocaml_kompiled): $(ocaml_defn)
 	@echo "== kompile: $@"
 	eval $$(opam config env)                                 \
-	    $(k_bin)/kompile -O3 --non-strict --backend ocaml    \
+	    $(K_BIN)/kompile -O3 --non-strict --backend ocaml    \
 	    --directory $(ocaml_dir) -I $(ocaml_dir)             \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
-	$(k_bin)/kompile --backend java                          \
+	$(K_BIN)/kompile --backend java                          \
 	    --directory $(java_dir) -I $(java_dir)               \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
-	$(k_bin)/kompile --backend haskell                       \
+	$(K_BIN)/kompile --backend haskell                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)         \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
