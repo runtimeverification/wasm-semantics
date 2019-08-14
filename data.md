@@ -508,8 +508,7 @@ To avoid dealing with these data strings in K, we use a list of integers as an i
 
 ```k
     syntax WasmString ::= ".WasmString"
-    syntax String     ::= #parseWasmString   ( WasmString ) [function, functional, hook(STRING.token2string)]
-    syntax WasmString ::= #unparseWasmString ( String     ) [function, functional, hook(STRING.string2token)]
+    syntax String     ::= #parseWasmString ( WasmString ) [function, functional, hook(STRING.token2string)]
     syntax DataString ::= List{WasmString, ""}            [klabel(listWasmString)]
  // ------------------------------------------------------------------------------
 ```
