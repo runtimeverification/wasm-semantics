@@ -111,8 +111,8 @@ The text format also specifies the `plaininstr`, which corresponds almost exactl
 Most instructions are plain instructions.
 
 ```k
-    syntax Instr ::= PlainInstr
- // ---------------------------
+    syntax Instr ::= PlainInstr | BlockInstr
+ // ----------------------------------------
 ```
 
 ### Sequencing
@@ -320,10 +320,12 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax Instr ::= "block" TypeDecls Instrs "end"
- // ---------------------------------------------------------------------
-    rule <k> block TDECLS IS end => IS ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
+ // --------------------------------------------------------------------------
+    rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
+      requires OID ==K OID'
+        orBool notBool isIdentifier(OID')
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -363,20 +365,31 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= "if" TypeDecls Instrs "else" Instrs "end"
- // ----------------------------------------------------------
-    rule <k> if TDECLS:TypeDecls IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    syntax BlockInstr ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // ------------------------------------------------------------------------------------------------
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS                         end OID'':OptionalId => if OID TDECLS IS else OID .Instrs end OID ... </k>
+      requires OID ==K OID''
+        orBool notBool isIdentifier(OID'')
+
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS  ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
+       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
 
-    rule <k> if TDECLS:TypeDecls IS else IS' end => IS' ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS' ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL ==Int 0
+       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
 
-    syntax Instr ::= "loop" TypeDecls Instrs "end"
- // ----------------------------------------------
-    rule <k> loop TDECLS:TypeDecls IS end => IS ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
+    syntax BlockInstr ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
+ // -------------------------------------------------------------------------
+    rule <k> loop OID:OptionalId TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { loop OID TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
+      requires OID ==K OID'
+        orBool notBool isIdentifier(OID')
 ```
 
 Variable Operators
