@@ -59,6 +59,80 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
+Looking up Indices
+------------------
+
+In the abstract Wasm syntax, indices are always integers.
+In the text format, we extend indices to incorporate identifiers.
+We also enable context lookups with identifiers.
+
+```k
+    syntax Index ::= Identifier
+ // ---------------------------
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
+```
+
+Block Instructions
+------------------
+
+In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
+The `<labelIds>` cell maps labels to the depth at which they occur.
+To ensure the bookkeeping mapping in `<labelIds>` is properly updated when branching, we don't make a new `Label` production, but instead a different one: `IdLabel`.
+
+Branching with an identifier is the same as branching to the label with that identifier.
+The correct label index is calculated by looking at whih depth the index occured and what depth execution is currently at.
+
+```k
+    rule <k> br ID:Identifier => br DEPTH -Int DEPTH' -Int 1 ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> ... ID |-> DEPTH' ... </labelIds>
+```
+
+Finally, we introduce the text format block instructions, which may have identifiers after each keyword.
+If more than one identifier is present, they all have to agree (they are just there to make clear what if-block they belong to).
+If identifiers are used, one must occur after the initial keyword (`block`, `if` or `loop`).
+
+```k
+    syntax Instr ::= BlockInstr
+ // ---------------------------
+
+    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
+ // --------------------------------------------------------------------------
+    rule <k> block ID:Identifier TDECLS IS end OID':OptionalId => block TDECLS IS end ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
+      requires ID ==K OID'
+        orBool notBool isIdentifier(OID')
+
+    syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
+ // -------------------------------------------------------------------------
+    rule <k> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => loop TDECLS IS end ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
+      requires ID ==K OID'
+        orBool notBool isIdentifier(OID')
+```
+
+In the text format, it is also allowed to have a conditional without the `else` branch.
+
+```k
+    syntax BlockInstr ::= "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // ------------------------------------------------------------------------------------------------
+    rule <k> if TDECLS:TypeDecls IS end => if TDECLS IS else .Instrs end ... </k>
+
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
+      requires ID ==K OID''
+        orBool notBool isIdentifier(OID'')
+
+    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => if TDECLS:TypeDecls IS else IS' end ... </k>
+         <labelDepth> DEPTH </labelDepth>
+         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
+      requires ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
+       andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
+```
+
 Memory and Tables
 -----------------
 

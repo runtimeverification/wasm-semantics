@@ -22,6 +22,8 @@ Configuration
           <locals>    .Map </locals>
           <localIds>  .Map </localIds>
           <curModIdx> .Int </curModIdx>
+          <labelDepth> 0   </labelDepth>
+          <labelIds>  .Map </labelIds>
         </curFrame>
         <moduleRegistry> .Map </moduleRegistry>
         <moduleIds> .Map </moduleIds>
@@ -102,20 +104,17 @@ All places in the data with no entry are considered zero bytes.
 Instructions
 ------------
 
-According to the WebAssembly semantics there are 3 categories of instructions.
+### Text Format
 
--  Plain Instructions (`PlainInstr`): Most instructions are plain instructions. They could be wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
--  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier.
--  Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
+WebAssmebly code consists of instruction sequences.
+The basic abstract syntax contains only the `instr` syntax production.
+The text format also specifies the `plaininstr`, which corresponds almost exactly to the the `instr` production.
 
-The core semantics deals with plain instructions and block instructions.
-Folded instructions are part of the text format only.
-
-Also in our definition, there are some helper instructions not directly used in programs but will help us define the rules, they are directly subsorted into `Instr`.
+Most instructions are plain instructions.
 
 ```k
-    syntax Instr ::= PlainInstr | BlockInstr
- // ----------------------------------------
+    syntax Instr ::= PlainInstr
+ // ---------------------------
 ```
 
 ### Sequencing
@@ -317,18 +316,20 @@ The supplied type represents the values that should taken from the current stack
 A block is the simplest way to create targets for break instructions (ie. jump destinations).
 It simply executes the block then records a label with an empty continuation.
 
-```k
-    syntax Label ::= "label" OptionalId VecType "{" Instrs "}" ValStack
- // -------------------------------------------------------------------
-    rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+We keep track of the number of labels on the stack, incrementing and decrementing the `<labelDepth>` counter when one is introduced or removed.
 
-    syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
- // --------------------------------------------------------------------------
-    rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+```k
+    syntax Label ::= "label" VecType "{" Instrs "}" ValStack
+ // --------------------------------------------------------
+    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
+         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+         <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
+
+    syntax Instr ::= "block" TypeDecls Instrs "end"
+ // -----------------------------------------------
+    rule <k> block TDECLS IS end => IS ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
-      requires OID ==K OID'
-        orBool notBool isIdentifier(OID')
+         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
 
 The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
@@ -339,23 +340,21 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 ```k
     syntax PlainInstr ::= "br" Index
  // --------------------------------
-    rule <k> br TFIDX ~> (SS:Stmts => .) ... </k>
-    rule <k> br TFIDX ~> (PI:PlainInstr => .) ... </k>
-    rule <k> br 0     ~> label ID [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    rule <k> br IDX   ~> (SS:Stmts => .) ... </k>
+    rule <k> br IDX   ~> (PI:PlainInstr => .) ... </k>
+    rule <k> br 0     ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+         <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
     rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
+         <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
       requires N >Int 0
-    rule <k> br ID:Identifier ~> label ID  [ TYPES ] { IS } VALSTACK' => IS ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
-    rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
-      requires ID =/=K ID'
 
     syntax PlainInstr ::= "br_if" Index
  // -----------------------------------
-    rule <k> br_if TFIDX => br TFIDX ... </k>
+    rule <k> br_if IDX => br IDX ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <k> br_if TFIDX => .    ... </k>
+    rule <k> br_if IDX => .    ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
@@ -368,31 +367,23 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax BlockInstr ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
-                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
- // ------------------------------------------------------------------------------------------------
-    rule <k> if OID:OptionalId TDECLS:TypeDecls IS                         end OID'':OptionalId => if OID TDECLS IS else OID .Instrs end OID ... </k>
-      requires OID ==K OID''
-        orBool notBool isIdentifier(OID'')
-
-    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS  ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    syntax Instr ::= "if" TypeDecls Instrs "else" Instrs "end"
+ // ----------------------------------------------------------
+    rule <k> if TDECLS:TypeDecls IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL =/=Int 0
-       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
-       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
 
-    rule <k> if OID:OptionalId TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => IS' ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> if TDECLS:TypeDecls IS else IS' end => IS' ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
+         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL ==Int 0
-       andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
-       andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
 
-    syntax BlockInstr ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
- // -------------------------------------------------------------------------
-    rule <k> loop OID:OptionalId TDECLS:TypeDecls IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { loop OID TDECLS IS end } VALSTACK ... </k>
+    syntax Instr ::= "loop" TypeDecls Instrs "end"
+ // ----------------------------------------------
+    rule <k> loop TDECLS:TypeDecls IS end => IS ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
-      requires OID ==K OID'
-        orBool notBool isIdentifier(OID')
+         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
 
 Variable Operators
@@ -708,12 +699,14 @@ Similar to labels, they sit on the instruction stack (the `<k>` cell), and `retu
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" Int ValTypes ValStack Map
- // --------------------------------------------------
-    rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </k>
+    syntax Frame ::= "frame" Int ValTypes ValStack Map Int Map
+ // ----------------------------------------------------------
+    rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELDEPTH LABELIDS => . ... </k>
          <valstack> VALSTACK => #take(unnameValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
+         <labelDepth> _ => LABELDEPTH </labelDepth>
+         <labelIds> _ => LABELIDS </labelIds>
 ```
 
 When we invoke a function, the element on the top of the stack will become the last parameter of the function.
@@ -728,12 +721,14 @@ The `#take` function will return the parameter stack in the reversed order, then
           => init_locals #revs(#take(#revt(unnameValTypes(TDOMAIN)), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
           ~> init_localids TDOMAIN + TLOCALS
           ~> INSTRS
-          ~> frame MODIDX TRANGE #drop(#revt(unnameValTypes(TDOMAIN)), VALSTACK) LOCAL
+          ~> frame MODIDX TRANGE #drop(#revt(unnameValTypes(TDOMAIN)), VALSTACK) LOCAL DEPTH IDS
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
          <locals> LOCAL => .Map </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
+         <labelDepth> DEPTH => 0 </labelDepth>
+         <labelIds> IDS => .Map </labelIds>
          <funcDef>
            <fAddr>    FADDR                     </fAddr>
            <fCode>    INSTRS                    </fCode>
