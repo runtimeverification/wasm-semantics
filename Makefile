@@ -62,7 +62,7 @@ haskell_kompiled:=$(haskell_dir)/test-kompiled/definition.kore
 
 llvm_dir:=$(DEFN_DIR)/llvm
 llvm_defn:=$(patsubst %, $(llvm_dir)/%, $(wasm_files))
-llvm_kompiled:=$(llvm_dir)/test-kompiled/definition.kore
+llvm_kompiled:=$(llvm_dir)/test-kompiled/interpreter
 
 # Tangle definition from *.md files
 
