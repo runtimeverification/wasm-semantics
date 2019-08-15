@@ -108,17 +108,14 @@ According to the WebAssembly semantics there are 3 categories of instructions.
 -  Structured control instructions (`BlockInstr`): Structured control instructions are used to control the program flow. They can be annotated with a symbolic label identifier.
 -  Folded Instructions (`FoldedInstr`): Folded Instructions describes the rules of desugaring plain instructions and block instructions.
 
+The core semantics deals with plain instructions and block instructions.
+Folded instructions are part of the text format only.
+
 Also in our definition, there are some helper instructions not directly used in programs but will help us define the rules, they are directly subsorted into `Instr`.
 
 ```k
-    syntax Instr ::= PlainInstr | BlockInstr | FoldedInstr
- // ------------------------------------------------------
-
-    syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
-                         | "(" PlainInstr        ")" [prefer]
- // ---------------------------------------------------------
-    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
-    rule <k> ( PI:PlainInstr           ):FoldedInstr =>       PI ... </k>
+    syntax Instr ::= PlainInstr | BlockInstr
+ // ----------------------------------------
 ```
 
 ### Sequencing
@@ -326,10 +323,6 @@ It simply executes the block then records a label with an empty continuation.
     rule <k> label ID [ TYPES ] { _ } VALSTACK' => . ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
- // ------------------------------------------------------------------
-    rule <k> ( block OID:OptionalId TDECLS:TypeDecls INSTRS:Instrs ) => block OID TDECLS INSTRS end ... </k>
-
     syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
  // --------------------------------------------------------------------------
     rule <k> block OID:OptionalId TDECLS IS end OID':OptionalId => IS ~> label OID gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
@@ -344,8 +337,8 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax PlainInstr ::= "br" TextFormatIdx
- // ----------------------------------------
+    syntax PlainInstr ::= "br" Index
+ // --------------------------------
     rule <k> br TFIDX ~> (SS:Stmts => .) ... </k>
     rule <k> br TFIDX ~> (PI:PlainInstr => .) ... </k>
     rule <k> br 0     ~> label ID [ TYPES ] { IS } VALSTACK' => IS ... </k>
@@ -357,8 +350,8 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> br ID:Identifier ~> label ID' [ TYPES ] { IS } VALSTACK' => br ID ... </k>
       requires ID =/=K ID'
 
-    syntax PlainInstr ::= "br_if" TextFormatIdx
- // -------------------------------------------
+    syntax PlainInstr ::= "br_if" Index
+ // -----------------------------------
     rule <k> br_if TFIDX => br TFIDX ... </k>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
@@ -375,12 +368,6 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
- // -----------------------------------------------------------------------------------------------------------
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if OID TDECLS IS else .Instrs end ... </k>
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if OID TDECLS IS else IS'     end ... </k>
-
     syntax BlockInstr ::= "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
  // ------------------------------------------------------------------------------------------------
@@ -399,10 +386,6 @@ Finally, we have the conditional and loop instructions.
       requires VAL ==Int 0
        andBool ( OID ==K OID'  orBool notBool isIdentifier(OID')  )
        andBool ( OID ==K OID'' orBool notBool isIdentifier(OID'') )
-
-    syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
- // -----------------------------------------------------------------
-    rule <k> ( loop OID:OptionalId TDECLS:TypeDecls IS ) => loop OID TDECLS IS end ... </k>
 
     syntax BlockInstr ::= "loop" OptionalId TypeDecls Instrs "end" OptionalId
  // -------------------------------------------------------------------------
@@ -453,10 +436,10 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax PlainInstr ::= "local.get" TextFormatIdx
-                        | "local.set" TextFormatIdx
-                        | "local.tee" TextFormatIdx
- //------------------------------------------------
+    syntax PlainInstr ::= "local.get" Index
+                        | "local.set" Index
+                        | "local.tee" Index
+ //----------------------------------------
     rule <k> local.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... #ContextLookup(IDS , TFIDX) |-> VALUE ... </locals>
@@ -524,9 +507,9 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax PlainInstr ::= "global.get" TextFormatIdx
-                        | "global.set" TextFormatIdx
- // ------------------------------------------------
+    syntax PlainInstr ::= "global.get" Index
+                        | "global.set" Index
+ // ----------------------------------------
     rule <k> global.get TFIDX => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
@@ -597,9 +580,9 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
 
 ```k
     syntax TypeUse ::= TypeDecls
-                     | "(type" TextFormatIdx ")"           [prefer]
-                     | "(type" TextFormatIdx ")" TypeDecls
- // ------------------------------------------------------
+                     | "(type" Index ")"           [prefer]
+                     | "(type" Index ")" TypeDecls
+ // ----------------------------------------------
 
     syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                       | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
@@ -771,8 +754,8 @@ The `#take` function will return the parameter stack in the reversed order, then
 `call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
 
 ```k
-    syntax PlainInstr ::= "call" TextFormatIdx
- // ------------------------------------------
+    syntax PlainInstr ::= "call" Index
+ // ----------------------------------
     rule <k> call TFIDX => ( invoke FADDR:Int ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -870,7 +853,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn      ::= TableDefn
     syntax TableType ::= Limits TableElemType
     syntax TableSpec ::= TableType
-                       | TableElemType "(" "elem" ElemSegment ")"
     syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
                        |     "table" "{" OptionalId Int OptionalInt "}"
  // -------------------------------------------------------------------
@@ -879,15 +861,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
-
-    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( table ID:Identifier funcref ( elem ES ) )
-          =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
-          ~> ( elem ID (i32.const 0) ES )
-          ...
-         </k>
 
     rule <k> table { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -935,7 +908,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn       ::= MemoryDefn
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
-                        | "(" "data" DataString ")"
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
                         |     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
@@ -944,14 +916,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-
-    rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( memory ID:Identifier ( data DS ) )
-          =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data ID (i32.const 0) DS ) ... </k>
-      requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     rule <k> memory { _ _ _ } => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1219,14 +1183,14 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ### Table initialization
 
 Tables can be initialized with element and the element type is always `funcref".
-The initialization of a table needs an offset and a list of functions, given as `TextFormatIdx`s.
+The initialization of a table needs an offset and a list of functions, given as `Index`s.
 A table index is optional and will be default to zero.
 
 ```k
     syntax Defn     ::= ElemDefn
-    syntax ElemDefn ::= "(" "elem"     TextFormatIdx Offset ElemSegment ")"
-                      | "(" "elem"                   Offset ElemSegment ")"
-                      |     "elem" "{" TextFormatIdx        ElemSegment "}"
+    syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
+                      | "(" "elem"           Offset ElemSegment ")"
+                      |     "elem" "{" Index        ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
  // ---------------------------------------------------------------------
     // Default to table with index 0.
@@ -1262,10 +1226,10 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 
 ```k
     syntax Defn     ::= DataDefn
-    syntax DataDefn ::= "(" "data"     TextFormatIdx Offset DataString ")"
-                      | "(" "data"                   Offset DataString ")"
-                      |     "data" "{" TextFormatIdx        Bytes      "}"
- // ----------------------------------------------------------------------
+    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
+                      | "(" "data"           Offset DataString ")"
+                      |     "data" "{" Index        Bytes      "}"
+ // --------------------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
     rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
@@ -1305,8 +1269,8 @@ The `start` component of a module declares the function index of a `start functi
 
 ```k
     syntax Defn      ::= StartDefn
-    syntax StartDefn ::= "(" "start" TextFormatIdx ")"
- // --------------------------------------------------
+    syntax StartDefn ::= "(" "start" Index ")"
+ // ------------------------------------------
     rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1326,78 +1290,13 @@ Exports make functions, tables, memories and globals available for importing int
     syntax Defn       ::= ExportDefn
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
  // -------------------------------------------------------------------
-    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:TextFormatIdx ) ) => . ... </k>
+    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
            ...
          </moduleInst>
-```
-
-Exports can also be declared like regular functions, memories, etc., by giving an inline export declaration.
-In that case, it simply desugars to an export followed by the definition, after introducing a fresh identifier if no identifier is present.
-Note that it is possible to define multiple exports inline, i.e., export a single entity under many names.
-
-```k
-    syntax InlineExport  ::= "(" "export" WasmString ")"
- // ----------------------------------------------------
-
-    syntax GlobalSpec ::= InlineExport GlobalSpec
- // ---------------------------------------------
-    rule <k> ( global                  EXPO:InlineExport SPEC:GlobalSpec )
-          => ( global #freshId(NEXTID) EXPO              SPEC            )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec )
-          => ( export ENAME ( global ID ) )
-          ~> ( global ID SPEC )
-          ...
-         </k>
-
-    syntax FuncSpec   ::= InlineExport FuncSpec
- // -------------------------------------------
-    rule <k> ( func                  EXPO:InlineExport SPEC:FuncSpec )
-          => ( func #freshId(NEXTID) EXPO              SPEC          )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( func ID:Identifier ( export ENAME ) SPEC:FuncSpec )
-          => ( export ENAME ( func ID ) )
-          ~> ( func ID SPEC )
-          ...
-         </k>
-
-    syntax TableSpec  ::= InlineExport TableSpec
- // --------------------------------------------
-    rule <k> ( table                  EXPO:InlineExport SPEC:TableSpec )
-          => ( table #freshId(NEXTID) EXPO              SPEC           )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( table ID:Identifier ( export ENAME ) SPEC:TableSpec )
-          => ( export ENAME ( table ID ) )
-          ~> ( table ID SPEC )
-          ...
-         </k>
-
-    syntax MemorySpec ::= InlineExport MemorySpec
- // ---------------------------------------------
-    rule <k> ( memory                  EXPO:InlineExport SPEC:MemorySpec )
-          => ( memory #freshId(NEXTID) EXPO              SPEC            )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec )
-          => ( export ENAME ( memory ID ) )
-          ~> ( memory ID SPEC )
-          ...
-         </k>
 ```
 
 Imports
@@ -1524,29 +1423,6 @@ The following function checks if the limits in the first parameter *match*, i.e.
     rule #limitsMatchImport(L1,      _, L2:Int   ) => L1 >=Int L2
     rule #limitsMatchImport( _,   .Int,  _:Int  _) => false
     rule #limitsMatchImport(L1, U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
-```
-
-Imports can also be declared like regular functions, memories, etc., by giving an inline import declaration.
-
-```k
-    syntax InlineImport ::= "(" "import" WasmString WasmString ")"
- // --------------------------------------------------------------
-
-    syntax GlobalSpec ::= InlineImport TextFormatGlobalType
- // -------------------------------------------------------
-    rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
-
-    syntax FuncSpec ::= InlineImport TypeUse
- // ----------------------------------------
-    rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
-
-    syntax TableSpec ::= InlineImport TableType
- // -------------------------------------------
-    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table OID TT) ) ... </k>
-
-    syntax MemorySpec ::= InlineImport MemType
- // ------------------------------------------
-    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
 ```
 
 Module Instantiation

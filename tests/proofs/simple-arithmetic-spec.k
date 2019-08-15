@@ -1,7 +1,7 @@
 requires "kwasm-lemmas.k"
 
 module SIMPLE-ARITHMETIC-SPEC
-    imports WASM
+    imports WASM-TEXT
     imports KWASM-LEMMAS
 
     rule <k> (ITYPE:IValType . const X:Int) => . ... </k>
