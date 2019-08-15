@@ -72,7 +72,9 @@ Intitial memory data, and initial table elements can be given inline in the text
 
     rule <k> ( memory ID:Identifier ( data DS ) )
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data ID (i32.const 0) DS ) ... </k>
+          ~> ( data ID (i32.const 0) DS )
+          ...
+         </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
