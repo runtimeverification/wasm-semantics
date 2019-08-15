@@ -19,14 +19,14 @@ pipeline {
     stage('Dependencies') {
       steps {
         sh '''
-          make deps -B
+          make deps
         '''
       }
     }
     stage('Build') {
       steps {
         sh '''
-          make build -B -j4
+          make build -j4
         '''
       }
     }
