@@ -9,6 +9,9 @@ PANDOC_TANGLE_SUBMODULE:=$(DEPS_DIR)/pandoc-tangle
 K_BIN:=$(K_SUBMODULE)/k-distribution/target/release/k/bin
 TANGLER:=$(PANDOC_TANGLE_SUBMODULE)/tangle.lua
 
+PATH:=$(K_BIN):$(PATH)
+export PATH
+
 LUA_PATH=$(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
@@ -103,25 +106,25 @@ build-llvm: $(llvm_kompiled)
 $(ocaml_kompiled): $(ocaml_defn)
 	@echo "== kompile: $@"
 	eval $$(opam config env)                                        \
-	    $(K_BIN)/kompile -O3 --non-strict --backend ocaml           \
+	    kompile -O3 --non-strict --backend ocaml                    \
 	    --directory $(ocaml_dir) -I $(ocaml_dir)                    \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
-	$(K_BIN)/kompile --backend java                                 \
+	kompile --backend java                                          \
 	    --directory $(java_dir) -I $(java_dir)                      \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
-	$(K_BIN)/kompile --backend haskell                              \
+	kompile --backend haskell                                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)                \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
 $(llvm_kompiled): $(llvm_defn)
 	@echo "== kompile: $@"
-	$(K_BIN)/kompile --backend llvm                                 \
+	kompile --backend llvm                                          \
 	    --directory $(llvm_dir) -I $(llvm_dir)                      \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
 
