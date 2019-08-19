@@ -50,6 +50,15 @@ pipeline {
             '''
           }
         }
+        stage('Exec LLVM') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make TEST_CONCRETE_BACKEND=llvm test-execution -j"$nprocs"
+            '''
+          }
+        }
         stage('Proofs Java') {
           steps {
             sh '''
