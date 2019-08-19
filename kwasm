@@ -5,7 +5,7 @@ shopt -s extglob
 
 kwasm_dir="${KWASM_DIR:-$(dirname $0)}"
 build_dir="$kwasm_dir/.build"
-defn_dir="$build_dir/defn"
+defn_dir="${KWASM_DEFN_DIR:-$build_dir/defn}"
 lib_dir="$build_dir/local/lib"
 k_release_dir="${K_RELEASE:-$kwasm_dir/deps/k/k-distribution/target/release/k}"
 
