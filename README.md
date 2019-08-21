@@ -101,6 +101,12 @@ If you haven't already setup K's OCaml dependencies more recently than February 
 **NOTE**: It may prove useful to first do `rm -rf ~/.opam` if you've setup K projcets in the past and are experiencing trouble with the newest opam libraries.
           This is a fairly destructive operation, and will break any other projects that depend on specific locally installed ocaml packages.
 
+Similarly, you'll need to setup K's Rust dependencies:
+
+```sh
+./deps/k/llvm-backend/src/main/native/llvm-backend/install-rust
+```
+
 Install repository specific dependencies:
 
 ```sh

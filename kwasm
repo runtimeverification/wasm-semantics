@@ -5,7 +5,7 @@ shopt -s extglob
 
 kwasm_dir="${KWASM_DIR:-$(dirname $0)}"
 build_dir="$kwasm_dir/.build"
-defn_dir="$build_dir/defn"
+defn_dir="${KWASM_DEFN_DIR:-$build_dir/defn}"
 lib_dir="$build_dir/local/lib"
 k_release_dir="${K_RELEASE:-$kwasm_dir/deps/k/k-distribution/target/release/k}"
 
@@ -81,12 +81,12 @@ view_klab() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (ocaml|java|haskell)] <pgm>  <K args>*
-           $0 kast       [--backend (ocaml|java)]         <pgm>  <output format> <K args>*
-           $0 prove      [--backend (java|haskell)]       <spec> <K args>* -m <def_module>
-           $0 klab-run                                    <pgm>  <K arg>*
-           $0 klab-prove                                  <spec> <K arg>* -m <def_module>
-           $0 klab-view                                   [<pgm>|<spec>]
+    usage: $0 run        [--backend (ocaml|llvm|java|haskell)] <pgm>  <K args>*
+           $0 kast       [--backend (ocaml|llvm|java|haskell)] <pgm>  <output format> <K args>*
+           $0 prove      [--backend (java|haskell)]            <spec> <K args>* -m <def_module>
+           $0 klab-run                                         <pgm>  <K arg>*
+           $0 klab-prove                                       <spec> <K arg>* -m <def_module>
+           $0 klab-view                                        [<pgm>|<spec>]
 
        $0 run   : Run a single WebAssembly program
        $0 kast  : Parse a single WebAssembly program and output it in supported format
@@ -135,10 +135,10 @@ run_file="$1" ; shift
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
 case "$run_command-$backend" in
-    run-@(ocaml|java|haskell)  ) run_krun                        "$@" ;;
-    kast-@(ocaml|java)         ) run_kast                        "$@" ;;
-    prove-@(java|haskell)      ) run_prove                       "$@" ;;
-    klab-@(run|prove)-java     ) run_klab "${run_command#klab-}" "$@" ;;
-    klab-view-java             ) view_klab                       "$@" ;;
+    run-@(ocaml|llvm|java|haskell)  ) run_krun                        "$@" ;;
+    kast-@(ocaml|llvm|java|haskell) ) run_kast                        "$@" ;;
+    prove-@(java|haskell)           ) run_prove                       "$@" ;;
+    klab-@(run|prove)-java          ) run_klab "${run_command#klab-}" "$@" ;;
+    klab-view-java                  ) view_klab                       "$@" ;;
     *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
 esac

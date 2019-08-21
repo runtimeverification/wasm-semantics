@@ -19,14 +19,14 @@ pipeline {
     stage('Dependencies') {
       steps {
         sh '''
-          make deps -B
+          make deps
         '''
       }
     }
     stage('Build') {
       steps {
         sh '''
-          make build -B -j4
+          make build -j4
         '''
       }
     }
@@ -37,16 +37,25 @@ pipeline {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              make TEST_CONCRETE_BACKEND=ocaml test-execution -j"$nprocs"
+              make TEST_CONCRETE_BACKEND=ocaml test-simple -j"$nprocs"
             '''
           }
         }
-        stage('Exec Java') {
+        stage('Exec Java (Floating Point)') {
           steps {
             sh '''
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
-              make TEST_CONCRETE_BACKEND=java test-execution -j"$nprocs"
+              make TEST_CONCRETE_BACKEND=java test-simple-float -j"$nprocs"
+            '''
+          }
+        }
+        stage('Exec LLVM') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make TEST_CONCRETE_BACKEND=llvm test-simple -j"$nprocs"
             '''
           }
         }
