@@ -81,9 +81,9 @@ view_klab() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (ocaml|llvm|java|haskell)] <pgm>  <K args>*
-           $0 kast       [--backend (ocaml|llvm|java|haskell)] <pgm>  <output format> <K args>*
-           $0 prove      [--backend (java|haskell)]            <spec> <K args>* -m <def_module>
+    usage: $0 run        [--backend (llvm|ocaml|haskell|java)] <pgm>  <K args>*
+           $0 kast       [--backend (llvm|ocaml|haskell|java)] <pgm>  <output format> <K args>*
+           $0 prove      [--backend (haskell|java)]            <spec> <K args>* -m <def_module>
            $0 klab-run                                         <pgm>  <K arg>*
            $0 klab-prove                                       <spec> <K arg>* -m <def_module>
            $0 klab-view                                        [<pgm>|<spec>]
@@ -119,7 +119,7 @@ run_command="$1"; shift
 
 [[ ! -z ${1:-} ]] || usage_fatal "Must supply a file to work on."
 
-backend="ocaml"
+backend="llvm"
 [[ ! "$run_command" == 'prove' ]] || backend='java'
 [[ ! "$run_command" =~ klab*   ]] || backend='java'
 if [[ $# -gt 1 ]] && [[ $1 == '--backend' ]] || [[ $1 == '--definition' ]]; then
@@ -135,9 +135,9 @@ run_file="$1" ; shift
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
 case "$run_command-$backend" in
-    run-@(ocaml|llvm|java|haskell)  ) run_krun                        "$@" ;;
-    kast-@(ocaml|llvm|java|haskell) ) run_kast                        "$@" ;;
-    prove-@(java|haskell)           ) run_prove                       "$@" ;;
+    run-@(llvm|ocaml|haskell|java)  ) run_krun                        "$@" ;;
+    kast-@(llvm|ocaml|haskell|java) ) run_kast                        "$@" ;;
+    prove-@(haskell|java)           ) run_prove                       "$@" ;;
     klab-@(run|prove)-java          ) run_klab "${run_command#klab-}" "$@" ;;
     klab-view-java                  ) view_klab                       "$@" ;;
     *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
