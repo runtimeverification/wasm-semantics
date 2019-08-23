@@ -132,6 +132,12 @@ backend_dir="$defn_dir/$backend"
 # get the run file
 [[ ! -z ${1:-} ]] || usage_fatal "Must supply a file to run on."
 run_file="$1" ; shift
+if [[ "$run_file" == '-' ]]; then
+    tmp_input="$(mktemp)"
+    trap "rm -rf $tmp_input" INT TERM EXIT
+    cat - > "$tmp_input"
+    run_file="$tmp_input"
+fi
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
 case "$run_command-$backend" in
