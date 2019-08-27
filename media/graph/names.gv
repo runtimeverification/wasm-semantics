@@ -1,0 +1,14 @@
+strict graph G {
+
+  bgcolor=transparent
+
+  mid [label="Security", color=lightblue, style=filled, weight=bold]
+  verification [label="Verification", color=lightblue, style=filled]
+  static_checking [label="Statick checking", color=lightblue, style=filled]
+  model_checking [label="Model checking", color=lightblue, style=filled]
+  testing [label="Testing", color=lightblue, style=filled]
+
+  mid -- verification     [style=invis]
+  mid -- static_checking  [style=invis]
+  mid -- model_checking   [style=invis]
+  mid -- testing          [style=invis]

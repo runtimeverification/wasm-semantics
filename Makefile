@@ -20,7 +20,7 @@ export LUA_PATH
         defn defn-ocaml defn-java defn-haskell defn-llvm \
         build build-ocaml defn-haskell build-haskell build-llvm \
         test test-execution test-simple test-prove test-klab-prove \
-        media presentations reports
+        media presentations reports graphs
 
 all: build
 
@@ -210,12 +210,24 @@ presentations: media/201803-presentation-ethcc.pdf              \
                media/201906-presentation-wasm-on-blockchain.pdf \
                media/201910-presentation-devcon.pdf
 
+GRAPHS=security_full community_consensus_full
+
+media/graph/%.gv: media/graph/%.m4
+	m4 --include=media/graph/ $< > $@
+
+# Layout components vertically
+media/graph/%.png: media/graph/%.gv
+	ccomps -x  $< | dot | gvpack -array1 -m100 | neato -Tpng -Gdpi=300 -n2 > $@
+
+graphs: $(GRAPHS:%=media/graph/%.png)
+
 reports: TO_FORMAT=latex
 reports: media/201903-report-chalmers.pdf
 
+media/201910-presentation-devcon.pdf: graphs
 media/%.pdf: media/%.md media/citations.md
-	cat $^ | pandoc --from markdown-latex_macros --to $(TO_FORMAT) --filter pandoc-citeproc --output $@
+	cat $< media/citations.md | pandoc --from markdown-latex_macros --to $(TO_FORMAT) --filter pandoc-citeproc --output $@
 
 media-clean:
 	rm media/*.pdf
-
+	rm media/graph/*.png
