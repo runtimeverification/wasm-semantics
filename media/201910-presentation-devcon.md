@@ -44,53 +44,84 @@ Overview
 EVM Challenges
 ==========
 
-What we want
-------------
-
-![](media/graph/security1.png)
-
-What we want
-------------
-
-![](media/graph/security2.png)
-
-What we want
-------------
-
-![](media/graph/security3.png)
-
-What we want
-------------
-
-![](media/graph/security4.png)
-
-What we want
-------------
+What do we want from a VM?
+--------------------------
 
 ![](media/graph/security_full.png)
 
-What we want
-------------
+What do we want from a VM?
+--------------------------
 
-![](media/graph/security_full.png) ![](media/graph/community_consensus1.png)
+![](media/graph/community_consensus_full.png)
 
-What we want
-------------
+N birds with K stones
+=====================
 
-![](media/graph/security_full.png) ![](media/graph/community_consensus2.png)
+The Vision: Language Independence
+---------------------------------
 
-What we want
-------------
+![K Tooling Overview](media/img/k-overview.png)
 
-![](media/graph/security_full.png) ![](media/graph/community_consensus_full.png)
+K Framework
+-----------
 
+The right mix:
 
+> - **Ambitious ...**: Write all the tools for K and parameterize it by language.
+> - **... but realistic**: Delivering useful tools from day one.
 
+KEVM
+====
 
+KEVM
+----
 
+### A great spec
 
+> - Formal (like the Yellow Paper)
+> - Executable (like cpp-ethereum, Parity, ...)
+> - Reads like code with lots of documentation.
+
+. . .
+
+### Dev tools by K
+
+> - Firefly: run your tests in Truffle with the KEVM
+> - Docs: <https://jellopaper.org/>
+> - Verification: <https://github.com/runtimeverification/verified-smart-contracts>
+> - ... more cool stuff coming!
+
+<!-- Important point: we get these tools mostly for free for every new spec! -->
+
+KWasm
+=====
+
+KWasm, technically
+------------------
+
+> - KWasm is a spec of pure Wasm, very similar to the official spec (same formalism)
+> - Easy to add embeddings: Ewasm, Polkadot, etc.
+> - We're trying out the verification capabilities on Polkadot.
+
+KWasm: A head start
+-------------------
+
+> - Because K is so awesome, the EVM tools automatically become Ewasm tools.
+> - When Ewasm kicks in, we got the tooling.
+
+Conclusion/Questions?
+=====================
+
+References
+----------
+
+-   Thanks for listening!
+
+\tiny
 
 <!-- Scratchpad -->
+
+<!--
 Scratchpad
 ==========
 
@@ -123,21 +154,9 @@ Existing projects
 
 ![](media/img/k.png){ height=15% hspace=30px } &nbsp;&nbsp;&nbsp;
 ![](media/img/RV-logo-blue.eps){ height=15% hspace=30px } &nbsp;&nbsp;&nbsp;
-<!-- ![](media/img/rv.png){ height=15%} -->
 
 - ... using the K framework.
 
-<!--
-
-Verifying Ethereum contracts
----------
-
-1. Contracts are compiled to Ethereum virtual machine (EVM) bytecode.
-2. Some property or invariant is specified as a rewrite rule.
-3. K tries to construct a proof (using the SMT solver Z3) that every possible execution path eventually rewrites to the correct thing
-4. The tool KLab (by DappHub) offers an interactive view of execution paths, great for seeing where and why the prover failed.
-
--->
 
 The KEVM
 --------
@@ -699,13 +718,5 @@ KeWasm
 -   KEVM currently has many verified smart contracts at <https://github.com/runtimeverification/verified-smart-contracts>.
 -   We similarly would like to build a repository of verified code using KeWasm.
 
-Conclusion/Questions?
-=====================
-
-References
-----------
-
--   Thanks for listening!
-
-\tiny
+-->
 

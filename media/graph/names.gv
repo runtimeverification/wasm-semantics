@@ -2,13 +2,27 @@ strict graph G {
 
   bgcolor=transparent
 
-  mid [label="Security", color=lightblue, style=filled, weight=bold]
-  verification [label="Verification", color=lightblue, style=filled]
-  static_checking [label="Statick checking", color=lightblue, style=filled]
-  model_checking [label="Model checking", color=lightblue, style=filled]
-  testing [label="Testing", color=lightblue, style=filled]
+  subgraph sec {
+    security        [label=<<b>Contract Security</b>>, color=lightblue, style=filled]
+    verification    [label="Verification"                                           ]
+    static_checking [label="Statick checking"                                       ]
+    model_checking  [label="Model checking"                                         ]
+    testing         [label="Testing"                                                ]
 
-  mid -- verification     [style=invis]
-  mid -- static_checking  [style=invis]
-  mid -- model_checking   [style=invis]
-  mid -- testing          [style=invis]
+    { rank = same testing verification static_checking model_checking}
+    testing         -- security [style=invis]
+    static_checking -- security [style=invis]
+    verification    -- security [style=invis]
+    model_checking  -- security [style=invis]
+  }
+
+  subgraph cons {
+    consensus       [label=<<b>Consensus</b>>, color=orange, style=filled]
+    runtime         [label="Trusted runtime"                                ]
+    docs            [label="Good docs"                                      ]
+    unambiguous     [label="Unambiguous"                                    ]
+
+    consensus -- runtime     [style=invis]
+    consensus -- docs        [style=invis]
+    consensus -- unambiguous [style=invis]
+  }

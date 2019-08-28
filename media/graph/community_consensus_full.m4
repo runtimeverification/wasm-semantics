@@ -5,9 +5,8 @@ include(names.gv)
   security -- model_checking   [style=solid]
   security -- testing          [style=solid]
 
-  consensus       [style=invis]
-  runtime         [style=invis]
-  docs            [style=invis]
-  unambiguous     [style=invis]
+  consensus -- runtime     [style=solid]
+  consensus -- docs        [style=solid]
+  consensus -- unambiguous [style=solid]
 
 }
