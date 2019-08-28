@@ -3,7 +3,7 @@
 	url = https://github.com/kframework/k
 	ignore = untracked
 [submodule "tests/wasm-tests"]
-	path = tests/wasm-tests
+	path = deps/spec
 	url = https://github.com/webassembly/spec
 	ignore = untracked
 [submodule "deps/pandoc-tangle"]
