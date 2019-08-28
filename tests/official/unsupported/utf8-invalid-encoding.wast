@@ -1,0 +1,1 @@
+../../../deps/spec/test/core/utf8-invalid-encoding.wast

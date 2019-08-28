@@ -1,0 +1,1 @@
+../../../deps/spec/test/core/func_ptrs.wast

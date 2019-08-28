@@ -1,0 +1,1 @@
+../../../deps/spec/test/core/local_set.wast
