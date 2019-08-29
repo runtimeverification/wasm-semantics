@@ -157,6 +157,13 @@ tests/%.frun: tests/%
 	$(CHECK) tests/success-$(TEST_FLOAT_CONCRETE_BACKEND).out tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
 
+tests/%.run-term: tests/%
+	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< --interpret > tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	grep --after-context=2 "<k>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
+	$(CHECK) tests/success-k.out tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
+	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
+
 tests/%.parse: tests/%
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
 	$(CHECK) $@-expected $@-out
@@ -197,6 +204,11 @@ test-prove: $(proof_tests:=.prove)
 ### KLab interactive
 
 test-klab-prove: $(quick_proof_tests:=.klab-prove)
+
+### Official test suite
+
+official_tests:=$(wildcard tests/official/supported/*.wast)
+test-official: $(official_tests:=.run-term)
 
 # Presentation
 # ------------
