@@ -326,8 +326,10 @@ We keep track of the number of labels on the stack, incrementing and decrementin
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
+                   | "block" VecType   Instrs "end"
  // -----------------------------------------------
-    rule <k> block TDECLS IS end => IS ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> block TDECLS:TypeDecls IS end => block gatherTypes(result, TDECLS) IS end ... </k>
+    rule <k> block VECTYP:VecType   IS end => IS ~> label VECTYP { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
@@ -720,7 +722,7 @@ The `#take` function will return the parameter stack in the reversed order, then
     rule <k> ( invoke FADDR )
           => init_locals #revs(#take(#revt(unnameValTypes(TDOMAIN)), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
           ~> init_localids TDOMAIN + TLOCALS
-          ~> INSTRS
+          ~> block [TRANGE] INSTRS end
           ~> frame MODIDX TRANGE #drop(#revt(unnameValTypes(TDOMAIN)), VALSTACK) LOCAL DEPTH IDS
           ...
           </k>
