@@ -97,6 +97,8 @@ $(llvm_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 
 # Build definitions
 
+KOMPILE_OPTIONS :=
+
 build: build-ocaml build-java build-haskell build-llvm
 build-ocaml: $(ocaml_kompiled)
 build-java: $(java_kompiled)
@@ -108,25 +110,29 @@ $(ocaml_kompiled): $(ocaml_defn)
 	eval $$(opam config env)                                        \
 	    kompile -O3 --non-strict --backend ocaml                    \
 	    --directory $(ocaml_dir) -I $(ocaml_dir)                    \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 $(java_kompiled): $(java_defn)
 	@echo "== kompile: $@"
 	kompile --backend java                                          \
 	    --directory $(java_dir) -I $(java_dir)                      \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 $(haskell_kompiled): $(haskell_defn)
 	@echo "== kompile: $@"
 	kompile --backend haskell                                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)                \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 $(llvm_kompiled): $(llvm_defn)
 	@echo "== kompile: $@"
 	kompile --backend llvm                                          \
 	    --directory $(llvm_dir) -I $(llvm_dir)                      \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 # Testing
 # -------
