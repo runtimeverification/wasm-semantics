@@ -343,7 +343,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     syntax PlainInstr ::= "br" Index
  // --------------------------------
     rule <k> br IDX   ~> (SS:Stmts => .) ... </k>
-    rule <k> br IDX   ~> (PI:PlainInstr => .) ... </k>
+    rule <k> br IDX   ~> ( I:Instr => .) ... </k>
     rule <k> br 0     ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
          <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
