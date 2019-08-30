@@ -67,14 +67,16 @@ The following are needed for building/running KWasm:
 -   [Haskell Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/#installupgrade).
     Note that the version of the `stack` tool provided by your package manager might not be recent enough.
     Please follow installation instructions from the Haskell Stack website linked above.
+-   [LLVM](https://llvm.org/) For building the LLVM backend.
 
 On Ubuntu >= 15.04 (for example):
 
 ```sh
-sudo apt install                                                      \
-         autoconf curl flex gcc libffi-dev libmpfr-dev libtool maven  \
-         opam openjdk-8-jdk pandoc pkg-config python3 python-pygments \
-         python-recommonmark python-sphinx time zlib1g-dev
+sudo apt install                                                    \
+         autoconf curl flex gcc libffi-dev libmpfr-dev libtool llvm \
+         maven opam openjdk-8-jdk pandoc pkg-config python3         \
+         python-pygments python-recommonmark python-sphinx time     \
+         zlib1g-dev
 ```
 
 To upgrade `stack` (if needed):
@@ -82,6 +84,15 @@ To upgrade `stack` (if needed):
 ```sh
 stack upgrade
 export PATH=$HOME/.local/bin:$PATH
+```
+
+The LLVM backend has additional dependencies
+
+```
+sudo apt install
+         cmake clang-8 clang++-8 llvm-8 llvm-8-tools lld-8      \
+         libboost-test-dev libgmp-dev libprocps-dev libyaml-dev \
+         libjemalloc-dev curl protobuf-compiler libprotobuf-dev
 ```
 
 ### Building
