@@ -90,8 +90,8 @@ The LLVM backend has additional dependencies
 
 ```
 sudo apt install
-         cmake clang-8 clang++-8 llvm-8 llvm-8-tools lld-8      \
-         libboost-test-dev libgmp-dev libprocps-dev libyaml-dev \
+         bison cmake clang-8 clang++-8 llvm-8 llvm-8-tools lld-8 \
+         libboost-test-dev libgmp-dev libprocps-dev libyaml-dev  \
          libjemalloc-dev curl protobuf-compiler libprotobuf-dev
 ```
 
