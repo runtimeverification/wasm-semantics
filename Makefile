@@ -110,7 +110,6 @@ build-haskell: $(haskell_kompiled)
 build-llvm: $(llvm_kompiled)
 
 $(ocaml_kompiled): $(ocaml_defn)
-	@echo "== kompile: $@"
 	eval $$(opam config env)                                        \
 	    kompile -O3 --non-strict --backend ocaml                    \
 	    --directory $(ocaml_dir) -I $(ocaml_dir)                    \
@@ -118,21 +117,18 @@ $(ocaml_kompiled): $(ocaml_defn)
 	    $(KOMPILE_OPTIONS)
 
 $(java_kompiled): $(java_defn)
-	@echo "== kompile: $@"
 	kompile --backend java                                          \
 	    --directory $(java_dir) -I $(java_dir)                      \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
 	    $(KOMPILE_OPTIONS)
 
 $(haskell_kompiled): $(haskell_defn)
-	@echo "== kompile: $@"
 	kompile --backend haskell                                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)                \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
 	    $(KOMPILE_OPTIONS)
 
 $(llvm_kompiled): $(llvm_defn)
-	@echo "== kompile: $@"
 	kompile --backend llvm                                          \
 	    --directory $(llvm_dir) -I $(llvm_dir)                      \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
@@ -149,7 +145,6 @@ KPROVE_MODULE:=KWASM-LEMMAS
 CHECK:=git --no-pager diff --no-index --ignore-all-space
 
 tests/%/make.timestamp:
-	@echo "== submodule: $@"
 	git submodule update --init -- tests/$*
 	touch $@
 
