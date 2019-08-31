@@ -137,12 +137,14 @@ $(llvm_kompiled): $(llvm_defn)
 # Testing
 # -------
 
-TEST_CONCRETE_BACKEND:=ocaml
-TEST_FLOAT_CONCRETE_BACKEND:=java
-TEST_SYMBOLIC_BACKEND:=java
-TEST:=./kwasm
-KPROVE_MODULE:=KWASM-LEMMAS
-CHECK:=git --no-pager diff --no-index --ignore-all-space
+TEST  := ./kwasm
+CHECK := git --no-pager diff --no-index --ignore-all-space
+
+TEST_CONCRETE_BACKEND       := llvm
+TEST_FLOAT_CONCRETE_BACKEND := java
+TEST_SYMBOLIC_BACKEND       := java
+
+KPROVE_MODULE := KWASM-LEMMAS
 
 tests/%/make.timestamp:
 	git submodule update --init -- tests/$*
