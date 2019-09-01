@@ -6,4 +6,4 @@
 .krun*
 .kompile*
 
-rustc-*-src/
+/rustc-*
