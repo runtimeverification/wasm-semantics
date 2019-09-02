@@ -596,6 +596,16 @@ It is an `address` denoting either a `function instance`, `table instance`, `mem
  // --------------------------------------------
 ```
 
+WASM Token Sorts
+----------------
+```k
+    syntax WasmString [token]
+    syntax Identifier [token]
+    syntax WasmInt [token]
+    syntax #Layout [token]
+ // ----------------------
+```
+
 ```k
 endmodule
 ```
