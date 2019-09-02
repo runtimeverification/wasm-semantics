@@ -15,7 +15,7 @@ for backend in ocaml llvm; do
         make $file.parse
         if [ $? -eq 0 ]
         then
-            make $file.run-term
+            make $file.run-term TEST_CONCRETE_BACKEND=$backend
             if [ $? -eq 0 ]
             then
                 # Now supported, remove.
