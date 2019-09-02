@@ -2,10 +2,10 @@
 
 # Execute from project top directory.
 
-unparsefile="tests/official/unparseable.txt"
+unparsefile="tests/conformance/unparseable.txt"
 
 for backend in ocaml llvm; do
-    unsuppfile="tests/official/unsupported-$backend.txt"
+    unsuppfile="tests/conformance/unsupported-$backend.txt"
     for shortname in $(cat $unparsefile $unsuppfile); do
         file=tests/wasm-tests/test/core/$shortname
 
