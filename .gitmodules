@@ -7,6 +7,6 @@
 	url = https://github.com/ehildenb/pandoc-tangle
 	ignore = untracked
 [submodule "test/wasm-tests"]
-	path = test/wasm-tests
+	path = tests/wasm-tests
 	url = https://github.com/webassembly/spec
 	ignore = untracked
