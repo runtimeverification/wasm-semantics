@@ -20,18 +20,10 @@ float_exprs.wast
 float_literals.wast
 float_memory.wast
 float_misc.wast
-func.wast
-func_ptrs.wast
 globals.wast
-imports.wast
-labels.wast
 left-to-right.wast
-linking.wast
 load.wast
-local_get.wast
-local_set.wast
 local_tee.wast
-loop.wast
 memory.wast
 memory_redundancy.wast
 memory_trap.wast
@@ -39,8 +31,6 @@ names.wast
 return.wast
 select.wast
 skip-stack-guard-page.wast
-start.wast
 store.wast
-switch.wast
 traps.wast
 unreachable.wast

@@ -167,7 +167,6 @@ tests/%.run-term: tests/%
 
 tests/%.parse: tests/%
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
-	$(CHECK) $@-expected $@-out
 	rm -rf $@-out
 
 tests/%.prove: tests/%
