@@ -190,7 +190,7 @@ test-simple-float: $(simple_tests-float:=.frun)
 ### Conformance Tests
 
 conformance_tests:=$(wildcard tests/wasm-tests/test/core/*.wast)
-unsupported_conformance_tests:=$(patsubst %, tests/wasm-tests/test/core/%, $(shell cat tests/official/unsupported.txt))
+unsupported_conformance_tests:=$(patsubst %, tests/wasm-tests/test/core/%, $(shell cat tests/official/unsupported-$(TEST_CONCRETE_BACKEND).txt))
 unparseable_conformance_tests:=$(patsubst %, tests/wasm-tests/test/core/%, $(shell cat tests/official/unparseable.txt))
 parseable_conformance_tests:=$(filter-out $(unparseable_conformance_tests), $(conformance_tests))
 supported_conformance_tests:=$(filter-out $(unsupported_conformance_tests), $(parseable_conformance_tests))
