@@ -197,11 +197,6 @@ supported_conformance_tests:=$(filter-out $(unsupported_conformance_tests), $(pa
 
 test-conformance-parse: $(parseable_conformance_tests:=.parse)
 test-conformance-supported: $(supported_conformance_tests:=.run-term)
-test-unsupported:
-	echo "Unparsable:"
-	echo $(unparseable_conformance_tests)
-	@ echo "\nRuntime errors"
-	@ echo $(unsupported_conformance_tests)
 
 test-conformance: test-conformance-parse test-conformance-supported
 
