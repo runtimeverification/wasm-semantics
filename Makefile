@@ -20,7 +20,7 @@ export LUA_PATH
         defn defn-ocaml defn-java defn-haskell defn-llvm \
         build build-ocaml defn-haskell build-haskell build-llvm \
         test test-execution test-simple test-prove test-klab-prove \
-				test-conformance test-conformance-parse test-conformance-supported \
+        test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
 all: build
@@ -197,6 +197,11 @@ supported_conformance_tests:=$(filter-out $(unsupported_conformance_tests), $(pa
 
 test-conformance-parse: $(parseable_conformance_tests:=.parse)
 test-conformance-supported: $(supported_conformance_tests:=.run-term)
+test-unsupported:
+	echo "Unparsable:"
+	echo $(unparseable_conformance_tests)
+	@ echo "\nRuntime errors"
+	@ echo $(unsupported_conformance_tests)
 
 test-conformance: test-conformance-parse test-conformance-supported
 

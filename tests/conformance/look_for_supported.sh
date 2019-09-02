@@ -15,18 +15,18 @@ for backend in ocaml llvm; do
         make $file.parse
         if [ $? -eq 0 ]
         then
-        make $file.run-term
-        if [ $? -eq 0 ]
-        then
-            # Now supported, remove.
-            sed --in-place "/$shortname/d" $unparsefile
-            sed --in-place "/$shortname/d" $unsuppfile
-            echo "Success: $shortname\n"
-        else
-            echo $shortname >> $unsuppfile
-            sed --in-place "/$shortname/d" $unparsefile
-            echo "Unsupported: $shortname\n"
-        fi
+            make $file.run-term
+            if [ $? -eq 0 ]
+            then
+                # Now supported, remove.
+                sed --in-place "/$shortname/d" $unparsefile
+                sed --in-place "/$shortname/d" $unsuppfile
+                echo "Success: $shortname\n"
+            else
+                echo $shortname >> $unsuppfile
+                sed --in-place "/$shortname/d" $unparsefile
+                echo "Unsupported: $shortname\n"
+            fi
         else
             echo $shortname >> $unparsefile
             sed --in-place "/$shortname/d" $unsuppfile
