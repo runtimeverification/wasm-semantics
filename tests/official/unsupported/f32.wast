@@ -1,1 +1,0 @@
-../../../deps/spec/test/core/f32.wast

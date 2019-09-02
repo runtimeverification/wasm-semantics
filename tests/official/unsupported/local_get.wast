@@ -1,1 +1,0 @@
-../../../deps/spec/test/core/local_get.wast

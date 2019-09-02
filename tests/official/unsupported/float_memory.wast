@@ -1,1 +1,0 @@
-../../../deps/spec/test/core/float_memory.wast

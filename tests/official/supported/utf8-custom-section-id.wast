@@ -1,1 +1,0 @@
-../../../deps/spec/test/core/utf8-custom-section-id.wast

@@ -1,1 +1,0 @@
-../../../deps/spec/test/core/i64.wast

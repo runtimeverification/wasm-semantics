@@ -1,1 +1,0 @@
-../../../deps/spec/test/core/f64_bitwise.wast
