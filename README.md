@@ -77,7 +77,7 @@ sudo apt-get install --yes                                                      
     libgmp-dev libjemalloc-dev libmpfr-dev libprocps-dev libprotobuf-dev libtool      \
     libyaml-dev lld-8 llvm llvm-8 llvm-8-tools maven opam openjdk-8-jdk pandoc        \
     pkg-config protobuf-compiler python3 python-pygments python-recommonmark          \
-    python-sphinx time zlib1g-dev
+    python-sphinx time z3 zlib1g-dev
 ```
 
 To upgrade `stack` (if needed):

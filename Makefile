@@ -20,6 +20,7 @@ export LUA_PATH
         defn defn-ocaml defn-java defn-haskell defn-llvm \
         build build-ocaml defn-haskell build-haskell build-llvm \
         test test-execution test-simple test-prove test-klab-prove \
+        test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
 all: build
@@ -164,9 +165,15 @@ tests/%.frun: tests/%
 	$(CHECK) tests/success-$(TEST_FLOAT_CONCRETE_BACKEND).out tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
 
+tests/%.run-term: tests/%
+	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	grep --after-context=2 "<k>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
+	$(CHECK) tests/success-k.out tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
+	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
+
 tests/%.parse: tests/%
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
-	$(CHECK) $@-expected $@-out
 	rm -rf $@-out
 
 tests/%.prove: tests/%
@@ -190,8 +197,15 @@ test-simple-float: $(simple_tests-float:=.frun)
 ### Conformance Tests
 
 conformance_tests:=$(wildcard tests/wasm-tests/test/core/*.wast)
+unsupported_conformance_tests:=$(patsubst %, tests/wasm-tests/test/core/%, $(shell cat tests/conformance/unsupported-$(TEST_CONCRETE_BACKEND).txt))
+unparseable_conformance_tests:=$(patsubst %, tests/wasm-tests/test/core/%, $(shell cat tests/conformance/unparseable.txt))
+parseable_conformance_tests:=$(filter-out $(unparseable_conformance_tests), $(conformance_tests))
+supported_conformance_tests:=$(filter-out $(unsupported_conformance_tests), $(parseable_conformance_tests))
 
-parse-conformance: $(conformance_tests:=.parse)
+test-conformance-parse: $(parseable_conformance_tests:=.parse)
+test-conformance-supported: $(supported_conformance_tests:=.run-term)
+
+test-conformance: test-conformance-parse test-conformance-supported
 
 ### Proof Tests
 

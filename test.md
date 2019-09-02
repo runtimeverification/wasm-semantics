@@ -155,6 +155,7 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
   ( assert_return_canonical_nan <action> )   ;; assert action results in NaN in a canonical form
   ( assert_return_arithmetic_nan <action> )  ;; assert action results in NaN with 1 in MSB of fraction field
   ( assert_trap <action> <failure> )         ;; assert action traps with given failure string
+  ( assert_exhaustion <action> <failure> )   ;; assert action exhausts system resources
   ( assert_malformed <module> <failure> )    ;; assert module cannot be decoded with given failure string
   ( assert_invalid <module> <failure> )      ;; assert module is invalid with given failure string
   ( assert_unlinkable <module> <failure> )   ;; assert module fails to link
@@ -163,12 +164,15 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
 
 Except `assert_return` and `assert_trap`, the remaining rules are directly reduced to empty. We are not planning to implement them and these rules are only used to make it easier to parse conformance tests.
 
+*TODO:* Make use of `assert_exhaustion`, by detecting stack overflow.
+
 ```k
     syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
                        | "(" "assert_return"                Action            ")"
                        | "(" "assert_return_canonical_nan"  Action            ")"
                        | "(" "assert_return_arithmetic_nan" Action            ")"
                        | "(" "assert_trap"                  Action     WasmString ")"
+                       | "(" "assert_exhaustion"            Action     WasmString ")"
                        | "(" "assert_malformed"             ModuleDecl WasmString ")"
                        | "(" "assert_invalid"               ModuleDecl WasmString ")"
                        | "(" "assert_unlinkable"            ModuleDecl WasmString ")"
@@ -181,6 +185,7 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
     rule <k> (assert_return_canonical_nan  ACT)      => . ... </k>
     rule <k> (assert_return_arithmetic_nan ACT)      => . ... </k>
     rule <k> (assert_trap       ACT:Action     DESC) => ACT ~> #assertTrap DESC ... </k>
+    rule <k> (assert_exhaustion ACT:Action     DESC) => . ... </k>
     rule <k> (assert_malformed  MOD            DESC) => . ... </k>
     rule <k> (assert_invalid    MOD            DESC) => . ... </k>
     rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
