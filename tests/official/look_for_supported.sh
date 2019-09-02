@@ -2,18 +2,38 @@
 
 # Execute from project top directory.
 
-for file in `find tests/official/unsupported/*.wast`; do
-    shortname=$(echo $file | sed -E -s "s/.*\/([^/]+.wast)/\1/")
+unparsefile="tests/official/unparseable.txt"
+unsuppfile="tests/official/unsupported.txt"
+
+for shortname in $(cat $unparsefile $unsuppfile); do
+    file=tests/wasm-tests/test/core/$shortname
+
     echo Trying $shortname
     echo =================
-    make $file.run-term
+
+    make $file.parse
     if [ $? -eq 0 ]
     then
-        file_supp=$(echo $file | sed -s "s/unsupported/supported/")
-        git mv $file $file_supp
-        git commit -m "TEST: $shortname"
-        notify-send "Success: $shortname"
+       make $file.run-term
+       if [ $? -eq 0 ]
+       then
+           # Now supported, remove.
+           sed --in-place "/$shortname/d" $unparsefile
+           sed --in-place "/$shortname/d" $unsuppfile
+           echo "Success: $shortname\n"
+       else
+           echo $shortname >> $unsuppfile
+           sed --in-place "/$shortname/d" $unparsefile
+           echo "Unsupported: $shortname\n"
+       fi
     else
-        notify-send "Failed: $shortname"
+        echo $shortname >> $unparsefile
+        sed --in-place "/$shortname/d" $unsuppfile
+        echo "Unparseable: $shortname\n"
     fi
+
 done
+
+# Sort the files supported, remove duplicates (shouldn't be any).
+sort -u $unsuppfile -o $unsuppfile
+sort -u $unparsefile -o $unparsefile

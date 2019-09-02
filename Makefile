@@ -20,6 +20,7 @@ export LUA_PATH
         defn defn-ocaml defn-java defn-haskell defn-llvm \
         build build-ocaml defn-haskell build-haskell build-llvm \
         test test-execution test-simple test-prove test-klab-prove \
+				test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
 all: build
@@ -190,8 +191,15 @@ test-simple-float: $(simple_tests-float:=.frun)
 ### Conformance Tests
 
 conformance_tests:=$(wildcard tests/wasm-tests/test/core/*.wast)
+unsupported_conformance_tests:=$(patsubst %, tests/wasm-tests/test/core/%, $(shell cat tests/official/unsupported.txt))
+unparseable_conformance_tests:=$(patsubst %, tests/wasm-tests/test/core/%, $(shell cat tests/official/unparseable.txt))
+parsebale_conformance_tests:=$(filter-out $unparseable_conformance_tests, $conformance_tests)
+supported_conformance_tests:=$(filter-out $unsupported_conformance_tests, $parseable_conformance_tests)
 
-parse-conformance: $(conformance_tests:=.parse)
+test-conformance-parse: $(parseable_conformance_tests:=.parse)
+test-conformance-supported: $(supported_conformance_tests:=.run-term)
+
+test-conformance: test-conformance-parse test-conformance-supported
 
 ### Proof Tests
 
@@ -204,11 +212,6 @@ test-prove: $(proof_tests:=.prove)
 ### KLab interactive
 
 test-klab-prove: $(quick_proof_tests:=.klab-prove)
-
-### Official test suite
-
-official_tests:=$(wildcard tests/official/supported/*.wast)
-test-official: $(official_tests:=.run-term)
 
 # Presentation
 # ------------
