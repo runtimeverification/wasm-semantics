@@ -30,7 +30,7 @@ pipeline {
         '''
       }
     }
-    stage('Test') {
+    stage('Test Smoke') {
       options { timeout(time: 5, unit: 'MINUTES') }
       parallel {
         stage('Exec OCaml') {
@@ -75,6 +75,38 @@ pipeline {
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
               make test-klab-prove -j"$nprocs"
+            '''
+          }
+        }
+      }
+    }
+    stage('Test Conformance') {
+      options { timeout(time: 5, unit: 'MINUTES') }
+      parallel {
+        stage('Parse') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make test-conformance-parse -j"$nprocs"
+            '''
+          }
+        }
+        stage('Exec OCaml') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make TEST_CONCRETE_BACKEND=ocaml test-conformance-supported -j"$nprocs"
+            '''
+          }
+        }
+        stage('Exec LLVM') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make TEST_CONCRETE_BACKEND=llvm test-conformance-supported -j"$nprocs"
             '''
           }
         }
