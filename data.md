@@ -5,66 +5,6 @@ WebAssembly Data
 require "domains.k"
 ```
 
-```k
-module WASM-SYNTAX
-    imports WASM-TOKEN-SYNTAX
-    imports WASM-DATA
-endmodule
-```
-
-`WASM-TOKEN-SYNTAX` module defines the tokens used in parsing programs.
-
-```k
-module WASM-TOKEN-SYNTAX
-```
-
-### Strings
-
-In WebAssembly, strings are defined differently to K's built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
-Note that you cannot use a normal K `String` in any production definitions, because the definitions of `String` and `WasmString` overlap, and the K tokenizer does not support ambiguity.
-
-```k
-    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{1,6}\\}))*\\\"" [token]
- // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-```
-
-### Identifiers
-
-In WebAssembly, identifiers are defined by the regular expression below.
-
-```k
-    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
- // -----------------------------------------------------------------------
-```
-
-### Integers
-
-In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
-In both cases, digits can optionally be separated by underscores.
-
-```k
-    syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
-                     | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
- // -------------------------------------------------------------------
-```
-
-### Layout
-
-WebAssembly allows for block comments using `(;` and `;)`, and line comments using `;;`.
-Additionally, white-space is skipped/ignored.
-Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
-
-```k
-    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
-                     | r";;[^\\n\\r]*"                  [token]
-                     | r"[\\ \\n\\r\\t]"                [token]
- // -----------------------------------------------------------
-```
-
-```k
-endmodule
-```
-
 `WASM-DATA` module
 
 ```k
