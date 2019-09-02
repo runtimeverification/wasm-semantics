@@ -18,6 +18,18 @@ module WASM-DATA
     imports BYTES
 ```
 
+### WASM Token Sorts
+
+```k
+    syntax WasmString [token]
+    syntax Identifier [token]
+    syntax WasmInt    [token]
+    syntax #Layout    [token]
+ // -------------------------
+```
+
+### Identifiers
+
 In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
 And we use `OptionalId` to handle the case where an identifier could be omitted.
 
@@ -534,16 +546,6 @@ It is an `address` denoting either a `function instance`, `table instance`, `mem
     syntax AllocatedKind ::= "func" | "table" | "memory" | "global"
     syntax Externval     ::= AllocatedKind Index
  // --------------------------------------------
-```
-
-WASM Token Sorts
-----------------
-```k
-    syntax WasmString [token]
-    syntax Identifier [token]
-    syntax WasmInt [token]
-    syntax #Layout [token]
- // ----------------------
 ```
 
 ```k
