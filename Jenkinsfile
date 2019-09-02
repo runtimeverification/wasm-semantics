@@ -31,6 +31,7 @@ pipeline {
       }
     }
     stage('Test') {
+      options { timeout(time: 5, unit: 'MINUTES') }
       parallel {
         stage('Exec OCaml') {
           steps {
