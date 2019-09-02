@@ -68,6 +68,18 @@ llvm_dir:=$(DEFN_DIR)/llvm
 llvm_defn:=$(patsubst %, $(llvm_dir)/%, $(wasm_files))
 llvm_kompiled:=$(llvm_dir)/test-kompiled/interpreter
 
+$(ocaml_dir):
+	mkdir -p $@
+
+$(java_dir):
+	mkdir -p $@
+
+$(haskell_dir):
+	mkdir -p $@
+
+$(llvm_dir):
+	mkdir -p $@
+
 # Tangle definition from *.md files
 
 defn: defn-ocaml defn-java defn-haskell
@@ -76,27 +88,21 @@ defn-java: $(java_defn)
 defn-haskell: $(haskell_defn)
 defn-llvm: $(llvm_defn)
 
-$(ocaml_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
-	@echo "==  tangle: $@"
-	mkdir -p $(dir $@)
+$(ocaml_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(ocaml_dir)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(java_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
-	@echo "==  tangle: $@"
-	mkdir -p $(dir $@)
+$(java_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(java_dir)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(haskell_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
-	@echo "==  tangle: $@"
-	mkdir -p $(dir $@)
+$(haskell_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(haskell_dir)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(llvm_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
-	@echo "==  tangle: $@"
-	mkdir -p $(dir $@)
+$(llvm_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(llvm_dir)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 # Build definitions
+
+KOMPILE_OPTIONS :=
 
 build: build-ocaml build-java build-haskell build-llvm
 build-ocaml: $(ocaml_kompiled)
@@ -105,42 +111,43 @@ build-haskell: $(haskell_kompiled)
 build-llvm: $(llvm_kompiled)
 
 $(ocaml_kompiled): $(ocaml_defn)
-	@echo "== kompile: $@"
 	eval $$(opam config env)                                        \
 	    kompile -O3 --non-strict --backend ocaml                    \
 	    --directory $(ocaml_dir) -I $(ocaml_dir)                    \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 $(java_kompiled): $(java_defn)
-	@echo "== kompile: $@"
 	kompile --backend java                                          \
 	    --directory $(java_dir) -I $(java_dir)                      \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 $(haskell_kompiled): $(haskell_defn)
-	@echo "== kompile: $@"
 	kompile --backend haskell                                       \
 	    --directory $(haskell_dir) -I $(haskell_dir)                \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 $(llvm_kompiled): $(llvm_defn)
-	@echo "== kompile: $@"
 	kompile --backend llvm                                          \
 	    --directory $(llvm_dir) -I $(llvm_dir)                      \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $<
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 # Testing
 # -------
 
-TEST_CONCRETE_BACKEND:=ocaml
-TEST_FLOAT_CONCRETE_BACKEND:=java
-TEST_SYMBOLIC_BACKEND:=java
-TEST:=./kwasm
-KPROVE_MODULE:=KWASM-LEMMAS
-CHECK:=git --no-pager diff --no-index --ignore-all-space
+TEST  := ./kwasm
+CHECK := git --no-pager diff --no-index --ignore-all-space
+
+TEST_CONCRETE_BACKEND       := llvm
+TEST_FLOAT_CONCRETE_BACKEND := java
+TEST_SYMBOLIC_BACKEND       := java
+
+KPROVE_MODULE := KWASM-LEMMAS
 
 tests/%/make.timestamp:
-	@echo "== submodule: $@"
 	git submodule update --init -- tests/$*
 	touch $@
 

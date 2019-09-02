@@ -53,7 +53,7 @@ Installing/Building
 There are three backends of K available, the OCAML backend for concrete execution, the Java backend for symbolic reasoning and proofs, and the experimental Haskell backend for developers.
 This repository generates the build-products for both backends in `.build/defn/java/` and `.build/defn/ocaml/`.
 
-### System Dependencies
+### Dependencies
 
 The following are needed for building/running KWasm:
 
@@ -67,14 +67,17 @@ The following are needed for building/running KWasm:
 -   [Haskell Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/#installupgrade).
     Note that the version of the `stack` tool provided by your package manager might not be recent enough.
     Please follow installation instructions from the Haskell Stack website linked above.
+-   [LLVM](https://llvm.org/) For building the LLVM backend.
 
 On Ubuntu >= 15.04 (for example):
 
 ```sh
-sudo apt install                                                      \
-         autoconf curl flex gcc libffi-dev libmpfr-dev libtool maven  \
-         opam openjdk-8-jdk pandoc pkg-config python3 python-pygments \
-         python-recommonmark python-sphinx time zlib1g-dev
+sudo apt-get install --yes                                                            \
+    autoconf bison clang++-8 clang-8 cmake curl flex gcc libboost-test-dev libffi-dev \
+    libgmp-dev libjemalloc-dev libmpfr-dev libprocps-dev libprotobuf-dev libtool      \
+    libyaml-dev lld-8 llvm llvm-8 llvm-8-tools maven opam openjdk-8-jdk pandoc        \
+    pkg-config protobuf-compiler python3 python-pygments python-recommonmark          \
+    python-sphinx time zlib1g-dev
 ```
 
 To upgrade `stack` (if needed):
@@ -84,12 +87,16 @@ stack upgrade
 export PATH=$HOME/.local/bin:$PATH
 ```
 
-### Building
-
 After installing the above dependencies, make sure the submodules are setup:
 
 ```sh
 git submodule update --init --recursive
+```
+
+Similarly, you'll need to setup K's Rust dependencies:
+
+```sh
+./deps/k/llvm-backend/src/main/native/llvm-backend/install-rust
 ```
 
 If you haven't already setup K's OCaml dependencies more recently than February 1, 2019, then you also need to setup the K OCaml dependencies:
@@ -98,20 +105,13 @@ If you haven't already setup K's OCaml dependencies more recently than February 
 ./deps/k/k-distribution/src/main/scripts/bin/k-configure-opam-dev
 ```
 
-**NOTE**: It may prove useful to first do `rm -rf ~/.opam` if you've setup K projcets in the past and are experiencing trouble with the newest opam libraries.
-          This is a fairly destructive operation, and will break any other projects that depend on specific locally installed ocaml packages.
-
-Similarly, you'll need to setup K's Rust dependencies:
-
-```sh
-./deps/k/llvm-backend/src/main/native/llvm-backend/install-rust
-```
-
 Install repository specific dependencies:
 
 ```sh
 make deps
 ```
+
+### Building
 
 And then build the semantics:
 
@@ -119,7 +119,7 @@ And then build the semantics:
 make build
 ```
 
-To only build specific backends, you can do `make build-java`, `make build-ocaml`, or `make build-haskell`.
+To only build specific backends, you can do `make build-llvm`, `make build-java`, `make build-ocaml`, or `make build-haskell`.
 
 ### Media and documents
 
