@@ -50,6 +50,7 @@ run_krun() {
 run_kast() {
     local output_mode
 
+    preprocess
     output_mode="${1:-kast}" ; shift
     kast --directory "$backend_dir" "$run_file" --output "$output_mode" "$@"
 }
