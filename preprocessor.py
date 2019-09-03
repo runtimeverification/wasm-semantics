@@ -11,10 +11,10 @@ def hex2float(h):
         return re.sub("-?nan(:.*$)?", "NaN", h)
     elif "inf" in h:
         return h.replace("inf", "Infinity")
-    elif "0x" not in h:
-        return h
-    else:
+    elif "0x" in h:
         return h.split()[0] + " " + "%e" % (float.fromhex(h.split()[1]))
+    else:
+        return h
 
 
 def main():
