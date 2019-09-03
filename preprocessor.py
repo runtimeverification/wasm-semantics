@@ -7,6 +7,7 @@ import numpy
 
 
 def hex2float(h):
+    h = re.sub("_", "", h)
     if "nan" in h:
         # TODO: Keep bit pattern of float, don't turn all of them into simple NaNs.
         return re.sub("-?nan(:.*$)?", "NaN", h)
