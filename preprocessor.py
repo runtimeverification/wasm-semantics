@@ -6,13 +6,17 @@ import sys
 
 
 def hex2float(h):
+    h = re.sub("_", "", h)
     if "nan" in h:
         # TODO: Keep bit pattern of float, don't turn all of them into simple NaNs.
         return re.sub("-?nan(:.*$)?", "NaN", h)
     elif "inf" in h:
         return h.replace("inf", "Infinity")
     elif "0x" in h:
-        return h.split()[0] + " " + "%e" % (float.fromhex(h.split()[1]))
+        try:
+            return h.split()[0] + " " + "%e" % (float.fromhex(h.split()[1]))
+        except OverflowError:
+            return h
     else:
         return h
 

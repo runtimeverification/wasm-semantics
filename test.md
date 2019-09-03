@@ -122,15 +122,51 @@ We will reference modules by name in imports.
 
 ### Addtional Module Syntax
 
-The conformance test cases contain the syntax of declaring modules in the format of `(module binary <string>*)` and `(module quote <string>*)`. In order to parse the conformance test cases, we handle these declarations here and just reduce them to empty.
+The conformance test cases contain the syntax of declaring modules in the format of `(module binary <string>*)` and `(module quote <string>*)`.
+They are not defined in the official specification.
+In order to parse the conformance test cases, we handle these declarations here and just reduce them to empty.
 
 **TODO**: Implement `(module binary <string>*)` and put it into `wasm.md`.
 
 ```k
     syntax DefnStrings ::= List{WasmString, ""}
-    syntax ModuleDecl  ::= "(" "module" "quote" DefnStrings ")"
- // -----------------------------------------------------------
-    rule <k> ( module quote  _ ) => . ... </k>
+    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
+                        | "(" "module" OptionalId "quote"  DefnStrings ")" 
+                        | "module" "binary" Int
+                        | "module" "quote"  String
+ // ----------------------------------------------
+    rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
+    rule <k> module binary I => . ... </k>
+
+    rule <k> ( module OID quote DS ) => module quote #concatDS(DS) ... </k>
+    rule <k> module quote S => . ... </k>
+```
+
+The conformance tests contain imports of the `"spectest"` module.
+For now, we just introduce some special handling that ignores any tests that make use of `"spectest"`.
+The handling consists of trapping whenever a `"spectest"` function is called, and removing the trap whenever a new module or assertion comes up.
+
+TODO: Actually implement the `"spectest"` module, or call out to the supplied on in the spec repo.
+
+```k
+    syntax Instr ::= "spectest_trap"
+ // --------------------------------
+    rule <k> spectest_trap ~> (L:Label   => .) ... </k>
+    rule <k> spectest_trap ~> (F:Frame   => .) ... </k>
+    rule <k> spectest_trap ~> (I:Instr   => .) ... </k>
+    rule <k> spectest_trap ~> (IS:Instrs => .) ... </k>
+    rule <k> spectest_trap ~> (D:Defn    => .) ... </k>
+    rule <k> spectest_trap ~> (DS:Defns  => .) ... </k>
+    rule <k> spectest_trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
+
+    rule <k> (spectest_trap => . ) ~> M:ModuleDecl ... </k>
+    rule <k> (spectest_trap => . ) ~> A:Assertion  ... </k>
+
+    rule <k> ( import MOD _ (func OID:OptionalId TUSE:TypeUse) )
+          => ( func OID TUSE .LocalDecls spectest_trap .Instrs)
+          ...
+          </k>
+      requires MOD ==K #unparseWasmString("\"spectest\"")
 ```
 
 Assertions for KWasm tests
@@ -496,36 +532,6 @@ We also want to be able to test that the embedder's registration function is wor
     rule <k> #assertRegistrationNamed REGNAME NAME _ => . ... </k>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
-```
-
-Special Module Handling
------------------------
-
-The reference tests contain imports of the `"spectest"` module.
-For now, we just introduce some special handling that ignores any tests that make use of `"spectest"`.
-The handling consists of trapping whenever a `"spectest"` function is called, and removing the trap whenever a new module or assertion comes up.
-
-TODO: Actually implement the `"spectest"` module, or call out to the supplied on in the spec repo.
-
-```k
-    syntax Instr ::= "spectest_trap"
- // --------------------------------
-    rule <k> spectest_trap ~> (L:Label   => .) ... </k>
-    rule <k> spectest_trap ~> (F:Frame   => .) ... </k>
-    rule <k> spectest_trap ~> (I:Instr   => .) ... </k>
-    rule <k> spectest_trap ~> (IS:Instrs => .) ... </k>
-    rule <k> spectest_trap ~> (D:Defn    => .) ... </k>
-    rule <k> spectest_trap ~> (DS:Defns  => .) ... </k>
-    rule <k> spectest_trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
-
-    rule <k> (spectest_trap => . ) ~> M:ModuleDecl ... </k>
-    rule <k> (spectest_trap => . ) ~> A:Assertion  ... </k>
-
-    rule <k> ( import MOD _ (func OID:OptionalId TUSE:TypeUse) )
-          => ( func OID TUSE .LocalDecls spectest_trap .Instrs)
-          ...
-          </k>
-      requires MOD ==K #unparseWasmString("\"spectest\"")
 ```
 
 ```k

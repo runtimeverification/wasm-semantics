@@ -9,40 +9,56 @@
 unparsefile="tests/conformance/unparseable.txt"
 
 unparseable=$(cat $unparsefile)
+backends="llvm ocaml"
 
+# Try all unparseable files, see if any new one parses and add them to the unsupported lists.
+# Keep the files sorted and without duplicates so the diff is easy to follow.
+for shortname in $unparseable $unsupported; do
+    file=tests/wasm-tests/test/core/$shortname
+
+    echo Trying to parse: $shortname
+    echo ===============
+
+    make $file.parse
+    if [ $? -eq 0 ]
+    then
+        sed --in-place "/$shortname/d" $unparsefile
+        for backend in $backends; do
+            unsuppfile="tests/conformance/unsupported-$backend.txt"
+            echo $shortname >> $unsuppfile
+            sort -u $unsuppfile -o $unsuppfile
+        done
+    else
+        echo $shortname >> $unparsefile
+        sort -u $unparsefile -o $unparsefile
+        for backend in $backends; do
+            unsuppfile="tests/conformance/unsupported-$backend.txt"
+            sed --in-place "/$shortname/d" $unsuppfile
+        done
+        echo "Unparseable: $shortname\n"
+    fi
+done
+
+# Go over the unsupported files, see if any has become supported.
 for backend in ocaml llvm; do
     unsuppfile="tests/conformance/unsupported-$backend.txt"
     unsupported=$(cat $unsuppfile)
-    for shortname in $unparseable $unsupported; do
+    for shortname in $unsupported; do
+
         file=tests/wasm-tests/test/core/$shortname
 
-        echo Trying $shortname
-        echo =================
+        echo Trying to run: $shortname
+        echo =============
 
-        make $file.parse
+        make $file.run-term TEST_CONCRETE_BACKEND=$backend
         if [ $? -eq 0 ]
         then
-            make $file.run-term TEST_CONCRETE_BACKEND=$backend
-            if [ $? -eq 0 ]
-            then
-                # Now supported, remove.
-                sed --in-place "/$shortname/d" $unparsefile
-                sed --in-place "/$shortname/d" $unsuppfile
-                echo "Success: $shortname\n"
-            else
-                echo $shortname >> $unsuppfile
-                sed --in-place "/$shortname/d" $unparsefile
-                echo "Unsupported: $shortname\n"
-            fi
-        else
-            echo $shortname >> $unparsefile
+            # Now supported, remove.
+            sed --in-place "/$shortname/d" $unparsefile
             sed --in-place "/$shortname/d" $unsuppfile
-            echo "Unparseable: $shortname\n"
+            echo "New supported ($backend): $shortname\n"
+        else
+            echo "Unsupported ($backend): $shortname\n"
         fi
-
-        # Sort the files supported, remove duplicates.
-        sort -u $unsuppfile -o $unsuppfile
-        sort -u $unparsefile -o $unparsefile
     done
 done
-
