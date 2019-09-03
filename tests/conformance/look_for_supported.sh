@@ -58,4 +58,5 @@ for backend in ocaml llvm; do
         else
             echo "Unsupported ($backend): $shortname\n"
         fi
+    done
 done
