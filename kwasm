@@ -43,7 +43,7 @@ preprocess() {
 
 run_krun() {
     preprocess
-    export K_OPTS="-Xmx4G -Xss500m"
+    export K_OPTS="-Xss500m"
     krun --directory "$backend_dir" "$run_file" "$@"
 }
 
