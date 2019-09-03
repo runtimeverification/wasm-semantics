@@ -1,6 +1,4 @@
 address.wast
-align.wast
-br.wast
 br_table.wast
 call.wast
 call_indirect.wast
@@ -21,16 +19,10 @@ float_literals.wast
 float_memory.wast
 float_misc.wast
 globals.wast
-left-to-right.wast
-load.wast
 local_tee.wast
 memory.wast
 memory_redundancy.wast
-memory_trap.wast
 names.wast
-return.wast
 select.wast
 skip-stack-guard-page.wast
-store.wast
 traps.wast
-unreachable.wast

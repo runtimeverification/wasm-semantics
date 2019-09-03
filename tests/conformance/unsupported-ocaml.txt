@@ -1,6 +1,12 @@
+align.wast
+br.wast
 func.wast
 imports.wast
 labels.wast
+left-to-right.wast
 local_get.wast
 local_set.wast
 loop.wast
+memory_trap.wast
+return.wast
+unreachable.wast
