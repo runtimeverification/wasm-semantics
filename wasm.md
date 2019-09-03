@@ -957,7 +957,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
  // -----------------------------------------------
 
     syntax PlainInstr ::= IValType  "." StoreOpM
- //                     | FValType  "." StoreOpM
+                        | FValType  "." StoreOpM
  // --------------------------------------------
 
     syntax StoreOpM ::= StoreOp | StoreOp MemArg
@@ -1014,7 +1014,7 @@ Sort `Signedness` is defined in module `BYTES`.
  // ----------------------------------------------------------
 
     syntax PlainInstr ::= IValType "." LoadOpM
- //                     | FValType "." LoadOpM
+                        | FValType "." LoadOpM
                         | IValType "." LoadOp Int
  // ---------------------------------------------
 
