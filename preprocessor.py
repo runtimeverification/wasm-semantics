@@ -7,7 +7,8 @@ import sys
 
 def hex2float(h):
     if "nan" in h:
-        return h.replace("nan", "NaN")
+        # TODO: Keep bit pattern of float, don't turn all of them into simple NaNs.
+        return re.sub("-?nan(:.*$)?", "NaN", h)
     elif "inf" in h:
         return h.replace("inf", "Infinity")
     elif "0x" not in h:
