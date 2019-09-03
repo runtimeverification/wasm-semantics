@@ -741,6 +741,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 
     syntax PlainInstr ::= "return"
  // ------------------------------
+    rule <k> return ~> (I:Instr  => .)    ... </k>
     rule <k> return ~> (SS:Stmts => .)    ... </k>
     rule <k> return ~> (L:Label  => .)    ... </k>
     rule <k> (return => .) ~> FR:Frame    ... </k>
