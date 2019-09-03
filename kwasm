@@ -30,11 +30,20 @@ pretty_diff() {
     git --no-pager diff --no-index --ignore-all-space "$@"
 }
 
+preprocess() {
+    dir="$(mktemp -d)"
+    tmp_input="$dir/$(basename $run_file))"
+    touch "$tmp_input"
+    python preprocessor.py "$run_file" > "$tmp_input"
+    run_file="$tmp_input"
+}
+
 # Runners
 # -------
 
 run_krun() {
-    export K_OPTS=-Xss500m
+    preprocess
+    export K_OPTS="-Xmx4G -Xss500m"
     krun --directory "$backend_dir" "$run_file" "$@"
 }
 

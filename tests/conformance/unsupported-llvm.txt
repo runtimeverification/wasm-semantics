@@ -1,10 +1,12 @@
+align.wast
+br.wast
 func.wast
-func_ptrs.wast
 imports.wast
 labels.wast
-linking.wast
+left-to-right.wast
 local_get.wast
 local_set.wast
 loop.wast
-start.wast
-switch.wast
+memory_trap.wast
+return.wast
+unreachable.wast

@@ -1,12 +1,19 @@
 #!/bin/bash
 
-# Execute from project top directory.
+# Execute the script from project top directory.
+
+# This script considers all conformance tests currently listed as unparseable or unsupported, and tries parsing and executing them in turn.
+# If both steps are successfull, the confromance test is deleted from the lists.
+# If either step fails, the conformance test is added to the correct list and removed from the other.
 
 unparsefile="tests/conformance/unparseable.txt"
 
+unparseable=$(cat $unparsefile)
+
 for backend in ocaml llvm; do
     unsuppfile="tests/conformance/unsupported-$backend.txt"
-    for shortname in $(cat $unparsefile $unsuppfile); do
+    unsupported=$(cat $unsuppfile)
+    for shortname in $unparseable $unsupported; do
         file=tests/wasm-tests/test/core/$shortname
 
         echo Trying $shortname

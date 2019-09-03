@@ -741,6 +741,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 
     syntax PlainInstr ::= "return"
  // ------------------------------
+    rule <k> return ~> (I:Instr  => .)    ... </k>
     rule <k> return ~> (SS:Stmts => .)    ... </k>
     rule <k> return ~> (L:Label  => .)    ... </k>
     rule <k> (return => .) ~> FR:Frame    ... </k>
@@ -956,7 +957,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
  // -----------------------------------------------
 
     syntax PlainInstr ::= IValType  "." StoreOpM
- //                     | FValType  "." StoreOpM
+                        | FValType  "." StoreOpM
  // --------------------------------------------
 
     syntax StoreOpM ::= StoreOp | StoreOp MemArg
@@ -1013,7 +1014,7 @@ Sort `Signedness` is defined in module `BYTES`.
  // ----------------------------------------------------------
 
     syntax PlainInstr ::= IValType "." LoadOpM
- //                     | FValType "." LoadOpM
+                        | FValType "." LoadOpM
                         | IValType "." LoadOp Int
  // ---------------------------------------------
 
