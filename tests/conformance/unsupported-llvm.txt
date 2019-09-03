@@ -7,4 +7,3 @@ local_get.wast
 local_set.wast
 loop.wast
 start.wast
-switch.wast
