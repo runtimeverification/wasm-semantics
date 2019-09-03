@@ -45,6 +45,8 @@ for backend in ocaml llvm; do
     unsupported=$(cat $unsuppfile)
     for shortname in $unsupported; do
 
+        file=tests/wasm-tests/test/core/$shortname
+
         echo Trying to run: $shortname
         echo =============
 
