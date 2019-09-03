@@ -3,6 +3,7 @@
 
 import re
 import sys
+import numpy
 
 
 def hex2float(h):
@@ -12,7 +13,7 @@ def hex2float(h):
     elif "inf" in h:
         return h.replace("inf", "Infinity")
     elif "0x" in h:
-        return h.split()[0] + " " + "%e" % (float.fromhex(h.split()[1]))
+        return hex2float(h.split()[0] + " " + "%e" % (numpy.longdouble(h.split()[1])))
     else:
         return h
 
