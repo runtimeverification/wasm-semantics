@@ -93,12 +93,6 @@ After installing the above dependencies, make sure the submodules are setup:
 git submodule update --init --recursive
 ```
 
-Similarly, you'll need to setup K's Rust dependencies:
-
-```sh
-./deps/k/llvm-backend/src/main/native/llvm-backend/install-rust
-```
-
 If you haven't already setup K's OCaml dependencies more recently than February 1, 2019, then you also need to setup the K OCaml dependencies:
 
 ```sh
