@@ -167,4 +167,14 @@
 #assertMemoryData 1 (0, 65) "Start didn't modify other memory"
 #assertMemoryData (0, 42) "Start function modified its own memory"
 
+(module
+    (memory 0)
+
+    (func (export "load_at_zero") (result i32) (i32.load (i32.const 0)))
+    (func (export "store_at_zero") (i32.store (i32.const 0) (i32.const 2)))
+)
+
+(assert_trap (invoke "store_at_zero") "out of bounds memory access")
+(assert_trap (invoke "load_at_zero") "out of bounds memory access")
+
 #clearConfig

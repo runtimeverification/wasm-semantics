@@ -26,4 +26,9 @@
 #assertTrap "Trap propagates through start invocation"
 #assertFunction $foo  [ ] -> [ ] [ ] ""
 
+(assert_trap
+  (module (func $main (unreachable)) (start $main))
+  "unreachable"
+)
+
 #clearConfig
