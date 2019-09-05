@@ -1,18 +1,21 @@
 # Settings
 # --------
 
-BUILD_DIR:=.build
-DEPS_DIR:=deps
-DEFN_DIR:=$(BUILD_DIR)/defn
-K_SUBMODULE:=$(DEPS_DIR)/k
-PANDOC_TANGLE_SUBMODULE:=$(DEPS_DIR)/pandoc-tangle
-K_BIN:=$(K_SUBMODULE)/k-distribution/target/release/k/bin
-TANGLER:=$(PANDOC_TANGLE_SUBMODULE)/tangle.lua
+BUILD_DIR := .build
+DEPS_DIR  := deps
+DEFN_DIR  := $(BUILD_DIR)/defn
 
-PATH:=$(K_BIN):$(PATH)
+K_SUBMODULE := $(DEPS_DIR)/k
+K_RELEASE   := $(K_SUBMODULE)/k-distribution/target/release/k
+K_BIN       := $(K_RELEASE)/bin
+K_LIB       := $(K_RELEASE)/lib
+
+PATH := $(K_BIN):$(PATH)
 export PATH
 
-LUA_PATH=$(PANDOC_TANGLE_SUBMODULE)/?.lua;;
+PANDOC_TANGLE_SUBMODULE := $(DEPS_DIR)/pandoc-tangle
+TANGLER                 := $(PANDOC_TANGLE_SUBMODULE)/tangle.lua
+LUA_PATH                := $(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
 .PHONY: all clean \
@@ -39,7 +42,7 @@ $(K_SUBMODULE)/make.timestamp:
 	cd $(K_SUBMODULE) && mvn package -DskipTests
 	touch $(K_SUBMODULE)/make.timestamp
 
-$(PANDOC_TANGLE_SUBMODULE)/make.timestamp:
+$(TANGLER):
 	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
 	touch $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 
@@ -76,19 +79,19 @@ defn-java: $(java_defn)
 defn-haskell: $(haskell_defn)
 defn-llvm: $(llvm_defn)
 
-$(ocaml_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(ocaml_dir)
+$(ocaml_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(java_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(java_dir)
+$(java_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(haskell_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(haskell_dir)
+$(haskell_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(llvm_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(llvm_dir)
+$(llvm_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
