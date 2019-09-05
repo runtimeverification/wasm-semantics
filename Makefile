@@ -68,18 +68,6 @@ llvm_dir:=$(DEFN_DIR)/llvm
 llvm_defn:=$(patsubst %, $(llvm_dir)/%, $(wasm_files))
 llvm_kompiled:=$(llvm_dir)/test-kompiled/interpreter
 
-$(ocaml_dir):
-	mkdir -p $@
-
-$(java_dir):
-	mkdir -p $@
-
-$(haskell_dir):
-	mkdir -p $@
-
-$(llvm_dir):
-	mkdir -p $@
-
 # Tangle definition from *.md files
 
 defn: defn-ocaml defn-java defn-haskell
@@ -89,15 +77,19 @@ defn-haskell: $(haskell_defn)
 defn-llvm: $(llvm_defn)
 
 $(ocaml_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(ocaml_dir)
+	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(java_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(java_dir)
+	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(haskell_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(haskell_dir)
+	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(llvm_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(llvm_dir)
+	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 # Build definitions
