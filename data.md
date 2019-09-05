@@ -21,11 +21,11 @@ module WASM-DATA
 ### WASM Token Sorts
 
 ```k
-    syntax WasmString [token]
-    syntax Identifier [token]
-    syntax WasmInt    [token]
-    syntax #Layout    [token]
- // -------------------------
+    syntax WasmStringToken [token]
+    syntax IdentifierToken [token]
+    syntax WasmIntToken    [token]
+    syntax #Layout         [token]
+ // ------------------------------
 ```
 
 ### Identifiers
@@ -34,7 +34,8 @@ In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based
 And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
-    syntax Identifier ::= #freshId ( Int )
+    syntax Identifier ::= IdentifierToken
+                        | #freshId ( Int )
     syntax OptionalId ::= "" [klabel(.Identifier)]
                         | Identifier
  // --------------------------------
@@ -206,17 +207,16 @@ The `#width` function returns the bit-width of a given `IValType`.
 ```
 
 Here we define the rules about integer parsing.
-**TODO**: Symbolic reasoning for sort `WasmInt` not tested yet. In the future should investigate which direction the subsort should go. (`WasmInt` under `Int`/`Int` under `WasmInt`)
+**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
 
 ```k
-    syntax WasmInt
-    syntax String ::= #parseWasmIntToken ( WasmInt ) [function, functional, hook(STRING.token2string)]
-    syntax Int    ::= #parseWasmInt      ( String )  [function]
-                    | WasmInt
- // -------------------------
-    rule #parseWasmInt(S) => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
-    rule #parseWasmInt(S) => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-    rule WINT:WasmInt     => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
+    syntax String ::= #parseWasmIntToken ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= #parseWasmInt      ( String       )  [function]
+                    | WasmIntToken
+ // ------------------------------
+    rule #parseWasmInt(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+    rule #parseWasmInt(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+    rule WINT:WasmIntToken => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
 ```
 
 ### Type Mutability
@@ -456,6 +456,7 @@ To avoid dealing with these data strings in K, we use a list of integers as an i
 
 ```k
     syntax WasmString ::= ".WasmString"
+                        | WasmStringToken
     syntax String     ::= #parseWasmString   ( WasmString ) [function, functional, hook(STRING.token2string)]
     syntax WasmString ::= #unparseWasmString ( String     ) [function, functional, hook(STRING.string2token)]
     syntax DataString ::= List{WasmString, ""}              [klabel(listWasmString)]
