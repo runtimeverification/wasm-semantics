@@ -44,7 +44,6 @@ $(K_SUBMODULE)/make.timestamp:
 
 $(TANGLER):
 	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
-	touch $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 
 ocaml-deps:
 	eval $$(opam config env) \
