@@ -31,6 +31,7 @@ pretty_diff() {
 }
 
 preprocess() {
+    local this_script_dir tmp_dir tmp_input
     this_script_dir="$(dirname $0)"
     tmp_dir="$(mktemp -d)"
     tmp_input="$tmp_dir/$(basename $run_file))"
