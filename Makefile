@@ -35,7 +35,7 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(K_SUBMODULE)/make.timestamp $(PANDOC_TANGLE_SUBMODULE)/make.timestamp ocaml-deps
+deps: $(K_SUBMODULE)/make.timestamp $(TANGLER) ocaml-deps
 
 $(K_SUBMODULE)/make.timestamp:
 	git submodule update --init --recursive
