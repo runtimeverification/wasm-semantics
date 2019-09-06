@@ -81,13 +81,13 @@ pipeline {
       }
     }
     stage('Test Conformance') {
-      options { timeout(time: 5, unit: 'MINUTES') }
+      options { timeout(time: 15, unit: 'MINUTES') }
       parallel {
         stage('Parse') {
           steps {
             sh '''
               nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
+              [ "$nprocs" -gt '2' ] && nprocs=2
               make test-conformance-parse -j"$nprocs"
             '''
           }
