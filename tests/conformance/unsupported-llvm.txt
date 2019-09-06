@@ -3,8 +3,12 @@ align.wast
 br.wast
 call_indirect.wast
 const.wast
+f32.wast
 f32_bitwise.wast
+f32_cmp.wast
+f64.wast
 f64_bitwise.wast
+f64_cmp.wast
 float_memory.wast
 float_misc.wast
 func.wast
@@ -18,5 +22,6 @@ loop.wast
 memory_redundancy.wast
 memory_trap.wast
 return.wast
+skip-stack-guard-page.wast
 traps.wast
 unreachable.wast
