@@ -22,6 +22,5 @@ loop.wast
 memory_redundancy.wast
 memory_trap.wast
 return.wast
-skip-stack-guard-page.wast
 traps.wast
 unreachable.wast
