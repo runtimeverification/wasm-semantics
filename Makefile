@@ -1,18 +1,21 @@
 # Settings
 # --------
 
-BUILD_DIR:=.build
-DEPS_DIR:=deps
-DEFN_DIR:=$(BUILD_DIR)/defn
-K_SUBMODULE:=$(DEPS_DIR)/k
-PANDOC_TANGLE_SUBMODULE:=$(DEPS_DIR)/pandoc-tangle
-K_BIN:=$(K_SUBMODULE)/k-distribution/target/release/k/bin
-TANGLER:=$(PANDOC_TANGLE_SUBMODULE)/tangle.lua
+BUILD_DIR := .build
+DEPS_DIR  := deps
+DEFN_DIR  := $(BUILD_DIR)/defn
 
-PATH:=$(K_BIN):$(PATH)
+K_SUBMODULE := $(DEPS_DIR)/k
+K_RELEASE   := $(K_SUBMODULE)/k-distribution/target/release/k
+K_BIN       := $(K_RELEASE)/bin
+K_LIB       := $(K_RELEASE)/lib
+
+PATH := $(K_BIN):$(PATH)
 export PATH
 
-LUA_PATH=$(PANDOC_TANGLE_SUBMODULE)/?.lua;;
+PANDOC_TANGLE_SUBMODULE := $(DEPS_DIR)/pandoc-tangle
+TANGLER                 := $(PANDOC_TANGLE_SUBMODULE)/tangle.lua
+LUA_PATH                := $(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
 .PHONY: all clean \
@@ -32,16 +35,15 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(K_SUBMODULE)/make.timestamp $(PANDOC_TANGLE_SUBMODULE)/make.timestamp ocaml-deps
+deps: $(K_SUBMODULE)/make.timestamp $(TANGLER) ocaml-deps
 
 $(K_SUBMODULE)/make.timestamp:
 	git submodule update --init --recursive
 	cd $(K_SUBMODULE) && mvn package -DskipTests
 	touch $(K_SUBMODULE)/make.timestamp
 
-$(PANDOC_TANGLE_SUBMODULE)/make.timestamp:
+$(TANGLER):
 	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
-	touch $(PANDOC_TANGLE_SUBMODULE)/make.timestamp
 
 ocaml-deps:
 	eval $$(opam config env) \
@@ -68,19 +70,10 @@ llvm_dir:=$(DEFN_DIR)/llvm
 llvm_defn:=$(patsubst %, $(llvm_dir)/%, $(wasm_files))
 llvm_kompiled:=$(llvm_dir)/test-kompiled/interpreter
 
-$(ocaml_dir):
-	mkdir -p $@
-
-$(java_dir):
-	mkdir -p $@
-
-$(haskell_dir):
-	mkdir -p $@
-
-$(llvm_dir):
-	mkdir -p $@
-
 # Tangle definition from *.md files
+
+llvm_tangle     := .k:not(.not-llvm)
+not_llvm_tangle := .k:not(.llvm)
 
 defn: defn-ocaml defn-java defn-haskell
 defn-ocaml: $(ocaml_defn)
@@ -88,17 +81,21 @@ defn-java: $(java_defn)
 defn-haskell: $(haskell_defn)
 defn-llvm: $(llvm_defn)
 
-$(ocaml_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(ocaml_dir)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
+$(ocaml_dir)/%.k: %.md $(TANGLER)
+	@mkdir -p $(dir $@)
+	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
 
-$(java_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(java_dir)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
+$(java_dir)/%.k: %.md $(TANGLER)
+	@mkdir -p $(dir $@)
+	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
 
-$(haskell_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(haskell_dir)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
+$(haskell_dir)/%.k: %.md $(TANGLER)
+	@mkdir -p $(dir $@)
+	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
 
-$(llvm_dir)/%.k: %.md $(PANDOC_TANGLE_SUBMODULE)/make.timestamp $(llvm_dir)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
+$(llvm_dir)/%.k: %.md $(TANGLER)
+	@mkdir -p $(dir $@)
+	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(llvm_tangle)" $< > $@
 
 # Build definitions
 

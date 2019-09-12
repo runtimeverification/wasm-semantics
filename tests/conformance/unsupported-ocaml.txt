@@ -3,16 +3,18 @@ align.wast
 br.wast
 call_indirect.wast
 const.wast
-f32.wast
 f32_bitwise.wast
-f64.wast
+f32.wast
 f64_bitwise.wast
+f64.wast
 float_memory.wast
 float_misc.wast
+func_ptrs.wast
 func.wast
 imports.wast
 labels.wast
 left-to-right.wast
+linking.wast
 local_get.wast
 local_set.wast
 local_tee.wast
@@ -20,5 +22,6 @@ loop.wast
 memory_redundancy.wast
 memory_trap.wast
 return.wast
+start.wast
 traps.wast
 unreachable.wast

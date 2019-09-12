@@ -4,6 +4,8 @@ conversions.wast
 data.wast
 elem.wast
 endianness.wast
+f32_cmp.wast
+f64_cmp.wast
 float_exprs.wast
 float_literals.wast
 globals.wast
