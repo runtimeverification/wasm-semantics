@@ -98,7 +98,9 @@ $(java_dir)/%.k: %.md $(TANGLER)
 
 # Build definitions
 
-KOMPILE_OPTIONS :=
+KOMPILE_OPTIONS    :=
+MAIN_MODULE        := WASM-TEST
+MAIN_SYNTAX_MODULE := WASM-TEST-SYNTAX
 
 build: build-llvm build-haskell build-ocaml build-java
 build-llvm: $(llvm_kompiled)
@@ -107,28 +109,28 @@ build-ocaml: $(ocaml_kompiled)
 build-java: $(java_kompiled)
 
 $(llvm_kompiled): $(llvm_defn)
-	kompile --backend llvm                                          \
-	    --directory $(llvm_dir) -I $(llvm_dir)                      \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	kompile --backend llvm                                                    \
+	    --directory $(llvm_dir) -I $(llvm_dir)                                \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
 $(haskell_kompiled): $(haskell_defn)
-	kompile --backend haskell                                       \
-	    --directory $(haskell_dir) -I $(haskell_dir)                \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	kompile --backend haskell                                                 \
+	    --directory $(haskell_dir) -I $(haskell_dir)                          \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
 $(ocaml_kompiled): $(ocaml_defn)
-	eval $$(opam config env)                                        \
-	    kompile -O3 --non-strict --backend ocaml                    \
-	    --directory $(ocaml_dir) -I $(ocaml_dir)                    \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	eval $$(opam config env)                                                  \
+	    kompile -O3 --non-strict --backend ocaml                              \
+	    --directory $(ocaml_dir) -I $(ocaml_dir)                              \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
 $(java_kompiled): $(java_defn)
-	kompile --backend java                                          \
-	    --directory $(java_dir) -I $(java_dir)                      \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	kompile --backend java                                                    \
+	    --directory $(java_dir) -I $(java_dir)                                \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
 # Testing
