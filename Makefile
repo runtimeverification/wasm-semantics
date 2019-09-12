@@ -18,11 +18,11 @@ TANGLER                 := $(PANDOC_TANGLE_SUBMODULE)/tangle.lua
 LUA_PATH                := $(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
-.PHONY: all clean \
-        deps ocaml-deps haskell-deps \
-        defn defn-ocaml defn-java defn-haskell defn-llvm \
-        build build-ocaml defn-haskell build-haskell build-llvm \
-        test test-execution test-simple test-prove test-klab-prove \
+.PHONY: all clean                                                          \
+        deps ocaml-deps haskell-deps                                       \
+        defn defn-llvm defn-haskell defn-ocaml defn-java                   \
+        build build-llvm build-haskell build-ocaml build-java              \
+        test test-execution test-simple test-prove test-klab-prove         \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
@@ -54,22 +54,20 @@ ocaml-deps:
 
 wasm_files:=test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k
 
+llvm_dir    := $(DEFN_DIR)/llvm
+haskell_dir := $(DEFN_DIR)/haskell
+ocaml_dir   := $(DEFN_DIR)/ocaml
+java_dir    := $(DEFN_DIR)/java
 
-ocaml_dir      := $(DEFN_DIR)/ocaml
-ocaml_defn     := $(patsubst %, $(ocaml_dir)/%, $(wasm_files))
-ocaml_kompiled := $(ocaml_dir)/test-kompiled/interpreter
+llvm_defn    := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
+haskell_defn := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
+ocaml_defn   := $(patsubst %, $(ocaml_dir)/%, $(wasm_files))
+java_defn    := $(patsubst %, $(java_dir)/%, $(wasm_files))
 
-java_dir      := $(DEFN_DIR)/java
-java_defn     := $(patsubst %, $(java_dir)/%, $(wasm_files))
-java_kompiled := $(java_dir)/test-kompiled/compiled.txt
-
-haskell_dir      := $(DEFN_DIR)/haskell
-haskell_defn     := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
+llvm_kompiled    := $(llvm_dir)/test-kompiled/interpreter
 haskell_kompiled := $(haskell_dir)/test-kompiled/definition.kore
-
-llvm_dir      := $(DEFN_DIR)/llvm
-llvm_defn     := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
-llvm_kompiled := $(llvm_dir)/test-kompiled/interpreter
+ocaml_kompiled   := $(ocaml_dir)/test-kompiled/interpreter
+java_kompiled    := $(java_dir)/test-kompiled/compiled.txt
 
 # Tangle definition from *.md files
 
@@ -77,10 +75,18 @@ llvm_tangle     := .k:not(.not-llvm)
 not_llvm_tangle := .k:not(.llvm)
 
 defn: defn-ocaml defn-java defn-haskell
+defn-llvm: $(llvm_defn)
+defn-haskell: $(haskell_defn)
 defn-ocaml: $(ocaml_defn)
 defn-java: $(java_defn)
-defn-haskell: $(haskell_defn)
-defn-llvm: $(llvm_defn)
+
+$(llvm_dir)/%.k: %.md $(TANGLER)
+	@mkdir -p $(dir $@)
+	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(llvm_tangle)" $< > $@
+
+$(haskell_dir)/%.k: %.md $(TANGLER)
+	@mkdir -p $(dir $@)
+	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
 
 $(ocaml_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
@@ -90,23 +96,27 @@ $(java_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
 
-$(haskell_dir)/%.k: %.md $(TANGLER)
-	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
-
-$(llvm_dir)/%.k: %.md $(TANGLER)
-	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(llvm_tangle)" $< > $@
-
 # Build definitions
 
 KOMPILE_OPTIONS :=
 
-build: build-ocaml build-java build-haskell build-llvm
+build: build-llvm build-haskell build-ocaml build-java
+build-llvm: $(llvm_kompiled)
+build-haskell: $(haskell_kompiled)
 build-ocaml: $(ocaml_kompiled)
 build-java: $(java_kompiled)
-build-haskell: $(haskell_kompiled)
-build-llvm: $(llvm_kompiled)
+
+$(llvm_kompiled): $(llvm_defn)
+	kompile --backend llvm                                          \
+	    --directory $(llvm_dir) -I $(llvm_dir)                      \
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
+
+$(haskell_kompiled): $(haskell_defn)
+	kompile --backend haskell                                       \
+	    --directory $(haskell_dir) -I $(haskell_dir)                \
+	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
+	    $(KOMPILE_OPTIONS)
 
 $(ocaml_kompiled): $(ocaml_defn)
 	eval $$(opam config env)                                        \
@@ -118,18 +128,6 @@ $(ocaml_kompiled): $(ocaml_defn)
 $(java_kompiled): $(java_defn)
 	kompile --backend java                                          \
 	    --directory $(java_dir) -I $(java_dir)                      \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
-	    $(KOMPILE_OPTIONS)
-
-$(haskell_kompiled): $(haskell_defn)
-	kompile --backend haskell                                       \
-	    --directory $(haskell_dir) -I $(haskell_dir)                \
-	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
-	    $(KOMPILE_OPTIONS)
-
-$(llvm_kompiled): $(llvm_defn)
-	kompile --backend llvm                                          \
-	    --directory $(llvm_dir) -I $(llvm_dir)                      \
 	    --main-module WASM-TEST --syntax-module WASM-TEST-SYNTAX $< \
 	    $(KOMPILE_OPTIONS)
 
