@@ -177,7 +177,7 @@ tests/%.parse: tests/%
 	rm -rf $@-out
 
 tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells	k
 
 tests/%.klab-prove: tests/%
 	$(TEST) klab-prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
