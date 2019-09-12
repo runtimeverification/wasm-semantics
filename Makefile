@@ -110,26 +110,26 @@ build-haskell: $(haskell_kompiled)
 build-ocaml: $(ocaml_kompiled)
 build-java: $(java_kompiled)
 
-$(llvm_kompiled): $(llvm_files)
+$(llvm_kompiled): $(llvm_defn)
 	kompile --backend llvm                                                    \
 	    --directory $(llvm_dir) -I $(llvm_dir)                                \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(haskell_kompiled): $(haskell_files)
+$(haskell_kompiled): $(haskell_defn)
 	kompile --backend haskell                                                 \
 	    --directory $(haskell_dir) -I $(haskell_dir)                          \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(ocaml_kompiled): $(ocaml_files)
+$(ocaml_kompiled): $(ocaml_defn)
 	eval $$(opam config env)                                                  \
 	    kompile -O3 --non-strict --backend ocaml                              \
 	    --directory $(ocaml_dir) -I $(ocaml_dir)                              \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(java_kompiled): $(java_files)
+$(java_kompiled): $(java_defn)
 	kompile --backend java                                                    \
 	    --directory $(java_dir) -I $(java_dir)                                \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
