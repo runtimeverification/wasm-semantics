@@ -4,7 +4,7 @@ requires "kwasm-lemmas.k"
 module MEMORY-SPEC
     imports KWASM-LEMMAS
 
-    rule <k> (i32.const ADDR):Instr (i32.load ):Instr (i32.const ADDR):Instr (i32.store ):Instr => . ... </k>
+    rule <k> i32.const ADDR => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>

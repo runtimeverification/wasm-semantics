@@ -2,12 +2,174 @@ WebAssembly State and Semantics
 ===============================
 
 ```k
-require "data.k"
-require "numeric.k"
+module WASM-SYNTAX
+    imports WASM-DATA
+endmodule
+```
 
+```k
+module WASM-DATA
+    imports INT
+    imports BOOL
+    imports STRING
+    imports LIST
+    imports MAP
+    imports FLOAT
+    imports BYTES
+```
+
+
+```k
+    syntax OptionalInt ::= Int | ".Int"
+ // -----------------------------------
+
+    syntax IValType ::= "i32" | "i64"
+    syntax ValType  ::= IValType
+ // ----------------------------
+
+    syntax Int ::= #pow  ( IValType ) [function, smtlib(pow )] /* 2 ^Int #width(T)          */
+                 | #pow1 ( IValType ) [function, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */
+ // ------------------------------------------------------------------------------------------
+    rule #pow1(i32) => 2147483648
+    rule #pow (i32) => 4294967296
+    rule #pow1(i64) => 9223372036854775808
+    rule #pow (i64) => 18446744073709551616
+```
+
+Values
+------
+
+### Basic Values
+
+WebAssembly values are either integers or floating-point numbers, of 32- or 64-bit widths.
+
+```k
+    syntax Number ::= Int | Float
+ // -----------------------------
+```
+
+Proper values are numbers annotated with their types.
+
+```k
+    syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
+    syntax  Val ::= IVal
+ // --------------------
+```
+
+We also add `undefined` as a value, which makes many partial functions in the semantics total.
+
+```k
+    syntax Val ::= "undefined"
+ // --------------------------
+```
+
+### Value Operations
+
+The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
+The `#wrap` function wraps an integer to a given bit width.
+
+```k
+    syntax IVal ::= #chop ( IVal ) [function]
+ // -----------------------------------------
+    rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
+
+    syntax Int  ::= #wrap(Int, Int) [function]
+ // ------------------------------------------
+    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
+```
+
+### Signed Interpretation
+
+Functions `#signed` and `#unsigned` allow for easier operation on twos-complement numbers.
+These functions assume that the argument integer is in the valid range of signed and unsigned values of the respective type, so they will not correctly map arbitrary integers into the corret range.
+Some operations extend integers from 1, 2, or 4 bytes, so a special function with a bit width argument helps with the conversion.
+
+```k
+    syntax Int ::= #signed      ( IValType , Int ) [function]
+                 | #unsigned    ( IValType , Int ) [function]
+                 | #signedWidth ( Int      , Int ) [function]
+ // ---------------------------------------------------------
+    rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
+    rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
+```
+
+Data Structures
+---------------
+
+WebAssembly is a stack-machine, so here we provide the stack to operate over.
+Operator `_++_` implements an append operator for sort `ValStack`.
+
+```k
+    syntax ValStack ::= ".ValStack"
+                   | Val      ":"  ValStack
+                   | ValStack "++" ValStack [function]
+ // --------------------------------------------------
+    rule .ValStack       ++ VALSTACK' => VALSTACK'
+    rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')
+```
+
+
+Byte Map
+--------
+
+Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
+To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
+The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
+`BM [ N := I ]` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
+
+```k
+    syntax Map ::= Map "[" Int ":=" Int "]" [function]
+ // --------------------------------------------------
+    rule BM [ IDX := 0  ] => BM
+    rule BM [ IDX := VAL] => BM [IDX <- VAL modInt 256 ] [ IDX +Int 1 := VAL /Int 256 ]
+      requires VAL modInt 256 =/=Int 0
+       andBool VAL >Int 0
+    // Don't store 0 bytes.
+    rule BM [ IDX := VAL] => BM [IDX <- undef          ] [ IDX +Int 1 := VAL /Int 256 ]
+      requires VAL modInt 256 ==Int 0
+       andBool VAL >Int 0
+```
+
+`#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
+The function interprets the range of bytes as little-endian.
+
+```k
+    syntax Int ::= #range ( Map , Int , Int ) [function]
+ // ----------------------------------------------------
+    rule #range(BM:Map, START, WIDTH) => 0
+      requires WIDTH ==Int 0
+    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
+      requires WIDTH >Int 0 [concrete]
+```
+
+`#lookup` looks up a key in a map, defaulting to 0 if the map does not contain the key.
+
+```k
+    syntax Int ::= #lookup ( Map , Int ) [function]
+ // -----------------------------------------------
+    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
+    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
+```
+
+`#clearRange(MAP, START, END)` removes all entries in the map from `START` (inclusive) to `END` (exclusive).
+
+```k
+    syntax Map ::= #clearRange(Map, Int, Int) [function]
+ // ----------------------------------------------------
+    rule #clearRange(M, START, END) => M
+      requires START >=Int END
+    rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END)
+      requires START <Int  END
+```
+
+
+```k
+endmodule
+```
+
+```k
 module WASM
     imports WASM-DATA
-    imports WASM-NUMERIC
 ```
 
 Configuration
@@ -86,201 +248,9 @@ Configuration
 ```
 ```k
     syntax PlainInstr ::= IValType "." "const" Int
-                        | FValType "." "const" Number
  // -------------------------------------------------
     rule <k> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </k>
-    rule <k> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </k>
 ```
-
-Structured Control Flow
------------------------
-
-`nop` does nothing.
-
-```k
-    syntax PlainInstr ::= "nop"
- // ---------------------------
-    rule <k> nop => . ... </k>
-```
-
-`unreachable` causes an immediate `trap`.
-
-```k
-    syntax PlainInstr ::= "unreachable"
- // -----------------------------------
-    rule <k> unreachable => trap ... </k>
-```
-
-Memory
-------
-
-
-The assorted store operations take an address of type `i32` and a value.
-The `storeX` operations first wrap the the value to be stored to the bit wdith `X`.
-The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
-
-```k
-    syntax Instr ::= IValType "." StoreOp Int Int
- //                | FValType "." StoreOp Int Float
-                   | "store" "{" Int Int Number "}"
- // -----------------------------------------------
-
-    syntax PlainInstr ::= IValType  "." StoreOpM
-                        | FValType  "." StoreOpM
- // --------------------------------------------
-
-    syntax StoreOpM ::= StoreOp | StoreOp MemArg
- // --------------------------------------------
-    rule <k> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </k>
-         <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
-    rule <k> ITYPE . SOP:StoreOp MEMARG:MemArg => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
-         <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
-
-    rule <k> store { WIDTH EA VAL } => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           <mdata>   DATA => #clearRange(DATA, EA, EA +Int WIDTH) [EA := VAL ] </mdata>
-           ...
-         </memInst>
-         requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
-
-    rule <k> store { WIDTH  EA  _ } => trap ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           ...
-         </memInst>
-         requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
-
-    syntax StoreOp ::= "store" | "store8" | "store16" | "store32"
- // -------------------------------------------------------------
-    rule <k> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL            } ... </k>
-    rule <k> _     . store8  EA VAL => store { 1                EA #wrap(8,  VAL) } ... </k>
-    rule <k> _     . store16 EA VAL => store { 2                EA #wrap(16, VAL) } ... </k>
-    rule <k> i64   . store32 EA VAL => store { 4                EA #wrap(32, VAL) } ... </k>
-```
-
-The assorted load operations take an address of type `i32`.
-The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
-The value is fetched from the "effective address", which is the address given on the stack plus offset.
-Sort `Signedness` is defined in module `BYTES`.
-
-```k
-    syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
- // ----------------------------------------------------------
-
-    syntax PlainInstr ::= IValType "." LoadOpM
-                        | FValType "." LoadOpM
-                        | IValType "." LoadOp Int
- // ---------------------------------------------
-
-    syntax LoadOpM ::= LoadOp | LoadOp MemArg
- // -----------------------------------------
-    rule <k> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </k>
-         <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
-    rule <k> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
-         <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
-
-    rule <k> load { ITYPE WIDTH EA SIGN }
-          => < ITYPE > #if SIGN ==K Signed
-                           #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH))
-                           #else #range(DATA, EA, WIDTH)
-                       #fi
-         ...
-         </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           <mdata>   DATA </mdata>
-           ...
-         </memInst>
-      requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
-
-    rule <k> load { _ WIDTH EA _ } => trap ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           ...
-         </memInst>
-      requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
-
-    syntax LoadOp ::= "load"
-                    | "load8_u" | "load16_u" | "load32_u"
-                    | "load8_s" | "load16_s" | "load32_s"
- // -----------------------------------------------------
-    rule <k> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </k>
-    rule <k> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </k>
-    rule <k> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </k>
-    rule <k> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </k>
-    rule <k> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </k>
-    rule <k> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </k>
-    rule <k> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </k>
-```
-
-`MemArg`s can optionally be passed to `load` and `store` operations.
-The `offset` parameter is added to the the address given on the stack, resulting in the "effective address" to store to or load from.
-The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
-
-```k
-    syntax MemArg ::= OffsetArg | AlignArg | OffsetArg AlignArg
- // -----------------------------------------------------------
-
-    syntax OffsetArg ::= "offset=" Int
-    syntax AlignArg  ::= "align="  Int
- // ----------------------------------
-
-    syntax Int ::= #getOffset ( MemArg ) [function]
- // -----------------------------------------------
-    rule #getOffset(           _:AlignArg) => 0
-    rule #getOffset(offset= OS           ) => OS
-    rule #getOffset(offset= OS _:AlignArg) => OS
-```
-
-The `size` operation returns the size of the memory, measured in pages.
-
-```k
-    syntax PlainInstr ::= "memory.size"
- // -----------------------------------
-    rule <k> memory.size => < i32 > SIZE ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           ...
-         </memInst>
-```
-
-
 ```k
     syntax Int ::= #pageSize()      [function]
     syntax Int ::= #maxMemorySize() [function]
