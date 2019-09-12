@@ -21,10 +21,14 @@ module WASM-DATA
 ### WASM Token Sorts
 
 ```k
-    syntax WasmStringToken [token]
     syntax IdentifierToken [token]
     syntax WasmIntToken    [token]
     syntax #Layout         [token]
+ // ------------------------------
+```
+
+```{.k .not-llvm}
+    syntax WasmStringToken [token]
  // ------------------------------
 ```
 
@@ -454,9 +458,13 @@ The string considered to represent the sequence of UTF-8 bytes that encode it.
 The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
+```{.k .not-llvm}
+    syntax WasmString ::= WasmStringToken
+ // -------------------------------------
+```
+
 ```k
     syntax WasmString ::= ".WasmString"
-                        | WasmStringToken
     syntax String     ::= #parseWasmString   ( WasmString ) [function, functional, hook(STRING.token2string)]
     syntax WasmString ::= #unparseWasmString ( String     ) [function, functional, hook(STRING.string2token)]
     syntax DataString ::= List{WasmString, ""}              [klabel(listWasmString)]
