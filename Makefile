@@ -54,21 +54,22 @@ ocaml-deps:
 
 wasm_files:=test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k
 
-ocaml_dir:=$(DEFN_DIR)/ocaml
-ocaml_defn:=$(patsubst %, $(ocaml_dir)/%, $(wasm_files))
-ocaml_kompiled:=$(ocaml_dir)/test-kompiled/interpreter
 
-java_dir:=$(DEFN_DIR)/java
-java_defn:=$(patsubst %, $(java_dir)/%, $(wasm_files))
-java_kompiled:=$(java_dir)/test-kompiled/compiled.txt
+ocaml_dir      := $(DEFN_DIR)/ocaml
+ocaml_defn     := $(patsubst %, $(ocaml_dir)/%, $(wasm_files))
+ocaml_kompiled := $(ocaml_dir)/test-kompiled/interpreter
 
-haskell_dir:=$(DEFN_DIR)/haskell
-haskell_defn:=$(patsubst %, $(haskell_dir)/%, $(wasm_files))
-haskell_kompiled:=$(haskell_dir)/test-kompiled/definition.kore
+java_dir      := $(DEFN_DIR)/java
+java_defn     := $(patsubst %, $(java_dir)/%, $(wasm_files))
+java_kompiled := $(java_dir)/test-kompiled/compiled.txt
 
-llvm_dir:=$(DEFN_DIR)/llvm
-llvm_defn:=$(patsubst %, $(llvm_dir)/%, $(wasm_files))
-llvm_kompiled:=$(llvm_dir)/test-kompiled/interpreter
+haskell_dir      := $(DEFN_DIR)/haskell
+haskell_defn     := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
+haskell_kompiled := $(haskell_dir)/test-kompiled/definition.kore
+
+llvm_dir      := $(DEFN_DIR)/llvm
+llvm_defn     := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
+llvm_kompiled := $(llvm_dir)/test-kompiled/interpreter
 
 # Tangle definition from *.md files
 
