@@ -110,33 +110,29 @@ build-haskell: $(haskell_kompiled)
 build-ocaml: $(ocaml_kompiled)
 build-java: $(java_kompiled)
 
-$(llvm_kompiled): $(llvm_defn)
-	kompile --backend llvm                                                 \
-	    --directory $(llvm_dir) -I $(llvm_dir)                             \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) \
-	    $(llvm_dir)/$(MAIN_DEFN_FILE)                                      \
+$(llvm_kompiled): $(llvm_files)
+	kompile --backend llvm                                                    \
+	    --directory $(llvm_dir) -I $(llvm_dir)                                \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(haskell_kompiled): $(haskell_defn)
-	kompile --backend haskell                                              \
-	    --directory $(haskell_dir) -I $(haskell_dir)                       \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) \
-	    $(haskell_dir)/$(MAIN_DEFN_FILE)                                   \
+$(haskell_kompiled): $(haskell_files)
+	kompile --backend haskell                                                 \
+	    --directory $(haskell_dir) -I $(haskell_dir)                          \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(ocaml_kompiled): $(ocaml_defn)
-	eval $$(opam config env)                                               \
-	    kompile -O3 --non-strict --backend ocaml                           \
-	    --directory $(ocaml_dir) -I $(ocaml_dir)                           \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) \
-	    $(ocaml_dir)/$(MAIN_DEFN_FILE)                                     \
+$(ocaml_kompiled): $(ocaml_files)
+	eval $$(opam config env)                                                  \
+	    kompile -O3 --non-strict --backend ocaml                              \
+	    --directory $(ocaml_dir) -I $(ocaml_dir)                              \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(java_kompiled): $(java_defn)
-	kompile --backend java                                                 \
-	    --directory $(java_dir) -I $(java_dir)                             \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) \
-	    $(java_dir)/$(MAIN_DEFN_FILE)                                      \
+$(java_kompiled): $(java_files)
+	kompile --backend java                                                    \
+	    --directory $(java_dir) -I $(java_dir)                                \
+	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
 # Testing
