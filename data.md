@@ -455,16 +455,14 @@ The exception is for characters that are explicitly escaped which can represent 
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
 ```k
-    syntax WasmString ::= WasmStringToken
+    syntax WasmString ::= ".WasmString"
+                        | WasmStringToken
  // -------------------------------------
-```
 
-```k
     syntax String          ::= #parseWasmString   ( WasmStringToken ) [function, functional, hook(STRING.token2string)]
     syntax WasmStringToken ::= #unparseWasmString ( String          ) [function, functional, hook(STRING.string2token)]
-    syntax WasmString ::= ".WasmString"
-    syntax DataString ::= List{WasmString, ""}              [klabel(listWasmString)]
- // --------------------------------------------------------------------------------
+    syntax DataString      ::= List{WasmString, ""}                   [klabel(listWasmString)]
+ // ------------------------------------------------------------------------------------------
 ```
 
 `DataString`, as is defined in the wasm semantics, is a list of `WasmString`s.
