@@ -318,8 +318,8 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 The `#wrap` function wraps an integer to a given bit width.
 
 ```k
-    syntax IVal ::= #chop ( IVal ) [function]
- // -----------------------------------------
+    syntax IVal ::= #chop ( IVal ) [function, smtlib(chop)]
+ // -------------------------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
 
     syntax Int  ::= #wrap(Int, Int) [function]
@@ -556,8 +556,8 @@ The maps store integers, but maintains the invariant that each stored integer is
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #range ( Map , Int , Int ) [function]
- // ----------------------------------------------------
+    syntax Int ::= #range ( Map , Int , Int ) [function, smtlib(range)]
+ // -------------------------------------------------------------------
     rule #range(BM:Map, START, WIDTH) => 0
       requires WIDTH ==Int 0
     rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
