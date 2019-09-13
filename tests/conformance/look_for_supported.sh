@@ -40,7 +40,7 @@ for shortname in $unparseable $unsupported; do
 done
 
 # Go over the unsupported files, see if any has become supported.
-for backend in ocaml llvm; do
+for backend in $backends; do
     unsuppfile="tests/conformance/unsupported-$backend.txt"
     unsupported=$(cat $unsuppfile)
     for shortname in $unsupported; do

@@ -10,6 +10,77 @@ module WASM-TEXT-SYNTAX
     imports WASM-SYNTAX
 endmodule
 
+module WASM-SYNTAX
+    imports WASM-TOKEN-SYNTAX
+    imports WASM-DATA
+endmodule
+```
+
+Wasm Tokens
+-----------
+
+`WASM-TOKEN-SYNTAX` module defines the tokens used in parsing programs.
+
+```k
+module WASM-TOKEN-SYNTAX
+```
+
+### Strings
+
+In WebAssembly, strings are defined differently to K's built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
+Note that you cannot use a normal K `String` in any production definitions, because the definitions of `String` and `WasmString` overlap, and the K tokenizer does not support ambiguity.
+
+```{.k .not-llvm}
+    syntax WasmStringToken ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{1,6}\\}))*\\\"" [token]
+ // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```
+
+```{.k .llvm}
+    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{1,6}\\}))*\\\"" [token]
+ // ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```
+
+### Identifiers
+
+In WebAssembly, identifiers are defined by the regular expression below.
+
+```k
+    syntax IdentifierToken ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
+ // ----------------------------------------------------------------------------
+```
+
+### Integers
+
+In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
+In both cases, digits can optionally be separated by underscores.
+
+```k
+    syntax WasmIntToken ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
+                          | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
+ // ------------------------------------------------------------------------
+```
+
+### Layout
+
+WebAssembly allows for block comments using `(;` and `;)`, and line comments using `;;`.
+Additionally, white-space is skipped/ignored.
+Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
+
+```k
+    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
+                     | r";;[^\\n\\r]*"                  [token]
+                     | r"[\\ \\n\\r\\t]"                [token]
+ // -----------------------------------------------------------
+```
+
+```k
+endmodule
+```
+
+Wasm Textual Format
+-------------------
+
+```k
 module WASM-TEXT
     imports WASM
 ```
@@ -18,8 +89,7 @@ The text format is a concrete syntax for Wasm.
 It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
 Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
 
-Folded Instructions
--------------------
+### Folded Instructions
 
 Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
 
@@ -59,8 +129,7 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
-Looking up Indices
-------------------
+### Looking up Indices
 
 In the abstract Wasm syntax, indices are always integers.
 In the text format, we extend indices to incorporate identifiers.
@@ -73,8 +142,7 @@ We also enable context lookups with identifiers.
       requires ID in_keys(IDS)
 ```
 
-Block Instructions
-------------------
+### Block Instructions
 
 In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
 The `<labelIds>` cell maps labels to the depth at which they occur.
@@ -133,8 +201,7 @@ In the text format, it is also allowed to have a conditional without the `else` 
        andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
 ```
 
-Memory and Tables
------------------
+### Memory and Tables
 
 Intitial memory data, and initial table elements can be given inline in the text format.
 
@@ -163,8 +230,7 @@ Intitial memory data, and initial table elements can be given inline in the text
          </k>
 ```
 
-Exports
--------
+### Exports
 
 Exports can be declared like regular functions, memories, etc., by giving an inline export declaration.
 In that case, it simply desugars to the definition followed by an export of it.
@@ -232,8 +298,7 @@ Note that it is possible to define multiple exports inline, i.e. export a single
          </k>
 ```
 
-Imports
--------
+### Imports
 
 Imports can be declared like regular functions, memories, etc., by giving an inline import declaration.
 

@@ -4,13 +4,10 @@ conversions.wast
 data.wast
 elem.wast
 endianness.wast
-f32.wast
 f32_cmp.wast
-f64.wast
 f64_cmp.wast
 float_exprs.wast
 float_literals.wast
 globals.wast
 memory.wast
 names.wast
-skip-stack-guard-page.wast

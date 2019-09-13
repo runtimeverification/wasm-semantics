@@ -5,66 +5,6 @@ WebAssembly Data
 require "domains.k"
 ```
 
-```k
-module WASM-SYNTAX
-    imports WASM-TOKEN-SYNTAX
-    imports WASM-DATA
-endmodule
-```
-
-`WASM-TOKEN-SYNTAX` module defines the tokens used in parsing programs.
-
-```k
-module WASM-TOKEN-SYNTAX
-```
-
-### Strings
-
-In WebAssembly, strings are defined differently to K's built-in strings, so we have to write the definition of WebAssembly `WasmString` in a separate module, and use the module just for parsing the program.
-Note that you cannot use a normal K `String` in any production definitions, because the definitions of `String` and `WasmString` overlap, and the K tokenizer does not support ambiguity.
-
-```k
-    syntax WasmString ::= r"\\\"(([^\\\"\\\\])|(\\\\[0-9a-fA-F]{2})|(\\\\t)|(\\\\n)|(\\\\r)|(\\\\\\\")|(\\\\')|(\\\\\\\\)|(\\\\u\\{[0-9a-fA-F]{1,6}\\}))*\\\"" [token]
- // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-```
-
-### Identifiers
-
-In WebAssembly, identifiers are defined by the regular expression below.
-
-```k
-    syntax Identifier ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
- // -----------------------------------------------------------------------
-```
-
-### Integers
-
-In WebAssembly, integers could be represented in either the decimal form or hexadecimal form.
-In both cases, digits can optionally be separated by underscores.
-
-```k
-    syntax WasmInt ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
-                     | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
- // -------------------------------------------------------------------
-```
-
-### Layout
-
-WebAssembly allows for block comments using `(;` and `;)`, and line comments using `;;`.
-Additionally, white-space is skipped/ignored.
-Declaring regular expressions of sort `#Layout` infroms the K lexer to drop these tokens.
-
-```k
-    syntax #Layout ::= r"\\(;([^;]|(;+([^;\\)])))*;\\)" [token]
-                     | r";;[^\\n\\r]*"                  [token]
-                     | r"[\\ \\n\\r\\t]"                [token]
- // -----------------------------------------------------------
-```
-
-```k
-endmodule
-```
-
 `WASM-DATA` module
 
 ```k
@@ -78,11 +18,28 @@ module WASM-DATA
     imports BYTES
 ```
 
+### WASM Token Sorts
+
+```k
+    syntax IdentifierToken [token]
+    syntax WasmIntToken    [token]
+    syntax #Layout         [token]
+ // ------------------------------
+```
+
+```{.k .not-llvm}
+    syntax WasmStringToken [token]
+ // ------------------------------
+```
+
+### Identifiers
+
 In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
 And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
-    syntax Identifier ::= #freshId ( Int )
+    syntax Identifier ::= IdentifierToken
+                        | #freshId ( Int )
     syntax OptionalId ::= "" [klabel(.Identifier)]
                         | Identifier
  // --------------------------------
@@ -254,17 +211,16 @@ The `#width` function returns the bit-width of a given `IValType`.
 ```
 
 Here we define the rules about integer parsing.
-**TODO**: Symbolic reasoning for sort `WasmInt` not tested yet. In the future should investigate which direction the subsort should go. (`WasmInt` under `Int`/`Int` under `WasmInt`)
+**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
 
 ```k
-    syntax WasmInt
-    syntax String ::= #parseWasmIntToken ( WasmInt ) [function, functional, hook(STRING.token2string)]
-    syntax Int    ::= #parseWasmInt      ( String )  [function]
-                    | WasmInt
- // -------------------------
-    rule #parseWasmInt(S) => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
-    rule #parseWasmInt(S) => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-    rule WINT:WasmInt     => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
+    syntax String ::= #parseWasmIntToken ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= #parseWasmInt      ( String       )  [function]
+                    | WasmIntToken
+ // ------------------------------
+    rule #parseWasmInt(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+    rule #parseWasmInt(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+    rule WINT:WasmIntToken => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
 ```
 
 ### Type Mutability
@@ -501,6 +457,11 @@ Wasm memories can be initialized with a segment of data, sepcified as a string.
 The string considered to represent the sequence of UTF-8 bytes that encode it.
 The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
 To avoid dealing with these data strings in K, we use a list of integers as an initializer.
+
+```{.k .not-llvm}
+    syntax WasmString ::= WasmStringToken
+ // -------------------------------------
+```
 
 ```k
     syntax WasmString ::= ".WasmString"

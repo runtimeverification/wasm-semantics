@@ -20,6 +20,8 @@ KLAB_OUT="${KLAB_OUT:-$build_dir/klab}"
 KLAB_NODE_STACK_SIZE="${KLAB_NODE_STACK_SIZE:-30000}"
 export KLAB_OUT
 
+export K_OPTS="-Xmx8G"
+
 # Utilities
 # ---------
 
@@ -31,10 +33,12 @@ pretty_diff() {
 }
 
 preprocess() {
-    dir="$(mktemp -d)"
-    tmp_input="$dir/$(basename $run_file))"
+    local this_script_dir tmp_dir tmp_input
+    this_script_dir="$(dirname $0)"
+    tmp_dir="$(mktemp -d)"
+    tmp_input="$tmp_dir/$(basename $run_file))"
     touch "$tmp_input"
-    python preprocessor.py "$run_file" > "$tmp_input"
+    python "$this_script_dir/preprocessor.py" "$run_file" > "$tmp_input"
     run_file="$tmp_input"
 }
 
@@ -43,7 +47,7 @@ preprocess() {
 
 run_krun() {
     preprocess
-    export K_OPTS="-Xss500m"
+    export K_OPTS="$K_OPTS -Xss500m"
     krun --directory "$backend_dir" "$run_file" "$@"
 }
 
@@ -56,7 +60,6 @@ run_kast() {
 }
 
 run_prove() {
-    export K_OPTS=-Xmx8G
     kprove --directory "$backend_dir" "$run_file" "$@"
 }
 
