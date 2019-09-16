@@ -492,42 +492,42 @@ Byte Map
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
 To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
 The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
-`BM [ N := I ]` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
+`#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
     syntax Map ::= #setRange(Map, Int, Int, Int) [function]
  // -------------------------------------------------------
-    rule #setRange(BM, IDX,   0, 0) => BM
-       [concrete]
-    rule #setRange(BM, IDX, VAL, N) => #setRange(BM [ IDX <- undef ], IDX +Int 1, VAL /Int 256, N -Int 1)
-      requires VAL modInt 256 ==Int 0
-       andBool N >Int 0
-       [concrete]
-    rule #setRange(BM, IDX, VAL, N) => #setRange(BM [ IDX <- VAL modInt 256 ], IDX +Int 1, VAL /Int 256, N -Int 1)
-      requires VAL modInt 256 =/=Int 0
-       andBool N >Int 0
-       [concrete]
+    rule #setRange(BM, IDX,   0, N) => BM
+      requires N ==Int 0
+    rule #setRange(BM, IDX, VAL, N) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, N -Int 1)
+      requires N >Int 0
 ```
 
-`#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
+`#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #range ( Map , Int , Int ) [function]
- // ----------------------------------------------------
-    rule #range(BM:Map, START, WIDTH) => 0
+    syntax Int ::= #getRange ( Map , Int , Int ) [function]
+ // -------------------------------------------------------
+    rule #getRange(BM, START, WIDTH) => 0
       requires WIDTH ==Int 0
-    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires WIDTH >Int 0 [concrete]
+    rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
+      requires WIDTH >Int 0
 ```
 
-`#lookup` looks up a key in a map, defaulting to 0 if the map does not contain the key.
+`#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
+`#set` sets a key in a map, defaulting to 0 if the value is 0.
+
 
 ```k
-    syntax Int ::= #lookup ( Map , Int ) [function]
- // -----------------------------------------------
-    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
-    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
+    syntax Int ::= #get ( Map , Int      ) [function]
+    syntax Map ::= #set ( Map , Int, Int ) [function]
+ // -------------------------------------------------
+    rule #get( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
+    rule #get(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
+
+    rule #set( M, KEY, VAL ) => M [KEY <- undef] requires VAL ==Int 0  [concrete]
+    rule #set( M, KEY, VAL ) => M [KEY <- VAL  ] requires VAL  >Int 0  [concrete]
 ```
 
 External Values

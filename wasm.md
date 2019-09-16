@@ -1027,8 +1027,8 @@ Sort `Signedness` is defined in module `BYTES`.
 
     rule <k> load { ITYPE WIDTH EA SIGN }
           => < ITYPE > #if SIGN ==K Signed
-                           #then #signedWidth(WIDTH, #range(DATA, EA, WIDTH))
-                           #else #range(DATA, EA, WIDTH)
+                           #then #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))
+                           #else #getRange(DATA, EA, WIDTH)
                        #fi
          ...
          </k>
