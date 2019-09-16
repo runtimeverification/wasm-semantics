@@ -449,10 +449,9 @@ The implementation is not correct for now because the UTF-8 encoding is not impl
        andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "u"
 ```
 
-Wasm memories can be initialized with a segment of data, sepcified as a string.
+Wasm binary data can sometimes be specified as a string.
 The string considered to represent the sequence of UTF-8 bytes that encode it.
 The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
-To avoid dealing with these data strings in K, we use a list of integers as an initializer.
 
 ```k
     syntax WasmString ::= ".WasmString"
