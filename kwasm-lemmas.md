@@ -9,14 +9,6 @@ module KWASM-LEMMAS
     imports WASM-TEXT
 ```
 
-Z3 can't reason about values tagged with type as if they were numbers.
-This lemma helps unpack values.
-
-```k
-rule <TYPE> N:Int ==K <TYPE'> N':Int => TYPE ==K TYPE' andBool N ==Int N'
-rule <TYPE> N:Int ==K #chop(<TYPE'> N':Int) => TYPE ==K TYPE' andBool N ==Int (N' modInt #pow(ITYPE))
-```
-
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
 In this case, it's simpler (and safe) to simply discard the `#chop`, instead of evaluating it.
 
