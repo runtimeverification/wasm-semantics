@@ -497,10 +497,10 @@ The maps store integers, but maintains the invariant that each stored integer is
 ```k
     syntax Map ::= #setRange(Map, Int, Int, Int) [function]
  // -------------------------------------------------------
-    rule #setRange(BM, IDX,   0, N) => BM
-      requires N ==Int 0
+    rule #setRange(BM, IDX,   _, N) => BM
+      requires N  ==Int 0
     rule #setRange(BM, IDX, VAL, N) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, N -Int 1)
-      requires N >Int 0
+      requires N =/=Int 0
 ```
 
 `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
