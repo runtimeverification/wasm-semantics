@@ -15,8 +15,6 @@ module MEMORY-SPEC
     imports WASM-TEXT
     imports KWASM-LEMMAS
 
-    rule <TYPE> N:Int ==K <TYPE'> N':Int => TYPE ==K TYPE' andBool N ==Int N' [smt-lemma]
-
     rule <k> (TYPE:IValType.store (i32.const ADDR) (TYPE.load (i32.const ADDR)):Instr):Instr => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
