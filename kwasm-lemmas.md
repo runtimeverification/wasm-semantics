@@ -36,8 +36,13 @@ TODO: We should inspect these two functions closer.
 They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
 
 ```k
-    rule #range(#setRange(MAP, ADDRESS, VAL, WIDTH), ADDRESS, WIDTH) => VAL
-    rule #setRange(MAP, ADDRESS, #range(MAP, ADDRESS, WIDTH), WIDTH) => MAP
+    rule #get(#set(MAP, IDX, VAL), IDX) => VAL
+    rule #set(MAP, IDX, #get(MAP, IDX)) => MAP
+
+    rule (X +Int (Y *Int N)) modInt N => X modInt N
+      requires N >=Int 1
+    rule (X +Int (Y *Int N)) /Int N   => X /Int N
+      requires N =/=Int 0
 ```
 
 ```k
