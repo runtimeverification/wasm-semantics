@@ -40,6 +40,9 @@ In this case, it's simpler (and safe) to simply discard the `#chop`, instead of 
 Memory
 ------
 
+TODO: We should inspect these two functions closer.
+They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
+
 ```k
     rule #range(#setRange(MAP, ADDRESS, VAL, WIDTH), ADDRESS, WIDTH) => VAL
     rule #setRange(MAP, ADDRESS, #range(MAP, ADDRESS, WIDTH), WIDTH) => MAP
