@@ -501,16 +501,18 @@ The maps store integers, but maintains the invariant that each stored integer is
 `BM [ N := I ]` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax Map ::= Map "[" Int ":=" Int "]" [function]
- // --------------------------------------------------
-    rule BM [ IDX := 0  ] => BM
-    rule BM [ IDX := VAL] => BM [IDX <- VAL modInt 256 ] [ IDX +Int 1 := VAL /Int 256 ]
-      requires VAL modInt 256 =/=Int 0
-       andBool VAL >Int 0
-    // Don't store 0 bytes.
-    rule BM [ IDX := VAL] => BM [IDX <- undef          ] [ IDX +Int 1 := VAL /Int 256 ]
+    syntax Map ::= #setRange(Map, Int, Int, Int) [function]
+ // -------------------------------------------------------
+    rule #setRange(BM, IDX,   0, 0) => BM
+       [concrete]
+    rule #setRange(BM, IDX, VAL, N) => #setRange(BM [ IDX <- undef ], IDX +Int 1, VAL /Int 256, N -Int 1)
       requires VAL modInt 256 ==Int 0
-       andBool VAL >Int 0
+       andBool N >Int 0
+       [concrete]
+    rule #setRange(BM, IDX, VAL, N) => #setRange(BM [ IDX <- VAL modInt 256 ], IDX +Int 1, VAL /Int 256, N -Int 1)
+      requires VAL modInt 256 =/=Int 0
+       andBool N >Int 0
+       [concrete]
 ```
 
 `#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
@@ -532,17 +534,6 @@ The function interprets the range of bytes as little-endian.
  // -----------------------------------------------
     rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
     rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
-```
-
-`#clearRange(MAP, START, END)` removes all entries in the map from `START` (inclusive) to `END` (exclusive).
-
-```k
-    syntax Map ::= #clearRange(Map, Int, Int) [function]
- // ----------------------------------------------------
-    rule #clearRange(M, START, END) => M
-      requires START >=Int END
-    rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END)
-      requires START <Int  END
 ```
 
 External Values

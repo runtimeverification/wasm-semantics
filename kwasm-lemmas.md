@@ -37,6 +37,14 @@ In this case, it's simpler (and safe) to simply discard the `#chop`, instead of 
     rule #minSigned(ITYPE) => 0 -Int #pow1(ITYPE)
 ```
 
+Memory
+------
+
+```k
+    rule #range(#setRange(MAP, ADDRESS, VAL, WIDTH), ADDRESS, WIDTH) => VAL
+    rule #setRange(MAP, ADDRESS, #range(MAP, ADDRESS, WIDTH), WIDTH) => MAP
+```
+
 ```k
 endmodule
 ```
