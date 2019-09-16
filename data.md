@@ -519,8 +519,8 @@ The maps store integers, but maintains the invariant that each stored integer is
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #range ( Map , Int , Int ) [function, smtlib(range)]
- // -------------------------------------------------------------------
+    syntax Int ::= #range ( Map , Int , Int ) [function]
+ // ----------------------------------------------------
     rule #range(BM:Map, START, WIDTH) => 0
       requires WIDTH ==Int 0
     rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
