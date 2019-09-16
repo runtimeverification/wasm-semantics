@@ -75,9 +75,6 @@ java_kompiled    := $(java_dir)/test-kompiled/compiled.txt
 
 # Tangle definition from *.md files
 
-llvm_tangle     := .k:not(.not-llvm)
-not_llvm_tangle := .k:not(.llvm)
-
 defn: defn-ocaml defn-java defn-haskell
 defn-llvm: $(llvm_defn)
 defn-haskell: $(haskell_defn)
@@ -86,19 +83,19 @@ defn-java: $(java_defn)
 
 $(llvm_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(llvm_tangle)" $< > $@
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(haskell_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(ocaml_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(java_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:"$(not_llvm_tangle)" $< > $@
+	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 # Build definitions
 

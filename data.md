@@ -24,10 +24,6 @@ module WASM-DATA
     syntax IdentifierToken [token]
     syntax WasmIntToken    [token]
     syntax #Layout         [token]
- // ------------------------------
-```
-
-```{.k .not-llvm}
     syntax WasmStringToken [token]
  // ------------------------------
 ```
@@ -457,17 +453,15 @@ Wasm binary data can sometimes be specified as a string.
 The string considered to represent the sequence of UTF-8 bytes that encode it.
 The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
 
-```{.k .not-llvm}
-    syntax WasmString ::= WasmStringToken
- // -------------------------------------
-```
-
 ```k
     syntax WasmString ::= ".WasmString"
-    syntax String     ::= #parseWasmString   ( WasmString ) [function, functional, hook(STRING.token2string)]
-    syntax WasmString ::= #unparseWasmString ( String     ) [function, functional, hook(STRING.string2token)]
-    syntax DataString ::= List{WasmString, ""}              [klabel(listWasmString)]
- // --------------------------------------------------------------------------------
+                        | WasmStringToken
+ // -------------------------------------
+
+    syntax String          ::= #parseWasmString   ( WasmStringToken ) [function, functional, hook(STRING.token2string)]
+    syntax WasmStringToken ::= #unparseWasmString ( String          ) [function, functional, hook(STRING.string2token)]
+    syntax DataString      ::= List{WasmString, ""}                   [klabel(listWasmString)]
+ // ------------------------------------------------------------------------------------------
 ```
 
 `DataString`, as is defined in the wasm semantics, is a list of `WasmString`s.
@@ -479,8 +473,8 @@ The strings to connect needs to be unescaped before concatenated, because the `u
                     | #concatDS ( DataString, String ) [function, klabel(#concatDSAux)]
  // -----------------------------------------------------------------------------------
     rule #concatDS ( DS ) => #concatDS ( DS, "" )
-    rule #concatDS ( .DataString , S ) => S
-    rule #concatDS (  WS DS      , S ) => #concatDS ( DS , S +String unescape(#parseWasmString(WS)) )
+    rule #concatDS ( .DataString            , S ) => S
+    rule #concatDS (  WS:WasmStringToken DS , S ) => #concatDS ( DS , S +String unescape(#parseWasmString(WS)) )
 ```
 
 `#DS2Bytes` converts a `DataString` to a K builtin `Bytes`.
