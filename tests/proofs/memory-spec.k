@@ -1,6 +1,17 @@
 requires "kwasm-lemmas.k"
 
-// TODO: i32 => ITYPE
+/*
+TODO:To make the proof complete:
+1. Make sure that the Z3 can realize that
+        #chop(<T> X) ==K <T> Y
+andBool #chop(<T> X) ==K <T> Z
+=>      Y ==Int Z
+
+and remove the inUnsignedRange requirement.
+
+2.i32 => ITYPE
+*/
+
 module MEMORY-SPEC
     imports WASM-TEXT
     imports KWASM-LEMMAS
