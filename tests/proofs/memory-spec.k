@@ -1,7 +1,7 @@
 requires "kwasm-lemmas.k"
 
 /*
-TODO:To make the proof complete:
+TODO: To make the proof complete:
 1. Make sure that the Z3 can realize that
 
         #chop(<T> X) ==K <T> Y
