@@ -530,9 +530,9 @@ The function interprets the range of bytes as little-endian.
     syntax ByteMap ::= #set (ByteMap , Int, Int) [function, smtlib(mapSet)]
  // -----------------------------------------------------------------------
     rule #get( ByteMap <| M |>, KEY ) => {M [KEY]}:>Int requires         KEY in_keys(M) [concrete]
-    rule #get( ByteMap <| M |>, KEY ) => 0              requires notBool KEY in_keys(M) [concrete]
+    rule #get( ByteMap <| M |>, KEY ) => 0              requires notBool KEY in_keys(M)
 
-    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- undef] |> requires          VAL ==Int 0  [concrete]
+    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- undef] |> requires          VAL ==Int 0
     rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- VAL  ] |> requires notBool (VAL ==Int 0) [concrete]
 ```
 
