@@ -522,8 +522,8 @@ The function interprets the range of bytes as little-endian.
     syntax Int ::= #get ( Map , Int      ) [function, smtlib(mapGet)]
     syntax Map ::= #set ( Map , Int, Int ) [function, smtlib(mapSet)]
  // -----------------------------------------------------------------
-    rule #get( M, KEY ) => M [KEY] requires         KEY in_keys(M) [concrete]
-    rule #get( M, KEY ) => 0       requires notBool KEY in_keys(M) [concrete]
+    rule #get( M, KEY ) => {M [KEY]}:>Int requires         KEY in_keys(M) [concrete]
+    rule #get( M, KEY ) => 0              requires notBool KEY in_keys(M) [concrete]
 
     rule #set( M, KEY, VAL ) => M [KEY <- undef] requires          VAL ==Int 0  [concrete]
     rule #set( M, KEY, VAL ) => M [KEY <- VAL  ] requires notBool (VAL ==Int 0)  [concrete]
