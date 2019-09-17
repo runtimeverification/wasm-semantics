@@ -496,10 +496,10 @@ The maps store integers, but maintains the invariant that each stored integer is
 ```k
     syntax Map ::= #setRange(Map, Int, Int, Int) [function]
  // -------------------------------------------------------
-    rule #setRange(BM, IDX,   _, N) => BM
-      requires N  ==Int 0
-    rule #setRange(BM, IDX, VAL, N) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, N -Int 1)
-      requires N =/=Int 0
+    rule #setRange(BM, IDX,   _, WIDTH) => BM
+      requires notBool (WIDTH >Int 0)
+    rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
+      requires          WIDTH >Int 0
 ```
 
 `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
@@ -509,9 +509,9 @@ The function interprets the range of bytes as little-endian.
     syntax Int ::= #getRange ( Map , Int , Int ) [function]
  // -------------------------------------------------------
     rule #getRange(BM, START, WIDTH) => 0
-      requires WIDTH ==Int 0
+      requires notBool (WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires WIDTH >Int 0
+      requires          WIDTH >Int 0
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
