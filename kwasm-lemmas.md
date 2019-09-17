@@ -28,8 +28,10 @@ In this case, it's simpler (and safe) to simply discard the `#chop`, instead of 
 ```k
     rule #chop(< ITYPE:IValType > N) => < ITYPE > N
       requires #inUnsignedRange(ITYPE, N)
+      [simplification]
     rule #chop(< ITYPE > N) => < ITYPE > #unsigned(ITYPE, N)
       requires #inSignedRange (ITYPE, N)
+      [simplification]
 
     syntax Bool ::= #inUnsignedRange (IValType, Int) [function]
     syntax Bool ::= #inSignedRange   (IValType, Int) [function]
