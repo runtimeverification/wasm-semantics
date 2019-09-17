@@ -27,10 +27,12 @@ module MEMORY-SPEC
          <memInst>
            <mAddr> MEMADDR </mAddr>
            <msize> SIZE </msize>
+           <mdata> BM   </mdata>
            ...
          </memInst>
        requires #chop(<i32> ADDR) ==K <i32> EA
         andBool EA +Int #numBytes(i32) <=Int SIZE *Int #pageSize()
         andBool #inUnsignedRange(i32, ADDR) // Makes sure we don't take the trapping path
+        andBool #isWellFormedByteMap(BM)
 
 endmodule

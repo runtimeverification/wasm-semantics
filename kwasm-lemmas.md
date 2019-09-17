@@ -47,11 +47,20 @@ Memory
 
 Memory is represented by a byte map, where each key is an index and each entry either empty (0) or a byte (1 to 255).
 This invariant must be maintained by the semantics, and any failure to maintain it is a breach of the Wasm specification.
-With this invariant, we can introduce the following simplifications.
+We want to make the variant explicit, so we introduce the following helper, which simply signifies that we assume a well-formed byte map:
+
+```k
+    syntax Bool ::= "#isWellFormedByteMap" "(" ByteMap ")" [function, smtlib(isWellFormedByteMap)]
+ // ----------------------------------------------------------------------------------------------
+```
+
+With this invariant encoded, we can introduce the following simplifications.
 
 ```k
     rule #get(BMAP, IDX) modInt 256 => #get(BMAP, IDX)
+      requires #isWellFormedByteMap(BMAP)
     rule #get(BMAP, IDX) /Int   256 => 0
+      requires #isWellFormedByteMap(BMAP)
 ```
 
 From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
