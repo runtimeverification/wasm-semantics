@@ -13,24 +13,28 @@ Basic arithmetic
 ----------------
 
 ```k
-    rule (0 +Int X) => X
-    rule (X +Int 0) => X
+    rule (0 +Int X) => X [simplification]
+    rule (X +Int 0) => X [simplification]
 
     rule (X +Int (Y *Int N)) modInt N => X modInt N
       requires N >=Int 1
+      [simplification]
     rule (X +Int (Y *Int N)) /Int N   => (X /Int N) +Int Y
       requires N =/=Int 0
+      [simplification]
+
+    rule X modInt N => X
+      requires X <=Int 0
+       andBool X  <Int N
+      [simplification]
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
 In this case, it's simpler (and safe) to simply discard the `#chop`, instead of evaluating it.
 
 ```k
-    rule #chop(< ITYPE:IValType > N) => < ITYPE > N
-      requires #inUnsignedRange(ITYPE, N)
-      [simplification]
-    rule #chop(< ITYPE > N) => < ITYPE > #unsigned(ITYPE, N)
-      requires #inSignedRange (ITYPE, N)
+    rule X modInt #pow(ITYPE) => #unsigned(ITYPE, X)
+      requires #inSignedRange (ITYPE, X)
       [simplification]
 
     syntax Bool ::= #inUnsignedRange (IValType, Int) [function]
