@@ -69,10 +69,10 @@ Configuration
           <nextTabAddr> 0 </nextTabAddr>
           <mems>
             <memInst multiplicity="*" type="Map">
-              <mAddr> 0    </mAddr>
-              <mmax>  .Int </mmax>
-              <msize> 0    </msize>
-              <mdata> .Map </mdata>
+              <mAddr> 0                  </mAddr>
+              <mmax>  .Int               </mmax>
+              <msize> 0                  </msize>
+              <mdata> ByteMap <| .Map |> </mdata>
             </memInst>
           </mems>
           <nextMemAddr> 0 </nextMemAddr>
@@ -939,7 +939,7 @@ The importing and exporting parts of specifications are dealt with in the respec
                <mAddr>   NEXTADDR </mAddr>
                <mmax>    MAX      </mmax>
                <msize>   MIN      </msize>
-               <mdata>   .Map     </mdata>
+               ...
              </memInst>
            )
            ...

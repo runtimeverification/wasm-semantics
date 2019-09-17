@@ -491,11 +491,19 @@ Byte Map
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
 To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
 The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
+We make a `ByteMap` sort so that the following functions only make sense over this sort.
+However, `ByteMap` is just a wrapper around regular `Map`s.
+
+```k
+    syntax ByteMap ::= "ByteMap" "<|" Map "|>"
+ // ------------------------------------------
+```
+
 `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax Map ::= #setRange(Map, Int, Int, Int) [function]
- // -------------------------------------------------------
+    syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function]
+ // ---------------------------------------------------------------
     rule #setRange(BM, IDX,   _, WIDTH) => BM
       requires notBool (WIDTH >Int 0)
     rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
@@ -506,8 +514,8 @@ The maps store integers, but maintains the invariant that each stored integer is
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #getRange ( Map , Int , Int ) [function]
- // -------------------------------------------------------
+    syntax Int ::= #getRange (ByteMap, Int , Int) [function]
+ // --------------------------------------------------------
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
@@ -517,16 +525,15 @@ The function interprets the range of bytes as little-endian.
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
 `#set` sets a key in a map, defaulting to 0 if the value is 0.
 
-
 ```k
-    syntax Int ::= #get ( Map , Int      ) [function, smtlib(mapGet)]
-    syntax Map ::= #set ( Map , Int, Int ) [function, smtlib(mapSet)]
- // -----------------------------------------------------------------
-    rule #get( M, KEY ) => {M [KEY]}:>Int requires         KEY in_keys(M) [concrete]
-    rule #get( M, KEY ) => 0              requires notBool KEY in_keys(M) [concrete]
+    syntax Int     ::= #get (ByteMap , Int     ) [function, smtlib(mapGet)]
+    syntax ByteMap ::= #set (ByteMap , Int, Int) [function, smtlib(mapSet)]
+ // -----------------------------------------------------------------------
+    rule #get( ByteMap <| M |>, KEY ) => {M [KEY]}:>Int requires         KEY in_keys(M) [concrete]
+    rule #get( ByteMap <| M |>, KEY ) => 0              requires notBool KEY in_keys(M) [concrete]
 
-    rule #set( M, KEY, VAL ) => M [KEY <- undef] requires          VAL ==Int 0  [concrete]
-    rule #set( M, KEY, VAL ) => M [KEY <- VAL  ] requires notBool (VAL ==Int 0)  [concrete]
+    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- undef] |> requires          VAL ==Int 0  [concrete]
+    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- VAL  ] |> requires notBool (VAL ==Int 0) [concrete]
 ```
 
 External Values
