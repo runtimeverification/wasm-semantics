@@ -185,13 +185,13 @@ Also we can reverse a `ValTypes` with `#revt`
 The `#width` function returns the bit-width of a given `IValType`.
 
 ```k
-    syntax Int ::= #width    ( IValType ) [function]
-    syntax Int ::= #numBytes ( IValType ) [function]
- // ------------------------------------------------
+    syntax Int ::= #width    ( IValType ) [function, functional]
+    syntax Int ::= #numBytes ( IValType ) [function, functional, smtlib(numBytes)]
+ // ------------------------------------------------------------------------------
     rule #width(i32) => 32
     rule #width(i64) => 64
 
-    rule #numBytes(ITYPE) => #width(ITYPE) /Int 8
+    rule #numBytes(ITYPE) => #width(ITYPE) /Int 8 [concrete]
 ```
 
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
