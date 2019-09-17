@@ -270,7 +270,7 @@ The `#chop` function will ensure that an integer value is wrapped to the correct
 The `#wrap` function wraps an integer to a given bit width.
 
 ```k
-    syntax IVal ::= #chop ( IVal ) [function]
+    syntax IVal ::= #chop ( IVal ) [function, functional]
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE)) [concrete]
 
