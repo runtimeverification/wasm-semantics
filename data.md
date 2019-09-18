@@ -185,13 +185,13 @@ Also we can reverse a `ValTypes` with `#revt`
 The `#width` function returns the bit-width of a given `IValType`.
 
 ```k
-    syntax Int ::= #width    ( IValType ) [function]
-    syntax Int ::= #numBytes ( IValType ) [function]
- // ------------------------------------------------
+    syntax Int ::= #width    ( IValType ) [function, functional]
+    syntax Int ::= #numBytes ( IValType ) [function, functional, smtlib(numBytes)]
+ // ------------------------------------------------------------------------------
     rule #width(i32) => 32
     rule #width(i64) => 64
 
-    rule #numBytes(ITYPE) => #width(ITYPE) /Int 8
+    rule #numBytes(ITYPE) => #width(ITYPE) /Int 8 [concrete]
 ```
 
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
@@ -491,51 +491,49 @@ Byte Map
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
 To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
 The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
-`BM [ N := I ]` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
+We make a `ByteMap` sort so that the following functions only make sense over this sort.
+However, `ByteMap` is just a wrapper around regular `Map`s.
 
 ```k
-    syntax Map ::= Map "[" Int ":=" Int "]" [function]
- // --------------------------------------------------
-    rule BM [ IDX := 0  ] => BM
-    rule BM [ IDX := VAL] => BM [IDX <- VAL modInt 256 ] [ IDX +Int 1 := VAL /Int 256 ]
-      requires VAL modInt 256 =/=Int 0
-       andBool VAL >Int 0
-    // Don't store 0 bytes.
-    rule BM [ IDX := VAL] => BM [IDX <- undef          ] [ IDX +Int 1 := VAL /Int 256 ]
-      requires VAL modInt 256 ==Int 0
-       andBool VAL >Int 0
+    syntax ByteMap ::= "ByteMap" "<|" Map "|>"
+ // ------------------------------------------
 ```
 
-`#range(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
+`#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
+
+```k
+    syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function]
+ // ---------------------------------------------------------------
+    rule #setRange(BM, IDX,   _, WIDTH) => BM
+      requires notBool (WIDTH >Int 0)
+    rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
+      requires          WIDTH >Int 0
+```
+
+`#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #range ( Map , Int , Int ) [function]
- // ----------------------------------------------------
-    rule #range(BM:Map, START, WIDTH) => 0
-      requires WIDTH ==Int 0
-    rule #range(BM:Map, START, WIDTH) => #lookup(BM, START) +Int (#range(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires WIDTH >Int 0 [concrete]
+    syntax Int ::= #getRange (ByteMap, Int , Int) [function]
+ // --------------------------------------------------------
+    rule #getRange(BM, START, WIDTH) => 0
+      requires notBool (WIDTH >Int 0)
+    rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
+      requires          WIDTH >Int 0
 ```
 
-`#lookup` looks up a key in a map, defaulting to 0 if the map does not contain the key.
+`#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
+`#set` sets a key in a map, removing the key if the value is 0.
 
 ```k
-    syntax Int ::= #lookup ( Map , Int ) [function]
- // -----------------------------------------------
-    rule #lookup( (KEY |-> VAL) M, KEY ) => VAL                               [concrete]
-    rule #lookup(               M, KEY ) => 0 requires notBool KEY in_keys(M) [concrete]
-```
+    syntax Int     ::= #get (ByteMap , Int     ) [function, smtlib(mapGet)]
+    syntax ByteMap ::= #set (ByteMap , Int, Int) [function, smtlib(mapSet)]
+ // -----------------------------------------------------------------------
+    rule #get( ByteMap <| M |>, KEY ) => {M [KEY]}:>Int requires         KEY in_keys(M) [concrete]
+    rule #get( ByteMap <| M |>, KEY ) => 0              requires notBool KEY in_keys(M)
 
-`#clearRange(MAP, START, END)` removes all entries in the map from `START` (inclusive) to `END` (exclusive).
-
-```k
-    syntax Map ::= #clearRange(Map, Int, Int) [function]
- // ----------------------------------------------------
-    rule #clearRange(M, START, END) => M
-      requires START >=Int END
-    rule #clearRange(M, START, END) => #clearRange(M [START <- undef], START +Int 1, END)
-      requires START <Int  END
+    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- undef] |> requires          VAL ==Int 0
+    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- VAL  ] |> requires notBool (VAL ==Int 0) [concrete]
 ```
 
 External Values
