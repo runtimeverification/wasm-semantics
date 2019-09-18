@@ -18,7 +18,7 @@ module MEMORY-SPEC
            ...
          </memInst>
        requires #chop(<i32> ADDR) ==K <i32> EA
-        andBool EA +Int #numBytes(i32) <=Int SIZE *Int #pageSize()
-        andBool #isWellFormedByteMap(BM)
+        andBool EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
+        andBool #isByteMap(BM)
 
 endmodule
