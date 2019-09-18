@@ -52,8 +52,21 @@ This invariant must be maintained by the semantics, and any failure to maintain 
 We want to make the variant explicit, so we introduce the following helper, which simply signifies that we assume a well-formed byte map:
 
 ```k
-    syntax Bool ::= "#isByteMap" "(" ByteMap ")" [function, smtlib(isByteMap)]
- // --------------------------------------------------------------------------
+    syntax Bool ::= #isByteMap ( ByteMap ) [function, smtlib(isByteMap)]
+    syntax Bool ::= #isByte    ( KItem   ) [function, smtlib(isByte)]
+ // -----------------------------------------------------------------
+    rule #isByteMap(ByteMap <| .Map         |>) => true
+    rule #isByteMap(ByteMap <| (_ |-> V) M  |>) => #isByte(V) andBool #isByteMap(ByteMap <| M |>)
+    rule #isByteMap(ByteMap <| M [ _ <- V ] |>) => #isByte(V) andBool #isByteMap(ByteMap <| M |>)
+
+    rule #isByte(I:Int) => true
+      requires 0 <=Int I
+       andBool I <=Int 255
+    rule #isByte(I:Int) => false
+      requires notBool (0 <=Int I
+                        andBool I <=Int 255)
+    rule #isByte(I:KItem) => false
+      requires notBool isInt(I)
 ```
 
 With this invariant encoded, we can introduce the following simplifications.
