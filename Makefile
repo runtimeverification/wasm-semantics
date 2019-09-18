@@ -54,9 +54,9 @@ ocaml-deps:
 
 MAIN_MODULE        := WASM-TEST
 MAIN_SYNTAX_MODULE := WASM-TEST-SYNTAX
-MAIN_DEFN_FILE     :=
+MAIN_DEFN_FILE     := test
 
-wasm_files := $(MAIN_DEFN_FILE) test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k
+wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k
 
 llvm_dir    := $(DEFN_DIR)/llvm
 haskell_dir := $(DEFN_DIR)/haskell
@@ -68,10 +68,10 @@ haskell_defn := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
 ocaml_defn   := $(patsubst %, $(ocaml_dir)/%, $(wasm_files))
 java_defn    := $(patsubst %, $(java_dir)/%, $(wasm_files))
 
-llvm_kompiled    := $(llvm_dir)/test-kompiled/interpreter
-haskell_kompiled := $(haskell_dir)/test-kompiled/definition.kore
-ocaml_kompiled   := $(ocaml_dir)/test-kompiled/interpreter
-java_kompiled    := $(java_dir)/test-kompiled/compiled.txt
+llvm_kompiled    := $(llvm_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
+haskell_kompiled := $(haskell_dir)/$(MAIN_DEFN_FILE)-kompiled/definition.kore
+ocaml_kompiled   := $(ocaml_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
+java_kompiled    := $(java_dir)/$(MAIN_DEFN_FILE)-kompiled/compiled.txt
 
 # Tangle definition from *.md files
 
