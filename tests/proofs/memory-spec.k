@@ -20,6 +20,6 @@ module MEMORY-SPEC
        requires #chop(<i32> ADDR) ==K <i32> EA
         andBool EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
         andBool #inUnsignedRange(i32, ADDR) // Makes sure we don't take the trapping path
-        andBool #isWellFormedByteMap(BM)
+        andBool #isByteMap(BM)
 
 endmodule

@@ -52,17 +52,17 @@ This invariant must be maintained by the semantics, and any failure to maintain 
 We want to make the variant explicit, so we introduce the following helper, which simply signifies that we assume a well-formed byte map:
 
 ```k
-    syntax Bool ::= "#isWellFormedByteMap" "(" ByteMap ")" [function, smtlib(isWellFormedByteMap)]
- // ----------------------------------------------------------------------------------------------
+    syntax Bool ::= "#isByteMap" "(" ByteMap ")" [function, smtlib(isByteMap)]
+ // --------------------------------------------------------------------------
 ```
 
 With this invariant encoded, we can introduce the following simplifications.
 
 ```k
     rule #get(BMAP, IDX) modInt 256 => #get(BMAP, IDX)
-      requires #isWellFormedByteMap(BMAP)
+      requires #isByteMap(BMAP)
     rule #get(BMAP, IDX) /Int   256 => 0
-      requires #isWellFormedByteMap(BMAP)
+      requires #isByteMap(BMAP)
 ```
 
 From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
