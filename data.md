@@ -523,7 +523,7 @@ The function interprets the range of bytes as little-endian.
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
-`#set` sets a key in a map, defaulting to 0 if the value is 0.
+`#set` sets a key in a map, removing the key if the value is 0.
 
 ```k
     syntax Int     ::= #get (ByteMap , Int     ) [function, smtlib(mapGet)]
