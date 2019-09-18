@@ -30,7 +30,7 @@ pipeline {
         '''
       }
     }
-    stage('Test Smoke') {
+    stage('Test Simple') {
       options { timeout(time: 5, unit: 'MINUTES') }
       parallel {
         stage('Exec OCaml') {
@@ -57,24 +57,6 @@ pipeline {
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
               make TEST_CONCRETE_BACKEND=llvm test-simple -j"$nprocs"
-            '''
-          }
-        }
-        stage('Proofs Java') {
-          steps {
-            sh '''
-              nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
-              make test-prove -j"$nprocs"
-            '''
-          }
-        }
-        stage('KLab Proofs Java') {
-          steps {
-            sh '''
-              nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
-              make test-klab-prove -j"$nprocs"
             '''
           }
         }
@@ -107,6 +89,29 @@ pipeline {
               nprocs=$(nproc)
               [ "$nprocs" -gt '4' ] && nprocs=4
               make TEST_CONCRETE_BACKEND=llvm test-conformance-supported -j"$nprocs"
+            '''
+          }
+        }
+      }
+    }
+    stage('Test Proofs') {
+      options { timeout(time: 5, unit: 'MINUTES') }
+      parallel {
+        stage('Proofs Java') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make test-prove -j"$nprocs"
+            '''
+          }
+        }
+        stage('KLab Proofs Java') {
+          steps {
+            sh '''
+              nprocs=$(nproc)
+              [ "$nprocs" -gt '4' ] && nprocs=4
+              make test-klab-prove -j"$nprocs"
             '''
           }
         }
