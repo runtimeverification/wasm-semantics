@@ -443,29 +443,12 @@ This checks that the last allocated memory has the given size and max value.
          <mems>
            <memInst>
              <mAddr> ADDR </mAddr>
-             <mdata> ... KEY |-> VAL ... </mdata>
+             <mdata> BM </mdata>
              ...
            </memInst>
            ...
          </mems>
-      requires VAL =/=Int 0
-
-    rule <k> #assertMemoryData MODIDX (KEY , VAL) MSG => . ... </k>
-         <moduleInst>
-           <modIdx> MODIDX </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
-         <mems>
-           <memInst>
-             <mAddr> ADDR </mAddr>
-             <mdata> DATA </mdata>
-             ...
-           </memInst>
-           ...
-         </mems>
-      requires VAL ==Int 0
-       andBool notBool (KEY in_keys(DATA))
+      requires #get(BM, KEY) ==Int VAL
 ```
 
 ### Module Assertions
