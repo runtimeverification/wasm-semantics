@@ -24,7 +24,7 @@ Basic arithmetic
       [simplification]
 
     rule X modInt N => X
-      requires X <=Int 0
+      requires 0 <=Int X
        andBool X  <Int N
       [simplification]
 ```
