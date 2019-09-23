@@ -178,11 +178,10 @@ tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
 
 tests/%.cannot-prove: tests/%
-	@echo "$<"
-	@failed=0 \
-	  ; $(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k 2> /dev/null \
-	  || failed=1 \
-	  ; test $$failed = 1
+	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
+	$(CHECK) $<.expected $<.out
+	rm -rf $<.err-log
+	rm -rf $<.out
 
 tests/%.klab-prove: tests/%
 	$(TEST) klab-prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
