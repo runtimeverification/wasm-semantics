@@ -22,7 +22,7 @@ for shortname in $unparseable $unsupported; do
     make $file.parse
     if [ $? -eq 0 ]
     then
-        sed --in-place "/$shortname/d" $unparsefile
+        sed --in-place "/^$shortname\$/d" $unparsefile
         for backend in $backends; do
             unsuppfile="tests/conformance/unsupported-$backend.txt"
             echo $shortname >> $unsuppfile
@@ -33,7 +33,7 @@ for shortname in $unparseable $unsupported; do
         sort -u $unparsefile -o $unparsefile
         for backend in $backends; do
             unsuppfile="tests/conformance/unsupported-$backend.txt"
-            sed --in-place "/$shortname/d" $unsuppfile
+            sed --in-place "/^$shortname\$/d" $unsuppfile
         done
         echo "Unparseable: $shortname\n"
     fi
@@ -54,8 +54,9 @@ for backend in $backends; do
         if [ $? -eq 0 ]
         then
             # Now supported, remove.
-            sed --in-place "/$shortname/d" $unparsefile
-            sed --in-place "/$shortname/d" $unsuppfile
+            sed --in-place "/^$shortname\$/d" $unparsefile
+            sed --in-place "/^$shortname\$/d" $unsuppfile
+            sort -u $unsuppfile -o $unsuppfile
             echo "New supported ($backend): $shortname\n"
         else
             echo "Unsupported ($backend): $shortname\n"
