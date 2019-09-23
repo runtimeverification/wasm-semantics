@@ -23,6 +23,7 @@ export LUA_PATH
         defn defn-llvm defn-haskell defn-ocaml defn-java                   \
         build build-llvm build-haskell build-ocaml build-java              \
         test test-execution test-simple test-prove test-klab-prove         \
+        test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
@@ -176,6 +177,12 @@ tests/%.parse: tests/%
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
 
+tests/%.cannot-prove: tests/%
+	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
+	$(CHECK) $<.expected $<.out
+	rm -rf $<.err-log
+	rm -rf $<.out
+
 tests/%.klab-prove: tests/%
 	$(TEST) klab-prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
 
@@ -207,10 +214,14 @@ test-conformance: test-conformance-parse test-conformance-supported
 ### Proof Tests
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
+bad_proof_tests:=$(wildcard tests/bad-proofs/*-spec.k)
 slow_proof_tests:=tests/proofs/loops-spec.k
 quick_proof_tests:=$(filter-out $(slow_proof_tests), $(proof_tests))
 
-test-prove: $(proof_tests:=.prove)
+test-prove-good: $(proof_tests:=.prove)
+test-prove-bad:  $(bad_proof_tests:=.cannot-prove)
+
+test-prove: test-prove-good test-prove-bad
 
 ### KLab interactive
 
