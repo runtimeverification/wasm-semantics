@@ -322,8 +322,8 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
 Function `#bool` converts a `Bool` into an `Int`.
 
 ```k
-    syntax Int ::= #bool ( Bool ) [function]
- // ----------------------------------------
+    syntax Int ::= #bool ( Bool ) [function, functional]
+ // ----------------------------------------------------
     rule #bool( B:Bool ) => 1 requires B
     rule #bool( B:Bool ) => 0 requires notBool B
 ```

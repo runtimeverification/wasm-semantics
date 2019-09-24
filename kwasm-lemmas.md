@@ -9,12 +9,22 @@ module KWASM-LEMMAS
     imports WASM-TEXT
 ```
 
+Basic logic
+-----------
+
+```k
+    rule #bool(P) ==Int 0 => notBool P
+```
+
 Basic arithmetic
 ----------------
 
 ```k
     rule (0 +Int X) => X [simplification]
     rule (X +Int 0) => X [simplification]
+
+    rule ((X +Int N) -Int N) => X [simplification]
+    rule ((X -Int N) +Int N) => X [simplification]
 
     rule (X +Int (Y *Int N)) modInt N => X modInt N
       requires N >=Int 1
