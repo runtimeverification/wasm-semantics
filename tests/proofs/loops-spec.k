@@ -48,6 +48,5 @@ module LOOPS-SPEC
       requires #inUnsignedRange(i32, N)
        andBool N >Int 0
        andBool #inUnsignedRange(i32, ((N *Int (N +Int 1)) /Int 2))
-       [trusted] // Remove
 
 endmodule
