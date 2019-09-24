@@ -23,9 +23,6 @@ Basic arithmetic
     rule (0 +Int X) => X [simplification]
     rule (X +Int 0) => X [simplification]
 
-    rule ((X +Int N) -Int N) => X [simplification]
-    rule ((X -Int N) +Int N) => X [simplification]
-
     rule (X +Int (Y *Int N)) modInt N => X modInt N
       requires N >=Int 1
       [simplification]
