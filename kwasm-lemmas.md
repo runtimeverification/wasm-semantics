@@ -9,6 +9,13 @@ module KWASM-LEMMAS
     imports WASM-TEXT
 ```
 
+Basic logic
+-----------
+
+```k
+    rule #bool(P) ==Int 0 => notBool P
+```
+
 Basic arithmetic
 ----------------
 
