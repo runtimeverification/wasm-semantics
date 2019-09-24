@@ -37,8 +37,9 @@ module LOOPS-SPEC
          </k>
          <locals>
            0 |-> < i32 > (N => 0)
-           1 |-> < i32 > (0 => N *Int (N +Int 1) /Int 2)
+           1 |-> < i32 > (0 => (N *Int (N +Int 1)) /Int 2)
          </locals>
       requires #inUnsignedRange(i32, N)
        andBool N >Int 0
+       andBool #inUnsignedRange(i32, ((N *Int (N +Int 1)) /Int 2))
 endmodule
