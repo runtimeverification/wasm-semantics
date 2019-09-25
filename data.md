@@ -199,7 +199,7 @@ The `#width` function returns the bit-width of a given `IValType`.
 ```k
     syntax Int ::= #pow  ( IValType ) [function, functional, smtlib(pow )] /* 2 ^Int #width(T)          */
                  | #pow1 ( IValType ) [function, functional, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */
- // ------------------------------------------------------------------------------------------
+ // ------------------------------------------------------------------------------------------------------
     rule #pow1(i32) => 2147483648
     rule #pow (i32) => 4294967296
     rule #pow1(i64) => 9223372036854775808
