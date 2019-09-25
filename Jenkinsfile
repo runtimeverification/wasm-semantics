@@ -97,21 +97,24 @@ pipeline {
     stage('Test Proofs') {
       options { timeout(time: 5, unit: 'MINUTES') }
       parallel {
-        stage('Proofs Java') {
+        stage('Java') {
           steps {
             sh '''
-              nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
-              make test-prove -j"$nprocs"
+              make test-prove -j4
             '''
           }
         }
-        stage('KLab Proofs Java') {
+        stage('KLab Java') {
           steps {
             sh '''
-              nprocs=$(nproc)
-              [ "$nprocs" -gt '4' ] && nprocs=4
-              make test-klab-prove -j"$nprocs"
+              make test-klab-prove -j4
+            '''
+          }
+        }
+        stage('Haskell') {
+          steps {
+            sh '''
+              make tests/proofs/simple-arithmetic-spec.k.prove TEST_SYMBOLIC_BACKEND=haskell
             '''
           }
         }
