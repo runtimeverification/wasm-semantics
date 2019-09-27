@@ -208,7 +208,7 @@ Intitial memory data, and initial table elements can be given inline in the text
 
     rule <k> ( memory ID:Identifier ( data DS ) )
           =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data ID (i32.const 0) DS )
+          ~> ( data ID (i32.const 0 .Instrs) DS )
           ...
          </k>
       requires #lengthDataPages(DS) <=Int #maxMemorySize()
@@ -220,7 +220,7 @@ Intitial memory data, and initial table elements can be given inline in the text
 
     rule <k> ( table ID:Identifier funcref ( elem ES ) )
           =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
-          ~> ( elem ID (i32.const 0) ES )
+          ~> ( elem ID (i32.const 0 .Instrs) ES )
           ...
          </k>
 ```
