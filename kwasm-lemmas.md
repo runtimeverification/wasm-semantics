@@ -20,16 +20,6 @@ Basic arithmetic
 ----------------
 
 ```k
-    rule (0 +Int X) => X [simplification]
-    rule (X +Int 0) => X [simplification]
-
-    rule (X +Int (Y *Int N)) modInt N => X modInt N
-      requires N >=Int 1
-      [simplification]
-    rule (X +Int (Y *Int N)) /Int N   => (X /Int N) +Int Y
-      requires N =/=Int 0
-      [simplification]
-
     rule X modInt N => X
       requires 0 <=Int X
        andBool X  <Int N
