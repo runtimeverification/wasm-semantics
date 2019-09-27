@@ -164,6 +164,27 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
 
     rule <k> ( import MOD _ _ ) => spectest_trap ... </k>
       requires MOD ==K #unparseWasmString("\"spectest\"")
+        orBool MOD ==K #unparseWasmString("\"test\"")
+```
+
+Similarly, we exlude any tests that rely on unsupported floating point exceptions.
+
+```k
+    syntax Instr ::= "unsupported_trap"
+ // -----------------------------------
+    rule <k> unsupported_trap ~> (L:Label   => .) ... </k>
+    rule <k> unsupported_trap ~> (F:Frame   => .) ... </k>
+    rule <k> unsupported_trap ~> (I:Instr   => .) ... </k>
+    rule <k> unsupported_trap ~> (IS:Instrs => .) ... </k>
+    rule <k> unsupported_trap ~> (D:Defn    => .) ... </k>
+    rule <k> unsupported_trap ~> (DS:Defns  => .) ... </k>
+    rule <k> unsupported_trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
+
+    rule <k> (unsupported_trap => . ) ~> M:ModuleDecl ... </k>
+    rule <k> (unsupported_trap => . ) ~> A:Assertion  ... </k>
+
+    rule <k> TYP:FValType . _:LoadOpM  => unsupported_trap ... </k>
+    rule <k> TYP:FValType . _:StoreOpM => unsupported_trap ... </k>
 ```
 
 Assertions for KWasm tests
