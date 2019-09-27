@@ -167,6 +167,7 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
           ...
           </k>
       requires MOD ==K #unparseWasmString("\"spectest\"")
+        orBool MOD ==K #unparseWasmString("\"test\"")
 ```
 
 Assertions for KWasm tests
