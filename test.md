@@ -156,7 +156,7 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
     rule <k> spectest_trap ~> (I:Instr   => .) ... </k>
     rule <k> spectest_trap ~> (IS:Instrs => .) ... </k>
     rule <k> spectest_trap ~> (D:Defn    => .) ... </k>
-    rule <k> (spectest_trap ~> DS:Defns) => DS ~> spectest_trap ... </k>
+    rule <k> spectest_trap ~> (DS:Defns  => .) ... </k>
     rule <k> spectest_trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
 
     rule <k> (spectest_trap => . ) ~> M:ModuleDecl ... </k>
