@@ -1173,8 +1173,8 @@ This is not optional.
 The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
 
 ```k
-    syntax Offset ::= "(" "offset" Instr ")"
-                    | Instr
+    syntax Offset ::= "(" "offset" Instrs ")"
+                    | Instrs
  // -----------------------
 ```
 
@@ -1193,7 +1193,7 @@ A table index is optional and will be default to zero.
  // ---------------------------------------------------------------------
     // Default to table with index 0.
     rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
-    rule <k> ( elem TABIDX IS:Instr    ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
+    rule <k> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
     rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, FIDS, ELEMSEGMENT ) ... </k>
@@ -1230,7 +1230,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
  // --------------------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
-    rule <k> ( data MEMID IS:Instr      STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
+    rule <k> ( data MEMID IS:Instrs     STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
     rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
 
     // For now, deal only with memory 0.
