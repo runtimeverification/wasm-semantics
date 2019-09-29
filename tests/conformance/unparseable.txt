@@ -1,8 +1,6 @@
 br_table.wast
 comments.wast
 conversions.wast
-data.wast
-elem.wast
 endianness.wast
 float_exprs.wast
 float_literals.wast

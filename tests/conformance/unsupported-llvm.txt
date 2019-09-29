@@ -3,6 +3,8 @@ align.wast
 br.wast
 call_indirect.wast
 const.wast
+data.wast
+elem.wast
 f32.wast
 f32_bitwise.wast
 f32_cmp.wast
