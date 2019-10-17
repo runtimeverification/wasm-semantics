@@ -1126,7 +1126,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <k> memory.grow => grow N ... </k>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
-    rule <k> grow N => < i32 > #if #growthAllowed(SIZE +Int N, MAX) #then SIZE #else #unsigned(i32, -1) #fi ... </k>
+    rule <k> grow N => < i32 > SIZE ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1136,12 +1136,27 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <memInst>
            <mAddr>   ADDR </mAddr>
            <mmax>    MAX  </mmax>
-           <msize>   SIZE => #if #growthAllowed(SIZE +Int N, MAX) #then SIZE +Int N #else SIZE #fi </msize>
+           <msize>   SIZE => SIZE +Int N </msize>
            ...
          </memInst>
+      requires #growthAllowed(SIZE +Int N, MAX)
 
-    rule <k> grow N => < i32 > #unsigned(i32, -1) </k>
-         <deterministicMemoryGrowth> false </deterministicMemoryGrowth>
+    rule <k> grow N => < i32 > #unsigned(i32, -1) ... </k>
+         <deterministicMemoryGrowth> DET:Bool </deterministicMemoryGrowth>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr>   ADDR </mAddr>
+           <mmax>    MAX  </mmax>
+           <msize>   SIZE </msize>
+           ...
+         </memInst>
+      requires notBool DET
+        orBool notBool #growthAllowed(SIZE +Int N, MAX)
 
     syntax Bool ::= #growthAllowed(Int, OptionalInt) [function]
  // -----------------------------------------------------------
