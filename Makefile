@@ -10,6 +10,8 @@ K_RELEASE   := $(K_SUBMODULE)/k-distribution/target/release/k
 K_BIN       := $(K_RELEASE)/bin
 K_LIB       := $(K_RELEASE)/lib
 
+K_BUILD_TYPE := Debug
+
 PATH := $(K_BIN):$(PATH)
 export PATH
 
@@ -40,7 +42,7 @@ deps: $(K_SUBMODULE)/make.timestamp $(TANGLER) ocaml-deps
 
 $(K_SUBMODULE)/make.timestamp:
 	git submodule update --init --recursive
-	cd $(K_SUBMODULE) && mvn package -DskipTests
+	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
 	touch $(K_SUBMODULE)/make.timestamp
 
 $(TANGLER):
