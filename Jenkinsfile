@@ -97,24 +97,17 @@ pipeline {
     stage('Test Proofs') {
       options { timeout(time: 5, unit: 'MINUTES') }
       parallel {
-        stage('Java') {
+        stage('Normal') {
           steps {
             sh '''
               make test-prove -j4
             '''
           }
         }
-        stage('KLab Java') {
+        stage('KLab') {
           steps {
             sh '''
               make test-klab-prove -j4
-            '''
-          }
-        }
-        stage('Haskell') {
-          steps {
-            sh '''
-              make tests/proofs/simple-arithmetic-spec.k.prove TEST_SYMBOLIC_BACKEND=haskell
             '''
           }
         }
