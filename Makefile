@@ -145,6 +145,9 @@ TEST_CONCRETE_BACKEND       := llvm
 TEST_FLOAT_CONCRETE_BACKEND := java
 TEST_SYMBOLIC_BACKEND       := haskell
 
+tests/proofs/memory-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+
 KPROVE_MODULE := KWASM-LEMMAS
 
 tests/%/make.timestamp:
@@ -176,15 +179,8 @@ tests/%.parse: tests/%
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
 	rm -rf $@-out
 
-tests/proofs/memory-spec.k.prove:            TEST_SYMBOLIC_BACKEND=java
-tests/proofs/loops-spec.k.prove:             TEST_SYMBOLIC_BACKEND=java
-tests/proofs/locals-spec.k.prove:            TEST_SYMBOLIC_BACKEND=java
-tests/proofs/simple-arithmetic-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
-
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
-
-tests/bad-proofs/mod-on-negative-spec.k.cannot-prove: TEST_SYMBOLIC_BACKEND=java
 
 tests/%.cannot-prove: tests/%
 	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
@@ -192,12 +188,8 @@ tests/%.cannot-prove: tests/%
 	rm -rf $<.err-log
 	rm -rf $<.out
 
-tests/proofs/memory-spec.k.klab-prove:            TEST_SYMBOLIC_BACKEND=java
-tests/proofs/locals-spec.k.klab-prove:            TEST_SYMBOLIC_BACKEND=java
-tests/proofs/simple-arithmetic-spec.k.klab-prove: TEST_SYMBOLIC_BACKEND=java
-
 tests/%.klab-prove: tests/%
-	$(TEST) klab-prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) klab-prove --backend java $< --format-failures --def-module $(KPROVE_MODULE)
 
 ### Execution Tests
 
