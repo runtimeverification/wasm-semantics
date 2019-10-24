@@ -143,7 +143,10 @@ CHECK := git --no-pager diff --no-index --ignore-all-space
 
 TEST_CONCRETE_BACKEND       := llvm
 TEST_FLOAT_CONCRETE_BACKEND := java
-TEST_SYMBOLIC_BACKEND       := java
+TEST_SYMBOLIC_BACKEND       := haskell
+
+tests/proofs/memory-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 
 KPROVE_MODULE := KWASM-LEMMAS
 
@@ -186,7 +189,7 @@ tests/%.cannot-prove: tests/%
 	rm -rf $<.out
 
 tests/%.klab-prove: tests/%
-	$(TEST) klab-prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) klab-prove --backend java $< --format-failures --def-module $(KPROVE_MODULE)
 
 ### Execution Tests
 
