@@ -6,10 +6,26 @@ module LOOPS-SPEC
 
     // Lemma
     rule <k> br 0
-             ~> label [ .ValTypes ] { loop .TypeDecls (local.get 0) (local.get 1) (ITYPE.add) (local.set 1) (local.get 0) (ITYPE.const 1) (ITYPE.sub) (local.tee 0) (ITYPE.eqz) (br_if 1) (br 0) end } .ValStack  // Loop
-             ~> label [ .ValTypes ] {.Instrs } STACK      // Block
-          => .
-          ...
+             ~> label // Loop label.
+                  [ .ValTypes ]
+                  { loop .TypeDecls
+                      (local.get 0)
+                      (local.get 1)
+                      (ITYPE.add)
+                      (local.set 1)
+                      (local.get 0)
+                      (ITYPE.const 1)
+                      (ITYPE.sub)
+                      (local.tee 0)
+                      (ITYPE.eqz)
+                      (br_if 1)
+                      (br 0)
+                    end
+                 }
+                 .ValStack
+             ~> label [ .ValTypes ] {.Instrs } STACK // Block label. 
+           => .
+              ...
          </k>
          <valstack> _ => STACK </valstack>
          <labelDepth> D => (D -Int 1) -Int 1 </labelDepth>
