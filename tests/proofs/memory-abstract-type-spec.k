@@ -20,6 +20,5 @@ module MEMORY-ABSTRACT-TYPE-SPEC
        requires #chop(<i32> ADDR) ==K <i32> EA
         andBool EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
         andBool #isByteMap(BM)
-        andBool #inUnsignedRange(i32, ADDR)
 
 endmodule
