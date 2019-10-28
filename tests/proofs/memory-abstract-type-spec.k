@@ -1,4 +1,11 @@
-requires "memory-abstract-type-lemmas.k"
+require "kwasm-lemmas.k"
+
+module MEMORY-ABSTRACT-TYPE-LEMMAS
+  imports KWASM-LEMMAS
+
+  rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
+
+endmodule
 
 module MEMORY-ABSTRACT-TYPE-SPEC
     imports WASM-TEXT
