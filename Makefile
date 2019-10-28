@@ -145,7 +145,9 @@ TEST_CONCRETE_BACKEND       := llvm
 TEST_FLOAT_CONCRETE_BACKEND := java
 TEST_SYMBOLIC_BACKEND       := haskell
 
-tests/proofs/memory-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/memory-concrete-type-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/memory-abstract-type-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/memory-abstract-type-spec.k.prove: KPROVE_MODULE=MEMORY-ABSTRACT-TYPE-LEMMAS
 tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 
 KPROVE_MODULE := KWASM-LEMMAS

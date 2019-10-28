@@ -1,10 +1,10 @@
-requires "kwasm-lemmas.k"
+requires "memory-abstract-type-lemmas.k"
 
-module MEMORY-SPEC
+module MEMORY-ABSTRACT-TYPE-SPEC
     imports WASM-TEXT
-    imports KWASM-LEMMAS
+    imports MEMORY-ABSTRACT-TYPE-LEMMAS
 
-    rule <k> (i32:IValType.store (i32.const ADDR) (i32.load (i32.const ADDR)):Instr):Instr => . ... </k>
+    rule <k> (ITYPE:IValType.store (i32.const ADDR) (ITYPE.load (i32.const ADDR)):Instr):Instr => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -18,7 +18,7 @@ module MEMORY-SPEC
            ...
          </memInst>
        requires #chop(<i32> ADDR) ==K <i32> EA
-        andBool EA +Int #numBytes(i32) <=Int SIZE *Int #pageSize()
+        andBool EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
         andBool #isByteMap(BM)
         andBool #inUnsignedRange(i32, ADDR)
 
