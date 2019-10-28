@@ -98,7 +98,6 @@ Conversely, setting an index in a map to a value `VAL` and then retrieving the v
     rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP
 ```
 
-
 ```k
 endmodule
 ```
