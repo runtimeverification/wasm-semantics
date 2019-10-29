@@ -96,6 +96,13 @@ Conversely, setting an index in a map to a value `VAL` and then retrieving the v
     rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP
 ```
 
+TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
+They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
+
+```k
+    rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
+```
+
 ```k
 endmodule
 ```
