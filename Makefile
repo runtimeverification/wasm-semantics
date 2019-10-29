@@ -147,8 +147,6 @@ TEST_SYMBOLIC_BACKEND       := haskell
 
 tests/proofs/memory-concrete-type-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 tests/proofs/memory-concrete-type-spec.k.prove: KPROVE_MODULE=MEMORY-CONCRETE-TYPE-LEMMAS
-tests/proofs/memory-abstract-type-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
-tests/proofs/memory-abstract-type-spec.k.prove: KPROVE_MODULE=MEMORY-ABSTRACT-TYPE-LEMMAS
 tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 
 KPROVE_MODULE := KWASM-LEMMAS
