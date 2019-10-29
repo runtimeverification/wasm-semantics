@@ -264,9 +264,17 @@ Conversion Operation convert constant elements at the top of the stack to anothe
 ```k
     syntax PlainInstr ::= AValType "." CvtOp
  // ----------------------------------------
-    rule <k> ATYPE:AValType . CVTOP:CvtOp => ATYPE . CVTOP C1  ... </k>
-         <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
-      requires #cvtSourceType(CVTOP) ==K SRCTYPE
+    rule <k> ATYPE:AValType . CVTOP:Cvti32Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < i32 > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> ATYPE:AValType . CVTOP:Cvti64Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < i64 > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> ATYPE:AValType . CVTOP:Cvtf32Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < f32 > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> ATYPE:AValType . CVTOP:Cvtf64Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < f64 > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ValStack Operations

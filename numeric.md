@@ -336,18 +336,14 @@ There are 6 relationship operators for floats: `eq`, `ne`, `lt`, `gt`, `le` and 
 ### Conversion Operators
 
 Conversion operators always take a single argument as input and cast it to another type.
+The operators are further broken down into subsorts for their input type, for simpler type-checking.
 
 ```k
     syntax Val ::= AValType "." CvtOp Number [klabel(numberCvtOp), function]
  // ------------------------------------------------------------------------
-```
 
-Function `#cvtSourceType` returns the target value type of every conversion operator.
-For each conversion operator, function `#cvtSourceType` must be defined on it.
-
-```k
-    syntax AValType ::= #cvtSourceType ( CvtOp ) [function]
- // -------------------------------------------------------
+    syntax CvtOp ::= Cvti32Op | Cvti64Op | Cvtf32Op | Cvtf64Op
+ // ----------------------------------------------------------
 ```
 
 There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote` ,`promote` and `reinterpret`.
@@ -355,80 +351,73 @@ There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote`
 - `wrap` takes an `i64` value, cuts of the 32 most significant bits and returns an `i32` value.
 
 ```k
-    syntax CvtOp ::= "wrap_i64"
- // ---------------------------
+    syntax Cvti64Op ::= "wrap_i64"
+ // ------------------------------
     rule i32 . wrap_i64 I => #chop(< i32 > I)
-
-    rule #cvtSourceType(wrap_i64) => i64
 ```
 
 - `extend` takes an `i32` type value, converts its type into the `i64` and returns the result.
 
 ```k
-    syntax CvtOp ::= "extend_i32_u" | "extend_i32_s"
- // ------------------------------------------------
+    syntax Cvti32Op ::= "extend_i32_u" | "extend_i32_s"
+ // ---------------------------------------------------
     rule i64 . extend_i32_u I:Int => < i64 > I
     rule i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I))
-
-    rule #cvtSourceType(extend_i32_u) => i32
-    rule #cvtSourceType(extend_i32_s) => i32
 ```
 
 - `convert` takes an `int` type value and convert it to the nearest `float` type value.
 
 ```k
-    syntax CvtOp ::= "convert_i32_s" | "convert_i32_u" | "convert_i64_s" | "convert_i64_u"
- // --------------------------------------------------------------------------------------
+    syntax Cvti32Op ::= "convert_i32_s" | "convert_i32_u"
+ // -----------------------------------------------------
     rule FTYPE . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) )
     rule FTYPE . convert_i32_u I:Int => #round( FTYPE , I )
+
+    syntax Cvti64Op ::= "convert_i64_s" | "convert_i64_u"
+ // -----------------------------------------------------
     rule FTYPE . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) )
     rule FTYPE . convert_i64_u I:Int => #round( FTYPE , I )
-
-    rule #cvtSourceType(convert_i32_s) => i32
-    rule #cvtSourceType(convert_i32_u) => i32
-    rule #cvtSourceType(convert_i64_s) => i64
-    rule #cvtSourceType(convert_i64_u) => i64
 ```
 
 - `demote` turns an `f64` type value to the nearest `f32` type value.
 - `promote` turns an `f32` type value to the nearest `f64` type value:
 
 ```k
-    syntax CvtOp ::= "demote_f64" | "promote_f32"
- // ---------------------------------------------
-    rule f32 . demote_f64  F => #round( f32 , F )
+    syntax Cvtf32Op ::= "promote_f32"
+ // ---------------------------------
     rule f64 . promote_f32 F => #round( f64 , F )
 
-    rule #cvtSourceType(demote_f64)  => f64
-    rule #cvtSourceType(promote_f32) => f32
+    syntax Cvtf64Op ::= "demote_f64"
+ // --------------------------------
+    rule f32 . demote_f64  F => #round( f32 , F )
 ```
 
 - `trunc` first truncates a float value, then convert the result to the nearest ineger value.
 
 ```k
-    syntax CvtOp ::= "trunc_f32_s" | "trunc_f32_u" | "trunc_f64_s" | "trunc_f64_u"
- // ------------------------------------------------------------------------------
+    syntax Cvtf32Op ::= "trunc_f32_s" | "trunc_f32_u"
+ // -------------------------------------------------
     rule ITYPE . trunc_f32_s F => undefined
       requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
     rule ITYPE . trunc_f32_u F => undefined
       requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0)
-    rule ITYPE . trunc_f64_s F => undefined
-      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
-    rule ITYPE . trunc_f64_u F => undefined
-      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0)
+
     rule ITYPE . trunc_f32_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F)))
       requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
     rule ITYPE . trunc_f32_u F => <ITYPE> Float2Int(truncFloat(F))
       requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0))
+
+    syntax Cvtf64Op ::= "trunc_f64_s" | "trunc_f64_u"
+ // -------------------------------------------------
+    rule ITYPE . trunc_f64_s F => undefined
+      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
+    rule ITYPE . trunc_f64_u F => undefined
+      requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0)
+
     rule ITYPE . trunc_f64_s F => <ITYPE> #unsigned(ITYPE, Float2Int(truncFloat(F)))
       requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE)))
     rule ITYPE . trunc_f64_u F => <ITYPE> Float2Int(truncFloat(F))
       requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0))
-
-    rule #cvtSourceType(trunc_f32_s) => f32
-    rule #cvtSourceType(trunc_f32_u) => f32
-    rule #cvtSourceType(trunc_f64_s) => f64
-    rule #cvtSourceType(trunc_f64_u) => f64
 ```
 
 **TODO**: Unimplemented: `inn.reinterpret_fnn`,  `fnn.reinterpret_inn`.
