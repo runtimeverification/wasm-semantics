@@ -645,19 +645,24 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
-    rule <k> #checkTypeUse ( TDECLS:TypeDecls )
-       => #if notBool unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
-          #then (type (func TDECLS))
-          #else .K
-          #fi
-         ...
-         </k>
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <types> TYPES </types>
            ...
          </moduleInst>
+       requires notBool unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
+
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <types> TYPES </types>
+           ...
+         </moduleInst>
+       requires unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
+
     rule <k> #checkTypeUse ( (type TFIDF) )        => . ... </k>
     rule <k> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </k>
 ```
