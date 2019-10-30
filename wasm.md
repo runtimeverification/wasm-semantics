@@ -1465,42 +1465,36 @@ Imports must appear before any allocations in a module, due to validation.
 
 A subtle point is related to tables with inline `elem` definitions: since these may refer to functions by identifier, we need to make sure that tables definitions come after function definitions.
 
-`structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
+`sortModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax Map ::=  structureModule (     Defns) [function]
-                 | #structureModule (Map, Defns) [function]
-                 | #initialMap ()                [function]
- // -------------------------------------------------------
-    rule #initialMap ()
-      => "typeDecls" |-> .Defns
-         "imports"   |-> .Defns
-         "func/glob" |-> .Defns
-         "allocs"    |-> .Defns
-         "exports"   |-> .Defns
-         "inits"     |-> .Defns
-         "start"     |-> .Defns
+    syntax ModuleDecl ::= sortedModule ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, allocs: Defns, exports: Defns, inits: Defns, start: Defns )
+ // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
+    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
+                        | #sortModule ( Defns , ModuleDecl ) [function]
+ // -------------------------------------------------------------------
+    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), sortedModule(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, allocs: .Defns, exports: .Defns, inits: .Defns, start: .Defns))
 
-    rule #structureModule(M,                  .Defns) => M
-    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
+    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
 
-    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+    rule #sortModule((T:TypeDefn   DS:Defns => DS), sortedModule(... types: (TS => T TS)))
 
-    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+    rule #sortModule((I:ImportDefn DS:Defns => DS), sortedModule(... importDefns: (IS => I IS)))
 
-    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #sortModule((X:FuncDefn   DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
+    rule #sortModule((X:GlobalDefn DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
 
-    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
+    rule #sortModule((A:TableDefn  DS:Defns => DS), sortedModule(... allocs: (AS => A AS)))
+    rule #sortModule((A:MemoryDefn DS:Defns => DS), sortedModule(... allocs: (AS => A AS)))
 
-    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+    rule #sortModule((E:ExportDefn DS:Defns => DS), sortedModule(... exports: (ES => E ES)))
 
-    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
+    rule #sortModule((I:DataDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
+    rule #sortModule((I:ElemDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
+
+    rule #sortModule((S:StartDefn  DS:Defns => DS), sortedModule(... start: (_ => S .Defns)))
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
@@ -1516,16 +1510,10 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
                         |     "module" OptionalId Map
  // -------------------------------------------------
-    rule <k> ( module OID:OptionalId DEFNS ) => module OID structureModule(DEFNS) ... </k>
+    rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
 
-    rule <k> module OID:OptionalId MOD
-          => MOD["typeDecls"]
-          ~> MOD["imports"  ]
-          ~> MOD["func/glob"]
-          ~> MOD["allocs"   ]
-          ~> MOD["exports"  ]
-          ~> MOD["inits"    ]
-          ~> MOD["start"    ]
+    rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, allocs: AS, exports: ES, inits: INIS, start: S)
+          => TS ~> IS ~> FGS ~> AS ~> ES ~> INIS ~> S
          ...
          </k>
          <curModIdx> _ => NEXT </curModIdx>
