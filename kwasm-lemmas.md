@@ -25,9 +25,8 @@ Basic arithmetic
        andBool X  <Int N
       [simplification]
 
-    rule (X *Int N +Int Y) modInt N => Y modInt N [simplification]
-    rule (Y +Int X *Int N) modInt N => Y modInt N [simplification]
-
+    rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
+    rule (Y +Int X *Int M) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
 
     rule 0 +Int X => X [simplification]
     rule X +Int 0 => X [simplification]
