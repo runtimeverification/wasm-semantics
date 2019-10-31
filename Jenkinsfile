@@ -69,7 +69,7 @@ pipeline {
           steps {
             sh '''
               nprocs=$(nproc)
-              [ "$nprocs" -gt '2' ] && nprocs=2
+              [ "$nprocs" -gt '4' ] && nprocs=2
               make test-conformance-parse -j"$nprocs"
             '''
           }
