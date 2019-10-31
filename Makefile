@@ -151,6 +151,11 @@ tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 
 KPROVE_MODULE := KWASM-LEMMAS
 
+Z3_OPTIONS ?= --z3-tactic "(or-else (using-params smt :random-seed 3 :timeout 1000) (using-params smt :random-seed 2 :timeout 2000) (using-params smt :random-seed 1))"
+
+PROVE_OPTIONS := $(Z3_OPTIONS)
+
+
 tests/%/make.timestamp:
 	git submodule update --init -- tests/$*
 	touch $@
@@ -181,7 +186,8 @@ tests/%.parse: tests/%
 	rm -rf $@-out
 
 tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) \
+	$(PROVE_OPTIONS)
 
 tests/%.cannot-prove: tests/%
 	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
@@ -190,7 +196,8 @@ tests/%.cannot-prove: tests/%
 	rm -rf $<.out
 
 tests/%.klab-prove: tests/%
-	$(TEST) klab-prove --backend java $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) klab-prove --backend java $< --format-failures --def-module $(KPROVE_MODULE) \
+	$(PROVE_OPTIONS)
 
 ### Execution Tests
 

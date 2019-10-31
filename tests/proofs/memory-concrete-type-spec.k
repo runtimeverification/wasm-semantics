@@ -10,18 +10,6 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
 
     rule #wrap(16, N) => N modInt (256 *Int 256)
 
-    rule (X modInt M) modInt N => X modInt N
-      requires M modInt N ==Int 0
-       andBool N >Int 0
-       andBool M >Int 0
-
-    // Should be generalized:
-    // ----------------------
-//  rule (X +Int (Y +Int (Z *Int 256)) *Int 256) modInt 65536 => (X +Int (Y *Int 256)) modInt 65536
-//  rule (#get(BM, X) +Int #get(BM, Y) *Int 256) modInt 65536 => #get(BM, X) +Int #get(BM, Y) *Int 256
-//    requires #isByteMap(BM)
-    // ----------------------
-
 endmodule
 
 
