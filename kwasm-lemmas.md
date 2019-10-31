@@ -24,14 +24,6 @@ Basic arithmetic
       requires 0 <=Int X
        andBool X  <Int N
       [simplification]
-
-    rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
-    rule (Y +Int X *Int M) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
-
-    rule 0 +Int X => X [simplification]
-    rule X +Int 0 => X [simplification]
-
-    rule (Y +Int X *Int N) /Int N => (Y /Int N) +Int X [simplification]
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
