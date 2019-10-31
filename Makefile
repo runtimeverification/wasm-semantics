@@ -154,7 +154,6 @@ KPROVE_MODULE := KWASM-LEMMAS
 
 PROVE_OPTIONS ?=
 
-
 tests/%/make.timestamp:
 	git submodule update --init -- tests/$*
 	touch $@
