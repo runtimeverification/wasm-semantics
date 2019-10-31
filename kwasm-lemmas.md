@@ -78,7 +78,7 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
-With this invariant encoded, we can introduce the following simplifications.
+With this invariant encoded, we can introduce the following lemma.
 
 ```k
     rule #isByteMap(BMAP) impliesBool (0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256) => true [smt-lemma]

@@ -8,7 +8,7 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires          WIDTH >Int 0
 
-    rule #wrap(16, N) => N modInt (256 *Int 256)
+    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
 
 endmodule
 
