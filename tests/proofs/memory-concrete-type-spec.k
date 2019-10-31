@@ -1,18 +1,5 @@
 requires "kwasm-lemmas.k"
 
-module MEMORY-CONCRETE-TYPE-LEMMAS
-    imports KWASM-LEMMAS
-
-    rule #getRange(BM, START, WIDTH) => 0
-      requires notBool (WIDTH >Int 0)
-    rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires          WIDTH >Int 0
-
-    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
-
-endmodule
-
-
 module MEMORY-CONCRETE-TYPE-SPEC
     imports WASM-TEXT
     imports MEMORY-CONCRETE-TYPE-LEMMAS
