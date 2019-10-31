@@ -1,6 +1,30 @@
+  #Not ( #Not ( {
+      N
+    #Equals
+      0
+    } )
+  #And
+    {
+      X
+    #Equals
+      X modInt N
+    }
+  #And
+    {
+      X <=Int 0 andBool 0 <Int N
+    #Equals
+      true
+    } )
+#And
+  #Not ( {
+    N
+  #Equals
+    0
+  } )
+#And
   <wasm>
     <k>
-      nop ~> X modInt N ~> DotVar2
+      X modInt N ~> DotVar2
     </k>
     <valstack>
       _00
