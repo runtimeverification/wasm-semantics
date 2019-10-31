@@ -102,6 +102,14 @@ They are non-trivial in their implementation, but the following should obviously
 endmodule
 ```
 
+Specialized Lemmas
+==================
+
+The following are lemmas that should not be included in every proof, but are necessary for certain proofs.
+
+Concrete Memory
+---------------
+
 ```k
 module MEMORY-CONCRETE-TYPE-LEMMAS
     imports KWASM-LEMMAS
