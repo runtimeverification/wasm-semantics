@@ -80,7 +80,7 @@ From the semantics, it should be clear that setting the index in a bytemap to th
 Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
 
 ```k
-    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
+    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [simplification]
 ```
 
 TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
