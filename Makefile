@@ -145,9 +145,14 @@ TEST_CONCRETE_BACKEND       := llvm
 TEST_FLOAT_CONCRETE_BACKEND := java
 TEST_SYMBOLIC_BACKEND       := haskell
 
+tests/proofs/memory-concrete-type-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/memory-concrete-type-spec.k%prove: PROVE_OPTIONS=--z3-tactic "(or-else (using-params smt :random-seed 3 :timeout 1000) (using-params smt :random-seed 2 :timeout 2000) (using-params smt :random-seed 0))" --z3-impl-timeout 6000
+tests/proofs/memory-concrete-type-spec.k%prove: KPROVE_MODULE=MEMORY-CONCRETE-TYPE-LEMMAS
 tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 
 KPROVE_MODULE := KWASM-LEMMAS
+
+PROVE_OPTIONS ?=
 
 tests/%/make.timestamp:
 	git submodule update --init -- tests/$*
@@ -179,7 +184,8 @@ tests/%.parse: tests/%
 	rm -rf $@-out
 
 tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) \
+	$(PROVE_OPTIONS)
 
 tests/%.cannot-prove: tests/%
 	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
@@ -188,7 +194,8 @@ tests/%.cannot-prove: tests/%
 	rm -rf $<.out
 
 tests/%.klab-prove: tests/%
-	$(TEST) klab-prove --backend java $< --format-failures --def-module $(KPROVE_MODULE)
+	$(TEST) klab-prove --backend java $< --format-failures --def-module $(KPROVE_MODULE) \
+	$(PROVE_OPTIONS)
 
 ### Execution Tests
 

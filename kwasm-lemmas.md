@@ -70,21 +70,17 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
-With this invariant encoded, we can introduce the following simplifications.
+With this invariant encoded, we can introduce the following lemma.
 
 ```k
-    rule #get(BMAP, IDX) modInt 256 => #get(BMAP, IDX)
-      requires #isByteMap(BMAP)
-    rule #get(BMAP, IDX) /Int   256 => 0
-      requires #isByteMap(BMAP)
+    rule #isByteMap(BMAP) impliesBool (0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256) => true [smt-lemma]
 ```
 
 From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
 Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
 
 ```k
-    rule #get(#set(BMAP, IDX, VAL), IDX)  => VAL
-    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP
+    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
 ```
 
 TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
@@ -95,5 +91,27 @@ They are non-trivial in their implementation, but the following should obviously
 ```
 
 ```k
+endmodule
+```
+
+Specialized Lemmas
+==================
+
+The following are lemmas that should not be included in every proof, but are necessary for certain proofs.
+
+Concrete Memory
+---------------
+
+```k
+module MEMORY-CONCRETE-TYPE-LEMMAS
+    imports KWASM-LEMMAS
+
+    rule #getRange(BM, START, WIDTH) => 0
+      requires notBool (WIDTH >Int 0)
+    rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
+      requires          WIDTH >Int 0
+
+    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
+
 endmodule
 ```
