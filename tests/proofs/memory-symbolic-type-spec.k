@@ -1,6 +1,6 @@
 requires "kwasm-lemmas.k"
 
-module MEMORY-SPEC
+module MEMORY-SYMBOLIC-TYPE-SPEC
     imports WASM-TEXT
     imports KWASM-LEMMAS
 
