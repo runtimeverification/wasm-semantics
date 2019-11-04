@@ -17,7 +17,8 @@ module WRC20-SPEC
       (func DOLLAR__CALLDATACOPY:Identifier ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"callDataCopy\"") ) param i32 i32 i32 .ValTypes .TypeDecls ) 
       (func DOLLAR__STORAGELOAD:Identifier ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"storageLoad\"") ) param i32 i32 .ValTypes .TypeDecls ) 
       (func DOLLAR__STORAGESTORE:Identifier ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"storageStore\"") ) param i32 i32 .ValTypes .TypeDecls ) 
-      (func DOLLAR__GETCALLER:Identifier ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"getCaller\"") ) param i32 .ValTypes .TypeDecls ) ( memory ( export #unparseWasmString("\"memory\"") ) 1 ) 
+      (func DOLLAR__GETCALLER:Identifier ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"getCaller\"") ) param i32 .ValTypes .TypeDecls )
+      ( memory ( export #unparseWasmString("\"memory\"") ) 1 )
 
       (func ( export #unparseWasmString("\"main\"") ) .TypeDecls .LocalDecls 
         block .TypeDecls 
