@@ -747,10 +747,10 @@ A module of shorthand commands for the WRC20 module.
       .Defns
       [macro]
 
-    syntax Defns ::= Defns "++Defns" Defns
- // --------------------------------------
-    rule .Defns ++Defns DS' => DS' [macro]
-    rule (D DS) ++Defns DS' => D (DS ++Defns DS') [macro-rec]
+    syntax Defns ::= Defns "++Defns" Defns [function, functional]
+ // -------------------------------------------------------------
+    rule .Defns ++Defns DS' => DS'
+    rule (D DS) ++Defns DS' => D (DS ++Defns DS')
 ```
 
 ```k
