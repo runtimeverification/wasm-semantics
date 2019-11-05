@@ -124,6 +124,14 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
 ```
 
+### Identifiers
+
+When we want to specify an identifier, we can do so with the following helper function.
+
+```k
+    syntax IdentifierToken ::= String2Identifier(String) [function, functional, hook(STRING.string2token)]
+```
+
 ### Looking up Indices
 
 In the abstract Wasm syntax, indices are always integers.
