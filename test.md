@@ -746,8 +746,8 @@ module WRC20
       .Defns
       [macro-rec]
 
-    syntax Defns ::= Defns "++Defns" Defns [function, functional]
- // -------------------------------------------------------------
+    syntax Defns ::= Defns "++Defns" Defns [function]
+ // -------------------------------------------------
     rule .Defns ++Defns DS' => DS'
     rule (D DS) ++Defns DS' => D (DS ++Defns DS')
 ```
