@@ -7,6 +7,7 @@ requires "kwasm-lemmas.k"
 
 module WRC20-SPEC
   imports KWASM-LEMMAS
+  imports WRC20
 
   rule <k> #wrc20 </k>
 
