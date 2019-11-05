@@ -529,15 +529,17 @@ module WRC20
     imports WASM-TEXT
 ```
 
+A module of shorthand commands for the WRC20 module.
+
 ```k
     syntax Stmts ::= "#wrc20"
     syntax Defns ::= "#wrc20Body"
     syntax Defns ::= "#wrc20Imports"
     syntax Defns ::= "#wrc20Functions"
- // --------------------------------
-    rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro-rec]
+ // ----------------------------------
+    rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro]
 
-    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro-rec]
+    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro]
 
     rule #wrc20Imports =>
       (func String2Identifier("$revert")          ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"revert\"") )          param i32 i32 .ValTypes .TypeDecls )
@@ -549,8 +551,7 @@ module WRC20
       (func String2Identifier("$getCaller")       ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"getCaller\"") )       param i32 .ValTypes .TypeDecls )
       ( memory ( export #unparseWasmString("\"memory\"") ) 1 )
       .Defns
-      [macro-rec]
-
+      [macro]
 
     rule #wrc20Functions =>
       (func ( export #unparseWasmString("\"main\"") ) .TypeDecls .LocalDecls
@@ -744,12 +745,12 @@ module WRC20
         .EmptyStmts
         )
       .Defns
-      [macro-rec]
+      [macro]
 
-    syntax Defns ::= Defns "++Defns" Defns [function, functional]
- // -------------------------------------------------------------
-    rule .Defns ++Defns DS' => DS'
-    rule (D DS) ++Defns DS' => D (DS ++Defns DS')
+    syntax Defns ::= Defns "++Defns" Defns
+ // --------------------------------------
+    rule .Defns ++Defns DS' => DS' [macro]
+    rule (D DS) ++Defns DS' => D (DS ++Defns DS') [macro-rec]
 ```
 
 ```k
