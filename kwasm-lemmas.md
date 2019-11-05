@@ -116,3 +116,236 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
 
 endmodule
 ```
+
+```k
+module WRC20
+    imports WASM-TEXT
+```
+
+A module of shorthand commands for the WRC20 module.
+
+```k
+    syntax Stmts ::= "#wrc20"
+    syntax Defns ::= "#wrc20Body"
+    syntax Defns ::= "#wrc20Imports"
+    syntax Defns ::= "#wrc20Functions"
+ // ----------------------------------
+    rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro]
+
+    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro]
+
+    rule #wrc20Imports =>
+      (func String2Identifier("$revert")          ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"revert\"") )          param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$finish")          ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"finish\"") )          param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$getCallDataSize") ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"getCallDataSize\"") ) result i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$callDataCopy")    ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"callDataCopy\"") )    param i32 i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$storageLoad")     ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"storageLoad\"") )     param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$storageStore")    ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"storageStore\"") )    param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$getCaller")       ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"getCaller\"") )       param i32 .ValTypes .TypeDecls )
+      ( memory ( export #unparseWasmString("\"memory\"") ) 1 )
+      .Defns
+      [macro]
+
+    rule #wrc20Functions =>
+      (func ( export #unparseWasmString("\"main\"") ) .TypeDecls .LocalDecls
+        block .TypeDecls
+          block .TypeDecls
+            call String2Identifier("$getCallDataSize")
+            i32.const 4
+            i32.ge_u
+            br_if 0
+            i32.const 0
+            i32.const 0
+            call String2Identifier("$revert")
+            br 1
+            .EmptyStmts
+          end
+          i32.const 0
+          i32.const 0
+          i32.const 4
+          call String2Identifier("$callDataCopy")
+          block .TypeDecls
+            i32.const 0
+            i32.load
+            i32.const 436376473:Int
+            i32.eq
+            i32.eqz
+            br_if 0
+            call String2Identifier("$do_balance")
+            br 1
+            .EmptyStmts
+          end
+          block .TypeDecls
+            i32.const 0 i32.load
+            i32.const 3181327709:Int
+            i32.eq
+            i32.eqz
+            br_if 0
+            call String2Identifier("$do_transfer")
+            br 1
+            .EmptyStmts
+          end
+          i32.const 0
+          i32.const 0
+          call String2Identifier("$revert")
+          .EmptyStmts
+        end
+        .EmptyStmts
+      )
+
+      (func String2Identifier("$do_balance") .TypeDecls .LocalDecls
+        block .TypeDecls
+          block .TypeDecls
+            call String2Identifier("$getCallDataSize")
+            i32.const 24
+            i32.eq
+            br_if 0
+            i32.const 0
+            i32.const 0
+            call String2Identifier("$revert")
+            br 1
+            .EmptyStmts
+          end
+          i32.const 0
+          i32.const 4
+          i32.const 20
+          call String2Identifier("$callDataCopy")
+          i32.const 0
+          i32.const 32
+          call String2Identifier("$storageLoad")
+          i32.const 32
+          i32.const 32
+          i64.load
+          call String2Identifier("$i64.reverse_bytes")
+          i64.store
+          i32.const 32
+          i32.const 8
+          call String2Identifier("$finish")
+          .EmptyStmts
+        end
+        .EmptyStmts )
+
+      (func String2Identifier("$do_transfer") .TypeDecls local i64 i64 i64 .ValTypes .LocalDecls
+        block .TypeDecls
+          block .TypeDecls
+            call String2Identifier("$getCallDataSize")
+            i32.const 32
+            i32.eq
+            br_if 0
+            i32.const 0
+            i32.const 0
+            call String2Identifier("$revert")
+            br 1
+            .EmptyStmts
+          end
+          i32.const 0
+          call String2Identifier("$getCaller")
+          i32.const 32
+          i32.const 4
+          i32.const 20
+          call String2Identifier("$callDataCopy")
+          i32.const 64
+          i32.const 24
+          i32.const 8
+          call String2Identifier("$callDataCopy")
+          i32.const 64
+          i64.load
+          call String2Identifier("$i64.reverse_bytes")
+          local.set 0
+          i32.const 0
+          i32.const 64
+          call String2Identifier("$storageLoad")
+          i32.const 64
+          i64.load
+          local.set 1
+          i32.const 32
+          i32.const 64
+          call String2Identifier("$storageLoad")
+          i32.const 64
+          i64.load
+          local.set 2
+          block .TypeDecls
+            local.get 0
+            local.get 1
+            i64.le_u
+            br_if 0
+            i32.const 0
+            i32.const 0
+            call String2Identifier("$revert")
+            br 1
+            .EmptyStmts
+          end
+          local.get 1
+          local.get 0
+          i64.sub
+          local.set 1
+          local.get 2
+          local.get 0
+          i64.add
+          local.set 2
+          i32.const 64
+          local.get 1
+          i64.store
+          i32.const 0
+          i32.const 64
+          call String2Identifier("$storageStore")
+          i32.const 64
+          local.get 2
+          i64.store
+          i32.const 32
+          i32.const 64
+          call String2Identifier("$storageStore")
+          .EmptyStmts
+        end
+        .EmptyStmts
+      )
+
+      (func String2Identifier("$i64.reverse_bytes") param i64 .ValTypes result i64 .ValTypes .TypeDecls local i64 i64 .ValTypes .LocalDecls
+        block .TypeDecls
+          loop .TypeDecls
+            local.get 1
+            i64.const 8
+            i64.ge_u
+            br_if 1
+            local.get 0
+            i64.const 56
+            local.get 1
+            i64.const 8
+            i64.mul
+            i64.sub
+            i64.shl
+            i64.const 56
+            i64.shr_u
+            i64.const 56
+            i64.const 8
+            local.get 1
+            i64.mul
+            i64.sub
+            i64.shl
+            local.get 2
+            i64.add
+            local.set 2
+            local.get 1
+            i64.const 1
+            i64.add
+            local.set 1
+            br 0
+            .EmptyStmts
+          end
+          .EmptyStmts
+        end
+        local.get 2
+        .EmptyStmts
+        )
+      .Defns
+      [macro]
+
+    syntax Defns ::= Defns "++Defns" Defns [function, functional]
+ // -------------------------------------------------------------
+    rule .Defns ++Defns DS' => DS'
+    rule (D DS) ++Defns DS' => D (DS ++Defns DS')
+```
+
+```k
+endmodule
+```
