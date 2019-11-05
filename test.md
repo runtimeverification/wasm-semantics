@@ -131,7 +131,7 @@ In order to parse the conformance test cases, we handle these declarations here 
 ```k
     syntax DefnStrings ::= List{WasmString, ""}
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
-                        | "(" "module" OptionalId "quote"  DefnStrings ")" 
+                        | "(" "module" OptionalId "quote"  DefnStrings ")"
                         | "module" "binary" Int
                         | "module" "quote"  String
  // ----------------------------------------------
