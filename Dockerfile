@@ -9,7 +9,16 @@ RUN    apt-get update                                                        \
         libz3-dev lld-8 llvm-8-tools make maven netcat-openbsd opam          \
         openjdk-11-jdk pandoc pkg-config protobuf-compiler python3           \
         python-pygments python-recommonmark python-sphinx rapidjson-dev time \
-        z3 zlib1g-dev
+        zlib1g-dev
+
+RUN    git clone 'https://github.com/z3prover/z3' --branch=z3-4.8.6 \
+    && cd z3                                                        \
+    && python scripts/mk_make.py                                    \
+    && cd build                                                     \
+    && make -j8                                                     \
+    && make install                                                 \
+    && cd ../..                                                     \
+    && rm -rf z3
 
 ADD deps/k/haskell-backend/src/main/native/haskell-backend/scripts/install-stack.sh /.install-stack/
 RUN /.install-stack/install-stack.sh
