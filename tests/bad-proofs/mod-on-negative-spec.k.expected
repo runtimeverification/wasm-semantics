@@ -4,6 +4,12 @@
       0
     } )
   #And
+    #Not ( {
+      N
+    #Equals
+      0
+    } )
+  #And
     {
       X
     #Equals
