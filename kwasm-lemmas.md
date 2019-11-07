@@ -46,6 +46,13 @@ In this case, it's simpler (and safe) to simply discard the `#chop`, instead of 
     rule #minSigned(ITYPE) => 0 -Int #pow1(ITYPE)
 ```
 
+Lookups
+-------
+
+```k
+    rule (MAP:Map [KEY <- VAL])[KEY] => VAL
+```
+
 Memory
 ------
 

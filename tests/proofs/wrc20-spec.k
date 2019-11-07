@@ -8,14 +8,15 @@ requires "kwasm-lemmas.k"
 module WRC20-SPEC
     imports KWASM-LEMMAS
 
-    rule <k> #wrc20 </k>
+    //rule <k> #wrc20 </k>
 
     // Reverse bytes spec.
 
     rule <k> #wrc20ReverseBytes
-    //    ~> (call String2Identifier("$i64.reverse_bytes"))
-        => .
-           ...
+          ~> ( i64.const X )
+             ( invoke NEXTADDR ) // TODO: Use `call`.
+          => .
+             ...
         </k>
         <curModIdx> CUR </curModIdx>
         <moduleInst>
@@ -29,7 +30,8 @@ module WRC20-SPEC
         </moduleInst>
         <funcs> _ => _ </funcs>
         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
-        // TODO: Make function.
+        // TODO: Make function out of this tricky side condition.
       requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
+       andBool #inUnsignedRange(i64, X)
 
 endmodule
