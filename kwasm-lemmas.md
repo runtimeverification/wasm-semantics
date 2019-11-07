@@ -125,11 +125,13 @@ module WRC20
 A module of shorthand commands for the WRC20 module.
 
 ```k
-    syntax Stmts ::= "#wrc20"
-    syntax Defns ::= "#wrc20Body"
-    syntax Defns ::= "#wrc20Imports"
-    syntax Defns ::= "#wrc20Functions"
- // ----------------------------------
+    syntax Stmts     ::= "#wrc20"
+    syntax Defns     ::= "#wrc20Body"
+    syntax Defns     ::= "#wrc20Imports"
+    syntax Defns     ::= "#wrc20Functions"
+    syntax Defns     ::= "#wrc20ReverseBytes"
+    syntax TypeDecls ::= "#wrc20ReverseBytesTypeDecls"
+ // --------------------------------------------------
     rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro]
 
     rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro]
@@ -300,7 +302,13 @@ A module of shorthand commands for the WRC20 module.
         .EmptyStmts
       )
 
-      (func String2Identifier("$i64.reverse_bytes") param i64 .ValTypes result i64 .ValTypes .TypeDecls local i64 i64 .ValTypes .LocalDecls
+      #wrc20ReverseBytes
+      [macro]
+
+    rule #wrc20ReverseBytesTypeDecls => param i64 .ValTypes result i64 .ValTypes .TypeDecls [macro]
+
+    rule #wrc20ReverseBytes =>
+      (func String2Identifier("$i64.reverse_bytes") #wrc20ReverseBytesTypeDecls local i64 i64 .ValTypes .LocalDecls
         block .TypeDecls
           loop .TypeDecls
             local.get 1
