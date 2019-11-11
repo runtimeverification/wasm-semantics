@@ -12,11 +12,11 @@ module WRC20-SPEC
 
     // Reverse bytes spec.
 
-    rule <k> #wrc20ReverseBytes
-          ~> (i32.load (i32.const ADDR))
+    rule <k> #wrc20ReverseBytes // TODO: Have this pre-loaded in the store.
+          ~> (i32.load (i32.const ADDR)):FoldedInstr
              ( i64.const X )
              ( invoke NEXTADDR ) // TODO: Use `call`.
-             (i32.store (i32.const ADDR))
+             (i32.store (i32.const ADDR)):FoldedInstr
           => .
              ...
         </k>
@@ -34,25 +34,25 @@ module WRC20-SPEC
         <funcs> _ => _ </funcs>
         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
         <memInst>
-          <mAddr> MEMADDR </mAddr>
-          <msize> SIZE    </msize>
-          <mdata> ByteMap <| ...
-                             (ADDR        |-> ( V0 => V7 ))
-                             (ADDR +Int 1 |-> ( V1 => V6 ))
-                             (ADDR +Int 2 |-> ( V2 => V5 ))
-                             (ADDR +Int 3 |-> ( V3 => V4 ))
-                             (ADDR +Int 4 |-> ( V4 => V3 ))
-                             (ADDR +Int 5 |-> ( V5 => V2 ))
-                             (ADDR +Int 6 |-> ( V6 => V1 ))
-                             (ADDR +Int 7 |-> ( V7 => V0 ))
-                             ... |>
-          </mdata>
+          <mAddr> MEMADDR  </mAddr>
+          <msize> SIZE     </msize>
+          <mdata> BM => BM' </mdata>
+          ...
         </memInst>
         // TODO: Make function out of this tricky side condition.
       requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
        andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
-       // andBool #isByteMap(BM) // TODO: how to specify?
+       andBool #isByteMap(BM)
+       andBool #isByteMap(BM')
        andBool #inUnsignedRange(i64, X)
        andBool #inUnsignedRange(i64, ADDR)
+       andBool #get(BM, ADDR +Int 0) ==Int #get(BM', ADDR +Int 7 )
+       andBool #get(BM, ADDR +Int 1) ==Int #get(BM', ADDR +Int 6 )
+       andBool #get(BM, ADDR +Int 2) ==Int #get(BM', ADDR +Int 5 )
+       andBool #get(BM, ADDR +Int 3) ==Int #get(BM', ADDR +Int 4 )
+       andBool #get(BM, ADDR +Int 4) ==Int #get(BM', ADDR +Int 3 )
+       andBool #get(BM, ADDR +Int 5) ==Int #get(BM', ADDR +Int 2 )
+       andBool #get(BM, ADDR +Int 6) ==Int #get(BM', ADDR +Int 1 )
+       andBool #get(BM, ADDR +Int 7) ==Int #get(BM', ADDR +Int 0 )
 
 endmodule
