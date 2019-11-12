@@ -13,10 +13,9 @@ module WRC20-SPEC
     // Reverse bytes spec.
 
     rule <k> #wrc20ReverseBytes // TODO: Have this pre-loaded in the store.
-          ~> (i32.load (i32.const ADDR)):FoldedInstr
-             ( i64.const X )
+          ~> (i64.load (i32.const ADDR)):FoldedInstr
              ( invoke NEXTADDR ) // TODO: Use `call`.
-             (i32.store (i32.const ADDR)):FoldedInstr
+             (i64.store (i32.const ADDR)):FoldedInstr
           => .
              ...
         </k>
@@ -45,7 +44,7 @@ module WRC20-SPEC
        andBool #isByteMap(BM)
        andBool #isByteMap(BM')
        andBool #inUnsignedRange(i64, X)
-       andBool #inUnsignedRange(i64, ADDR)
+       andBool #inUnsignedRange(i32, ADDR)
        andBool #get(BM, ADDR +Int 0) ==Int #get(BM', ADDR +Int 7 )
        andBool #get(BM, ADDR +Int 1) ==Int #get(BM', ADDR +Int 6 )
        andBool #get(BM, ADDR +Int 2) ==Int #get(BM', ADDR +Int 5 )
