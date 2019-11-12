@@ -14,8 +14,9 @@ module WRC20-SPEC
 
     rule <k> #wrc20ReverseBytes // TODO: Have this pre-loaded in the store.
           ~> (i64.load (i32.const ADDR)):FoldedInstr
+             (i32.const ADDR)
              ( invoke NEXTADDR ) // TODO: Use `call`.
-             (i64.store (i32.const ADDR)):FoldedInstr
+             (i64.store)
           => .
              ...
         </k>
