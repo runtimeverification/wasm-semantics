@@ -20,7 +20,14 @@ Basic logic
 Basic arithmetic
 ----------------
 
+// TODO: Upstream the lemmas in this section into K.
+
 ### Modular Arithmetic
+
+Z3 is slow and unreliable in reasoning about modular arithmetic.
+Therefore we want to make structural simplifications wherever possible.
+
+#### Rules for Expressions With Only Modulus
 
 ```k
     rule X modInt N => X
@@ -33,73 +40,74 @@ Basic arithmetic
        andBool M <=Int N
       [simplification]
 
-    rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
-    rule (Y +Int X *Int M) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
-
     rule (X modInt M) modInt N => X modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+```
 
-    /* Proof:
-       Assume n divides m
-       x = k*m + r
-       x mod m + y = r + y
-       (x + y) mod n
-         = k*m + r + y mod n
-         = (k*m/n)*n + r + y mod n  [Valid since n divides m]
-         = r + y mod n
-         = (x mod m + y) mod n
-    */
-    rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N
-      requires M >Int 0
-       andBool N >Int 0
-       andBool M modInt N ==Int 0
-      [simplification]
-    // Reverse case, proof is the same since addition commutes.
-    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
-      requires M >Int 0
-       andBool N >Int 0
-       andBool M modInt N ==Int 0
-      [simplification]
+#### Modulus Over Addition
 
-    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
+```k
+    rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
+    rule (Y +Int X *Int M) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
+```
 
-    rule (X >>Int N) >>Int M => X >>Int (N +Int M)
-    rule (X <<Int N) <<Int M => X <<Int (N +Int M)
+Proof:
 
-    rule (X <<Int N) >>Int M => X <<Int (N -Int M)
-      requires N >=Int M
-    rule (X <<Int N) >>Int M => X >>Int (M -Int N)
-      requires notBool (N >=Int M)
-      [simplification]
+```
+Assume m = k * n for some k (side condition).
+x * m + y mod n = x * (k * n) + y mod n = y mod n
+```
 
-    rule (X >>Int N) <<Int M => X >>Int (N -Int M)
-      requires N >=Int M
-    rule (X >>Int N) <<Int M => X <<Int (M -Int N)
-      requires notBool (N >=Int M)
-      [simplification]
+```k
+    rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N   requires M modInt N ==Int 0 [simplification]
+    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N   requires M modInt N ==Int 0 [simplification]
+    // rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N // Accidentally included.
+```
 
-    rule (X modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))
-      [simplification]
+Proof:
 
-    rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
-      [simplification]
+```
+Assume m = l * n
+x = k * m + r, r <
+x mod m + y = r + y
+(x + y) mod n
+  = k * m + r + y mod n
+  = k * l * n + r + y mod n
+  = r + y mod n
+  = (x mod m + y) mod n
+```
 
- // TODO: generalize these, right now they are specific to shifting bytes in i64
-    rule ( X           +Int Y) >>Int N => (Y >>Int N)
-      requires X <Int 2 ^Int N
-      [simplification]
-    rule ((X modInt M) +Int Y) >>Int N => (Y >>Int N)
-      requires M <=Int 2 ^Int N
-      [simplification]
+#### Bit Shifting
 
-    rule X *Int 256 >>Int N => (X >>Int (N -Int 8))
-      [simplification]
-
+```k
     rule ( X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
     rule ( X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
+
+    rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
+    rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
+
+    // The Haskell and Java backend accept negative shifts (the LLVM and OCaml backends do not).
+    // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
+    rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
+    rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
+    rule (X >>Int N) <<Int M => X >>Int (N -Int M)   requires          N >=Int M  [simplification]
+    rule (X >>Int N) <<Int M => X <<Int (M -Int N)   requires notBool (N >=Int M) [simplification]
+
+    // rule (X +Int Y) >>Int N => (Y >>Int N) requires X <Int 2 ^Int N [simplification] // Accidentally included. Counterexample: X = Y = 1 = N = 1
+    // rule ((X modInt M) +Int Y) >>Int N => (Y >>Int N) requires M <=Int 2 ^Int N [simplification] // Accidentally included. Counterexample: X = Y = 1 = N = 1 and M = 2
+
+ // TODO: generalize this.
+    rule X *Int 256 >>Int N => (X >>Int (N -Int 8)) [simplification]
+```
+
+The following rules decrease the modulus by rearranging it around a shift.
+
+```k
+    rule (X          modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))          [simplification]
+    rule (X <<Int N) modInt POW          => (X          modInt (POW /Int (2 ^Int N))) <<Int N [simplification]
 ```
 
 ### Basic Operations
