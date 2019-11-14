@@ -20,11 +20,99 @@ Basic logic
 Basic arithmetic
 ----------------
 
+### Modular Arithmetic
+
 ```k
     rule X modInt N => X
       requires 0 <=Int X
        andBool X  <Int N
       [simplification]
+
+    rule (X modInt M) modInt N => X modInt M
+      requires M >Int 0
+       andBool M <=Int N
+      [simplification]
+
+    rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
+    rule (Y +Int X *Int M) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
+
+    rule (X modInt M) modInt N => X modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+
+    /* Proof:
+       Assume n divides m
+       x = k*m + r
+       x mod m + y = r + y
+       (x + y) mod n
+         = k*m + r + y mod n
+         = (k*m/n)*n + r + y mod n  [Valid since n divides m]
+         = r + y mod n
+         = (x mod m + y) mod n
+    */
+    rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+    // Reverse case, proof is the same since addition commutes.
+    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+
+    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
+
+    rule (X >>Int N) >>Int M => X >>Int (N +Int M)
+    rule (X <<Int N) <<Int M => X <<Int (N +Int M)
+
+    rule (X <<Int N) >>Int M => X <<Int (N -Int M)
+      requires N >=Int M
+    rule (X <<Int N) >>Int M => X >>Int (M -Int N)
+      requires notBool (N >=Int M)
+      [simplification]
+
+    rule (X >>Int N) <<Int M => X >>Int (N -Int M)
+      requires N >=Int M
+    rule (X >>Int N) <<Int M => X <<Int (M -Int N)
+      requires notBool (N >=Int M)
+      [simplification]
+
+    rule (X modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))
+      [simplification]
+
+    rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
+      [simplification]
+
+ // TODO: generalize these, right now they are specific to shifting bytes in i64
+    rule ( X           +Int Y) >>Int N => (Y >>Int N)
+      requires X <Int 2 ^Int N
+      [simplification]
+    rule ((X modInt M) +Int Y) >>Int N => (Y >>Int N)
+      requires M <=Int 2 ^Int N
+      [simplification]
+
+    rule X *Int 256 >>Int N => (X >>Int (N -Int 8))
+      [simplification]
+
+    rule ( X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
+    rule ( X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
+```
+
+### Basic Operations
+
+```k
+    rule (Y +Int X *Int N) /Int N => (Y /Int N) +Int X [simplification]
+
+    rule X  +Int 0 => X [simplification]
+    rule 0  +Int X => X [simplification]
+    rule X <<Int 0 => X [simplification]
+    rule 0 <<Int X => X [simplification]
+    rule X >>Int 0 => X [simplification]
+    rule 0 >>Int X => X [simplification]
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
