@@ -47,7 +47,7 @@ Therefore we want to make structural simplifications wherever possible.
       [simplification]
 ```
 
-#### Modulus Over Addition
+#### Modulus Over Addition and Division
 
 ```k
     rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
@@ -98,16 +98,23 @@ x mod m + y = r + y
 
     // rule (X +Int Y) >>Int N => (Y >>Int N) requires X <Int 2 ^Int N [simplification] // Accidentally included. Counterexample: X = Y = 1 = N = 1
     // rule ((X modInt M) +Int Y) >>Int N => (Y >>Int N) requires M <=Int 2 ^Int N [simplification] // Accidentally included. Counterexample: X = Y = 1 = N = 1 and M = 2
-
- // TODO: generalize this.
-    rule X *Int 256 >>Int N => (X >>Int (N -Int 8)) [simplification]
 ```
 
 The following rules decrease the modulus by rearranging it around a shift.
 
 ```k
-    rule (X          modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))          [simplification]
-    rule (X <<Int N) modInt POW          => (X          modInt (POW /Int (2 ^Int N))) <<Int N [simplification]
+    rule (X          modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))            requires POW modInt (2 ^Int N) ==Int 0 [simplification]
+    rule (X <<Int N) modInt POW          => (X          modInt (POW /Int (2 ^Int N))) <<Int N   requires POW modInt (2 ^Int N) ==Int 0 [simplification]
+
+    rule (X +Int (Y <<Int N)) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
+    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
+```
+
+The next rules consider (some) cases where integers with disjoint 1-bits are added together.
+
+```k
+    rule (X +Int Y) >>Int N => (Y >>Int N) requires X  <Int 2 ^Int N andBool Y >=Int 2 ^Int N [simplification]
+    rule (Y +Int X) >>Int N => (Y >>Int N) requires X  <Int 2 ^Int N andBool Y >=Int 2 ^Int N [simplification]
 ```
 
 ### Basic Operations
@@ -174,6 +181,13 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
+We can now state the intended semantics of `#get`.
+
+```k
+    rule 0              <=Int #get(BM, ADDR) => true requires #isByteMap(BM) [simplification]
+    rule #get(BM, ADDR)  <Int 256            => true requires #isByteMap(BM) [simplification]
+```
+
 With this invariant encoded, we can introduce the following lemma.
 
 ```k
@@ -209,16 +223,48 @@ Concrete Memory
 ```k
 module MEMORY-CONCRETE-TYPE-LEMMAS
     imports KWASM-LEMMAS
+```
 
+TODO: Maybe rewrite `#getRange` in terms of bit shifts.
+
+```k
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires          WIDTH >Int 0
+       andBool #isByteMap(BM)
+      ensures  0 <=Int #get(BM, START)
+       andBool #get(BM, START) <Int 256
 
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
 
 endmodule
 ```
+
+WRC20
+-----
+
+### Lemmas
+
+TODO: Maybe use these?
+```k
+module WRC20-LEMMAS
+    imports MEMORY-CONCRETE-TYPE-LEMMAS
+
+    rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+```
+
+The following is valid because there can be no carry from the addition of the least 8 bits, since they are all 0 in the case of X*256.
+
+```k
+    rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+
+endmodule
+```
+
+### Macros
+
+The following module gives macros for the wrc20 code so that its parts can be expressed succinctly in proofs.
 
 ```k
 module WRC20
