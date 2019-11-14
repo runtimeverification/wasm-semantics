@@ -6,15 +6,16 @@ requires "kwasm-lemmas.k"
 // As long as the program parses correctly, the spec will pass.
 
 module WRC20-SPEC
-    imports KWASM-LEMMAS
+    imports MEMORY-CONCRETE-TYPE-LEMMAS
 
     //rule <k> #wrc20 </k>
 
     // Reverse bytes spec.
 
     rule <k> #wrc20ReverseBytes // TODO: Have this pre-loaded in the store.
-          ~> (i64.load (i32.const ADDR)):FoldedInstr
+          ~> (i32.const ADDR)
              (i32.const ADDR)
+             (i64.load)
              ( invoke NEXTADDR ) // TODO: Use `call`.
              (i64.store)
           => .
