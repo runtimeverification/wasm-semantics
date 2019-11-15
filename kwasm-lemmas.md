@@ -203,8 +203,8 @@ Conversely, setting an index in a map to a value `VAL` and then retrieving the v
 ```k
     rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
 
-    rule #get(#set(BMAP, IDX,  VAL), IDX) => VAL 
-    rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX)   requires IDX ==Int IDX'
+    rule #get(#set(BMAP, IDX,  VAL), IDX) => VAL  [smt-lemma]
+    rule IDX ==Int IDX' impliesBool #get(#set(BMAP, IDX', VAL), IDX) ==Int #get(BMAP, IDX) => true [smt-lemma]
 ```
 
 TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
