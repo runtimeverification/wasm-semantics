@@ -228,7 +228,7 @@ test-conformance: test-conformance-parse test-conformance-supported
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 bad_proof_tests:=$(wildcard tests/bad-proofs/*-spec.k)
-slow_proof_tests:=tests/proofs/loops-spec.k
+slow_proof_tests:=tests/proofs/loops-spec.k tests/proofs/wrc20-spec.k
 quick_proof_tests:=$(filter-out $(slow_proof_tests), $(proof_tests))
 
 test-prove-good: $(proof_tests:=.prove)
