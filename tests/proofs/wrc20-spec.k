@@ -6,7 +6,7 @@ requires "kwasm-lemmas.k"
 // As long as the program parses correctly, the spec will pass.
 
 module WRC20-SPEC
-    imports MEMORY-CONCRETE-TYPE-LEMMAS
+    imports WRC20-LEMMAS
 
     //rule <k> #wrc20 </k>
 

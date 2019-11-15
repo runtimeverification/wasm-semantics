@@ -107,14 +107,17 @@ The following rules decrease the modulus by rearranging it around a shift.
     rule (X <<Int N) modInt POW          => (X          modInt (POW /Int (2 ^Int N))) <<Int N   requires POW modInt (2 ^Int N) ==Int 0 [simplification]
 
     rule (X +Int (Y <<Int N)) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
-    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
+    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]    
 ```
 
 The next rules consider (some) cases where integers with disjoint 1-bits are added together.
 
 ```k
-    rule (X +Int Y) >>Int N => (Y >>Int N) requires X  <Int 2 ^Int N andBool Y >=Int 2 ^Int N [simplification]
-    rule (Y +Int X) >>Int N => (Y >>Int N) requires X  <Int 2 ^Int N andBool Y >=Int 2 ^Int N [simplification]
+    rule (X +Int Y) >>Int N => (Y >>Int N)
+      requires X  <Int 2 ^Int N
+       andBool (Y >=Int 2 ^Int N orBool Y ==Int 0)
+    [simplification]
+    //rule (Y +Int X) >>Int N => (Y >>Int N) requires X  <Int 2 ^Int N andBool Y >=Int 2 ^Int N [simplification]
 ```
 
 ### Basic Operations
@@ -199,6 +202,9 @@ Conversely, setting an index in a map to a value `VAL` and then retrieving the v
 
 ```k
     rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
+
+    rule #get(#set(BMAP, IDX,  VAL), IDX) => VAL 
+    rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX)   requires IDX ==Int IDX'
 ```
 
 TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
@@ -246,10 +252,13 @@ WRC20
 
 ### Lemmas
 
+Z3 is slow to reason about modular arithmetic for symbolic modulo classes, but can be quite efficient for specific values.
+Since memory mostly uses modulo 256, we add special cases for this.
+
 TODO: Maybe use these?
 ```k
 module WRC20-LEMMAS
-    imports MEMORY-CONCRETE-TYPE-LEMMAS
+    imports KWASM-LEMMAS
 
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 ```
@@ -258,7 +267,40 @@ The following is valid because there can be no carry from the addition of the le
 
 ```k
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+```
 
+TODO: We may want to generalize this since bit shifts are more specialized than (and easier to reason about than) division and multiplication.
+TODO: Maybe rewrite `#setRange` in terms of bit shifts.
+
+```k
+    rule X /Int 256 => X >>Int 8
+
+
+//Experimental:
+
+// Reassociate the gets in the final position.
+    //rule X +Int ((Y <<Int N) +Int Z) => (X +Int (Y <<Int N)) +Int Z
+
+    rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8  )  requires N >=Int 8 andBool WIDTH >Int 1
+    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR) requires WIDTH =/=Int 0 andBool #isByteMap(BM)
+      ensures 0 <=Int #get(BM, ADDR) 
+       andBool #get(BM, ADDR) <Int 256
+    
+    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) requires WIDTH ==Int 1
+      ensures 0 <=Int #get(BM, ADDR) 
+       andBool #get(BM, ADDR) <Int 256
+
+
+    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256
+    rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM)
+
+    rule (#isByteMap(BM) andBool N >=Int 8) impliesBool (((#get(BM, ADDR) <<Int N) +Int X >=Int 256 orBool (#get(BM, ADDR) <<Int N) +Int X ==Int 0) ==Bool X >=Int 256 orBool X ==Int 0) => true [smt-lemma]
+
+// DANGER: UNSOUND
+//    rule (#get(BM, ADDR) +Int X) >>Int 8 => X >>Int 8
+    
+    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N
+ 
 endmodule
 ```
 
