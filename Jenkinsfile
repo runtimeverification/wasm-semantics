@@ -121,7 +121,12 @@ pipeline {
     stage('Master Release') {
       when { branch 'master' }
       steps {
-        build job: 'rv-devops/master', parameters: [string(name: 'PR_REVIEWER', value: 'ehildenb'), booleanParam(name: 'UPDATE_DEPS_POLKADOT', value: true)], propagate: false, wait: false
+        build job: 'rv-devops/master', propagate: false, wait: false                                                   \
+            , parameters: [ booleanParam(name: 'UPDATE_DEPS_SUBMODULE', value: true)                                   \
+                          , string(name: 'PR_REVIEWER', value: 'ehildenb')                                             \
+                          , string(name: 'UPDATE_DEPS_REPOSITORY', value: 'runtimeverification/polkadot-verification') \
+                          , string(name: 'UPDATE_DEPS_SUBMODULE_DIR', value: 'deps/wasm-semantics')                    \
+                          ]
       }
     }
   }
