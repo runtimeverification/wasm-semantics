@@ -514,8 +514,8 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional]
- // --------------------------------------------------------------------
+    syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
+ // --------------------------------------------------------------------------------------
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)  [concrete]
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
