@@ -146,7 +146,7 @@ TEST_FLOAT_CONCRETE_BACKEND := java
 TEST_SYMBOLIC_BACKEND       := haskell
 
 tests/proofs/memory-concrete-type-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
-tests/proofs/memory-concrete-type-spec.k%prove: PROVE_OPTIONS=--z3-tactic "(or-else (using-params smt :random-seed 3 :timeout 1000) (using-params smt :random-seed 2 :timeout 2000) (using-params smt :random-seed 0))" --z3-impl-timeout 6000
+tests/proofs/memory-concrete-type-spec.k%prove: PROVE_OPTIONS=--z3-tactic "(or-else (using-params smt :random-seed 1))" --z3-impl-timeout 5000
 tests/proofs/memory-concrete-type-spec.k%prove: KPROVE_MODULE=MEMORY-CONCRETE-TYPE-LEMMAS
 tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 
