@@ -82,6 +82,8 @@ x mod m + y = r + y
 
 #### Bit Shifting
 
+We want Z3 to understand what a bit-shift is.
+
 ```k
     rule ( X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
     rule ( X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
@@ -203,8 +205,10 @@ Conversely, setting an index in a map to a value `VAL` and then retrieving the v
 ```k
     rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
 
-    rule #get(#set(BMAP, IDX,  VAL), IDX) => VAL  [smt-lemma]
-    rule IDX ==Int IDX' impliesBool #get(#set(BMAP, IDX', VAL), IDX) ==Int #get(BMAP, IDX) => true [smt-lemma]
+    rule #get(#set(BMAP, IDX,  VAL), IDX ) => VAL  [smt-lemma]
+    rule IDX =/=Int IDX' impliesBool #get(#set(BMAP, IDX', VAL), IDX) ==Int #get(BMAP, IDX) => true [smt-lemma]
+    rule #get(#set(BMAP, IDX', VAL), IDX) => VAL             requires         IDX ==Int IDX'
+    rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX) requires notBool IDX ==Int IDX'
 ```
 
 TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
@@ -296,10 +300,17 @@ TODO: Maybe rewrite `#setRange` in terms of bit shifts.
 
     rule (#isByteMap(BM) andBool N >=Int 8) impliesBool (((#get(BM, ADDR) <<Int N) +Int X >=Int 256 orBool (#get(BM, ADDR) <<Int N) +Int X ==Int 0) ==Bool X >=Int 256 orBool X ==Int 0) => true [smt-lemma]
 
+// TODO: Generalize
+    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8
+    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8
+
 // DANGER: UNSOUND
 //    rule (#get(BM, ADDR) +Int X) >>Int 8 => X >>Int 8
     
     rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N
+
+    rule 0 <=Int X impliesBool 0 <=Int (X <<Int N) => true [smt-lemma]
+    rule 0 <=Int X impliesBool 0 <=Int (X >>Int N) => true [smt-lemma]
  
 endmodule
 ```
