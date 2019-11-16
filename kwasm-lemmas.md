@@ -34,17 +34,42 @@ Therefore we want to make structural simplifications wherever possible.
       requires 0 <=Int X
        andBool X  <Int N
       [simplification]
+```
 
+`modInt` selects the least non-negative representative of a congruence class modulo `N`.
+
+```k
     rule (X modInt M) modInt N => X modInt M
       requires M >Int 0
        andBool M <=Int N
       [simplification]
+```
 
+Proof:
+
+
+```
+Since 0 <= x mod m < m <= n, (x mod m) mod n = x mod m
+```
+
+```k
     rule (X modInt M) modInt N => X modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+```
+
+Proof:
+
+```
+Assume m = n * k for some k > 0.
+x = m * q + r, for a unique q and r s.t. 0 <= r < m
+(x mod m) mod n
+ = r mod n
+ = n * ( k * q) + r mod n
+ = m * q + r mod n
+ = x mod n
 ```
 
 #### Modulus Over Addition and Division
@@ -64,14 +89,13 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
 ```k
     rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N   requires M modInt N ==Int 0 [simplification]
     rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N   requires M modInt N ==Int 0 [simplification]
-    // rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N // Accidentally included.
 ```
 
 Proof:
 
 ```
 Assume m = l * n
-x = k * m + r, r <
+x = k * m + r, r < m
 x mod m + y = r + y
 (x + y) mod n
   = k * m + r + y mod n
@@ -97,9 +121,6 @@ We want Z3 to understand what a bit-shift is.
     rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
     rule (X >>Int N) <<Int M => X >>Int (N -Int M)   requires          N >=Int M  [simplification]
     rule (X >>Int N) <<Int M => X <<Int (M -Int N)   requires notBool (N >=Int M) [simplification]
-
-    // rule (X +Int Y) >>Int N => (Y >>Int N) requires X <Int 2 ^Int N [simplification] // Accidentally included. Counterexample: X = Y = 1 = N = 1
-    // rule ((X modInt M) +Int Y) >>Int N => (Y >>Int N) requires M <=Int 2 ^Int N [simplification] // Accidentally included. Counterexample: X = Y = 1 = N = 1 and M = 2
 ```
 
 The following rules decrease the modulus by rearranging it around a shift.
@@ -107,26 +128,41 @@ The following rules decrease the modulus by rearranging it around a shift.
 ```k
     rule (X          modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))            requires POW modInt (2 ^Int N) ==Int 0 [simplification]
     rule (X <<Int N) modInt POW          => (X          modInt (POW /Int (2 ^Int N))) <<Int N   requires POW modInt (2 ^Int N) ==Int 0 [simplification]
-
-    rule (X +Int (Y <<Int N)) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
-    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]    
 ```
+
+Proof sketch: Taking modulo `2^n * k` can only affect the the `n`-th and higher bits.
+A shift right by `n` bits can only erase bits up to the `n-1`-th bit.
+Therefore, we may as well shift first and then take the modulus, only we need to make sure the modulus acts on the shifted bits, by taking modulo `k` instead.
+The argument for the left shift is similar.
+
+```k
+    rule (X +Int (Y <<Int N)) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
+    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
+```
+
+Proof: These follow from the fact that shifting left by `n` bits is simply multiplying by `2^n`, and from previously proven rules of modular arithmetic.
 
 The next rules consider (some) cases where integers with disjoint 1-bits are added together.
 
 ```k
     rule (X +Int Y) >>Int N => (Y >>Int N)
-      requires X  <Int 2 ^Int N
+      requires 0  <=Int X
+       andBool X   <Int 2 ^Int N
        andBool (Y >=Int 2 ^Int N orBool Y ==Int 0)
     [simplification]
-    //rule (Y +Int X) >>Int N => (Y >>Int N) requires X  <Int 2 ^Int N andBool Y >=Int 2 ^Int N [simplification]
+
+    rule (Y +Int X) >>Int N => (Y >>Int N)
+      requires 0  <=Int X
+       andBool X   <Int 2 ^Int N
+       andBool (Y >=Int 2 ^Int N orBool Y ==Int 0)
+      [simplification]
 ```
+
+Proof sketch: The side conditions guarantee that the addition causes no carries, so that `x + y = x | y`, `|` being a bitwise `or`.
 
 ### Basic Operations
 
 ```k
-    rule (Y +Int X *Int N) /Int N => (Y /Int N) +Int X [simplification]
-
     rule X  +Int 0 => X [simplification]
     rule 0  +Int X => X [simplification]
     rule X <<Int 0 => X [simplification]
@@ -201,12 +237,11 @@ With this invariant encoded, we can introduce the following lemma.
 
 From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
 Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
+A getting operation can safeley ignore setting operation on unrelated indices.
 
 ```k
     rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
 
-    rule #get(#set(BMAP, IDX,  VAL), IDX ) => VAL  [smt-lemma]
-    rule IDX =/=Int IDX' impliesBool #get(#set(BMAP, IDX', VAL), IDX) ==Int #get(BMAP, IDX) => true [smt-lemma]
     rule #get(#set(BMAP, IDX', VAL), IDX) => VAL             requires         IDX ==Int IDX'
     rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX) requires notBool IDX ==Int IDX'
 ```
@@ -256,24 +291,24 @@ WRC20
 
 ### Lemmas
 
-Z3 is slow to reason about modular arithmetic for symbolic modulo classes, but can be quite efficient for specific values.
-Since memory mostly uses modulo 256, we add special cases for this.
-
-TODO: Maybe use these?
 ```k
 module WRC20-LEMMAS
     imports KWASM-LEMMAS
+```
 
+Z3 is slow to reason about modular arithmetic for symbolic congruence classes, but can be quite efficient for specific values.
+Since memory mostly uses modulo 256, we add special cases for this.
+
+```k
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 ```
 
-The following is valid because there can be no carry from the addition of the least 8 bits, since they are all 0 in the case of X*256.
+The following is valid because there can be no carry from the addition of the least 8 bits, since they are all 0 in the case of X * 256.
 
 ```k
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 ```
 
-TODO: We may want to generalize this since bit shifts are more specialized than (and easier to reason about than) division and multiplication.
 TODO: Maybe rewrite `#setRange` in terms of bit shifts.
 
 ```k
@@ -282,23 +317,22 @@ TODO: Maybe rewrite `#setRange` in terms of bit shifts.
 
 //Experimental:
 
-// Reassociate the gets in the final position.
-    //rule X +Int ((Y <<Int N) +Int Z) => (X +Int (Y <<Int N)) +Int Z
+    rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8)
+      requires N >=Int 8 andBool WIDTH >Int 1
 
-    rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8  )  requires N >=Int 8 andBool WIDTH >Int 1
     rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR) requires WIDTH =/=Int 0 andBool #isByteMap(BM)
-      ensures 0 <=Int #get(BM, ADDR) 
-       andBool #get(BM, ADDR) <Int 256
-    
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) requires WIDTH ==Int 1
-      ensures 0 <=Int #get(BM, ADDR) 
+      ensures 0 <=Int #get(BM, ADDR)
        andBool #get(BM, ADDR) <Int 256
 
+    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
+      requires WIDTH ==Int 1
+       ensures 0 <=Int #get(BM, ADDR)
+       andBool #get(BM, ADDR) <Int 256
 
     rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256
     rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM)
 
-    rule (#isByteMap(BM) andBool N >=Int 8) impliesBool (((#get(BM, ADDR) <<Int N) +Int X >=Int 256 orBool (#get(BM, ADDR) <<Int N) +Int X ==Int 0) ==Bool X >=Int 256 orBool X ==Int 0) => true [smt-lemma]
+    //rule (#isByteMap(BM) andBool N >=Int 8) impliesBool (((#get(BM, ADDR) <<Int N) +Int X >=Int 256 orBool (#get(BM, ADDR) <<Int N) +Int X ==Int 0) ==Bool X >=Int 256 orBool X ==Int 0) => true [smt-lemma]
 
 // TODO: Generalize
     rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8
@@ -306,12 +340,12 @@ TODO: Maybe rewrite `#setRange` in terms of bit shifts.
 
 // DANGER: UNSOUND
 //    rule (#get(BM, ADDR) +Int X) >>Int 8 => X >>Int 8
-    
+
     rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N
 
     rule 0 <=Int X impliesBool 0 <=Int (X <<Int N) => true [smt-lemma]
     rule 0 <=Int X impliesBool 0 <=Int (X >>Int N) => true [smt-lemma]
- 
+
 endmodule
 ```
 
@@ -554,6 +588,27 @@ A module of shorthand commands for the WRC20 module.
  // -------------------------------------------------------------
     rule .Defns ++Defns DS' => DS'
     rule (D DS) ++Defns DS' => D (DS ++Defns DS')
+```
+
+```k
+endmodule
+```
+
+TODO: Upstream these, but don't commit them with the WRC20 proof (they aren't needed).
+
+```k
+module GENERAL-ARITHMETIC-LEMMAS
+    imports WASM-TEXT
+```
+
+Integer division can not in general be distributed over addition.
+However, when one of the addends is a multiple of the divisior, it is safe.
+
+```k
+    rule (Y +Int X *Int M) /Int N => (Y /Int N) +Int (X *Int (M /Int N))   requires M modInt N ==Int 0 [simplification]
+    rule (X +Int Y) /Int Z => X /Int Z +Int Y /Int Z
+      requires X modInt Z ==Int 0
+        orBool Y modInt Z ==Int 0
 ```
 
 ```k
