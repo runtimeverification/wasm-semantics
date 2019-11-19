@@ -1,7 +1,6 @@
 requires "kwasm-lemmas.k"
 
 module LOOPS-SPEC
-    imports WASM-TEXT
     imports KWASM-LEMMAS
 
     // Lemma

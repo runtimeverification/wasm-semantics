@@ -275,13 +275,16 @@ TODO: Maybe rewrite `#getRange` in terms of bit shifts.
 ```k
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)
+      [simplification]
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires          WIDTH >Int 0
        andBool #isByteMap(BM)
       ensures  0 <=Int #get(BM, START)
        andBool #get(BM, START) <Int 256
+      [simplification]
 
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
+      [simplification]
 
 endmodule
 ```
