@@ -109,10 +109,13 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
 
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)
+      [simplification]
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires          WIDTH >Int 0
+      [simplification]
 
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
+      [simplification]
 
 endmodule
 ```

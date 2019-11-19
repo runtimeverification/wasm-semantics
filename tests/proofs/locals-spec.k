@@ -1,7 +1,6 @@
 requires "kwasm-lemmas.k"
 
 module LOCALS-SPEC
-    imports WASM-TEXT
     imports KWASM-LEMMAS
 
     rule <k> (local.get X:Int) (local.set X:Int) => . ... </k>
