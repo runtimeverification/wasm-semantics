@@ -118,8 +118,6 @@ We want Z3 to understand what a bit-shift is.
     // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
     rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
     rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
-    rule (X >>Int N) <<Int M => X >>Int (N -Int M)   requires          N >=Int M  [simplification]
-    rule (X >>Int N) <<Int M => X <<Int (M -Int N)   requires notBool (N >=Int M) [simplification]
 ```
 
 The following rules decrease the modulus by rearranging it around a shift.
