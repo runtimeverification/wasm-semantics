@@ -108,7 +108,7 @@ x mod m + y = r + y
 We want Z3 to understand what a bit-shift is.
 
 ```k
-    rule ( X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
+    rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
     rule ( X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
 
     rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
