@@ -47,7 +47,6 @@ Therefore we want to make structural simplifications wherever possible.
 
 Proof:
 
-
 ```
 Since 0 <= x mod m < m <= n, (x mod m) mod n = x mod m
 ```
