@@ -142,16 +142,17 @@ Proof: These follow from the fact that shifting left by `n` bits is simply multi
 The next rules consider (some) cases where integers with disjoint 1-bits are added together.
 
 ```k
+// TODO: These rules turn out to not be necessary for the wrc20 proof. Keep?
     rule (X +Int Y) >>Int N => (Y >>Int N)
       requires 0  <=Int X
        andBool X   <Int 2 ^Int N
-       andBool (Y >=Int 2 ^Int N orBool Y ==Int 0)
+       andBool Y modInt 2^N ==Int 0
     [simplification]
 
     rule (Y +Int X) >>Int N => (Y >>Int N)
       requires 0  <=Int X
        andBool X   <Int 2 ^Int N
-       andBool (Y >=Int 2 ^Int N orBool Y ==Int 0)
+       andBool Y modInt 2^N ==Int 0
       [simplification]
 ```
 
