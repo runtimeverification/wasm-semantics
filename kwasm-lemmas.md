@@ -66,12 +66,12 @@ Assume m = n * k for some k > 0.
 x = m * q + r, for a unique q and r s.t. 0 <= r < m
 (x mod m) mod n
  = r mod n
- = n * ( k * q) + r mod n
+ = (n * ( k * q) + r) mod n
  = m * q + r mod n
  = x mod n
 ```
 
-#### Modulus Over Addition and Division
+#### Modulus Over Addition
 
 ```k
     rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
