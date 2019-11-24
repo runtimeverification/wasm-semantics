@@ -1,3 +1,36 @@
+---
+title: 'Verifying Wasm Functions: `$i64.reverse_bytes`'
+author:
+-   Rikard Hjort
+-   Stephen Skeirik
+date: \today
+header-includes:
+-   \usepackage{amssymb}
+-   \newcommand{\K}{$\mathbb{K}$~}
+-   \newcommand{\instr}{instr}
+-   \newcommand{\STORE}{\textit{S}}
+-   \newcommand{\FRAME}{\textit{F}}
+-   \newcommand{\CONST}{\texttt{const~}}
+-   \newcommand{\DATA}{\texttt{data}}
+-   \newcommand{\FUNCS}{\texttt{funcs}}
+-   \newcommand{\GLOBALS}{\texttt{globals}}
+-   \newcommand{\GROW}{\texttt{grow}}
+-   \newcommand{\ITHREETWO}{\texttt{i32}}
+-   \newcommand{\LOCALS}{\texttt{locals}}
+-   \newcommand{\MAX}{\texttt{max}}
+-   \newcommand{\MEMADDRS}{\texttt{memaddrs}}
+-   \newcommand{\MEMORY}{\texttt{memory}}
+-   \newcommand{\MEMS}{\texttt{mems}}
+-   \newcommand{\MEMINST}{\textit{meminst}}
+-   \newcommand{\MODULE}{\texttt{module}}
+-   \newcommand{\SIZE}{\texttt{size}}
+-   \newcommand{\TABLES}{\texttt{tables}}
+-   \newcommand{\with}{\text{~with~}}
+-   \newcommand{\stepto}{~\hookrightarrow~}
+-   \newcommand{\wif}[1]{\text{if}~#1}
+-   \newcommand{\diminish}[1]{\begin{footnotesize}#1\end{footnotesize}}
+---
+
 This is our journey of verifying a realistic EWasm contract.
 
 In doing so, we want to show you the practicalities of verification work.

@@ -253,6 +253,9 @@ presentations: media/201803-presentation-ethcc.pdf    \
 reports: TO_FORMAT=latex
 reports: media/201903-report-chalmers.pdf
 
+blogs: TO_FORMAT=latex
+blogs: media/201912-dlab-reverse-bytes-blog.pdf
+
 media/%.pdf: media/%.md media/citations.md
 	cat $^ | pandoc --from markdown-latex_macros --to $(TO_FORMAT) --filter pandoc-citeproc --output $@
 
