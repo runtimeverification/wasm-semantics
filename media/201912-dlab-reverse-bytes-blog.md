@@ -55,6 +55,26 @@ Our desire is that you will not only enjoy this technical adventure but also wal
 away knowing just a bit more about Wasm and how the formal verification process
 proceeds in practice.
 
+# A Whirlwind Tour of Formal Verification
+
+Formal verification is a process by which a system (typically, a software system)
+is proved to be consistent with a set of formalized requirements.
+
+![Formal Verification Process Overview](media/img/formal-verification-process-diagram.png)
+
+The figure provides an overview of how requirements are turned into working code.
+In convential software development, a developer (and typically also compiler)
+together turn system requirements into executable code.
+A (possibly different) developer will then write tests that hook into the executable
+code, ensuring that certain code paths return desired results.
+Here is the million dollar question: can testing ensure a perfect correspondence
+between the requirements and the code?
+The answer is _simply_ no; we know from experience that testing can only demonstrate
+the presence of bugs; not their absence.
+The beauty of formal verification is that we can _provably_ demonstrate an equivalence
+between our requirements and the source code via a *semantics*.
+You can think of a semantics as a compiler that maps code into its mathematical meaning.
+
 # How semantics are defined
 
 A K semantics consists of a *syntax* for the language, and a set of *transition rules* over a *state*.
