@@ -57,6 +57,7 @@ rule <k> drop => . ... </k>
 ```
 
 Here's how you read it:
+
 - The first element on the `<k>` cell (the next instruction) is `drop`, which rewrites to `.`, meaning it is deleted.
   The `...` means there may be more instructions following `drop`.
   This is syntactic sugar for `<k> drop ~> MORE_STUFF => MORE_STUFF <k>`: taking the entire cell, including `drop`, and rewriting the contents to whatever comes after `drop`.
@@ -473,6 +474,8 @@ Value:   00000001 00000000 00000000 00000000 00000000 00000000 00000000 00000000
 Ewasm call data is by convention interpreted as *big endian*, meaning the bytes are in the opposite order.
 So the contract must reverse all integer balances: in `transfer`, it must reverse the amount to be sent, and in `getBalance` it must reverse the result before returning.
 
+## The proof obligation
+
 Without further ado, here is what we are going to try to prove[^5]:
 
 ```
@@ -480,7 +483,7 @@ Without further ado, here is what we are going to try to prove[^5]:
           ~> (i32.const ADDR)
              (i32.const ADDR)
              (i64.load)
-             ( invoke NEXTADDR ) // Invoke is an internal Wasm command, similar to `call`.
+             (invoke NEXTADDR) // Invoke is an internal Wasm command, similar to `call`.
              (i64.store)
           => .
              ...
@@ -505,10 +508,10 @@ Without further ado, here is what we are going to try to prove[^5]:
           ...
         </memInst>
       requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
-       andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
        andBool #isByteMap(BM)
        andBool #inUnsignedRange(i64, X)
        andBool #inUnsignedRange(i32, ADDR)
+       andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
       ensures  #get(BM, ADDR +Int 0) ==Int #get(BM', ADDR +Int 7 )
        andBool #get(BM, ADDR +Int 1) ==Int #get(BM', ADDR +Int 6 )
        andBool #get(BM, ADDR +Int 2) ==Int #get(BM', ADDR +Int 5 )
@@ -520,11 +523,61 @@ Without further ado, here is what we are going to try to prove[^5]:
 ```
 
 The interesting parts are:
-- the `<k>` cell
+
+- the `<k>` cell,
 - the `<memInst>` cell group, and
-- the pre- and post-conditons, `requires` and `ensures`.
+- the pre- and postconditions, `requires` and `ensures`.
 
 [^5]: We should note that this is slightly different from the lemma we will need in the end when verifying the `transfer` and `getBalance` functions.
   To make this spec useful, we need to make sure the starting state of the spec matches the state of the program when `transfer` and `getBalance` calls `$i64.reverse_bytes`.
   If we do that, the prover will be able to go: "Aha! This state corresponds exactly to something I've proven, I can just jump to the conclusion!"
   But the above version makes for nice presentation.
+
+### The `<k>` cell
+
+Here we first declare the function, which we have saved, in pre-parsed form, as a macro.
+This will store the function in the state, which means several updates will happen.
+A new type and a new function address pointer get added to the module instance, and a new function get added to the world of functions (`<funcs>`).
+After that (remember, `~>` should be read as "and then"), we run a few Wasm instructions that load 8 bytes from memory, invokes the `i64.reverese_bytes` function, and stores the result back to the same address.
+
+### The `<memInst>` cell
+
+The `<memInst>` cell simply states that there is a memory with address `MEMADDR`, the same as int `<memAddrs>` in `<moduleInst>`, which makes this the memory belonging to the module we are currently executing in.
+We also state that the memory gets rewritten, from `BM` to `BM'`.
+Every part of the state that we do not state get rewritten will be assumed to stay the same.
+So if we omitted this rewrite, the proof obligation would be stating that the memory doesn't change at all.
+We also take the `SIZE` of the memory in account, given in number of pages (each page is 64 KiB).
+
+### The pre- and postconditions
+
+The `requires` and `ensures` sections say what we assume to be true when at the outset of the proof and what we need to prove at the end of the proof.
+Note that some pre- and postconditions are expressed in the rewrite rules themselves, such as the value in `<memAddrs>` of the current module matching the `<mAddr>` of the `<memInst>` that gets changed (precondition) and that the program in the `<k>` gets consumed (postcondition).
+The `requires` and `ensures` clauses are simply for stating facts that we can't express directly in the rewrite.
+
+The first 4 requirements are really boilerplate relevant to the technicalities of the semantics.
+The first states that the type of the `i64.reverse_bytes` function has not already been declared.[^6] 
+The second, third and fourth rules all make sure that integers, whether constants or stored in the byte map, are in the allowed range.
+Without these assumptions the prover assumes the values are unbounded integers.
+
+The final clause in the `requires` section states that our memory accesses are within bounds. This is why we need the `SIZE` of the memory.
+A separate (but less interesting) proof would show that the function causes a `trap` if this precondition is violated.
+
+The `ensures` section is straightforward.
+We are simply asking the prover to ensure that the final memory has correctly flipped the bytes.
+
+[^6]: This is a somewhat arbitrary choice.
+  There is a semantic rule which declares the function type if it is not already present.
+  There are some technicalities associated with declaring and looking up functions.
+  By letting the prover go through those steps, it can construct the state of the `TYPES` the way the semantics specifies.
+  This way, the proof becomes more robust (and readable) than if we wrote out the expected state of the types directly in the proof.
+
+## Helping the prover along
+
+Simply stating the above proof obligation and giving it to the prover will result in inconclusive results.
+The prover will fail without neither having proven or disproved the claim.
+
+One reason for this failure is that under the hood, there is a good deal of modular arithmetic going on.
+This happens when we transition from the bytes in memory to integer values, and back.
+K does not (yet) have much support for reasoning about modular arithmetic.
+This presents an excellent opportunity to add that support.
+We will extend the set of axioms K knows, triple checking each (so that we don't introduce unsoundness), directed by the places where the prover gets stuck.

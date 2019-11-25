@@ -43,10 +43,10 @@ module WRC20-SPEC
         </memInst>
         // TODO: Make function out of this tricky side condition.
       requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
-       andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
        andBool #isByteMap(BM)
        andBool #inUnsignedRange(i64, X)
        andBool #inUnsignedRange(i32, ADDR)
+       andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
       ensures  #get(BM, ADDR +Int 0) ==Int #get(BM', ADDR +Int 7 )
        andBool #get(BM, ADDR +Int 1) ==Int #get(BM', ADDR +Int 6 )
        andBool #get(BM, ADDR +Int 2) ==Int #get(BM', ADDR +Int 5 )
