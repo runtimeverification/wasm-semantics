@@ -31,10 +31,29 @@ header-includes:
 -   \newcommand{\diminish}[1]{\begin{footnotesize}#1\end{footnotesize}}
 ---
 
-This is our journey of verifying a realistic EWasm contract.
+This blog post is the second in a series of posts
+written by [Runtime Verification, Inc.](https://www.runtimeverification.com)
+and sponsored by [dlab](https://medium.com/dlabvc)
+on [web assembly (Wasm)](https://en.wikipedia.org/wiki/WebAssembly),
+and more specifically KWasm, a tool for doing
+[formal verification](https://en.wikipedia.org/wiki/Formal_verification) of Wasm programs.
+If you missed the
+[first post](https://medium.com/dlabvc/kwasm-a-new-executable-semantics-for-the-blockchain-14e1bca8a360),
+feel free to take a look!
 
-In doing so, we want to show you the practicalities of verification work.
-We also want to share our latest progress on our tool, K, and show you how to use it.
+Today, we will be exploring how to verify a fragment of the
+[WRC20 contract](https://gist.github.com/axic/16158c5c88fbc7b1d09dfa8c658bc363),
+i.e., a Wasm implementation of the [Ethereum](https://en.wikipedia.org/wiki/Ethereum)
+smart contract [ERC20](https://eips.ethereum.org/EIPS/eip-20), which provides
+an API for token enchange that is usable by other kinds of smart contracts (e.g., digital wallets).
+This is relevant because [the Ethereum virtual machine (EVM) is migrating to Wasm implemntation
+dubbed EWasm](https://www.coindesk.com/open-heart-surgery-inside-ethereums-crucial-replacement-of-the-evm).
+
+In other words, we will show how we can formally verify a fragment of a
+program (i.e., the WRC20 smart contract) which is written in web assembly (Wasm).
+Our desire is that you will not only enjoy this technical adventure but also walk
+away knowing just a bit more about Wasm and how the formal verification process
+proceeds in practice.
 
 # How semantics are defined
 
@@ -350,92 +369,6 @@ By invoking the \K prover with the option `--def-module MEMORY-SYMBOLIC-TYPE-LEM
 [^3]: Actually, there is one non-obvious part of each function: when the stored value is 0, that is represented by no entry.
       The two functions respect that by erasing 0-valued entries and interpreting an empty entry as 0, respectively.
 [^4]: N.B. that we cannot use the distributive property of division, as that holds over the rational numbers and its supersets, not over the integers.
-
-
-
-
-<!--- What happens when do the concrete type proof, with, with different lemmas added.
-
-No lemmas:
-
-#set(
-#set(
-#set(
-#set(BM
-
-, EA,
-_modInt_((#get(BM, EA) + ((#get(BM, (EA + 1)) + ((#get(BM, ((EA + 1) + 1)) + ((#get(BM, (((EA + 1) + 1) + 1)) + 0) * 256)) * 256)) * 256)), 256))
-
-, (EA + 1),
-_modInt_(((#get(BM, EA) + ((#get(BM, (EA + 1)) + ((#get(BM, ((EA + 1) + 1)) + ((#get(BM, (((EA + 1) + 1) + 1)) + 0) * 256)) * 256)) * 256)) / 256), 256))
-
-, ((EA + 1) + 1),
-_modInt_((((#get(BM
-, EA) + ((#get(BM, (EA + 1)) + ((#get(BM, ((EA + 1) + 1)) + ((#get(BM, (((EA + 1) + 1) + 1)) + 0) * 256)) * 256)) * 256)) / 256) / 256), 256)),
-
-(((EA + 1) + 1) + 1),
-_modInt_(((((#get(BM, EA) + ((#get(BM, (EA + 1)) + ((#get(BM, ((EA + 1) + 1)) + ((#get(BM, (((EA + 1) + 1) + 1)) + 0) * 256)) * 256)) * 256)) / 256) / 256) / 256), 256))
-
-
-
-
-Then added:
-rule (Y +Int X *Int N) modInt N => Y modInt N [simplification]
-
-
-
-#set(
-#set(
-#set(BM
-
-, (ADDR + 1),
-_modInt_(((#get(BM, ADDR) + ((#get(BM, (ADDR + 1)) + ((#get(BM, ((ADDR + 1) + 1)) + ((#get(BM, (((ADDR + 1) + 1) + 1)) + 0) * 256)) * 256)) * 256)) / 256), 256))
-
-, ((ADDR + 1) + 1),
-_modInt_((((#get(BM, ADDR) + ((#get(BM, (ADDR + 1)) + ((#get(BM, ((ADDR + 1) + 1)) + ((#get(BM, (((ADDR + 1) + 1) + 1)) + 0) * 256)) * 256)) * 256)) / 256) / 256), 256))
-
-, (((ADDR + 1) + 1) + 1),
-_modInt_(((((#get(BM, ADDR) + ((#get(BM, (ADDR + 1)) + ((#get(BM, ((ADDR + 1) + 1)) + ((#get(BM, (((ADDR + 1) + 1) + 1)) + 0) * 256)) * 256)) * 256)) / 256) / 256) / 256), 256))
-
-
-
-Then added:
-rule (Y +Int X *Int N) /Int N => (Y /Int N) +Int X [simplification]
-
-
-
-
-
-#set(
-#set(
-#set(BM
-
-, (ADDR + 1),
-_modInt_((0 + (#get(BM, (ADDR + 1)) + ((#get(BM, ((ADDR + 1) + 1)) + ((#get(BM, (((ADDR + 1) + 1) + 1)) + 0) * 256)) * 256))), 256))
-
-, ((ADDR + 1) + 1), _modInt_(((0 + (#get(BM, (ADDR + 1)) + ((#get(BM, ((ADDR + 1) + 1)) + ((#get(BM, (((ADDR + 1) + 1) + 1)) + 0) * 256)) * 256))) / 256), 256))
-
-, (((ADDR + 1) + 1) + 1),
-_modInt_((((0 + (#get(BM, (ADDR + 1)) + ((#get(BM, ((ADDR + 1) + 1)) + ((#get(BM, (((ADDR + 1) + 1) + 1)) + 0) * 256)) * 256))) / 256) / 256), 256))
-
-
-Then added:
-rule 0 +Int X => X [simplification]
-
-
-#set(BM, (((ADDR + 1) + 1) + 1), _modInt_((#get(BM, (((ADDR + 1) + 1) + 1)) + 0), 256))
-
-rule X +Int 0 => X [simplification]
-
-
-
-Also needed somewhere:
-rule #get(BMAP, IDX) modInt 256 => #get(BMAP, IDX)
-  requires #isByteMap(BMAP)
-rule #get(BMAP, IDX) /Int   256 => 0
-  requires #isByteMap(BMAP)
-
--->
 
 # WRC20 Verification: first step
 
