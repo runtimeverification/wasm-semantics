@@ -474,6 +474,133 @@ Value:   00000001 00000000 00000000 00000000 00000000 00000000 00000000 00000000
 Ewasm call data is by convention interpreted as *big endian*, meaning the bytes are in the opposite order.
 So the contract must reverse all integer balances: in `transfer`, it must reverse the amount to be sent, and in `getBalance` it must reverse the result before returning.
 
+## `$i64.revserse_bytes` Source Code
+
+### Wasm Text Format
+
+Here's how our function looks like when rendered using the Wasm text format.
+
+```
+(func $i64.reverse_bytes (param i64) (result i64) (local i64) (local i64)
+  block
+    loop
+      local.get 1
+      i64.const 8
+      i64.ge_u
+      br_if 1
+      local.get 0
+      i64.const 56
+      local.get 1
+      i64.const 8
+      i64.mul
+      i64.sub
+      i64.shl
+      i64.const 56
+      i64.shr_u
+      i64.const 56
+      local.get 1
+      i64.const 8
+      i64.mul
+      i64.sub
+      i64.shl
+      local.get 2
+      i64.add
+      local.set 2
+      local.get 1
+      i64.const 1
+      i64.add
+      local.set 1
+      br 0
+    end
+  end
+  local.get 2
+)
+```
+
+Recall that Wasm instructions are for a stack machine.
+The operations in the function above are manipulating a stack and a set of local variables.
+The return value of the function is the last remaining value on the stack.
+
+### Wasm Text Format (Folded)
+
+Like other assembly languages, because Wasm is low-level, it can be quite hard to read.
+For that reason, the Wasm text format specification provides a folded variant that allows
+expressions to be written in a simplified Lisp-like syntax, where an $n$-ary stack
+operation `f`---written postfix `x1 ... xn f` in stack-based languages like Wasm---can be written
+as `(f x1 ... xn)`. 
+
+Let's rewrite our function using the folded instruction notation and see if things become clearer:
+
+```
+(func $i64.reverse_bytes (param i64) (result i64) (local i64) (local i64)
+  block
+    loop
+      (br_if 1 (i64.ge_u (local.get 1) (i64.const 8)))
+      (local.set 2
+        (i64.add
+          (i64.shl
+	    (i64.shr_u
+	      (i64.shl
+	        (local.get 0)
+	        (i64.sub (i64.const 56) (i64.mul (local.get 1) (i64.const 8))))
+	      (i64.const 56))
+            (i64.sub (i64.const 56) (i64.mul (local.get 1) (i64.const 8))))
+          (local.get 2)))
+      (local.set 1 (i64.add (local.get 1) (i64.const 1)))
+      br 0
+    end
+  end
+  local.get 2
+)
+```
+
+The prefix form, when combined with nested parens, allows for the operator arguments to be easily disambiguated.
+However, the disambiguated expressions still seem quite complex.
+
+### Wasm Psuedo-code
+
+Notice that the sub-expression `(i64.sub (i64.const 56) (i64.mul (local.get 1) (i64.const 8)))` actually appears
+twice. Unfortunately, without changing the Wasm semantics or function declaration, we cannot simplify out this expression
+to a local, temproary variable. However, for the purposes of understanding how this function works, we would prefer
+to use a pseudo-code representation anyway. As opposed to jumping through a bunch of intermediate states as each
+feature is "compiled" into a nicer syntax, we will do the entire psuedo-code compilation at once. What we will do:
+
+1. update the function definition header to separate formal parameters from local variable declarations
+2. explicitly zero-initialize our local variables (this is implicit in the Wasm semantics)
+3. replace `local.get n` and `local.set n x` syntax with `local[n]` and `local[n] = x` explicitly
+4. compute the repeated sub-expression only once and assign it to an (imaginary) temporary variable
+5. replace the prefix notation with standard infix operation names and Python-like control flow constructions
+5. remove all redundant type information (we are always working with unsigned 64-bit integers)
+7. explicitly return the result using the `return` keyword
+
+And the result is:
+
+```
+(func $i64.reverse_bytes(i64 input)
+  i64 local[1] = 0
+  i64 local[2] = 0
+  while True:
+    if local[1] >= 8:
+      break
+    bits = 56 - (local[1] * 8)
+    local[2] = local[2] + (((input << bits) >> 56) << bits)
+    local[1] = local[1] + 1
+  return local[2]
+)
+```
+
+This is *much* more readable.
+As is usual, operations like `+` and `*` can overflow; if they do, the result is undefined.
+The `>>` and `<<` bit-shifting operations operate just as in other languages,
+unless the shift width is greater than or equal to the operand size, i.e., here 64, in which case, the shift width modulo 64 would be used.
+In this program, we can prove that no operator can ever overflow (because the shift widths are all provably less than `64`) and because
+adding any unsigned number to 0 cannot overflow.
+
+In this notation, we see that we are copying the bytes from the `input` variable to our output `local[2]`, one byte at a time.
+The bytes of `input` are successively extracted by the incantation `((input << bits) >> 56)` which zeros out all bits of `input` except
+for the `local[1]`th byte (which is now shifted all the way to right).
+These extracted bytes are then successively added to `local[2]` in reverse order, by first left-shifting by `bits`.
+
 ## The proof obligation
 
 Without further ado, here is what we are going to try to prove[^5]:
