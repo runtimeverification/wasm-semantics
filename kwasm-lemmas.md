@@ -80,8 +80,16 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
 #### Modulus Over Addition
 
 ```k
-    rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
-    rule (Y +Int X *Int M) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
+    rule (X *Int M +Int Y) modInt N => Y modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+    rule (Y +Int X *Int M) modInt N => Y modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
 ```
 
 Proof:
@@ -92,8 +100,16 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
 ```
 
 ```k
-    rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N   requires M modInt N ==Int 0 [simplification]
-    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N   requires M modInt N ==Int 0 [simplification]
+    rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
 ```
 
 Proof:
@@ -129,8 +145,16 @@ We want Z3 to understand what a bit-shift is.
 The following rules decrease the modulus by rearranging it around a shift.
 
 ```k
-    rule (X          modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))            requires POW modInt (2 ^Int N) ==Int 0 [simplification]
-    rule (X <<Int N) modInt POW          => (X          modInt (POW /Int (2 ^Int N))) <<Int N   requires POW modInt (2 ^Int N) ==Int 0 [simplification]
+    rule (X modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool POW modInt (2 ^Int N) ==Int 0
+      [simplification]
+    rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool POW modInt (2 ^Int N) ==Int 0
+      [simplification]
 ```
 
 Proof sketch: Taking modulo `2^n * k` can only affect the the `n`-th and higher bits.
@@ -139,8 +163,16 @@ Therefore, we may as well shift first and then take the modulus, only we need to
 The argument for the left shift is similar.
 
 ```k
-    rule (X +Int (Y <<Int N)) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
-    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW   requires (2 ^Int N) modInt POW ==Int 0 [simplification]
+    rule (X +Int (Y <<Int N)) modInt POW => X modInt POW
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool (2 ^Int N) modInt POW ==Int 0
+      [simplification]
+    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool (2 ^Int N) modInt POW ==Int 0
+      [simplification]
 ```
 
 Proof: These follow from the fact that shifting left by `n` bits is simply multiplying by `2^n`, and from previously proven rules of modular arithmetic.
@@ -150,13 +182,15 @@ The next rules consider (some) cases where integers with disjoint 1-bits are add
 ```k
 // TODO: These rules turn out to not be necessary for the wrc20 proof. Keep?
     rule (X +Int Y) >>Int N => (Y >>Int N)
-      requires 0  <=Int X
+      requires N  >=Int 0
+       andBool 0  <=Int X
        andBool X   <Int 2 ^Int N
        andBool Y modInt 2 ^Int N ==Int 0
     [simplification]
 
     rule (Y +Int X) >>Int N => (Y >>Int N)
-      requires 0  <=Int X
+      requires N  >=Int 0
+       andBool 0  <=Int X
        andBool X   <Int 2 ^Int N
        andBool Y modInt 2 ^Int N ==Int 0
       [simplification]
@@ -327,7 +361,9 @@ TODO: Maybe rewrite `#setRange` in terms of bit shifts.
     rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8)
       requires N >=Int 8 andBool WIDTH >Int 1
 
-    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR) requires WIDTH =/=Int 0 andBool #isByteMap(BM)
+    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
+      requires WIDTH =/=Int 0
+       andBool #isByteMap(BM)
       ensures 0 <=Int #get(BM, ADDR)
        andBool #get(BM, ADDR) <Int 256
 
