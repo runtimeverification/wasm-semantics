@@ -54,10 +54,9 @@ You can think of a semantics as a compiler that maps code into its mathematical 
 
 Let's examine the phases of formally verifying a program:
 
-1. Specify Language Semantics - must be done *once* for each programming language that consider, e.g., C, Javascript...;
-3. Apply Language Semantics - use language semantics to *automatically* compile program into its mathematical meaning;
+1. Specify Language Semantics - must be done *once* for each programming language that consider (e.g., C, Javascript...) and can be used for all programs in that language;
 2. Formalize Program Requirements - convert natural language requirements document into an equivalent mathematical description;
-4. Prove Correspondence - use a theorem prover to prove the desired equivalence between the *formalized requirements* and *formalized system specification*.
+3. Prove Correspondence - use a theorem prover to prove the desired equivalence between the *formalized requirements* and *formalized system specification*.
 
 We are going to illustrate this process concretely, using our tool, the [K Framework](https://github.com/kframework/k).
 The K Framework (which we abbreviate as K) can be used to specify language semantics as well as verify programs written in a specified language.
@@ -106,16 +105,6 @@ Here's how you read it:
 - In the successor state after the rule is applied, the `drop` instruction is deleted from the program code
   to be executed and the top value in the `<valstack>` cell is also deleted.
 
-## Applying Language Semantics
-
-The amazing thing about thing about K programming language semantics is that we *automatically*
-obtain an interpreter and compiler and theorem prover (and more...) just by providing a set of
-rules like the one above. Nothing else needs to be done.
-
-Thus, compiling a program into its mathematical meaning amounts to just executing the compiler provided
-by K Framework. Such a program can, of course, be executed as we usually execute programs.
-However, we often want to verify that such programs meet our requirements, which we discuss below.
-
 ## Formalizing Program Requirements
 
 <!--
@@ -132,8 +121,14 @@ An implication (rewrite) is a theorem of $T$ iff all terminating paths starting 
 Take, for example, the following implication:
 --->
 
-In K, the task of formalizing program requirements is *also* done via rules.
-Suppose we consider the rule below as a program requirement:
+In K, the task of formalizing program requirements is *also* done via rules of the form `S => S'`
+such that:
+
+- `S`  is a pattern that describes a (potentially infinite) set of *initial system states*;
+- `S'` is a pattern that describes a (potentially infinite) set of *acceptable final states*.
+
+We want to ensure that *all* initial states `S` end up in *some* acceptable final state `S'`.
+Let us see a more concrete example rule:
 
 ```
 rule <k> foo X Y => Z ... </k>
@@ -156,14 +151,28 @@ rule [b] <k> foo X Y => X +Int Y +Int 1 ... </k>
 Clearly, any path that applies rule `b` would immediately satisfy the program requirement.
 Of course, if we apply rule `a` forever, the program will never terminate (so we can ignore such executions).
 
+Interestingly, writing down requirements precisely is often the most challenging part of the verification process.
+This is typically because we have not fully considered all possible edge cases (e.g., what happens when $x \leq 0$?)
+or because we have assumptions about our system that have often never been written down or even verbalized.
+
 ## Proving Correspondence
 
-This last step is often the most challenging.
-Whereas the other three steps are essentially just applying definitions, in this definition,
-we must (perhaps creatively) discover the connection between our _program meaning_ and our _program requirements_.
-Since our requirements specification consider (possibly infinite) sets of program states,
-mere program execution (as in testing), is insufficient to prove the correspondence we want.
-Even if the program terminates in every state, if there are infinite states, this process will obviously never end.
+Here we use the K Framework to *formally prove* the correspondence between our *program meaning* and our *program requirements*.
+This last step is surprisingly quite mechanical.
+In some sense, you just have to "follow your nose," so to speak, in the sense that:
+
+1. (as we saw above) the formalized program requirements provides:
+
+  * a (possibly infinite) set of *initial program states* and;
+  * a (possibly infinite) set of *acceptable final program states*.
+
+2. the semantic definition of the programming language *completely determines* how initial states can evolve into final states.
+
+But, that being the case, how can this formal proof process be challenging?
+There are two main ways that things can go wrong:
+
+1. the proof process may take too much time and/or memory;
+2. the proof may get stuck by something that could not be proved.
 
 ### A Very Simple Proof
 
