@@ -500,10 +500,12 @@ Here's how our function looks like when rendered using the Wasm text format.
 Recall that Wasm instructions are for a stack machine.
 The operations in the function above are manipulating a stack and a set of local variables.
 The return value of the function is the last remaining value on the stack.
+Like other assembly languages, because Wasm is low-level, it can be quite hard to read.
+Let's try to improve the situation by rewriting this program in an easier to read format.
 
+<!--
 ### Wasm Text Format (Folded)
 
-Like other assembly languages, because Wasm is low-level, it can be quite hard to read.
 For that reason, the Wasm text format specification provides a folded variant that allows
 expressions to be written in a simplified Lisp-like syntax, where an $n$-ary stack
 operation `f`---written postfix `x1 ... xn f` in stack-based languages like Wasm---can be written
@@ -536,11 +538,13 @@ Let's rewrite our function using the folded instruction notation and see if thin
 
 The prefix form, when combined with nested parens, allows for the operator arguments to be easily disambiguated.
 However, the disambiguated expressions still seem quite complex.
+-->
 
 ### Wasm Psuedo-code
 
-Notice that the sub-expression `(i64.sub (i64.const 56) (i64.mul (local.get 1) (i64.const 8)))` actually appears
-twice. Unfortunately, without changing the Wasm semantics or function declaration, we cannot simplify out this expression
+Notice that the sub-expression `(i64.const 56) (local.get 1) (i64.const 8) i64.mul i64.sub i64.shl`
+(with added parens for disambiguation) actually appears twice.
+Unfortunately, without changing the Wasm semantics or function declaration, we cannot simplify out this expression
 to a local, temproary variable. However, for the purposes of understanding how this function works, we would prefer
 to use a pseudo-code representation anyway. As opposed to jumping through a bunch of intermediate states as each
 feature is "compiled" into a nicer syntax, we will do the entire psuedo-code compilation at once. What we will do:
