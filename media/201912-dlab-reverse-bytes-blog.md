@@ -590,7 +590,7 @@ These extracted bytes are then successively added to `local[2]` in reverse order
 Without further ado, here is what we are going to try to prove[^5]:
 
 ```
-    rule <k> #wrc20ReverseBytes // A macro. Expands to the function defintion.
+    rule <k> #wrc20ReverseBytes // A macro that expands to the function source code shown above.
           ~> (i32.const ADDR)
              (i32.const ADDR)
              (i64.load)
