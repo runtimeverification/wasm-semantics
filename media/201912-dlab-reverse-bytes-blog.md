@@ -636,3 +636,39 @@ This happens when we transition from the bytes in memory to integer values, and 
 K does not (yet) have much support for reasoning about modular arithmetic.
 This presents an excellent opportunity to add that support.
 We will extend the set of axioms K knows, triple checking each (so that we don't introduce unsoundness), directed by the places where the prover gets stuck.
+
+### Axiom Engineering: avoiding infinite rewrites
+
+The new axioms need to be designed with care.
+Apart from making sure they are correct, we want to ensure that they are simplifications: that is, they reduce the state somehow.
+This can be by making expression or values smaller.
+The reason is that we want to ensure we cannot get explosive growth.
+The prover will look for all axioms it knows and try to apply them.
+Therefore, if we were to add statements like `X +Int Y => Y +Int X`, which does not reduce the state, we are in trouble -- even though this is perfectly sound.
+Can you guess why?
+
+If we were to add a rule that says `X +Int Y => Y +Int X`, then the prover will apply this rewrite wherever it can, over every addition it sees.
+But once it is done, there are still just as many additions in the state, and the prover will again apply this rewrite over all additions it sees.
+
+To avoid this we follow a few general principles when engineering our axioms:
+
+Every rule must do at least one of the following:
+
+1. Reduce the number of `modInt`, `>>Int` or `<<Int` constructs.
+   This may increase the number of `*Int`, `/Int`, `+Int` and `-Int` (arithmetic) constructs, and increase the values of integers.
+2. Make the expression strictly smaller.
+3. Make some integer in the expression strictly closer to 0 without making the expression larger or making some other integer farther from 0.
+
+With these rules we can avoid infinite rewrites.
+The only way for the expressions size or integer sizes to grow is by removing a `modInt`, `<<Int` or `>>Int`, and there is no way to introduce more of these.
+Therefore, the first rule can apply only a finite number of times.
+This puts a hard upper limit on how large any given expression can grow through axiom application.
+
+The second rule can also only be applied a finite number of times, since the expression sizes are bounded from above.
+
+The third rule can also not apply infinitely often since there
+can only be a finite number of integers in a finite expression, and once these all go to 0, the rule can no longer apply.
+
+This kind of careful engineering is necessary for axioms we want to add to K's reasoning capabilities for all programs.
+For verifying specific languages or programs we may get away with being a little less rigor.
+However, it is good practice to try to ensure that your axioms are causing your prover to loop forever.
