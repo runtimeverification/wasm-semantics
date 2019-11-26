@@ -174,6 +174,17 @@ There are two main ways that things can go wrong:
 1. the proof process may take too much time and/or memory;
 2. the proof may get stuck by something that could not be proved.
 
+This leads us to primary proof search process that we call here the *verification cycle*:
+
+![Verification Cycle Overview](media/img/verification-cycle-diagram.png)
+
+What this means is: if the the proof is taking too long *or* if we get stuck, we will:
+
+1. Examine the proof output term to understand *why we are stuck*
+2. Extract any necessary lemmas that will help the stuck proof make progress *or*
+   strengthen the proof precondition in order to prune useless paths.
+3. Repeat the proof with the simplified claims.
+
 ### A Very Simple Proof
 
 As mentioned above, proof obligations in $mathbb{K}$ are specified exactly like regular semantic rules.
@@ -687,7 +698,7 @@ We are simply asking the prover to ensure that the final memory has correctly fl
 ## Helping the prover along
 
 Simply stating the above proof obligation and giving it to the prover will result in inconclusive results.
-The prover will fail without neither having proven or disproved the claim.
+The prover will fail without having proven or disproven the claim.
 
 One reason for this failure is that under the hood, there is a good deal of modular arithmetic going on.
 This happens when we transition from the bytes in memory to integer values, and back.
