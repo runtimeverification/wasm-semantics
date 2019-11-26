@@ -715,3 +715,20 @@ can only be a finite number of integers in a finite expression, and once these a
 This kind of careful engineering is necessary for axioms we want to add to K's reasoning capabilities for all programs.
 For verifying specific languages or programs we may get away with being a little less rigor.
 However, it is good practice to try to ensure that your axioms are causing your prover to loop forever.
+
+# That's it
+
+Hopefully we have given you some insight into the process of formal verification.
+As you may have noticed, it is a lot of work to verify something seemingly simple.
+This goes to show what our CEO expressed recently on Twitter:
+
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">1/2 &quot;Formal verification&quot; is now a buzzword in the blockchain, but it will not be done properly unless people understand that it takes *significantly* more work to formally verify a program than to write the program first place. Think 9x more for smart contracts!</p>&mdash; Grigore Rosu (@RosuGrigore) <a href="https://twitter.com/RosuGrigore/status/1134549315828035584?ref_src=twsrc%5Etfw">May 31, 2019</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+Formal verification takes time.
+Luckily, it doesn't have to take this much time and effort in the future.
+With the new axioms we added we can do more automatic reasoning about modular arithmetic and bit shifts in general, and of Wasm memory in particular.[^7]
+It is still early day for proving with the Wasm semantics.
+As we write more proofs, the set of axioms will grow, and with it the KWasm prover's reasoning power.
+
+To see the full set of axioms we use in KWasm, see [this file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md) in the GitHub repository.
+If you want to use K or KWasm for anything, feel free to open issues or contact us in the open [K chat](https://riot.im/app/#/room/#k:matrix.org).
