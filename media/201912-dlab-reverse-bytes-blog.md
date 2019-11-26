@@ -6,29 +6,6 @@ author:
 date: \today
 header-includes:
 -   \usepackage{amssymb}
--   \newcommand{\K}{$\mathbb{K}$~}
--   \newcommand{\instr}{instr}
--   \newcommand{\STORE}{\textit{S}}
--   \newcommand{\FRAME}{\textit{F}}
--   \newcommand{\CONST}{\texttt{const~}}
--   \newcommand{\DATA}{\texttt{data}}
--   \newcommand{\FUNCS}{\texttt{funcs}}
--   \newcommand{\GLOBALS}{\texttt{globals}}
--   \newcommand{\GROW}{\texttt{grow}}
--   \newcommand{\ITHREETWO}{\texttt{i32}}
--   \newcommand{\LOCALS}{\texttt{locals}}
--   \newcommand{\MAX}{\texttt{max}}
--   \newcommand{\MEMADDRS}{\texttt{memaddrs}}
--   \newcommand{\MEMORY}{\texttt{memory}}
--   \newcommand{\MEMS}{\texttt{mems}}
--   \newcommand{\MEMINST}{\textit{meminst}}
--   \newcommand{\MODULE}{\texttt{module}}
--   \newcommand{\SIZE}{\texttt{size}}
--   \newcommand{\TABLES}{\texttt{tables}}
--   \newcommand{\with}{\text{~with~}}
--   \newcommand{\stepto}{~\hookrightarrow~}
--   \newcommand{\wif}[1]{\text{if}~#1}
--   \newcommand{\diminish}[1]{\begin{footnotesize}#1\end{footnotesize}}
 ---
 
 This blog post is the second in a series of posts
@@ -108,14 +85,14 @@ Here's how you read it:
 # How the semantics get used for proofs.
 
 <!-- TODO: Rewrite this to be less academic -->
-As has been shown, a \K semantics can be read and understood as a computational transition system specifying an interpreter.
+As has been shown, a $mathbb{K}$ semantics can be read and understood as a computational transition system specifying an interpreter.
 But it can also be understood as a logic theory under which we can prove properties about programs.
 
 The set of rewrite rules in KWasm, $\Sigma$, are the axioms of the theory of KWasm transitions, $T$, where $\Sigma \subseteq T$.
 
 The full theory, $T$, consists of all theorems which are provable from the axioms.
 
-To use the \K framework for deductive program verification, one writes proof obligations as regular rewrite rules, which the \K prover tries to prove or disprove belong to $T$.
+To use the $mathbb{K}$ framework for deductive program verification, one writes proof obligations as regular rewrite rules, which the $mathbb{K}$ prover tries to prove or disprove belong to $T$.
 
 An implication (rewrite) is a theorem of $T$ iff all terminating paths starting on the left-hand side eventually reach a state that unifies with the right-hand side.
 Take, for example, the following implication:
@@ -147,7 +124,7 @@ This is enough for the spec to pass.
 
 ## A Very Simple Proof
 
-A proof obligation in \K is specified exactly like a regular semantic rule.
+A proof obligation in $mathbb{K}$ is specified exactly like a regular semantic rule.
 
 Just like in a semantic rule, the values mentioned may be symbolic.
 
@@ -292,15 +269,15 @@ bm[addr+3] &:= (val / 256^3) \mod 256
 
 If we plug $val$ into the above equation it becomes clear that the modulus and division operators will cancel out exactly so all we are doing is writing the values in each address back.
 
-This type of reasoning presents a challenge for the \K prover using the current semantics.
+This type of reasoning presents a challenge for the $mathbb{K}$ prover using the current semantics.
 The semantics uses pure helper functions, `#setRange` and `#getRange` for writing to and reading from the byte map.
 These functions expand to a series of `#set` and `#get`, that do the obvious[^3].
 
 However, Z3 can not reason about these functions in the way we would like without giving full definitions in Z3 of the functions themselves.
-Since the getting and setting happens at the \K level while the arithmetic reasoning happens at the Z3 level, we are stuck.
-We can remedy this by either extending Z3's reasoning capabilities, or \K's.
+Since the getting and setting happens at the $mathbb{K}$ level while the arithmetic reasoning happens at the Z3 level, we are stuck.
+We can remedy this by either extending Z3's reasoning capabilities, or $mathbb{K}$'s.
 
-In this case, we chose to extend \K.
+In this case, we chose to extend $mathbb{K}$.
 This simple case could be handled by just adding a high-level trusted lemma:
 
 ```k
@@ -380,9 +357,7 @@ module MEMORY-SYMBOLIC-TYPE-SPEC
 ...
 ```
 
-By invoking the \K prover with the option `--def-module MEMORY-SYMBOLIC-TYPE-LEMMAS` instead of the usual `--def-module KWASM-LEMMAS`, the prover will accept this new lemma in to its axioms, and the proof will go through.
-
-
+By invoking the $mathbb{K}$ prover with the option `--def-module MEMORY-SYMBOLIC-TYPE-LEMMAS` instead of the usual `--def-module KWASM-LEMMAS`, the prover will accept this new lemma in to its axioms, and the proof will go through.
 
 [^1]: The rule is paraphrased here, it actually is slightly more complex to deal with identifiers.
 [^2]: Again, paraphrased.
