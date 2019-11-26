@@ -27,6 +27,12 @@ Basic arithmetic
 Z3 is slow and unreliable in reasoning about modular arithmetic.
 Therefore we want to make structural simplifications wherever possible.
 
+`X modInt N` is undefined for `N ==Int 0`, so we must take care to check that `N =/=Int 0`.
+At the same time, we don't want to impose unnecessary side-conditions, so the non-zero condition can be implied by the other conditions.
+For example, `X modInt N ==Int Y` implies `N =/=Int 0`, because only non-zero `N` could have the right-hand side resolve to an `Int`.
+For simplicity, we impose that `N >Int 0`.
+Not however that K defines `X modInt N ==Int X modInt (-N)`.
+
 #### Rules for Expressions With Only Modulus
 
 ```k
@@ -607,9 +613,56 @@ However, when one of the addends is a multiple of the divisior, it is safe.
 
 ```k
     rule (Y +Int X *Int M) /Int N => (Y /Int N) +Int (X *Int (M /Int N))   requires M modInt N ==Int 0 [simplification]
-    rule (X +Int Y) /Int Z => X /Int Z +Int Y /Int Z
-      requires X modInt Z ==Int 0
-        orBool Y modInt Z ==Int 0
+```
+
+Proof:
+
+```
+m mod n = 0 => m = k * n
+y = l * n + r, where 0 <= r < n
+(y + x * m) / n
+  = (l * n + r + x * k * n) / n
+  = ((l + x * k) * n + r) / n
+  = l + x * k
+  = y / n + x * (m / n)
+```
+
+The more general cases for distributing division follow:
+
+```k
+    rule (X +Int Y) /Int Z =>        X /Int Z +Int Y /Int Z
+      requires         (X modInt Z) +Int (Y modInt Z) <Int Z
+      [simplification]
+
+    rule (X +Int Y) /Int Z => 1 +Int X /Int Z +Int Y /Int Z
+      requires notBool (X modInt Z) +Int (Y modInt Z) <Int Z
+      [simplification]
+```
+
+Proof:
+
+```
+x = k * z + r with 0 <= r < z
+y = l * z + s with 0 <= s < z
+Assumption:
+r + s < z
+Then
+(x + y) / z
+  = (k * z + r + l * z + s) / z
+  = ((k + l) * z + (r + s)) / z
+  = k + l
+  = (k * z + r) / z + (l * z + s) / z
+  = x / z + y / z
+
+If instead (r + s) >= z, then z <= (r + s) < 2z.
+Let t = r + s - z, so that 0 <= t < z
+Then
+(x + y) / z
+  = ((k + l) * z + (r + s)) / z
+  = ((k + l) * z + (r + s ) - z + z) / z
+  = ((k + l + 1) * z + t) / z
+  = k + l + 1
+  = x / z + y / z + 1
 ```
 
 ```k
