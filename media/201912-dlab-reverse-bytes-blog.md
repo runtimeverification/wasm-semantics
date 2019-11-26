@@ -313,7 +313,7 @@ However, the verification for this spec will fail.
 The reason is that storing to and reading from memory is more complicated than storing local values.
 
 When a value is stored to memory it is getting spliced into bytes.
-When a value is read from memory, the bytes are assembled into a integer value.
+When a value is read from memory, the bytes are assembled into an integer value.
 
 Conceptually, the load will put on the stack the following:
 
@@ -551,14 +551,14 @@ The prefix form, when combined with nested parens, allows for the operator argum
 However, the disambiguated expressions still seem quite complex.
 -->
 
-### Wasm Psuedo-code
+### Wasm Pseudo-code
 
 Notice that the sub-expression `(i64.const 56) (local.get 1) (i64.const 8) i64.mul i64.sub i64.shl`
 (with added parentheses for disambiguation) actually appears twice.
 Unfortunately, without changing the Wasm semantics or function declaration, we cannot simplify out this expression
 to a local, temporary variable. However, for the purposes of understanding how this function works, we would prefer
 to use a pseudo-code representation anyway. As opposed to jumping through a bunch of intermediate states as each
-feature is "compiled" into a nicer syntax, we will do the entire psuedo-code compilation at once. What we will do:
+feature is "compiled" into a nicer syntax, we will do the entire pseudo-code compilation at once. What we will do:
 
 1. update the function definition header to separate formal parameters from local variable declarations
 2. explicitly zero-initialize our local variables (this is implicit in the Wasm semantics)
@@ -596,7 +596,7 @@ The bytes of `input` are successively extracted by the incantation `((input << b
 for the `local[1]`th byte (which is now shifted all the way to right).
 These extracted bytes are then successively added to `local[2]` in reverse order, by first left-shifting by `bits`.
 
-Finally, remember that psuedo-code is *just for the reader*; the formal verification process only concerns real code.
+Finally, remember that pseudo-code is *just for the reader*; the formal verification process only concerns real code.
 
 ## The proof obligation
 
@@ -710,7 +710,7 @@ We will extend the set of axioms K knows, triple checking each (so that we don't
 
 The new axioms need to be designed with care.
 Apart from making sure they are correct, we want to ensure that they are simplifications: that is, they reduce the state somehow.
-This can be by making expression or values smaller.
+This can happen by making expressions or values smaller.
 The reason is that we want to ensure we cannot get explosive growth.
 The prover will look for all axioms it knows and try to apply them.
 Therefore, if we were to add statements like `X +Int Y => Y +Int X`, which does not reduce the state, we are in trouble -- even though this is perfectly sound.
