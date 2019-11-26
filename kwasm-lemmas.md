@@ -66,12 +66,12 @@ Assume m = n * k for some k > 0.
 x = m * q + r, for a unique q and r s.t. 0 <= r < m
 (x mod m) mod n
  = r mod n
- = n * ( k * q) + r mod n
+ = (n * ( k * q) + r) mod n
  = m * q + r mod n
  = x mod n
 ```
 
-#### Modulus Over Addition and Division
+#### Modulus Over Addition
 
 ```k
     rule (X *Int M +Int Y) modInt N => Y modInt N   requires M modInt N ==Int 0 [simplification]
@@ -109,7 +109,7 @@ We want Z3 to understand what a bit-shift is.
 
 ```k
     rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
-    rule ( X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
+    rule (X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
 
     rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
     rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
@@ -146,13 +146,13 @@ The next rules consider (some) cases where integers with disjoint 1-bits are add
     rule (X +Int Y) >>Int N => (Y >>Int N)
       requires 0  <=Int X
        andBool X   <Int 2 ^Int N
-       andBool Y modInt 2^N ==Int 0
+       andBool Y modInt 2 ^Int N ==Int 0
     [simplification]
 
     rule (Y +Int X) >>Int N => (Y >>Int N)
       requires 0  <=Int X
        andBool X   <Int 2 ^Int N
-       andBool Y modInt 2^N ==Int 0
+       andBool Y modInt 2 ^Int N ==Int 0
       [simplification]
 ```
 
