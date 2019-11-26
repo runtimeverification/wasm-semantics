@@ -22,8 +22,8 @@ Today, we will be exploring how to verify a fragment of the
 [WRC20 contract](https://gist.github.com/axic/16158c5c88fbc7b1d09dfa8c658bc363),
 i.e., a Wasm implementation of the [Ethereum](https://en.wikipedia.org/wiki/Ethereum)
 smart contract [ERC20](https://eips.ethereum.org/EIPS/eip-20), which provides
-an API for token enchange that is usable by other kinds of smart contracts (e.g., digital wallets).
-This is relevant because [the Ethereum virtual machine (EVM) is migrating to Wasm implemntation
+an API for token exchange that is usable by other kinds of smart contracts (e.g., digital wallets).
+This is relevant because [the Ethereum virtual machine (EVM) is migrating to Wasm implementation
 dubbed EWasm](https://www.coindesk.com/open-heart-surgery-inside-ethereums-crucial-replacement-of-the-evm).
 
 In other words, we will show how we can formally verify a fragment of a
@@ -40,7 +40,7 @@ is proved to be consistent with a set of formalized requirements.
 ![Formal Verification Process Overview](media/img/formal-verification-process-diagram.png)
 
 The figure provides an overview of how requirements are turned into working code.
-In convential software development, a developer (and typically also compiler)
+In conventional software development, a developer (and typically also compiler)
 together turn system requirements into executable code.
 A (possibly different) developer will then write tests that hook into the executable
 code, ensuring that certain code paths return desired results.
@@ -101,7 +101,7 @@ Here's how you read it:
 - The cell `<k>` is distinguished; it contains the program code;
 - In this rule, the first element of the `<k>` cell (the next instruction to be executed) is `drop`---the
   ellipses (`...`) refers to the (possibly empty) list of the instructions following `drop`;
-- The `<valstack>` cell contains a list of values where `:` is list concatentation;
+- The `<valstack>` cell contains a list of values where `:` is list concatenation;
 - In the successor state after the rule is applied, the `drop` instruction is deleted from the program code
   to be executed and the top value in the `<valstack>` cell is also deleted.
 
@@ -178,7 +178,7 @@ This leads us to primary proof search process that we call here the *verificatio
 
 ![Verification Cycle Overview](media/img/verification-cycle-diagram.png)
 
-What this means is: if the the proof is taking too long *or* if we get stuck, we will:
+What this means is: if the proof is taking too long *or* if we get stuck, we will:
 
 1. Examine the proof output term to understand *why we are stuck*
 2. Extract any necessary lemmas that will help the stuck proof make progress *or*
@@ -554,9 +554,9 @@ However, the disambiguated expressions still seem quite complex.
 ### Wasm Psuedo-code
 
 Notice that the sub-expression `(i64.const 56) (local.get 1) (i64.const 8) i64.mul i64.sub i64.shl`
-(with added parens for disambiguation) actually appears twice.
+(with added parentheses for disambiguation) actually appears twice.
 Unfortunately, without changing the Wasm semantics or function declaration, we cannot simplify out this expression
-to a local, temproary variable. However, for the purposes of understanding how this function works, we would prefer
+to a local, temporary variable. However, for the purposes of understanding how this function works, we would prefer
 to use a pseudo-code representation anyway. As opposed to jumping through a bunch of intermediate states as each
 feature is "compiled" into a nicer syntax, we will do the entire psuedo-code compilation at once. What we will do:
 
