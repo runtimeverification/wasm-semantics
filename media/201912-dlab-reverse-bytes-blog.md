@@ -585,6 +585,8 @@ The bytes of `input` are successively extracted by the incantation `((input << b
 for the `local[1]`th byte (which is now shifted all the way to right).
 These extracted bytes are then successively added to `local[2]` in reverse order, by first left-shifting by `bits`.
 
+Finally, remember that psuedo-code is *just for the reader*; the formal verification process only concerns real code.
+
 ## The proof obligation
 
 Without further ado, here is what we are going to try to prove[^5]:
