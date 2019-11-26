@@ -716,6 +716,54 @@ This kind of careful engineering is necessary for axioms we want to add to K's r
 For verifying specific languages or programs we may get away with being a little less rigor.
 However, it is good practice to try to ensure that your axioms are causing your prover to loop forever.
 
+### Adding new axioms
+
+When we conduct the proof without adding anything to the semantics, the prover manages will manage to run the program to termination.
+The contents of the `<k>` cell are gone, rewrites have happened in all the expected places.
+
+However, the memory array in `<mdata>`, `BM`, will have been replaced by a behemoth of a symbolic expression:
+
+```
+// TODO: Put in once KLab produces it.
+```
+
+Now, the rewrite part of our proof obligation states only that `BM` rewrites to *something*.
+
+```
+<mdata> BM => BM' </mdata>
+```
+
+The crux comes in the `ensures` section.
+K cannot immediately see that the postconditions hold.
+It is not immediately obvious to that, for example, `#get(BM, ADDR +Int 1) ==Int #get(BM', ADDR +Int 6)`.
+K then discharges the proof obligation to Z3 and asks it to prove the postcondition.
+But since Z3 does not understand our byte map functions, `#get` and `#set`, nor the bit shifts over integers, it doesn't stand a chance.
+
+So it's time for us to start doing axiom engineering.
+Our job is to ask ourselves: "What are some true things that the prover doesn't seem to get?" and the expand its knowledge base while sticking to the 3 principles we set out for ourselves.
+
+One common type of sub-expression is of the form `(Y +Int X *Int M) modInt N`.
+That is, a modulus operation over an addition, but with a multiplication on the right.
+Furthermore, it is usually the case that `N` is `256`, which is `2^8`, and `M` is some even larger power of 2.
+In these cases we can actually get rid of `X *Int M`, because `(a + b) mod n = a` when `b` is a multiple of `n`.[^8]
+
+```
+rule (Y +Int X *Int M) modInt N => Y modInt N
+  requires M >Int 0
+   andBool N >Int 0
+   andBool M modInt N ==Int 0
+  [simplification]
+
+```
+
+In theory, this could be generalized further by not matching on the multiplication and instead checking if the right side of the addition is 0 when applying `modInt N`.
+However, this seems to not be good enough for Z3 to solve the issue in reasonable time, so we go with this more specialized lemma for now.
+
+
+<!-- TODO: Write about some other axiom (that we can generalize more cleanly). -->
+
+[^8]: We don't include a proof of this here, but there is a formal proof included with the proof in our [lemmas file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md)
+
 # That's it
 
 Hopefully we have given you some insight into the process of formal verification.
