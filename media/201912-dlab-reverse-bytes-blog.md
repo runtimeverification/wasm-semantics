@@ -46,45 +46,79 @@ A (possibly different) developer will then write tests that hook into the execut
 code, ensuring that certain code paths return desired results.
 Here is the million dollar question: can testing ensure a perfect correspondence
 between the requirements and the code?
-The answer is _simply_ no; we know from experience that testing can only demonstrate
+The answer is *simply* no; we know from experience that testing can only demonstrate
 the presence of bugs; not their absence.
-The beauty of formal verification is that we can _provably_ demonstrate an equivalence
+The beauty of formal verification is that we can *provably* demonstrate an equivalence
 between our requirements and the source code via a *semantics*.
 You can think of a semantics as a compiler that maps code into its mathematical meaning.
 
-# How semantics are defined
+Let's examine the phases of formally verifying a program:
 
-A K semantics consists of a *syntax* for the language, and a set of *transition rules* over a *state*.
-The state consists of *cells* which are written with an XML-like syntax.
+1. Specify Language Semantics - must be done *once* for each programming language that consider, e.g., C, Javascript...;
+3. Apply Language Semantics - use language semantics to *automatically* compile program into its mathematical meaning;
+2. Formalize Program Requirements - convert natural language requirements document into an equivalent mathematical description;
+4. Prove Correspondence - use a theorem prover to prove the desired equivalence between the *formalized requirements* and *formalized system specification*.
 
-## Rules
+We are going to illustrate this process concretely, using our tool, the [K Framework](https://github.com/kframework/k).
+The K Framework (which we abbreviate as K) can be used to specify language semantics as well as verify programs written in a specified language.
 
-The bulk of the semantics are the transition rules.
-They describe how the state of the program changes gradually through rewrites.
-Initially, the state contains of 1) default initial values and 2) the program itself, in the `<k>` cell.
-When the program terminates, the program is gone, and the state has changed in some meaningful way.
+## Specifying Language Semantics
+
+Recall that a semantics is a way of mapping *terms* in a language into their *mathematical meaning*.
+In the case of a programming language, the terms of the language are *programs*.
+What is the mathematical meaning of a program?
+We can understand a program as a function that over *system states*, e.g.
+the state of the memory, the hard disk, network, etc...
+
+A K language semantics consists of three parts:
+
+1. a *syntax* for the language (i.e., a parser for programs in the language);
+2. a hierarchical XML-like syntax that defines the *system states*, which include the language syntax plus more stuff;
+3. and a set of *transition rules* that map systems states to new system states (typically by executing language expressions).
+
+The bulk of the semantics are the transition rules which describe how the state of a system executing a program gradually changes.
+For a typical language semantics, an initial system state for a program $P$ is just:
+
+1. default initialized values (e.g., the object `Object` in Java);
+2. the text of program $P$ stored in the `<k>` cell (a cell is just a fragment of the system state).
+
+When the program terminates, the program $P$ will have been totally consumed by the transition rules,
+and the rest of the state will have changed in some meaningful way.
 
 Here's an example of a simple rule in KWasm.
 The Wasm `drop` instruction simply drops the top element on the stack.
 
 ```
 rule <k> drop => . ... </k>
-      <valstack> _ : VALSTACK => VALSTACK </valstack>
+      <valstack> _ : VALUESTACK => VALUESTACK </valstack>
 ```
 
 Here's how you read it:
 
-- The first element on the `<k>` cell (the next instruction) is `drop`, which rewrites to `.`, meaning it is deleted.
-  The `...` means there may be more instructions following `drop`.
-  This is syntactic sugar for `<k> drop ~> MORE_STUFF => MORE_STUFF <k>`: taking the entire cell, including `drop`, and rewriting the contents to whatever comes after `drop`.
-  We introduced another arrow here: `~>`.
-  We usually read it as "and then" -- it's just a way to order things in a list-like fashion.
-- The stack consists of a top element and a tail, which gets rewritten to the tail.
-  Here there is no syntactic sugar going on.
+- An XML pair `<name>` and `</name>` introduces a *cell*, i.e., a fragment of the system state;
+- Anywhere a double arrow `=>` appears in a cell, it describes how the system state changes when
+  the rule is applied---the current state is described by the pattern on the left-hand side---the
+  successor state is described by the pattern on the right-hand side;
+- The cell `<k>` is distinguished; it contains the program code;
+- In this rule, the first element of the `<k>` cell (the next instruction to be executed) is `drop`---the
+  ellipses (`...`) refers to the (possibly empty) list of the instructions following `drop`;
+- The `<valstack>` cell contains a list of values where `:` is list concatentation;
+- In the successor state after the rule is applied, the `drop` instruction is deleted from the program code
+  to be executed and the top value in the `<valstack>` cell is also deleted.
 
-# How the semantics get used for proofs.
+## Applying Language Semantics
 
-<!-- TODO: Rewrite this to be less academic -->
+The amazing thing about thing about K programming language semantics is that we *automatically*
+obtain an interpreter and compiler and theorem prover (and more...) just by providing a set of
+rules like the one above. Nothing else needs to be done.
+
+Thus, compiling a program into its mathematical meaning amounts to just executing the compiler provided
+by K Framework. Such a program can, of course, be executed as we usually execute programs.
+However, we often want to verify that such programs meet our requirements, which we discuss below.
+
+## Formalizing Program Requirements
+
+<!--
 As has been shown, a $mathbb{K}$ semantics can be read and understood as a computational transition system specifying an interpreter.
 But it can also be understood as a logic theory under which we can prove properties about programs.
 
@@ -96,33 +130,42 @@ To use the $mathbb{K}$ framework for deductive program verification, one writes 
 
 An implication (rewrite) is a theorem of $T$ iff all terminating paths starting on the left-hand side eventually reach a state that unifies with the right-hand side.
 Take, for example, the following implication:
+--->
+
+In K, the task of formalizing program requirements is *also* done via rules.
+Suppose we consider the rule below as a program requirement:
 
 ```
 rule <k> foo X Y => Z ... </k>
   requires Z >Int X +Int Y
 ```
 
-This is a theorem iff starting in the configuration `<k> foo X Y ... </k>` (with all cells except the `<k>` cell unspecified), all paths either
+This rule *symbolically* specifies a (possibly infinite) set of program states where the `<k>` cell
+contains the program `foo X Y` where `X`, `Y`, and `Z` are integer variables (and all other cells are left unspecified).
+The requirement will be satisfied whenever all executions of program `foo X Y` starting in all possible system states either:
+1. do not terminate, or;
+2. terminate with integer `Z` on top of the `<k>` cell, with everything else that initially followed `foo X Y` (indicated by `...`) left unchanged, such that `Z` is larger sum of `X` and `Y`.
 
-1. do not terminate, or
-2. end up with an integer on top of the `<k>` cell, everything else that was initially following `foo X Y`, indicated by `...` was left unchanged, and the final integer is larger than the sum of `X` and `Y`.
-
-If, for example, we have the following rules, the spec would be provable:
+For example, if our programming language semantics contained the following rules, the requirement would be satisfiable:
 
 ```
 rule [a] <k> foo X Y => foo Y X ... </k>
 rule [b] <k> foo X Y => X +Int Y +Int 1 ... </k>
 ```
 
-Then all paths which eventually apply rule `b` would unify with the right-hand side of the proof obligation.
-The path which applies rule `a` forever will never terminate.
-This is enough for the spec to pass.
+Clearly, any path that applies rule `b` would immediately satisfy the program requirement.
+Of course, if we apply rule `a` forever, the program will never terminate (so we can ignore such executions).
 
-# Warm-up examples
+## Proving Correspondence
 
-<!-- TODO: Rewrite to be less academic -->
+This last step is often the most challenging.
+Whereas the other three steps are essentially just applying definitions, in this definition,
+we must (perhaps creatively) discover the connection between our _program meaning_ and our _program requirements_.
+Since our requirements specification consider (possibly infinite) sets of program states,
+mere program execution (as in testing), is insufficient to prove the correspondence we want.
+Even if the program terminates in every state, if there are infinite states, this process will obviously never end.
 
-## A Very Simple Proof
+### A Very Simple Proof
 
 A proof obligation in $mathbb{K}$ is specified exactly like a regular semantic rule.
 
@@ -208,7 +251,7 @@ In this simple case we were able to simply state how a program would terminate a
 Indeed, in making this example, the specification above was written and proved on the first try.
 The proving process is often not so straight-forward, however, and may require some tweaking and ingenuity.
 
-## A trickier example
+### A trickier example
 
 Some proofs require that we further specify our intended semantics and encode the invariants of the transition system.
 
@@ -325,7 +368,7 @@ The claim that our semantics maintain this invariant is, at present, a conjectur
 
 With all these lemmas added to the theory, the proof goes through.
 
-### Using a Symbolic Type
+#### Using a Symbolic Type
 
 If we want to make a proof that uses a symbolic type, rather than `i32` or `i64`, matters become more complicated.
 Without knowing the type, `#setRange` and `#getRange` will receive a symbolic `WIDTH` argument, and not be able to expand.
