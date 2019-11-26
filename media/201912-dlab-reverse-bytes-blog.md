@@ -308,7 +308,7 @@ module MEMORY-SPEC
 endmodule
 ```
 
-This spec will not pass.
+However, the verification for this spec will fail.
 
 The reason is that storing to and reading from memory is more complicated than storing local values.
 
@@ -323,12 +323,12 @@ $$
 
 The store operation takes the value off the stack, and conceptually stores the following sequence of bytes:
 
-\begin{align*}
-bm[addr]   &:= val \mod 256 \\
-bm[addr+1] &:= (val / 256) \mod 256 \\
-bm[addr+2] &:= (val / 256^2 ) \mod 256 \\
-bm[addr+3] &:= (val / 256^3) \mod 256
-\end{align*}
+----------------- ---------------- -------
+  bm[addr]     := val              mod 256
+  bm[addr + 1] := (val / 256)      mod 256
+  bm[addr + 2] := (val / $256^2$)  mod 256
+  bm[addr + 3] := (val / $256^3$)  mod 256
+----------------- ---------------- -------
 
 If we plug $val$ into the above equation it becomes clear that the modulus and division operators will cancel out exactly so all we are doing is writing the values in each address back.
 
@@ -363,14 +363,14 @@ rule (Y +Int X *Int N) /Int N => (Y /Int N) +Int X
 
 Together, they help eliminate the expressions for assignment to
 
-\begin{align*}
-bm[addr]   :=~& bm[addr]     & &        & &\mod{256}                       & &          \\
-bm[addr+1] :=~& bm[addr]     & &/ 256   & &\mod{256} + bm[addr + 1]        & &\mod{256} \\
-bm[addr+2] :=~& bm[addr]     & &/ 256^2 & &\mod{256} + bm[addr + 1] /256   & &\mod{256} \\
-           + ~& bm[addr + 2] & &        & &\mod{256}                       & &          \\
-bm[addr+3] :=~& bm[addr]     & &/ 256^3 & &\mod{256} + bm[addr + 1] /256^2 & &\mod{256} \\
-            +~& bm[addr + 2] & &/ 256   & &\mod{256} + bm[addr+3]          & &\mod{256}
-\end{align*}
+----------------  ------------  --------  -------------------------------  -------
+     bm[addr] :=  bm[addr]                mod 256
+ bm[addr + 1] :=  bm[addr]      /256      mod 256 + bm[addr + 1]           mod 256
+ bm[addr + 2] :=  bm[addr]      /$256^2$  mod 256 + bm[addr + 1] /256      mod 256
+               +  bm[addr + 2]            mod 256
+ bm[addr + 3] :=  bm[addr]      /$256^3$  mod 256 + bm[addr + 1] /$256^2$  mod 256
+               +  bm[addr + 2]  /256      mod 256 + bm[addr + 3]           mod 256
+----------------  ------------  --------  -------------------------------  --------
 
 We can now make use of the invariant that we claim to maintain for the byte map.
 We add the following two lemmas:
