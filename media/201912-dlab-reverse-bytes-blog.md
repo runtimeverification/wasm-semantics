@@ -167,9 +167,9 @@ Even if the program terminates in every state, if there are infinite states, thi
 
 ### A Very Simple Proof
 
-A proof obligation in $mathbb{K}$ is specified exactly like a regular semantic rule.
+As mentioned above, proof obligations in $mathbb{K}$ are specified exactly like regular semantic rules.
 
-Just like in a semantic rule, the values mentioned may be symbolic.
+Just like in a semantic rules, values referenced by rules mentioned may be symbolic.
 
 A set of these proof obligations is called a *spec*.
 
