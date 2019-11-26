@@ -766,7 +766,7 @@ K then discharges the proof obligation to Z3 and asks it to prove the postcondit
 But since Z3 does not understand our byte map functions, `#get` and `#set`, nor the bit shifts over integers, it doesn't stand a chance.
 
 So it's time for us to start doing axiom engineering.
-Our job is to ask ourselves: "What are some true things that the prover doesn't seem to get?" and the expand its knowledge base while sticking to the 3 principles we set out for ourselves.
+Our job is to ask ourselves: "What are some true things that the prover doesn't seem to get?" and expand its knowledge base while sticking to the 3 principles we set out for ourselves.
 
 One common type of sub-expression is of the form `(Y +Int X *Int M) modInt N`.
 That is, a modulus operation over an addition, but with a multiplication on the right.
@@ -801,7 +801,7 @@ This goes to show what our CEO expressed recently on Twitter:
 Formal verification takes time.
 Luckily, it doesn't have to take this much time and effort in the future.
 With the new axioms we added we can do more automatic reasoning about modular arithmetic and bit shifts in general, and of Wasm memory in particular.[^7]
-It is still early day for proving with the Wasm semantics.
+Note that this Wasm semantics project is still in an early phase.
 As we write more proofs, the set of axioms will grow, and with it the KWasm prover's reasoning power.
 
 To see the full set of axioms we use in KWasm, see [this file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md) in the GitHub repository.
