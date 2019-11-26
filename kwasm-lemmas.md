@@ -177,27 +177,6 @@ The argument for the left shift is similar.
 
 Proof: These follow from the fact that shifting left by `n` bits is simply multiplying by `2^n`, and from previously proven rules of modular arithmetic.
 
-The next rules consider (some) cases where integers with disjoint 1-bits are added together.
-
-```k
-// TODO: These rules turn out to not be necessary for the wrc20 proof. Keep?
-    rule (X +Int Y) >>Int N => (Y >>Int N)
-      requires N  >=Int 0
-       andBool 0  <=Int X
-       andBool X   <Int 2 ^Int N
-       andBool Y modInt 2 ^Int N ==Int 0
-    [simplification]
-
-    rule (Y +Int X) >>Int N => (Y >>Int N)
-      requires N  >=Int 0
-       andBool 0  <=Int X
-       andBool X   <Int 2 ^Int N
-       andBool Y modInt 2 ^Int N ==Int 0
-      [simplification]
-```
-
-Proof sketch: The side conditions guarantee that the addition causes no carries, so that `x + y = x | y`, `|` being a bitwise `or`.
-
 ### Basic Operations
 
 ```k
@@ -700,6 +679,27 @@ Then
   = k + l + 1
   = x / z + y / z + 1
 ```
+
+The next rules consider (some) cases where integers with disjoint 1-bits are added together.
+
+```k
+// TODO: These rules turn out to not be necessary for the wrc20 proof. Keep?
+    rule (X +Int Y) >>Int N => (Y >>Int N)
+      requires N  >=Int 0
+       andBool 0  <=Int X
+       andBool X   <Int 2 ^Int N
+       andBool Y modInt 2 ^Int N ==Int 0
+    [simplification]
+
+    rule (Y +Int X) >>Int N => (Y >>Int N)
+      requires N  >=Int 0
+       andBool 0  <=Int X
+       andBool X   <Int 2 ^Int N
+       andBool Y modInt 2 ^Int N ==Int 0
+      [simplification]
+```
+
+Proof sketch: The side conditions guarantee that the addition causes no carries, so that `x + y = x | y`, `|` being a bitwise `or`.
 
 ```k
 endmodule
