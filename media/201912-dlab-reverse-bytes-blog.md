@@ -455,7 +455,7 @@ Like other assembly languages, because Wasm is low-level, it can be quite hard t
 For that reason, the Wasm text format specification provides a folded variant that allows
 expressions to be written in a simplified Lisp-like syntax, where an $n$-ary stack
 operation `f`---written postfix `x1 ... xn f` in stack-based languages like Wasm---can be written
-as `(f x1 ... xn)`. 
+as `(f x1 ... xn)`.
 
 Let's rewrite our function using the folded instruction notation and see if things become clearer:
 
@@ -610,7 +610,7 @@ Note that some pre- and postconditions are expressed in the rewrite rules themse
 The `requires` and `ensures` clauses are simply for stating facts that we can't express directly in the rewrite.
 
 The first 4 requirements are really boilerplate relevant to the technicalities of the semantics.
-The first states that the type of the `i64.reverse_bytes` function has not already been declared.[^6] 
+The first states that the type of the `i64.reverse_bytes` function has not already been declared.[^6]
 The second, third and fourth rules all make sure that integers, whether constants or stored in the byte map, are in the allowed range.
 Without these assumptions the prover assumes the values are unbounded integers.
 
