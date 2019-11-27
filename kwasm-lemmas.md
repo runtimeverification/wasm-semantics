@@ -327,8 +327,6 @@ The following is valid because there can be no carry from the addition of the le
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 ```
 
-TODO: Maybe rewrite `#setRange` in terms of bit shifts.
-
 ```k
     rule X /Int 256 => X >>Int 8
 
