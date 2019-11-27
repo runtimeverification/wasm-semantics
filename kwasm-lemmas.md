@@ -140,6 +140,9 @@ We want Z3 to understand what a bit-shift is.
     // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
     rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
     rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
+
+    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+    rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
 ```
 
 The following rules decrease the modulus by rearranging it around a shift.
@@ -314,24 +317,15 @@ module WRC20-LEMMAS
     imports KWASM-LEMMAS
 ```
 
-Z3 is slow to reason about modular arithmetic for symbolic congruence classes, but can be quite efficient for specific values.
-Since memory mostly uses modulo 256, we add special cases for this.
+TODO: The following theorems should be generalized:
+Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
 
 ```k
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
-```
-
-The following is valid because there can be no carry from the addition of the least 8 bits, since they are all 0 in the case of X * 256.
-
-```k
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
-```
-
-```k
     rule X /Int 256 => X >>Int 8
-
-
-//Experimental:
+    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8
+    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8
 
     rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8)
       requires N >=Int 8 andBool WIDTH >Int 1
@@ -349,20 +343,6 @@ The following is valid because there can be no carry from the addition of the le
 
     rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256
     rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM)
-
-    //rule (#isByteMap(BM) andBool N >=Int 8) impliesBool (((#get(BM, ADDR) <<Int N) +Int X >=Int 256 orBool (#get(BM, ADDR) <<Int N) +Int X ==Int 0) ==Bool X >=Int 256 orBool X ==Int 0) => true [smt-lemma]
-
-// TODO: Generalize
-    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8
-    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8
-
-// DANGER: UNSOUND
-//    rule (#get(BM, ADDR) +Int X) >>Int 8 => X >>Int 8
-
-    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N
-
-    rule 0 <=Int X impliesBool 0 <=Int (X <<Int N) => true [smt-lemma]
-    rule 0 <=Int X impliesBool 0 <=Int (X >>Int N) => true [smt-lemma]
 
 endmodule
 ```
