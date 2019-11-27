@@ -183,9 +183,9 @@ Proof: These follow from the fact that shifting left by `n` bits is simply multi
     rule X  +Int 0 => X [simplification]
     rule 0  +Int X => X [simplification]
     rule X <<Int 0 => X [simplification]
-    rule 0 <<Int X => X [simplification]
+    rule 0 <<Int X => 0 [simplification]
     rule X >>Int 0 => X [simplification]
-    rule 0 >>Int X => X [simplification]
+    rule 0 >>Int X => 0 [simplification]
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
