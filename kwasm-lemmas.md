@@ -85,6 +85,7 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+
     rule (Y +Int X *Int M) modInt N => Y modInt N
       requires M >Int 0
        andBool N >Int 0
@@ -105,6 +106,7 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+
     rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
       requires M >Int 0
        andBool N >Int 0
@@ -153,6 +155,7 @@ The following rules decrease the modulus by rearranging it around a shift.
        andBool POW >Int 0
        andBool POW modInt (2 ^Int N) ==Int 0
       [simplification]
+
     rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
       requires N  >=Int 0
        andBool POW >Int 0
@@ -171,6 +174,7 @@ The argument for the left shift is similar.
        andBool POW >Int 0
        andBool (2 ^Int N) modInt POW ==Int 0
       [simplification]
+
     rule ((Y <<Int N) +Int X) modInt POW => X modInt POW
       requires N  >=Int 0
        andBool POW >Int 0
