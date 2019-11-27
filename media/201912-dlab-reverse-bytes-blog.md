@@ -766,29 +766,187 @@ K then discharges the proof obligation to Z3 and asks it to prove the postcondit
 But since Z3 does not understand our byte map functions, `#get` and `#set`, nor the bit shifts over integers, it doesn't stand a chance.
 
 So it's time for us to start doing axiom engineering.
-Our job is to ask ourselves: "What are some true things that the prover doesn't seem to get?" and expand its knowledge base while sticking to the 3 principles we set out for ourselves.
+Our job is to ask ourselves: "What are some true things that the prover doesn't seem to get?" and the expand its knowledge base while sticking to the 3 principles we set out for ourselves.
 
-One common type of sub-expression is of the form `(Y +Int X *Int M) modInt N`.
-That is, a modulus operation over an addition, but with a multiplication on the right.
-Furthermore, it is usually the case that `N` is `256`, which is `2^8`, and `M` is some even larger power of 2.
-In these cases we can actually get rid of `X *Int M`, because `(a + b) mod n = a` when `b` is a multiple of `n`.[^8]
+Let's look at part of the resulting expression.
+The algorithm started with `<i64> 0` in the `local 2`.
+After one iteration of the loop, the value has changed to.
 
 ```
-rule (Y +Int X *Int M) modInt N => Y modInt N
+(((((( #getRange(BM, ADDR, 8) <<Int 56) modInt 18446744073709551616) >>Int 56) <<Int 56) modInt 18446744073709551616) +Int 0) modInt 18446744073709551616
+```
+
+Here it is as a syntax tree, with 18446744073709551616 converted to $2^{64}$:
+
+\begin{tikzpicture}
+  \node (a) {modInt}
+  child {
+    node (b) {+Int}
+    child {
+      node (d) {modInt}
+      child {
+        node (e) {<<Int}
+        child {
+          node (g) {>>Int}
+          child {
+            node (k) {modInt}
+            child {
+              node (m) {<<Int}
+              child {
+                node (n) {\#getRange}
+                child {
+                  node (p) {BM}
+                }
+                child {
+                  node (q) {ADDR}
+                }
+                child {
+                  node (r) {8}
+                }
+              }
+              child {
+                node (o) {56}
+              }
+            }
+            child {
+              node (l) {$2^{64}$}
+            }
+          }
+          child {
+            node (j) {56}
+          }
+        }
+        child {
+          node (h) {56}
+        }
+      }
+      child {
+        node (f) {$2^{64}$}
+      }
+    }
+    child {node  (i) {0}}}
+  child {node (c) {$2^{64}$}};
+\end{tikzpicture}
+
+Looking at this expression, there are some obvious structural changes that we can tell K about.
+We don't include a proof of our new axioms here, but there is a formal proof included with the proof in our [lemmas file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md).
+
+First, let's get rid of the `+Int 0`.
+Z3 of course knows that `x + 0` is `x`, but until today, we haven't given these reasoning capabilities to K directly.
+We are moving to adding more reasoning to K for a variety of reasons.
+So we open by adding the following, obvious claim to our set of axioms.
+
+```
+rule X +Int 0 => X
+```
+
+Then, we have a `modInt` outside a `modInt`.
+They are even modulus the same number.
+We could say `(X modInt N) modInt N => X modInt N`, but let's be a bit more general:
+
+```
+rule (X modInt M) modInt N => X modInt M
   requires M >Int 0
-   andBool N >Int 0
-   andBool M modInt N ==Int 0
-  [simplification]
-
+    andBool M <=Int N
 ```
 
-In theory, this could be generalized further by not matching on the multiplication and instead checking if the right side of the addition is 0 when applying `modInt N`.
-However, this seems to not be good enough for Z3 to solve the issue in reasonable time, so we go with this more specialized lemma for now.
+We also have a right-shift followed by a modulus.
+In unbounded integers, shifting by `N` is the same as multiplying by `2^N`.
+That gives us the following rule:
 
+```
+rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
+  requires N  >=Int 0
+    andBool POW >Int 0
+    andBool POW modInt (2 ^Int N) ==Int 0
+```
 
-<!-- TODO: Write about some other axiom (that we can generalize more cleanly). -->
+This gives us a much smaller state:
 
-[^8]: We don't include a proof of this here, but there is a formal proof included with the proof in our [lemmas file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md)
+\begin{tikzpicture}
+  \node (a) {<<Int}
+      child {
+        node (e) {modInt}
+        child {
+          node (g) {>>Int}
+          child {
+            node (m) {<<Int}
+            child {
+              node (k) {modInt}
+              child {
+                node (n) {\#getRange}
+                child {
+                  node (p) {BM}
+                }
+                child {
+                  node (q) {ADDR}
+                }
+                child {
+                  node (r) {8}
+                }
+              }
+              child {
+                node (l) {$2^{8}$}
+              }
+            }
+            child {
+              node (o) {56}
+            }
+          }
+          child {
+            node (j) {56}
+          }
+        }
+        child {
+          node (h) {$2^{8}$}
+        }
+      }
+  child {node (c) {56}};
+\end{tikzpicture}
+
+This present a nice opportunity to get rid of some shifts.
+Again, recall that these are unbounded integers, so shifting left does not get rid of any bits of information.
+
+```
+rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires N >=Int M
+```
+The state is further reduced, by deleting two of the shifts.
+This exposes yet another situation where we have a `(X modInt 2 ^Int 8) modInt 2 ^Int 8` expression, which get simplified.
+
+We also tell K something about the way getting values from (little-endian) memory works:
+
+```
+rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
+  requires WIDTH =/=Int 0
+    andBool #isByteMap(BM)
+  ensures 0 <=Int #get(BM, ADDR)
+    andBool #get(BM, ADDR) <Int 256
+```
+
+In the end, adding these rule leaves us with our final expression (for now):
+
+\begin{tikzpicture}
+  \node (a) {<<Int}
+    child {
+      node (k) {modInt}
+      child {
+        node (n) {\#get}
+        child {
+          node (p) {BM}
+        }
+        child {
+          node (q) {ADDR}
+        }
+      }
+      child {
+        node (l) {$2^{8}$}
+      }
+    }
+  child {node (c) {56}};
+\end{tikzpicture}
+
+You may recognize this as getting the least significant byte of the stored value and putting it in the position of the most significant one in the resulting `i64` value.
+A good start!
 
 # That's it
 
