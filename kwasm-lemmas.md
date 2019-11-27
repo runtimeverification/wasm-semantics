@@ -271,6 +271,19 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
+
+    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
+      requires notBool (WIDTH ==Int 0)
+       andBool #isByteMap(BM)
+      ensures 0 <=Int #get(BM, ADDR)
+       andBool #get(BM, ADDR) <Int 256
+      [simplification]
+
+    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
+      requires WIDTH ==Int 1
+       ensures 0 <=Int #get(BM, ADDR)
+       andBool #get(BM, ADDR) <Int 256
+      [simplification]
 ```
 
 ```k
@@ -317,33 +330,42 @@ module WRC20-LEMMAS
     imports KWASM-LEMMAS
 ```
 
-TODO: The following theorems should be generalized:
+This conversion turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
+
+```k
+    rule X /Int 256 => X >>Int 8
+```
+
+TODO: The two `#get` theorems below theorems handle special cases in this proof, but we should be able to use some more general theorems to prove them.
+
+```k
+    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256       [simplification]
+    rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM) [simplification]
+```
+
+TODO: The following theorems should be generalized and proven, and moved to the set of general lemmas.
 Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
 
 ```k
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+
+    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8 [simplification]
+
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
-    rule X /Int 256 => X >>Int 8
-    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8
-    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8
 
+    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8 [simplification]
+```
+
+TODO: The following theorem should be proven, and moved to the set of general lemmas.
+
+```k
     rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8)
-      requires N >=Int 8 andBool WIDTH >Int 1
+      requires N >=Int 8
+       andBool WIDTH >Int 1
+      [simplification]
+```
 
-    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
-      requires WIDTH =/=Int 0
-       andBool #isByteMap(BM)
-      ensures 0 <=Int #get(BM, ADDR)
-       andBool #get(BM, ADDR) <Int 256
-
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
-      requires WIDTH ==Int 1
-       ensures 0 <=Int #get(BM, ADDR)
-       andBool #get(BM, ADDR) <Int 256
-
-    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256
-    rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM)
-
+```k
 endmodule
 ```
 
