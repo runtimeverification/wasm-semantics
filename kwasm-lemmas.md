@@ -287,8 +287,6 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
     imports KWASM-LEMMAS
 ```
 
-TODO: Maybe rewrite `#getRange` in terms of bit shifts.
-
 ```k
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)
