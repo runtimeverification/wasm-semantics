@@ -948,6 +948,27 @@ In the end, adding these rule leaves us with our final expression (for now):
 You may recognize this as getting the least significant byte of the stored value and putting it in the position of the most significant one in the resulting `i64` value.
 A good start!
 
+### The full set of extensions
+
+In the end, to get the proof to pass we added 40 new axioms.
+You can see them all in our [lemmas file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md).
+
+* 23 of these are general lemmas that can be upstreamed into K's reasoning capabilities.
+* 4 relate to the `#get` and `#set` operations of KWasm, and can be used in any KWasm verification
+* 13 are specific to the proof we just wrote.
+
+Of the 23 general ones, many are just trivial copies of each other.
+For example, we need both the rules.
+
+``
+rule X +Int 0 => X
+rule 0 +Int X => X
+``
+
+This repeats for all rules over addition.
+We can't tell K directly that addition commutes, because, if you recall, the rule `X +Int Y => Y +Int X` would cause infinite rewrites.
+So when it comes to stating true, simple things that K should know about, we need to be a little repetitive.
+
 # That's it
 
 Hopefully we have given you some insight into the process of formal verification.
