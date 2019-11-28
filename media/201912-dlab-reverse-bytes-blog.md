@@ -953,9 +953,9 @@ A good start!
 In the end, to get the proof to pass we added 40 new axioms.
 You can see them all in our [lemmas file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md).
 
-* 23 of these are general lemmas that can be upstreamed into K's reasoning capabilities.
-* 4 relate to the `#get` and `#set` operations of KWasm, and can be used in any KWasm verification
-* 13 are specific to the proof we just wrote.
+* 24 of these are general lemmas that can be upstreamed into K's reasoning capabilities.
+* 7 relate to the `#get` and `#set` operations of KWasm, and can be used in any KWasm verification
+* 8 are specific to the proof we just wrote.
 
 Of the 23 general ones, many are just trivial copies of each other.
 For example, we need both the rules.
