@@ -85,6 +85,7 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+
     rule (Y +Int X *Int M) modInt N => Y modInt N
       requires M >Int 0
        andBool N >Int 0
@@ -105,6 +106,7 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+
     rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
       requires M >Int 0
        andBool N >Int 0
@@ -142,6 +144,26 @@ We want Z3 to understand what a bit-shift is.
     rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
 ```
 
+```k
+    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+    rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+```
+
+Proof:
+```
+Let x' = x << m
+=> The least m bits of x' are 0.
+=> The least m bits of x' + y are the same as the least m bits of y, and there can be no carry in adding the least m bits.
+=> The least (m-n) bits of (x' + y) >> n are the same as the least (m-n) bits of (y >> n), or y[n..], and there can be no carry in adding the least (m-n) bits.
+=> ((x << m) + y) >> n is the same as adding x to the m'th and higher bits of y, and then concatenating the lesat (m-n) bytes of y[n..]
+=> ((x << m) + y) >> n = y[n..(m-1)] : (x + y[m..])
+=> ((x << m) + y) >> n
+ = ((x + y[m..]) << (m-n)) + y[n..(m-1)]
+ = (x << (m-n)) + (y[m..] << (m-n)) + y[n..(m-1)]
+ = (x << (m-n)) + (y[n..(m-1)] : y[m..])
+ = (x << (m-n)) + (y >> n)
+```
+
 The following rules decrease the modulus by rearranging it around a shift.
 
 ```k
@@ -150,6 +172,7 @@ The following rules decrease the modulus by rearranging it around a shift.
        andBool POW >Int 0
        andBool POW modInt (2 ^Int N) ==Int 0
       [simplification]
+
     rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
       requires N  >=Int 0
        andBool POW >Int 0
@@ -168,6 +191,7 @@ The argument for the left shift is similar.
        andBool POW >Int 0
        andBool (2 ^Int N) modInt POW ==Int 0
       [simplification]
+
     rule ((Y <<Int N) +Int X) modInt POW => X modInt POW
       requires N  >=Int 0
        andBool POW >Int 0
@@ -183,9 +207,9 @@ Proof: These follow from the fact that shifting left by `n` bits is simply multi
     rule X  +Int 0 => X [simplification]
     rule 0  +Int X => X [simplification]
     rule X <<Int 0 => X [simplification]
-    rule 0 <<Int X => X [simplification]
+    rule 0 <<Int X => 0 [simplification]
     rule X >>Int 0 => X [simplification]
-    rule 0 >>Int X => X [simplification]
+    rule 0 >>Int X => 0 [simplification]
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
@@ -268,6 +292,19 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
+
+    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
+      requires notBool (WIDTH ==Int 0)
+       andBool #isByteMap(BM)
+      ensures 0 <=Int #get(BM, ADDR)
+       andBool #get(BM, ADDR) <Int 256
+      [simplification]
+
+    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
+      requires WIDTH ==Int 1
+       ensures 0 <=Int #get(BM, ADDR)
+       andBool #get(BM, ADDR) <Int 256
+      [simplification]
 ```
 
 ```k
@@ -286,8 +323,6 @@ Concrete Memory
 module MEMORY-CONCRETE-TYPE-LEMMAS
     imports KWASM-LEMMAS
 ```
-
-TODO: Maybe rewrite `#getRange` in terms of bit shifts.
 
 ```k
     rule #getRange(BM, START, WIDTH) => 0
@@ -316,58 +351,42 @@ module WRC20-LEMMAS
     imports KWASM-LEMMAS
 ```
 
-Z3 is slow to reason about modular arithmetic for symbolic congruence classes, but can be quite efficient for specific values.
-Since memory mostly uses modulo 256, we add special cases for this.
-
-```k
-    rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
-```
-
-The following is valid because there can be no carry from the addition of the least 8 bits, since they are all 0 in the case of X * 256.
-
-```k
-    rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
-```
-
-TODO: Maybe rewrite `#setRange` in terms of bit shifts.
+This conversion turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
 
 ```k
     rule X /Int 256 => X >>Int 8
+```
 
+TODO: The two `#get` theorems below theorems handle special cases in this proof, but we should be able to use some more general theorems to prove them.
 
-//Experimental:
+```k
+    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256       [simplification]
+    rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM) [simplification]
+```
 
+TODO: The following theorems should be generalized and proven, and moved to the set of general lemmas.
+Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
+
+```k
+    rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+
+    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8 [simplification]
+
+    rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+
+    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8 [simplification]
+```
+
+TODO: The following theorem should be proven, and moved to the set of general lemmas.
+
+```k
     rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8)
-      requires N >=Int 8 andBool WIDTH >Int 1
+      requires N >=Int 8
+       andBool WIDTH >Int 1
+      [simplification]
+```
 
-    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
-      requires WIDTH =/=Int 0
-       andBool #isByteMap(BM)
-      ensures 0 <=Int #get(BM, ADDR)
-       andBool #get(BM, ADDR) <Int 256
-
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
-      requires WIDTH ==Int 1
-       ensures 0 <=Int #get(BM, ADDR)
-       andBool #get(BM, ADDR) <Int 256
-
-    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256
-    rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM)
-
-    //rule (#isByteMap(BM) andBool N >=Int 8) impliesBool (((#get(BM, ADDR) <<Int N) +Int X >=Int 256 orBool (#get(BM, ADDR) <<Int N) +Int X ==Int 0) ==Bool X >=Int 256 orBool X ==Int 0) => true [smt-lemma]
-
-// TODO: Generalize
-    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8
-    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8
-
-// DANGER: UNSOUND
-//    rule (#get(BM, ADDR) +Int X) >>Int 8 => X >>Int 8
-
-    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N
-
-    rule 0 <=Int X impliesBool 0 <=Int (X <<Int N) => true [smt-lemma]
-    rule 0 <=Int X impliesBool 0 <=Int (X >>Int N) => true [smt-lemma]
-
+```k
 endmodule
 ```
 
