@@ -142,9 +142,26 @@ We want Z3 to understand what a bit-shift is.
     // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
     rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
     rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
+```
 
+```k
     rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
     rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+```
+
+Proof:
+```
+Let x' = x << m
+=> The least m bits of x' are 0.
+=> The least m bits of x' + y are the same as the least m bits of y, and there can be no carry in adding the least m bits.
+=> The least (m-n) bits of (x' + y) >> n are the same as the least (m-n) bits of (y >> n), or y[n..], and there can be no carry in adding the least (m-n) bits.
+=> ((x << m) + y) >> n is the same as adding x to the m'th and higher bits of y, and then concatenating the lesat (m-n) bytes of y[n..]
+=> ((x << m) + y) >> n = y[n..(m-1)] : (x + y[m..])
+=> ((x << m) + y) >> n
+ = ((x + y[m..]) << (m-n)) + y[n..(m-1)]
+ = (x << (m-n)) + (y[m..] << (m-n)) + y[n..(m-1)]
+ = (x << (m-n)) + (y[n..(m-1)] : y[m..])
+ = (x << (m-n)) + (y >> n)
 ```
 
 The following rules decrease the modulus by rearranging it around a shift.
