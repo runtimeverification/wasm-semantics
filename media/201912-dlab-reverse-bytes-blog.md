@@ -48,9 +48,9 @@ Here is the million dollar question: can testing ensure a perfect correspondence
 between the requirements and the code?
 The answer is *simply* no; we know from experience that testing can only demonstrate
 the presence of bugs; not their absence.
-_The beauty of formal verification is that we can *provably* demonstrate a correspondence
-between our requirements and the source code via a *semantics*.
-You can think of a semantics as a compiler that maps code into its mathematical meaning._
+**The beauty of formal verification is that we can _provably_ demonstrate a correspondence
+between our requirements and the source code via a _semantics_.
+You can think of a semantics as a compiler that maps code into its mathematical meaning.**
 
 Let's examine the phases of formally verifying a program:
 
