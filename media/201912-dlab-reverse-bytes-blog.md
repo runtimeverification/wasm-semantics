@@ -66,7 +66,7 @@ The K Framework (which we abbreviate as K) can be used to specify language seman
 Recall that a semantics is a way of mapping *terms* in a language into their *mathematical meaning*.
 In the case of a programming language, the terms of the language are *programs*.
 What is the mathematical meaning of a program?
-We can understand a program as a function that over *system states*, e.g.
+We can understand a program as a function over *system states*, e.g.
 the state of the memory, the hard disk, network, etc...
 
 A K language semantics consists of three parts:
