@@ -108,14 +108,14 @@ Here's how you read it:
 ## Formalizing Program Requirements
 
 <!--
-As has been shown, a $mathbb{K}$ semantics can be read and understood as a computational transition system specifying an interpreter.
+As has been shown, a $\mathbb{K}$ semantics can be read and understood as a computational transition system specifying an interpreter.
 But it can also be understood as a logic theory under which we can prove properties about programs.
 
 The set of rewrite rules in KWasm, $\Sigma$, are the axioms of the theory of KWasm transitions, $T$, where $\Sigma \subseteq T$.
 
 The full theory, $T$, consists of all theorems which are provable from the axioms.
 
-To use the $mathbb{K}$ framework for deductive program verification, one writes proof obligations as regular rewrite rules, which the $mathbb{K}$ prover tries to prove or disprove belong to $T$.
+To use the $\mathbb{K}$ framework for deductive program verification, one writes proof obligations as regular rewrite rules, which the $\mathbb{K}$ prover tries to prove or disprove belong to $T$.
 
 An implication (rewrite) is a theorem of $T$ iff all terminating paths starting on the left-hand side eventually reach a state that unifies with the right-hand side.
 Take, for example, the following implication:
@@ -187,7 +187,7 @@ What this means is: if the proof is taking too long *or* if we get stuck, we wil
 
 ### A Very Simple Proof
 
-As mentioned above, proof obligations in $mathbb{K}$ are specified exactly like regular semantic rules.
+As mentioned above, proof obligations in $\mathbb{K}$ are specified exactly like regular semantic rules.
 
 Just like in a semantic rules, values referenced by rules mentioned may be symbolic.
 
@@ -332,15 +332,15 @@ The store operation takes the value off the stack, and conceptually stores the f
 
 If we plug $val$ into the above equation it becomes clear that the modulus and division operators will cancel out exactly so all we are doing is writing the values in each address back.
 
-This type of reasoning presents a challenge for the $mathbb{K}$ prover using the current semantics.
+This type of reasoning presents a challenge for the $\mathbb{K}$ prover using the current semantics.
 The semantics uses pure helper functions, `#setRange` and `#getRange` for writing to and reading from the byte map.
 These functions expand to a series of `#set` and `#get`, that do the obvious[^3].
 
 However, Z3 can not reason about these functions in the way we would like without giving full definitions in Z3 of the functions themselves.
-Since the getting and setting happens at the $mathbb{K}$ level while the arithmetic reasoning happens at the Z3 level, we are stuck.
-We can remedy this by either extending Z3's reasoning capabilities, or $mathbb{K}$'s.
+Since the getting and setting happens at the $\mathbb{K}$ level while the arithmetic reasoning happens at the Z3 level, we are stuck.
+We can remedy this by either extending Z3's reasoning capabilities, or $\mathbb{K}$'s.
 
-In this case, we chose to extend $mathbb{K}$.
+In this case, we chose to extend $\mathbb{K}$.
 This simple case could be handled by just adding a high-level trusted lemma:
 
 ```k
@@ -420,7 +420,7 @@ module MEMORY-SYMBOLIC-TYPE-SPEC
 ...
 ```
 
-By invoking the $mathbb{K}$ prover with the option `--def-module MEMORY-SYMBOLIC-TYPE-LEMMAS` instead of the usual `--def-module KWASM-LEMMAS`, the prover will accept this new lemma in to its axioms, and the proof will go through.
+By invoking the $\mathbb{K}$ prover with the option `--def-module MEMORY-SYMBOLIC-TYPE-LEMMAS` instead of the usual `--def-module KWASM-LEMMAS`, the prover will accept this new lemma in to its axioms, and the proof will go through.
 
 [^1]: The rule is paraphrased here, it actually is slightly more complex to deal with identifiers.
 [^2]: Again, paraphrased.
@@ -760,7 +760,7 @@ The reason for the size is that the function returns the following large express
 ( ( ( #getRange ( BM , ADDR , 8 ) <<Int 0 ) modInt 18446744073709551616 >>Int 56 <<Int 0 ) modInt 18446744073709551616 +Int ( ( ( #getRange ( BM , ADDR , 8 ) <<Int 8 ) modInt 18446744073709551616 >>Int 56 <<Int 8 ) modInt 1844674407370 9551616 +Int ( ( ( #getRange ( BM , ADDR , 8 ) <<Int 16 ) modInt 18446744073709551616 >>Int 56 <<Int 16 ) modInt 18446744073709551616 +Int ( ( ( #getRange ( BM , ADDR , 8 ) <<Int 24 ) modInt 18446744073709551616 >>Int 56 <<Int 24 ) modInt 18446744073709551616 +Int ( ( ( #getRange ( BM , ADDR , 8 ) <<Int 32 ) modInt 18446744073709551616 >>Int 56 <<Int 32 ) modInt 18446744073709551616 +Int ( ( ( #getRange ( BM , ADDR , 8 ) <<Int 40 ) modInt 18446744073709551616 >>Int 56 <<Int 40 ) modInt 18446744073709551616 +Int ( (( #getRange ( BM , ADDR , 8 ) <<Int 48 ) modInt 18446744073709551616 >>Int 56 <<Int 48 ) modInt 18446744073709551616 +Int ( ( ( #getRange ( BM , ADDR , 8 ) <<Int 56 ) modInt 18446744073709551616 >>Int 56 <<Int 56 ) modInt 18446744073709551616 +Int 0 ) modInt 18446744073709551616 ) modInt 18446744073709551616 ) modInt 18446744073709551616 ) modInt 18446744073709551616 ) modInt 18446744073709551616 ) modInt 18446744073709551616 ) modInt 18446744073709551616 ) modInt 18446744073709551616
 ```
 
-To make the proof go through, we will need to tell \K how to reduce both the above `i64` expression a bit, and how to reduce the resulting `#set` expressions.
+To make the proof go through, we will need to tell $\mathbb{K}$ how to reduce both the above `i64` expression a bit, and how to reduce the resulting `#set` expressions.
 
 Now, the rewrite part of our proof obligation states only that `BM` rewrites to *something* -- even if it ends up being a really big expression.
 
