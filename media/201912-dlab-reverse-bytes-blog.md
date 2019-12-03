@@ -6,6 +6,7 @@ author:
 date: \today
 header-includes:
 -   \usepackage{amssymb}
+-   \usepackage{tikz}
 ---
 
 This blog post is the second in a series of posts
@@ -71,10 +72,10 @@ systems) proceeds in the figure below:
 ## Overview of the Formal Verification Process
 
 In the figure, boxes represent different _artifacts_ that our produced during the verification process,
-while connecting lines represent _processes_ that can transform artifacts of one kind into another.
+while connecting lines represent _transformations_ from one kind of artifact into another.
+Double connecting lines represent transformations that preserve all esssential information;
+they are supposed to be reminiscent of the equality symbol (=) from mathematics.
 These lines are annotated by the _entity_ needed to perform the desired transformation.
-We have two kinds of connecting lines: (i) arrows that denote _one-way processes_ and (ii)
-two parallel lines that denote _two-way processes_ (in other words, a _correspondence_ between two artifacts).
 Let us define the various artifacts and entities that appear in our figure:
 
 1. **requirements**: a human language document that describes what our system should do;
@@ -88,24 +89,22 @@ Let us define the various artifacts and entities that appear in our figure:
 8. **formalized system specification**: the mathematical meaning of some **source code**;
 9. **theorem prover**: a computerized assistant that helps a user solve mathematical problems.
 
+<!--
 As an example of a one-way process, consider how software requirements are mapped into working code.
 This is a one-way process because it is _essentially impossible to reconstruct software requirements by examining source code_.
 Computer languages are just _too different_ from human languages and are unable to directly express our requirements.
 The same holds true for tests.
 While typically closer in structure, the language of tests is almost always _too limited_ to fully express our human language requirements.
-<!--
 The reason for this is simple: software must deal with many concerns that only indirectly
 relate to our software requirements but which are necessary for execution
 (e.g., writing a program in C versus Javascript).
--->
 On the other hand, since formalized requirements are merely a mathematical restatement of the original human language requirements,
 a sufficiently skilled developer can read them and reconstruct an equivalent human language version.
 Thus, this transformation is an example of a two-way process or a correspondence.
 Similarly, a semantics takes a program and generates its mathematical meaning (i.e., the formalized system specification).
 Of course, this meaning must necessarily capture all of the important details of the program.
 Thus, given the formalized system specification, we can reconstruct what the original program must have been like.
-
-## Re-examining the Formal Verification Process
+-->
 
 With these details in hand, let us re-examine the figure.
 In conventional software development, a developer (and typically also compiler)
@@ -120,7 +119,7 @@ i.e., we can prove that our source code has _no bugs_.**
 
 A key tool that we use in this process is a _semantics_.
 You can think of a semantics as a **compiler that maps code into its mathematical meaning.**
-This compiler is special because it perfectly captures all possible behaviors of the program without taking any shortcuts.
+This compiler is special because it perfectly captures all possible information about the program.
 <!--
 Most compilers explicitly do _NOT_ do this for performance.
 As an example, the C language specfication allows function arguments to be evaluated in any order,
@@ -158,8 +157,7 @@ The K Framework (which we abbreviate as K) can be used to specify language seman
 
 ## Specifying Language Semantics
 
-Recall that a semantics is a way of mapping *terms* in a language into their *mathematical meaning*.
-In the case of a programming language, the terms of the language are *programs*.
+Recall that a semantics is a way of assigning a *mathematical meaning* to a program.
 What is the mathematical meaning of a program?
 We can understand a program as a function over *system states*, e.g.
 the state of the memory, the hard disk, network, etc...
@@ -167,14 +165,14 @@ the state of the memory, the hard disk, network, etc...
 A K language semantics consists of three parts:
 
 1. a *syntax* for the language (i.e., a parser for programs in the language);
-2. a hierarchical XML-like syntax that defines the *system states*, which include the language syntax plus more stuff;
-3. and a set of *transition rules* that map systems states to new system states (typically by executing language expressions).
+2. an XML tree that defines the *system states*;
+3. and a set of *transition rules* that map systems states to new system states (by executing programs in the language).
 
-The bulk of the semantics are the transition rules which describe how the state of a system executing a program gradually changes.
+The bulk of a semantics is composed of transition rules.
 For a typical language semantics, an initial system state for a program $P$ is just:
 
 1. default initialized values (e.g., the object `Object` in Java);
-2. the text of program $P$ stored in the `<k>` cell (a cell is just a fragment of the system state).
+2. a parsed program $P$ stored in the `<k>` cell (a cell is just a fragment of the system state).
 
 When the program terminates, the program $P$ will have been totally consumed by the transition rules,
 and the rest of the state will have changed in some meaningful way.
@@ -252,22 +250,23 @@ or because we have assumptions about our system that have often never been writt
 
 ## Proving the Correspondence
 
-Here we use the K Framework to *formally prove* the correspondence between our *program meaning* and our *program requirements*.
-This last step is surprisingly quite mechanical.
-At this point, you just have to "follow your nose," so to speak, in the sense that:
+Here we use the K Framework's built-in theorem prover to *formally prove* the correspondence between our *program meaning* and our *program requirements*.
+At this point, our situation is as follows:
 
-1. (as we saw above) the formalized program requirements provide:
+1. Our formalized program requirements has provided us with:
 
   * a (possibly infinite) set of *initial program states* and;
   * a (possibly infinite) set of *acceptable final program states*.
 
-2. the semantic definition of a programming language *completely determines* how initial states can evolve into final states.
+2. Our programming language semantics *completely determines* how initial states can evolve into final states.
 
+Thus, our theorem prover can, in general, test every possible execution path and check that the requirements
+hold at the end.
 But, that being the case, how can this formal proof process be challenging?
 There are two main ways that things can go wrong:
 
-1. the proof process relies on a computer program that may run out of time or memory;
-2. the proof may get stuck because it could not prove something.
+1. the theorem prover is a computer program and it may take too long or run out of memory;
+2. the theorem prover may get stuck because it could not prove something (either because it is non-trivial or because it doesn't understand our intended program meaning).
 
 This leads us to primary proof search process that we call here the *verification cycle*:
 
@@ -277,7 +276,7 @@ What this means is: if the proof is taking too long *or* if we get stuck, we wil
 
 1. Examine the proof output term to understand *why we are stuck*
 2. Extract any necessary lemmas that will help the stuck proof make progress *or*
-   strengthen the proof precondition in order to prune useless paths.
+   add assumptions about our initial state (called strengthening the pre-condition) in order to prune useless paths.
 3. Repeat the proof with the simplified claims.
 
 ### A Very Simple Proof
@@ -295,14 +294,13 @@ Below is a simple spec which asserts that copying the value of a local variable 
 
 ```k
 module LOCALS-SPEC
-    imports WASM-TEXT
-    imports KWASM-LEMMAS
+  imports WASM-TEXT
+  imports KWASM-LEMMAS
 
-    rule <k> (local.get X:Int) (local.set X:Int) => . ... </k>
-         <locals>
-           X |-> < ITYPE > VAL
-         </locals>
-
+  rule <k> (local.get X:Int) (local.set X:Int) => . ... </k>
+       <locals>
+         X |-> < ITYPE > VAL
+       </locals>
 endmodule
 ```
 
@@ -380,26 +378,26 @@ An invariant the semantics have been designed to maintain (but that we have yet 
 
 ```k
 module MEMORY-SPEC
-    imports WASM-TEXT
-    imports KWASM-LEMMAS
+  imports WASM-TEXT
+  imports KWASM-LEMMAS
 
-    rule <k> (i32:IValType.store (i32.const ADDR) (i32.load (i32.const ADDR)):Instr):Instr => . ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> MEMADDR </memAddrs>
-           ...
-         </moduleInst>
-         <memInst>
-           <mAddr> MEMADDR </mAddr>
-           <msize> SIZE </msize>
-           <mdata> BM   </mdata>
-           ...
-         </memInst>
-       requires #chop(<i32> ADDR) ==K <i32> EA
-        andBool EA +Int #numBytes(i32) <=Int SIZE *Int #pageSize()
-        andBool #isByteMap(BM)
-
+  rule <k> ( i32:IValType.store (i32.const ADDR)
+            (i32.load           (i32.const ADDR)):Instr):Instr => . ... </k>
+       <curModIdx> CUR </curModIdx>
+       <moduleInst>
+         <modIdx> CUR </modIdx>
+         <memAddrs> 0 |-> MEMADDR </memAddrs>
+         ...
+       </moduleInst>
+       <memInst>
+         <mAddr> MEMADDR </mAddr>
+         <msize> SIZE </msize>
+         <mdata> BM   </mdata>
+         ...
+       </memInst>
+     requires #chop(<i32> ADDR) ==K <i32> EA
+      andBool EA +Int #numBytes(i32) <=Int SIZE *Int #pageSize()
+      andBool #isByteMap(BM)
 endmodule
 ```
 
@@ -507,10 +505,11 @@ module MEMORY-SYMBOLIC-TYPE-LEMMAS
 endmodule
 
 module MEMORY-SYMBOLIC-TYPE-SPEC
-    imports WASM-TEXT
-    imports MEMORY-SYMBOLIC-TYPE-LEMMAS
+ imports WASM-TEXT
+ imports MEMORY-SYMBOLIC-TYPE-LEMMAS
 
-    rule <k> (ITYPE:IValType.store (i32.const ADDR) (ITYPE.load (i32.const ADDR)):Instr):Instr => . ... </k>
+ rule <k> ( ITYPE:IValType.store (i32.const ADDR)
+           (ITYPE.load           (i32.const ADDR)):Instr):Instr => . ... </k>
 
 ...
 ```
@@ -698,47 +697,47 @@ Finally, remember that pseudo-code is *just for the reader*; the formal verifica
 Without further ado, here is what we are going to try to prove[^5]:
 
 ```
-    rule <k> #wrc20ReverseBytes // A macro that expands to the function source code shown above.
-          ~> (i32.const ADDR)
-             (i32.const ADDR)
-             (i64.load)
-             (invoke NEXTADDR) // Invoke is an internal Wasm command, similar to `call`.
-             (i64.store)
-          => .
-             ...
-        </k>
-        <curModIdx> CUR </curModIdx>
-        <moduleInst>
-          <modIdx> CUR </modIdx>
-          <memAddrs> 0 |-> MEMADDR </memAddrs>
-          <types> TYPES => _ </types>                                     /* These five state changes  */
-          <nextTypeIdx> NEXTTYPEIDX => NEXTTYPEIDX +Int 1 </nextTypeIdx>  /* are due to the fact that  */
-          <funcIds> _ => _ </funcIds>                                     /* we declare a new function */
-          <funcAddrs> _ => _ </funcAddrs>                                 /* in the first step of the  */
-          <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>  /* specification.            */
-          ...
-        </moduleInst>
-        <funcs> _ => _ </funcs>                                      /* So is this change. */
-        <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>   /* And this one.      */
-        <memInst>
-          <mAddr> MEMADDR  </mAddr>
-          <msize> SIZE     </msize>
-          <mdata> BM => BM' </mdata>
-          ...
-        </memInst>
-      requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
-       andBool #isByteMap(BM)
-       andBool #inUnsignedRange(i64, X)
-       andBool #inUnsignedRange(i32, ADDR)
-       andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
-      ensures  #get(BM, ADDR +Int 0) ==Int #get(BM', ADDR +Int 7 )
-       andBool #get(BM, ADDR +Int 1) ==Int #get(BM', ADDR +Int 6 )
-       andBool #get(BM, ADDR +Int 2) ==Int #get(BM', ADDR +Int 5 )
-       andBool #get(BM, ADDR +Int 3) ==Int #get(BM', ADDR +Int 4 )
-       andBool #get(BM, ADDR +Int 4) ==Int #get(BM', ADDR +Int 3 )
-       andBool #get(BM, ADDR +Int 5) ==Int #get(BM', ADDR +Int 2 )
-       andBool #get(BM, ADDR +Int 6) ==Int #get(BM', ADDR +Int 1 )
-       andBool #get(BM, ADDR +Int 7) ==Int #get(BM', ADDR +Int 0 )
+rule <k> #wrc20ReverseBytes // A macro that expands to the function source code shown above.
+      ~> (i32.const ADDR)
+         (i32.const ADDR)
+         (i64.load)
+         (invoke NEXTADDR) // Invoke is an internal Wasm command, similar to `call`.
+         (i64.store)
+      => .
+         ...
+    </k>
+    <curModIdx> CUR </curModIdx>
+    <moduleInst>
+      <modIdx> CUR </modIdx>
+      <memAddrs> 0 |-> MEMADDR </memAddrs>
+      <types> TYPES => _ </types>                                     /* These five state changes  */
+      <nextTypeIdx> NEXTTYPEIDX => NEXTTYPEIDX +Int 1 </nextTypeIdx>  /* are due to the fact that  */
+      <funcIds> _ => _ </funcIds>                                     /* we declare a new function */
+      <funcAddrs> _ => _ </funcAddrs>                                 /* in the first step of the  */
+      <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>  /* specification.            */
+      ...
+    </moduleInst>
+    <funcs> _ => _ </funcs>                                      /* So is this change. */
+    <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>   /* And this one.      */
+    <memInst>
+      <mAddr> MEMADDR  </mAddr>
+      <msize> SIZE     </msize>
+      <mdata> BM => BM' </mdata>
+      ...
+    </memInst>
+  requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
+   andBool #isByteMap(BM)
+   andBool #inUnsignedRange(i64, X)
+   andBool #inUnsignedRange(i32, ADDR)
+   andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
+  ensures  #get(BM, ADDR +Int 0) ==Int #get(BM', ADDR +Int 7 )
+   andBool #get(BM, ADDR +Int 1) ==Int #get(BM', ADDR +Int 6 )
+   andBool #get(BM, ADDR +Int 2) ==Int #get(BM', ADDR +Int 5 )
+   andBool #get(BM, ADDR +Int 3) ==Int #get(BM', ADDR +Int 4 )
+   andBool #get(BM, ADDR +Int 4) ==Int #get(BM', ADDR +Int 3 )
+   andBool #get(BM, ADDR +Int 5) ==Int #get(BM', ADDR +Int 2 )
+   andBool #get(BM, ADDR +Int 6) ==Int #get(BM', ADDR +Int 1 )
+   andBool #get(BM, ADDR +Int 7) ==Int #get(BM', ADDR +Int 0 )
 ```
 
 The interesting parts are:
