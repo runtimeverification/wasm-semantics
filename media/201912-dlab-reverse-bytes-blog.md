@@ -36,23 +36,118 @@ proceeds in practice.
 
 Formal verification is a process by which a system (typically, a software system)
 is proved to be consistent with a set of formalized requirements.
+To understand what we mean by this, it is helpful to zoom out and recall
+how the system  development proceeds in the large.
+
+Fundamentally, system or product development is an iterative process where we
+are trying to relate a set of **system requirements** with a **system implementation**.
+More formally, we might write:
+
+$$\textit{Implementation} = \textit{Requirements}$$
+
+Or, at least:
+
+$$\textit{Implementation} \Rightarrow \textit{Requirements}$$
+
+Which is to say, our implementation satisfies our requirements (and possibly more things).
+
+Of course, this leads us to an important question:
+_how can we know that our system implementation satisfies our system requirements?_
+In our view, **formal verification is merely a systematic method of answering this question**.
+Stated differently, formal verification shifts the question of system correctness from
+informal human reasoning to formal mathematical reasoning.
+But really, why should we bother with formal verification?
+What is the benefit?
+There are two enormous benefits we obtain when we embrace the practice of formal verification:
+
+1. Systematic, formal, and mathematical reasoning gives us a _precise language for thinking about system design_;
+2. Many important formal verification tasks are _automable by a computer_; this means we can consider very difficult problems that would be impossible for a human to solve.
+
+Now, without further ado, we present an overview of how formal verification (for software
+systems) proceeds in the figure below:
 
 ![Formal Verification Process Overview](media/img/formal-verification-process-diagram.png)
 
-The figure provides an overview of how requirements are turned into working code.
+## Overview of the Formal Verification Process
+
+In the figure, boxes represent different _artifacts_ that our produced during the verification process,
+while connecting lines represent _processes_ that can transform artifacts of one kind into another.
+These lines are annotated by the _entity_ needed to perform the desired transformation.
+We have two kinds of connecting lines: (i) arrows that denote _one-way processes_ and (ii)
+two parallel lines that denote _two-way processes_ (in other words, a _correspondence_ between two artifacts).
+Let us define the various artifacts and entities that appear in our figure:
+
+1. **requirements**: a human language document that describes what our system should do;
+2. **developer**: a human expert that produces **source code** based on **requirements**;
+3. **compiler**: a special program that transforms code from one language into another language;
+4. **verification expert**: someone who understands how to formally relate **requirements** to **source code**;
+5. **tests**: special code that interfaces with and checks that our **source code** behaves correctly in certain cases;
+6. **source code/assembly**: the code that (hopefully) implements all of our **requirements**;
+7. **formalized requirements**: a mathematical restatement of our **requirements**;
+7. **semantics**: a special **compiler** that maps code into its mathematical meaning;
+8. **formalized system specification**: the mathematical meaning of some **source code**;
+9. **theorem prover**: a computerized assistant that helps a user solve mathematical problems.
+
+As an example of a one-way process, consider how software requirements are mapped into working code.
+This is a one-way process because it is _essentially impossible to reconstruct software requirements by examining source code_.
+Computer languages are just _too different_ from human languages and are unable to directly express our requirements.
+The same holds true for tests.
+While typically closer in structure, the language of tests is almost always _too limited_ to fully express our human language requirements.
+<!--
+The reason for this is simple: software must deal with many concerns that only indirectly
+relate to our software requirements but which are necessary for execution
+(e.g., writing a program in C versus Javascript).
+-->
+On the other hand, since formalized requirements are merely a mathematical restatement of the original human language requirements,
+a sufficiently skilled developer can read them and reconstruct an equivalent human language version.
+Thus, this transformation is an example of a two-way process or a correspondence.
+Similarly, a semantics takes a program and generates its mathematical meaning (i.e., the formalized system specification).
+Of course, this meaning must necessarily capture all of the important details of the program.
+Thus, given the formalized system specification, we can reconstruct what the original program must have been like.
+
+## Re-examining the Formal Verification Process
+
+With these details in hand, let us re-examine the figure.
 In conventional software development, a developer (and typically also compiler)
 together turn system requirements into executable code.
-A (possibly different) developer will then write tests that hook into the executable
-code, ensuring that certain code paths return desired results.
-Here is the million dollar question: can testing ensure a perfect correspondence
-between the requirements and the code?
-The answer is *simply* no; we know from experience that testing can only demonstrate
-the presence of bugs; not their absence.
+A (possibly different) developer will then take those same system requirements and
+write tests that hook into the executable code, ensuring that certain code paths return desired results.
+These tests are helpful in showing that our code is correct, but we already know testing is not enough.
+While tests can demonstrate the presence of bugs, they typically can _never prove the absence of bugs_.
 **The beauty of formal verification is that we can _provably_ demonstrate a correspondence
-between our requirements and the source code via a _semantics_.
-You can think of a semantics as a compiler that maps code into its mathematical meaning.**
+between our requirements and our system specification,
+i.e., we can prove that our source code has _no bugs_.**
 
-Let's examine the phases of formally verifying a program:
+A key tool that we use in this process is a _semantics_.
+You can think of a semantics as a **compiler that maps code into its mathematical meaning.**
+This compiler is special because it perfectly captures all possible behaviors of the program without taking any shortcuts.
+<!--
+Most compilers explicitly do _NOT_ do this for performance.
+As an example, the C language specfication allows function arguments to be evaluated in any order,
+but C compilers will always pick one arbitrary order to use when executing the program.
+This can cause problems with side-effecting expressions like `f(x,++x)` which have different behaviors
+depending on evaluation order, so that compiling with different compilers _can give different results!_
+-->
+Another key tool that we use is a _theorem prover_, which is just a computer program that assists us
+in solving mathematical problems and avoiding careless errors. Since our _formalized requirements_ and
+_formalized system specification_ are both mathematical statements, we can use a theorem prover to talk
+about how they are related. Thus, to answer the question:
+
+_How can we know that our system implementation satisfies our system requirements?_
+
+We shift our thinking into the formal, mathematical domain and instead ask:
+
+_Can our theorem prover show that our formalized system specification satisfies our formalized requirements?_
+
+Thus, we have come full circle and can now see how formal verification shifts
+our investigation from informal human reasoning to formal mathematical reasoning.
+
+# The Main Phases of Formal Verification
+
+With that explanation out of the way, let's examine the phases of formally verifying a program.
+Obviously, to formally verify anything, we first need to have some requirements and a program in mind.
+Thus, let's assume we already have them.
+Then we will:
 
 1. Specify Language Semantics - must be done *once* for each programming language that consider (e.g., C, Javascript...) and can be used for all programs in that language;
 2. Formalize Program Requirements - convert natural language requirements document into an equivalent mathematical description;
@@ -155,24 +250,24 @@ Interestingly, writing down requirements precisely is often the most challenging
 This is typically because we have not fully considered all possible edge cases (e.g., what happens when $x \leq 0$?)
 or because we have assumptions about our system that have often never been written down or even verbalized.
 
-## Proving Correspondence
+## Proving the Correspondence
 
 Here we use the K Framework to *formally prove* the correspondence between our *program meaning* and our *program requirements*.
 This last step is surprisingly quite mechanical.
-In some sense, you just have to "follow your nose," so to speak, in the sense that:
+At this point, you just have to "follow your nose," so to speak, in the sense that:
 
-1. (as we saw above) the formalized program requirements provides:
+1. (as we saw above) the formalized program requirements provide:
 
   * a (possibly infinite) set of *initial program states* and;
   * a (possibly infinite) set of *acceptable final program states*.
 
-2. the semantic definition of the programming language *completely determines* how initial states can evolve into final states.
+2. the semantic definition of a programming language *completely determines* how initial states can evolve into final states.
 
 But, that being the case, how can this formal proof process be challenging?
 There are two main ways that things can go wrong:
 
-1. the proof process may take too much time and/or memory;
-2. the proof may get stuck by something that could not be proved.
+1. the proof process relies on a computer program that may run out of time or memory;
+2. the proof may get stuck because it could not prove something.
 
 This leads us to primary proof search process that we call here the *verification cycle*:
 
