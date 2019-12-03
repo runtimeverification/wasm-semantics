@@ -19,7 +19,7 @@ If you missed the
 [first post](https://medium.com/dlabvc/kwasm-a-new-executable-semantics-for-the-blockchain-14e1bca8a360),
 feel free to take a look!
 
-Today, we will be exploring how to verify a fragment of the
+Today, we will be starting a mini-series on exploring how to verify a fragment of the
 [WRC20 contract](https://gist.github.com/axic/16158c5c88fbc7b1d09dfa8c658bc363),
 i.e., a Wasm implementation of the [Ethereum](https://en.wikipedia.org/wiki/Ethereum)
 smart contract [ERC20](https://eips.ethereum.org/EIPS/eip-20), which provides
@@ -27,8 +27,11 @@ an API for token exchange that is usable by other kinds of smart contracts (e.g.
 This is relevant because [the Ethereum virtual machine (EVM) is migrating to Wasm implementation
 dubbed EWasm](https://www.coindesk.com/open-heart-surgery-inside-ethereums-crucial-replacement-of-the-evm).
 
-In other words, we will show how we can formally verify a fragment of a
+The first part of the mini-series will be a deep dive into what formal verification is
+and how we can use the [K Framework](https://github.com/kframework/k) to help automate this process.
+In the second part, we will show how we can formally verify a fragment of a
 program (i.e., the WRC20 smart contract) which is written in web assembly (Wasm).
+
 Our desire is that you will not only enjoy this technical adventure but also walk
 away knowing just a bit more about Wasm and how the formal verification process
 proceeds in practice.
@@ -521,6 +524,13 @@ By invoking the $\mathbb{K}$ prover with the option `--def-module MEMORY-SYMBOLI
 [^3]: Actually, there is one non-obvious part of each function: when the stored value is 0, that is represented by no entry.
       The two functions respect that by erasing 0-valued entries and interpreting an empty entry as 0, respectively.
 [^4]: N.B. that we cannot use the distributive property of division, as that holds over the rational numbers and its supersets, not over the integers.
+
+# What's Next
+
+We covered a lot of highly technical ground today.
+Thanks for sticking with us this far.
+In the next post in this mini-series, we will show how to apply the concepts defined today
+using the K Framework to verify a fragment of the WRC20 program!
 
 # WRC20 Verification: first step
 
