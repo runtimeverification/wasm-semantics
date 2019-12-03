@@ -76,9 +76,9 @@ systems) proceeds in the figure below:
 
 In the figure, boxes represent different _artifacts_ that our produced during the verification process,
 while connecting lines represent _transformations_ from one kind of artifact into another.
-Double connecting lines represent transformations that preserve all esssential information;
+Double connecting lines represent transformations that preserve all essential information;
 they are supposed to be reminiscent of the equality symbol (=) from mathematics.
-These lines are annotated by the _entity_ needed to perform the desired transformation.
+All lines are annotated by the _entity_ needed to perform the desired transformation.
 Let us define the various artifacts and entities that appear in our figure:
 
 1. **requirements**: a human language document that describes what our system should do;
@@ -468,8 +468,7 @@ Together, they help eliminate the expressions for assignment to
                +  bm[addr + 2]  /256      mod 256 + bm[addr + 3]           mod 256
 ----------------  ------------  --------  -------------------------------  --------
 
-We can now make use of the invariant that we claim to maintain for the byte map.
-We add the following two lemmas:
+We can now make use of our claimed invariant for the byte map. We add the following two lemmas:
 
 ```k
 rule #get(BMAP, IDX) modInt 256 => #get(BMAP, IDX)
