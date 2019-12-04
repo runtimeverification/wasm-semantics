@@ -6,7 +6,7 @@ DEPS_DIR  := deps
 DEFN_DIR  := $(BUILD_DIR)/defn
 
 K_SUBMODULE := $(DEPS_DIR)/k
-K_RELEASE   := $(K_SUBMODULE)/k-distribution/target/release/k
+K_RELEASE   ?= $(K_SUBMODULE)/k-distribution/target/release/k
 K_BIN       := $(K_RELEASE)/bin
 K_LIB       := $(K_RELEASE)/lib
 
