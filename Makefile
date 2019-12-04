@@ -149,7 +149,7 @@ tests/proofs/memory-concrete-type-spec.k%prove: PROVE_OPTIONS=--z3-tactic "(or-e
 tests/proofs/memory-concrete-type-spec.k%prove: KPROVE_MODULE=MEMORY-CONCRETE-TYPE-LEMMAS
 tests/proofs/wrc20-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
 tests/proofs/wrc20-spec.k%prove: KPROVE_MODULE=WRC20-LEMMAS
-tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=haskell
 
 KPROVE_MODULE := KWASM-LEMMAS
 
@@ -258,4 +258,3 @@ media/%.pdf: media/%.md media/citations.md
 
 media-clean:
 	rm media/*.pdf
-
