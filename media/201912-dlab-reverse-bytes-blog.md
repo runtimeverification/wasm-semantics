@@ -531,6 +531,35 @@ Thanks for sticking with us this far.
 In the next post in this mini-series, we will show how to apply the concepts defined today
 using the K Framework to verify a fragment of the WRC20 program!
 
+# Part Two
+
+This blog post is the second in a series of posts
+written by [Runtime Verification, Inc.](https://www.runtimeverification.com)
+and sponsored by [dlab](https://medium.com/dlabvc)
+on [web assembly (Wasm)](https://en.wikipedia.org/wiki/WebAssembly),
+and more specifically KWasm, a tool for doing
+[formal verification](https://en.wikipedia.org/wiki/Formal_verification) of Wasm programs.
+If you missed the
+[first post](https://medium.com/dlabvc/kwasm-a-new-executable-semantics-for-the-blockchain-14e1bca8a360),
+feel free to take a look!
+
+Today, we will be finishing a mini-series on exploring how to verify a fragment of the
+[WRC20 contract](https://gist.github.com/axic/16158c5c88fbc7b1d09dfa8c658bc363),
+i.e., a Wasm implementation of the [Ethereum](https://en.wikipedia.org/wiki/Ethereum)
+smart contract [ERC20](https://eips.ethereum.org/EIPS/eip-20), which provides
+an API for token exchange that is usable by other kinds of smart contracts (e.g., digital wallets).
+This is relevant because [the Ethereum virtual machine (EVM) is migrating to Wasm implementation
+dubbed EWasm](https://www.coindesk.com/open-heart-surgery-inside-ethereums-crucial-replacement-of-the-evm).
+
+The first part of the mini-series was a deep dive into what formal verification is
+and how we can use the [K Framework](https://github.com/kframework/k) to help automate this process.
+In this final part, we will show how we can formally verify a fragment of a
+program (i.e., the WRC20 smart contract) which is written in web assembly (Wasm).
+
+Our desire is that you will not only enjoy this technical adventure but also walk
+away knowing just a bit more about Wasm and how the formal verification process
+proceeds in practice.
+
 # WRC20 Verification: first step
 
 WRC20 is a Wasm version of an ERC20.
@@ -890,6 +919,7 @@ After one iteration of the loop, the value has changed to.
 
 Here it is as a syntax tree, with 18446744073709551616 converted to $2^{64}$:
 
+<!--
 \begin{tikzpicture}
   \node (a) {modInt}
   child {
@@ -939,6 +969,9 @@ Here it is as a syntax tree, with 18446744073709551616 converted to $2^{64}$:
     child {node  (i) {0}}}
   child {node (c) {$2^{64}$}};
 \end{tikzpicture}
+-->
+
+![Reverse Bytes Term Tree 1](media/img/reverse-bytes-term-tree1.png)
 
 Looking at this expression, there are some obvious structural changes that we can tell K about.
 We don't include a proof of our new axioms here, but there is a formal proof included with the proof in our [lemmas file](https://github.com/kframework/wasm-semantics/blob/master/kwasm-lemmas.md).
@@ -975,6 +1008,7 @@ rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
 
 This gives us a much smaller state:
 
+<!--
 \begin{tikzpicture}
   \node (a) {<<Int}
       child {
@@ -1015,6 +1049,9 @@ This gives us a much smaller state:
       }
   child {node (c) {56}};
 \end{tikzpicture}
+-->
+
+![Reverse Bytes Term Tree 2](media/img/reverse-bytes-term-tree2.png)
 
 This present a nice opportunity to get rid of some shifts.
 Again, recall that these are unbounded integers, so shifting left does not get rid of any bits of information.
@@ -1037,6 +1074,7 @@ rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
 
 In the end, adding these rule leaves us with our final expression (for now):
 
+<!--
 \begin{tikzpicture}
   \node (a) {<<Int}
     child {
@@ -1056,6 +1094,9 @@ In the end, adding these rule leaves us with our final expression (for now):
     }
   child {node (c) {56}};
 \end{tikzpicture}
+-->
+
+![Reverse Bytes Term Tree 3](media/img/reverse-bytes-term-tree3.png)
 
 You may recognize this as getting the least significant byte of the stored value and putting it in the position of the most significant one in the resulting `i64` value.
 A good start!
