@@ -1,27 +1,3 @@
-  #Not ( #Not ( {
-      N
-    #Equals
-      0
-    } )
-  #And
-    #Not ( {
-      N
-    #Equals
-      0
-    } )
-  #And
-    {
-      X
-    #Equals
-      X modInt N
-    }
-  #And
-    {
-      X <=Int 0 andBool 0 <Int N
-    #Equals
-      true
-    } )
-#And
   #Not ( {
     N
   #Equals
