@@ -459,7 +459,7 @@ The exception is for characters that are explicitly escaped which can represent 
  // -------------------------------------
 
     syntax String          ::= #parseWasmString   ( WasmStringToken ) [function, functional, hook(STRING.token2string)]
-    syntax WasmStringToken ::= #unparseWasmString ( String          ) [function, functional, hook(STRING.string2token)]
+    syntax WasmStringToken ::= #unparseWasmString ( String          ) [function, functional, hook(STRING.string2token), smtlib(string2wasmstring)]
     syntax DataString      ::= List{WasmString, ""}                   [klabel(listWasmString)]
  // ------------------------------------------------------------------------------------------
 ```
