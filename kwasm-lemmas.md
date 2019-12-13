@@ -402,14 +402,14 @@ module WRC20
 A module of shorthand commands for the WRC20 module.
 
 ```k
-    syntax Stmts     ::= "#wrc20"
-    syntax Defns     ::= "#wrc20Body"
-    syntax Defns     ::= "#wrc20Imports"
-    syntax Defns     ::= "#wrc20Functions"
-    syntax Defns     ::= "#wrc20ReverseBytes"
-    syntax TypeDecls ::= "#wrc20ReverseBytesTypeDecls"
- // --------------------------------------------------
-    rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro]
+    syntax ModuleDecl ::= "#wrc20"
+    syntax Defns      ::= "#wrc20Body"
+    syntax Defns      ::= "#wrc20Imports"
+    syntax Defns      ::= "#wrc20Functions"
+    syntax Defns      ::= "#wrc20ReverseBytes"
+    syntax TypeDecls  ::= "#wrc20ReverseBytesTypeDecls"
+ // ---------------------------------------------------
+    rule #wrc20 => ( module #wrc20Body ) [macro]
 
     rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro]
 
