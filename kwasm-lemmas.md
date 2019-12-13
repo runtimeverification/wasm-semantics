@@ -236,6 +236,8 @@ Lookups
 
 ```k
     rule (MAP:Map [KEY <- VAL])[KEY] => VAL
+    rule values(.Map) => .List
+    rule _ in .List => false
 ```
 
 Memory
