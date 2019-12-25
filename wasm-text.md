@@ -310,20 +310,14 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // --------------------------------------------------------------
 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
- // -------------------------------------------------------
-    rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
-
-    syntax FuncSpec ::= InlineImport TypeUse
- // ----------------------------------------
-    rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
-
-    syntax TableSpec ::= InlineImport TableType
- // -------------------------------------------
-    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table OID TT) ) ... </k>
-
+    syntax FuncSpec   ::= InlineImport TypeUse
+    syntax TableSpec  ::= InlineImport TableType
     syntax MemorySpec ::= InlineImport MemType
  // ------------------------------------------
-    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
+    rule ( global OID:OptionalId (import MOD NAME) TYP          ) => ( import MOD NAME (global OID TYP ) )  [macro]
+    rule ( func   OID:OptionalId (import MOD NAME) TUSE         ) => ( import MOD NAME (func   OID TUSE) )  [macro]
+    rule ( table  OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table  OID TT  ) )  [macro]
+    rule ( memory OID:OptionalId (import MOD NAME) MT:MemType   ) => ( import MOD NAME (memory OID MT  ) )  [macro]
 ```
 
 ```k
