@@ -23,4 +23,17 @@
 
 (assert_return (invoke "baz") (i32.const 97))
 
+;; Same as above but for `elem`
+(module
+  (elem (offset (i32.const 0)) 0)
+  (table funcref (elem 1))
+  (func (result i32) (i32.const 0))
+  (func (result i32) (i32.const 1))
+  (func (export "biz") (result i32)
+    (call_indirect (result i32) (i32.const 0))
+  )
+)
+
+(assert_return (invoke "biz") (i32.const 1))
+
 #clearConfig

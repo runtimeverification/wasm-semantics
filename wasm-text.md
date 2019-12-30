@@ -209,28 +209,27 @@ In the text format, it is also allowed to have a conditional without the `else` 
 Intitial memory data, and initial table elements can be given inline in the text format.
 
 ```k
+    syntax Identifier ::= "#memId" | "#tabId"
+
     syntax MemorySpec ::= "(" "data" DataString ")"
  // -----------------------------------------------
-    rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+    rule ( memory ( data DS ) ) => ( memory #memId (data DS) ) [macro]
 
-    rule <k> ( memory ID:Identifier ( data DS ) )
-          =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data ID (offset (i32.const 0) .Instrs) DS )
-          ...
-         </k>
-      requires #lengthDataPages(DS) <=Int #maxMemorySize()
+    rule ( memory ID:Identifier ( data DS ) ) DEFS:Defns
+      => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
+         ( data   ID (offset (i32.const 0) .Instrs) DS )
+         DEFS
+      [macro]
 
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
-    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+    rule ( table funcref ( elem ES ) ) => ( table #tabId funcref (elem ES) ) [macro]
 
-    rule <k> ( table ID:Identifier funcref ( elem ES ) )
-          =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
-          ~> ( elem ID (offset (i32.const 0) .Instrs) ES )
-          ...
-         </k>
+    rule ( table ID:Identifier funcref ( elem ES ) ) DEFS:Defns
+      => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
+         ( elem  ID (offset (i32.const 0) .Instrs) ES )
+         DEFS
+      [macro]
 ```
 
 ### Exports
