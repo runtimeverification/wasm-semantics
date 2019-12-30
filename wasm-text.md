@@ -207,6 +207,12 @@ In the text format, it is also allowed to have a conditional without the `else` 
 ### Memory and Tables
 
 Intitial memory data, and initial table elements can be given inline in the text format.
+We supply macros that will unfold these definitions when they are part of a body of definitions, such as in a module.
+This is to ensure that the unfolding happens before the different elements in a module are grouped together, so as to maintain their order.
+
+We also supply rules for when the inlined definitions are encountered on top of the `<k>` cell, so that they can be desugared on the fly.
+
+This is useful when specifying modules in the more lax KWasm format, where they can be declared as they are needed.
 
 ```k
     syntax Identifier ::= "#memId" | "#tabId"
@@ -221,6 +227,12 @@ Intitial memory data, and initial table elements can be given inline in the text
          DEFS
       [macro]
 
+    rule <k> ( memory ID:Identifier ( data DS ) )
+          => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
+          ~> ( data   ID (offset (i32.const 0) .Instrs) DS )
+          ...
+         </k>
+
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
     rule ( table funcref ( elem ES ) ) => ( table #tabId funcref (elem ES) ) [macro]
@@ -230,6 +242,12 @@ Intitial memory data, and initial table elements can be given inline in the text
          ( elem  ID (offset (i32.const 0) .Instrs) ES )
          DEFS
       [macro]
+
+    rule <k> ( table ID:Identifier funcref ( elem ES ) )
+         => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
+         ~> ( elem  ID (offset (i32.const 0) .Instrs) ES )
+         ...
+         </k>
 ```
 
 ### Exports
