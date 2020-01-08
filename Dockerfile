@@ -27,7 +27,6 @@ RUN    apt-get update           \
             make                \
             maven               \
             netcat-openbsd      \
-            opam                \
             openjdk-11-jdk      \
             pandoc              \
             pkg-config          \
@@ -45,11 +44,6 @@ ADD deps/k/haskell-backend/src/main/native/haskell-backend/scripts/install-stack
 RUN /.install-stack/install-stack.sh
 
 USER user:user
-
-ADD deps/k/k-distribution/src/main/scripts/bin/k-configure-opam-dev deps/k/k-distribution/src/main/scripts/bin/k-configure-opam-common /home/user/.tmp-opam/bin/
-ADD deps/k/k-distribution/src/main/scripts/lib/opam  /home/user/.tmp-opam/lib/opam/
-RUN    cd /home/user \
-    && ./.tmp-opam/bin/k-configure-opam-dev
 
 ADD --chown=user:user deps/k/haskell-backend/src/main/native/haskell-backend/stack.yaml /home/user/.tmp-haskell/
 ADD --chown=user:user deps/k/haskell-backend/src/main/native/haskell-backend/kore/package.yaml /home/user/.tmp-haskell/kore/
