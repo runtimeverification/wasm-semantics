@@ -216,7 +216,7 @@ test-prove: test-prove-good test-prove-bad
 
 ### KLab interactive
 
-test-klab-prove: $(quick_proof_tests:=.klab-prove)
+test-klab-prove: tests/proofs/simple-arithmetic-spec.k.klab-prove
 
 # Presentation
 # ------------
