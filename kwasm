@@ -73,7 +73,6 @@ run_klab() {
         --state-log --state-log-path "$KLAB_OUT/data" --state-log-id "$klab_log" \
         --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
         --output-flatten "_Map_ #And" \
-        --output-tokenize "listInstr <_>_ i32_WASM-DATA i64_WASM-DATA _:__WASM-DATA" \
         --no-alpha-renaming --restore-original-names --no-sort-collections \
         --output json \
         "$@"
