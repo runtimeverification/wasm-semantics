@@ -50,8 +50,8 @@ Installing/Building
 
 ### K Backends
 
-There are three backends of K available, the OCAML backend for concrete execution, the Java backend for symbolic reasoning and proofs, and the experimental Haskell backend for developers.
-This repository generates the build-products for both backends in `.build/defn/java/` and `.build/defn/ocaml/`.
+There are three backends of K available, the LLVM backend for concrete execution, and the Haskell/Java backends for symbolic reasoning and proofs.
+This repository generates the build-products for the backends in `.build/defn/llvm`, `.build/defn/haskell`, and `.build/defn/java`.
 
 ### Dependencies
 
@@ -62,8 +62,6 @@ The following are needed for building/running KWasm:
 -   GNU [Bison](https://www.gnu.org/software/bison/), [Flex](https://github.com/westes/flex), and [Autoconf](http://www.gnu.org/software/autoconf/).
 -   GNU [libmpfr](http://www.mpfr.org/) and [libtool](https://www.gnu.org/software/libtool/).
 -   Java 8 JDK (eg. [OpenJDK](http://openjdk.java.net/))
--   [Opam](https://opam.ocaml.org/doc/Install.html), **important**: Ubuntu users prior to 15.04 **must** build from source, as the Ubuntu install for 14.10 and prior is broken.
-    `opam repository` also requires `rsync`.
 -   [Haskell Stack](https://docs.haskellstack.org/en/stable/install_and_upgrade/#installupgrade).
     Note that the version of the `stack` tool provided by your package manager might not be recent enough.
     Please follow installation instructions from the Haskell Stack website linked above.
@@ -75,9 +73,9 @@ On Ubuntu >= 15.04 (for example):
 sudo apt-get install --yes                                                            \
     autoconf bison clang++-8 clang-8 cmake curl flex gcc libboost-test-dev libffi-dev \
     libgmp-dev libjemalloc-dev libmpfr-dev libprocps-dev libprotobuf-dev libtool      \
-    libyaml-dev lld-8 llvm llvm-8 llvm-8-tools maven opam openjdk-8-jdk pandoc        \
-    pkg-config protobuf-compiler python3 python-pygments python-recommonmark          \
-    python-sphinx time z3 zlib1g-dev
+    libyaml-dev lld-8 llvm llvm-8 llvm-8-tools maven openjdk-8-jdk pandoc pkg-config  \
+    protobuf-compiler python3 python-pygments python-recommonmark python-sphinx time  \
+    z3 zlib1g-dev
 ```
 
 To upgrade `stack` (if needed):
@@ -91,12 +89,6 @@ After installing the above dependencies, make sure the submodules are setup:
 
 ```sh
 git submodule update --init --recursive
-```
-
-If you haven't already setup K's OCaml dependencies more recently than February 1, 2019, then you also need to setup the K OCaml dependencies:
-
-```sh
-./deps/k/k-distribution/src/main/scripts/bin/k-configure-opam-dev
 ```
 
 Install repository specific dependencies:
@@ -113,7 +105,7 @@ And then build the semantics:
 make build
 ```
 
-To only build specific backends, you can do `make build-llvm`, `make build-java`, `make build-ocaml`, or `make build-haskell`.
+To only build specific backends, you can do `make build-llvm`, `make build-java`, or `make build-haskell`.
 
 ### Media and documents
 
