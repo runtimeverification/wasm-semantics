@@ -211,16 +211,6 @@ Here we define the rules about integer parsing.
 
 ```k
     syntax WasmInt ::= Int
-    syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
- // --------------------------------------------------------------------------
-
-    syntax String ::= WasmIntToken2String( WasmIntToken ) [function, functional, hook(STRING.token2string)]
-    syntax Int    ::= WasmIntToken2Int   ( String       ) [function]
- // ----------------------------------------------------------------
-    rule `WasmInt`(VAL:WasmIntToken) => WasmIntToken2Int(replaceAll(WasmIntToken2String(VAL), "_", ""))
-    rule WasmIntToken2Int(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
-    rule WasmIntToken2Int(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-
 //    syntax String ::= #parseWasmIntToken ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
 //    syntax Int    ::= #parseWasmInt      ( String       )  [function]
 //                    | WasmIntToken

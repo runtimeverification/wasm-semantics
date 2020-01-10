@@ -84,6 +84,27 @@ The text format is a concrete syntax for Wasm.
 It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
 Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
 
+### Text Integers
+
+All integers given in the text format are automatically turned into regular integers.
+That means converting between hexadecimal and decimal when necessary, and removing underscores.
+
+```k
+    syntax WasmInt ::= Int
+    syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
+ // --------------------------------------------------------------------------
+    rule `WasmInt`(VAL) => WasmIntToken2Int(VAL)
+
+    syntax String ::= WasmIntToken2String    ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= WasmIntTokenString2Int ( String       ) [function]
+                    | WasmIntToken2Int       ( WasmIntToken ) [function]
+ // --------------------------------------------------------------------
+    rule WasmIntTokenString2Int(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+    rule WasmIntTokenString2Int(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+
+    rule WasmIntToken2Int(VAL) => WasmIntTokenString2Int(replaceAll(WasmIntToken2String(VAL), "_", ""))
+```
+
 ### Folded Instructions
 
 Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
