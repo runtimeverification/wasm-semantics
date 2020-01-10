@@ -58,8 +58,8 @@ In the abstract syntax of Wasm, indicies are 32 bit unsigned integers.
 However, we extend the `Index` sort with another subsort, `Identifier`, in the text format.
 
 ```k
-    syntax Index ::= Int
- // --------------------
+    syntax Index ::= WasmInt
+ // ------------------------
 ```
 
 `Int` is the basic form of index, and indices always need to resolve to integers.
@@ -210,13 +210,24 @@ Here we define the rules about integer parsing.
 **TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
 
 ```k
-    syntax String ::= #parseWasmIntToken ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
-    syntax Int    ::= #parseWasmInt      ( String       )  [function]
-                    | WasmIntToken
- // ------------------------------
-    rule #parseWasmInt(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
-    rule #parseWasmInt(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-    rule WINT:WasmIntToken => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
+    syntax WasmInt ::= Int
+    syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
+ // --------------------------------------------------------------------------
+
+    syntax String ::= WasmIntToken2String( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= WasmIntToken2Int   ( String       ) [function]
+ // ----------------------------------------------------------------
+    rule `WasmInt`(VAL:WasmIntToken) => WasmIntToken2Int(replaceAll(WasmIntToken2String(VAL), "_", ""))
+    rule WasmIntToken2Int(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+    rule WasmIntToken2Int(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+
+//    syntax String ::= #parseWasmIntToken ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+//    syntax Int    ::= #parseWasmInt      ( String       )  [function]
+//                    | WasmIntToken
+// // ------------------------------
+//    rule #parseWasmInt(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+//    rule #parseWasmInt(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+//    rule WINT:WasmIntToken => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
 ```
 
 ### Type Mutability

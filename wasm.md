@@ -196,7 +196,7 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 **TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
-    syntax PlainInstr ::= IValType "." "const" Int
+    syntax PlainInstr ::= IValType "." "const" WasmInt
                         | FValType "." "const" Number
  // -------------------------------------------------
     rule <k> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </k>
@@ -1094,9 +1094,9 @@ The `align` parameter is for optimization only and is not allowed to influence t
     syntax MemArg ::= OffsetArg | AlignArg | OffsetArg AlignArg
  // -----------------------------------------------------------
 
-    syntax OffsetArg ::= "offset=" Int
-    syntax AlignArg  ::= "align="  Int
- // ----------------------------------
+    syntax OffsetArg ::= "offset=" WasmInt
+    syntax AlignArg  ::= "align="  WasmInt
+ // --------------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function]
  // -----------------------------------------------
