@@ -206,18 +206,11 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i64) => 18446744073709551616
 ```
 
-Here we define the rules about integer parsing.
-**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
+Here we define the rules about what integer formats can be used in Wasm.
+For the core language, only regular integers are allowed.
 
 ```k
     syntax WasmInt ::= Int
-//    syntax String ::= #parseWasmIntToken ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
-//    syntax Int    ::= #parseWasmInt      ( String       )  [function]
-//                    | WasmIntToken
-// // ------------------------------
-//    rule #parseWasmInt(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
-//    rule #parseWasmInt(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-//    rule WINT:WasmIntToken => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
 ```
 
 ### Type Mutability

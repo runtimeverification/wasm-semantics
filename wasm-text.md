@@ -89,6 +89,8 @@ Most instructions, those in the sort `PlainInstr`, have identical keywords in th
 All integers given in the text format are automatically turned into regular integers.
 That means converting between hexadecimal and decimal when necessary, and removing underscores.
 
+**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
+
 ```k
     syntax WasmInt ::= Int
     syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
