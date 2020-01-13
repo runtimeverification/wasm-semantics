@@ -245,10 +245,7 @@ test-klab-prove: $(quick_proof_tests:=.klab-prove)
 media: presentations reports
 
 media/%.pdf: TO_FORMAT=beamer
-presentations: media/201803-presentation-ethcc.pdf    \
-               media/201903-presentation-edcon.pdf    \
-               media/201903-presentation-chalmers.pdf \
-               media/201906-presentation-wasm-on-blockchain.pdf
+presentations: $(patsubst %.md, %.pdf, $(wildcard media/*-presentation-*.md))
 
 media/201903-report-chalmers.pdf: TO_FORMAT=latex
 reports: media/201903-report-chalmers.pdf
