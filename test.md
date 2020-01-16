@@ -5,6 +5,7 @@ For testing, we augment the semantics with some helpers.
 
 ```k
 require "wasm-text.k"
+require "kwasm-lemmas.k"
 ```
 
 Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consists of the definitions both for parsing and execution.
@@ -17,6 +18,7 @@ endmodule
 
 module WASM-TEST
     imports WASM-TEXT
+    imports KWASM-LEMMAS
 ```
 
 Auxiliary

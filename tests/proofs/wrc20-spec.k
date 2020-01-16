@@ -23,6 +23,7 @@ module WRC20-SPEC
              ...
         </k>
         <curModIdx> CUR </curModIdx>
+        <moduleInstances>
         <moduleInst>
           <modIdx> CUR </modIdx>
           <memAddrs> 0 |-> MEMADDR </memAddrs>
@@ -33,14 +34,17 @@ module WRC20-SPEC
           <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>
           ...
         </moduleInst>
+        </moduleInstances>
         <funcs> _ => _ </funcs>
         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
+        <mems>
         <memInst>
           <mAddr> MEMADDR  </mAddr>
           <msize> SIZE     </msize>
           <mdata> BM => BM' </mdata>
           ...
         </memInst>
+        </mems>
         // TODO: Make function out of this tricky side condition.
       requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
        andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
