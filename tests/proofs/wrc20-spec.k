@@ -33,7 +33,7 @@ module WRC20-SPEC
           <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>
           ...
         </moduleInst>
-        <funcs> _ => _ </funcs>
+        <funcs> .Bag => _ </funcs>
         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
         <memInst>
           <mAddr> MEMADDR  </mAddr>
