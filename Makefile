@@ -20,10 +20,9 @@ TANGLER                 := $(PANDOC_TANGLE_SUBMODULE)/tangle.lua
 LUA_PATH                := $(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
-.PHONY: all clean                                                          \
-        deps ocaml-deps haskell-deps                                       \
-        defn defn-llvm defn-haskell defn-ocaml defn-java                   \
-        build build-llvm build-haskell build-ocaml build-java              \
+.PHONY: all clean deps                                                     \
+        defn defn-llvm defn-haskell defn-java                              \
+        build build-llvm build-haskell build-java                          \
         test test-execution test-simple test-prove test-klab-prove         \
         test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
@@ -38,7 +37,7 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(K_SUBMODULE)/make.timestamp $(TANGLER) ocaml-deps
+deps: $(K_SUBMODULE)/make.timestamp $(TANGLER)
 
 $(K_SUBMODULE)/make.timestamp:
 	git submodule update --init --recursive
@@ -47,10 +46,6 @@ $(K_SUBMODULE)/make.timestamp:
 
 $(TANGLER):
 	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
-
-ocaml-deps:
-	eval $$(opam config env) \
-	    opam install --yes mlgmp zarith uuidm
 
 # Building Definition
 # -------------------
@@ -63,25 +58,21 @@ wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwa
 
 llvm_dir    := $(DEFN_DIR)/llvm
 haskell_dir := $(DEFN_DIR)/haskell
-ocaml_dir   := $(DEFN_DIR)/ocaml
 java_dir    := $(DEFN_DIR)/java
 
 llvm_defn    := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
 haskell_defn := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
-ocaml_defn   := $(patsubst %, $(ocaml_dir)/%, $(wasm_files))
 java_defn    := $(patsubst %, $(java_dir)/%, $(wasm_files))
 
 llvm_kompiled    := $(llvm_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
 haskell_kompiled := $(haskell_dir)/$(MAIN_DEFN_FILE)-kompiled/definition.kore
-ocaml_kompiled   := $(ocaml_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
 java_kompiled    := $(java_dir)/$(MAIN_DEFN_FILE)-kompiled/compiled.txt
 
 # Tangle definition from *.md files
 
-defn: defn-ocaml defn-java defn-haskell
+defn: defn-java defn-haskell
 defn-llvm: $(llvm_defn)
 defn-haskell: $(haskell_defn)
-defn-ocaml: $(ocaml_defn)
 defn-java: $(java_defn)
 
 $(llvm_dir)/%.k: %.md $(TANGLER)
@@ -89,10 +80,6 @@ $(llvm_dir)/%.k: %.md $(TANGLER)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(haskell_dir)/%.k: %.md $(TANGLER)
-	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
-
-$(ocaml_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
@@ -104,11 +91,10 @@ $(java_dir)/%.k: %.md $(TANGLER)
 
 KOMPILE_OPTIONS    :=
 
-build: build-llvm build-haskell build-ocaml build-java
-build-llvm: $(llvm_kompiled)
+build: build-llvm build-haskell build-java
+build-llvm:    $(llvm_kompiled)
 build-haskell: $(haskell_kompiled)
-build-ocaml: $(ocaml_kompiled)
-build-java: $(java_kompiled)
+build-java:    $(java_kompiled)
 
 $(llvm_kompiled): $(llvm_defn)
 	$(K_BIN)/kompile --backend llvm                                           \
@@ -119,13 +105,6 @@ $(llvm_kompiled): $(llvm_defn)
 $(haskell_kompiled): $(haskell_defn)
 	$(K_BIN)/kompile --backend haskell                                        \
 	    --directory $(haskell_dir) -I $(haskell_dir)                          \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
-	    $(KOMPILE_OPTIONS)
-
-$(ocaml_kompiled): $(ocaml_defn)
-	eval $$(opam config env)                                                  \
-	    $(K_BIN)/kompile -O3 --non-strict --backend ocaml                     \
-	    --directory $(ocaml_dir) -I $(ocaml_dir)                              \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
@@ -237,7 +216,7 @@ test-prove: test-prove-good test-prove-bad
 
 ### KLab interactive
 
-test-klab-prove: $(quick_proof_tests:=.klab-prove)
+test-klab-prove: tests/proofs/simple-arithmetic-spec.k.klab-prove
 
 # Presentation
 # ------------

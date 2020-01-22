@@ -36,15 +36,6 @@ pipeline {
         stage('Test Simple') {
           options { timeout(time: 5, unit: 'MINUTES') }
           parallel {
-            stage('Exec OCaml') {
-              steps {
-                sh '''
-                  nprocs=$(nproc)
-                  [ "$nprocs" -gt '4' ] && nprocs=4
-                  make TEST_CONCRETE_BACKEND=ocaml test-simple -j"$nprocs"
-                '''
-              }
-            }
             stage('Exec Java (Floating Point)') {
               steps {
                 sh '''
@@ -74,15 +65,6 @@ pipeline {
                   nprocs=$(nproc)
                   [ "$nprocs" -gt '4' ] && nprocs=4
                   make test-conformance-parse -j"$nprocs"
-                '''
-              }
-            }
-            stage('Exec OCaml') {
-              steps {
-                sh '''
-                  nprocs=$(nproc)
-                  [ "$nprocs" -gt '4' ] && nprocs=4
-                  make TEST_CONCRETE_BACKEND=ocaml test-conformance-supported -j"$nprocs"
                 '''
               }
             }
