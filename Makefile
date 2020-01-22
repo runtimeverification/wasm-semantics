@@ -27,7 +27,7 @@ export LUA_PATH
         test test-execution test-simple test-prove test-klab-prove         \
         test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
-        media presentations reports reverse-bytes-images media-clean
+        media presentations reports
 
 all: build
 
@@ -245,22 +245,13 @@ test-klab-prove: $(quick_proof_tests:=.klab-prove)
 media: presentations reports
 
 media/%.pdf: TO_FORMAT=beamer
-media/201903-report-chalmers.pdf: TO_FORMAT=latex
-media/202001-presentation-dlab.pdf: reverse-bytes-images
-
 presentations: $(patsubst %.md, %.pdf, $(wildcard media/*-presentation-*.md))
+
+media/201903-report-chalmers.pdf: TO_FORMAT=latex
 reports: media/201903-report-chalmers.pdf
 
-media/%.pdf: media/%.md
-	cat $< media/citations.md | pandoc --from markdown-latex_macros --to $(TO_FORMAT) --filter pandoc-citeproc --output $@
+media/%.pdf: media/%.md media/citations.md
+	cat $^ | pandoc --from markdown-latex_macros --to $(TO_FORMAT) --filter pandoc-citeproc --output $@
 
-reverse-bytes-images: media/img/reverse-bytes-ast.tex img-clean
-	cd $(dir $<) && pdflatex -shell-escape -halt-on-error $(notdir $<)
-
-img-clean:
-	rm -f $(patsubst %, media/img/*%, $(img_generated))
-
-img_generated:=.pdf .dpth .log .md5 .aux .auxlock
-
-media-clean: img-clean
-	rm -f media/*.pdf
+media-clean:
+	rm media/*.pdf
