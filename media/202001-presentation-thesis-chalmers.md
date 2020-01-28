@@ -344,6 +344,7 @@ Least significant byte in original number, modified the first loop iteration:
 
 First proof attempt
 -------------------
+\small
 
 \begin{minipage}[l]{0.40\textwidth}
 \begin{tikzpicture}[scale=0.56]
@@ -431,6 +432,7 @@ First proof attempt
 
 New state
 ---------
+\small
 
 \begin{minipage}[l]{0.40\textwidth}
 \begin{tikzpicture}[scale=0.56]
@@ -537,6 +539,7 @@ New state
 
 Second proof attempt
 ---------
+\small
 
 \uncover<2->{\begin{minipage}[r]{0.52\textwidth}
 
@@ -574,7 +577,7 @@ rule X <<Int 0 => X
 \end{minipage}
 }
 \hfill
-\only<1->{\begin{minipage}[r]{0.39\textwidth}
+\only<1->{\begin{minipage}[r]{0.391\textwidth}
 \begin{tikzpicture}[scale=0.6]
   \node (a) {<<Int}
       child {
@@ -621,6 +624,7 @@ rule X <<Int 0 => X
 
 New state
 ---------
+\small
 
 \begin{minipage}[r]{0.4\textwidth}
 \begin{tikzpicture}
