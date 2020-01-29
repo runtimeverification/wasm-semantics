@@ -10,7 +10,7 @@ date: January 30, 2020
 institute:
 -   M.Sc. Thesis at Chalmers University of Technology, Gothenburg, Sweden
 -   In collaboration with Runtime Verification, Inc., Urbana, IL, United States
-abstract: 
+abstract: A smart contract is immutable, public bytecode which handles valuable assets. This makes it a prime target for formal methods. WebAssembly (Wasm) is emerging as bytecode format for smart contracts. KWasm is a mechanization of Wasm in the K framework which can be used for formal verification. The current project aims to verify a single smart contract in Wasm by completing unfinished parts of KWasm, making an Ethereum flavored embedding for the Wasm semantics, and incremententally using KWasm for more complex verification, with a focus on heap reasoning. In the process many arithmetic axioms are added to the reasoning capabilities of the K prover.
 theme: metropolis
 fontsize: 9pt
 header-includes:
@@ -57,10 +57,8 @@ Smart contracts and formal methods
 - Ethereum is the most significant platform, with $700+ million locked in financial smart contracts.[^1] 
 - Currently execute contracts on their own virtual machine, the *EVM*.
 
-Ewasm
+WebAssmebly and Ewasm
 ----
-
-**Rationale**
 
 Planned transition to Ewasm as part of Ethereum 2.0 roadmap.
 
@@ -87,7 +85,9 @@ Ewasm is coming, we want to be able to verify the contracts.
 
 . . .
 
-... and Wasm has more applications than just smart contracts.
+\flushright\footnotesize (... and Wasm has more applications than just smart contracts.)
+
+
 
 WRC20
 -----
@@ -100,8 +100,6 @@ WRC20
 * It has two public functions:
     - `balanceOf ::  address              -> i256`
     - `transfer  :: (address, i256 value) -> i1`
-    
-. . .
 
 \$i64.reverse\_bytes
 --------------------
@@ -141,11 +139,12 @@ Overview
 
 
 1. The tool: KWasm
-2. Steps towards proving WRC20:
+2. Finishing KWasm
     * Completing KWasm
     * Ewasm embedding
-    * Proofs and axioms
-3. Example: Proving the helper function
+3. Proofs and axioms
+     * Example: Proving the helper function
+     * Axiom engineering
 4. Discussion
 
 KWasm as a tool
@@ -175,7 +174,7 @@ Why \lK?
 
 * The forerunner to KWasm, KEVM, has seen significant adoption, and we want to build on the success.
 
-Steps Towards Proving WRC20
+Steps Towards Finishing KWasm
 ===========================
 
 Completing KWasm
@@ -211,44 +210,18 @@ Ewasm embedding
 > * Design: Ethereum client (EEI) and Wasm semantics composed into one semantics with a thin boundary between them.
 
 Proofs and Axioms
------------------
-
-> * \K supports adding new axioms (as rewrite rules), or new statements to Z3, to help the prover.
-> * Whenever we can, we choose to add lemmas to KWasm and upstream them into the \K tool when they are general enough.
-> * Axioms in \K apply unconditionally, so there is a risk of infinite rewrites. (No commutativity or associativity axioms!)
-> * We found a lexicographic product which the axioms always decrease.
-
-. . .
-
-$$
-(b, e, n)
-$$
-
-- $b$: Number of certain operations, (for now `mod`, `<<`, and `>>`.)
-- $e$: Expression size.
-- $n$: Sum of absolute values of integers.
-
-Proofs and Axioms
------------------
-
-We ended up adding 32 axioms to KWasm.
-
-* 24 axioms that can be upstreamed into \lK's reasoning capabilities.
-* 7 relate to the `#get` and `#set` operations of KWasm, and can be used in any KWasm verification with memory access.
-
-
-Example Proofs: Reversing Bytes
-===============================
+=====================
 
 Verifying Wasm programs
 ----------------------------
 
 > 1. From the KWasm semantics, \K generates a parser and a deductive program verifier.
 > 2. A verification claim is written like a rewrite rule. `rule A => B` should be read as "`A` will eventually always evaluate to `B`".
+> 3. A proof is (hopefully) constructed for the entire rewrite by composing rules in the semantics. Some equalities and side conditions are proved by Z3, the SMT solver.
 > 3. The automatic prover tries to construct a proof (with the help of Z3 to check constraint satisfiability) that every possible execution path starting in `A` eventually rewrites to `B`.
-> 4. Interactive views: KLab for Java backend and symbolic REPL for Haskell backend
+> 4. We can help the prover by adding lemmas (which must be proven), or axioms (which are taken for true).
 
-The Program Again
+Verification Example: `reverse_bytes` Program Again
 -----------------
 
 ```
@@ -550,7 +523,6 @@ Second proof attempt
 \texttt{~ => X <<Int (N -Int M)}
 
 \texttt{~~ requires N >=Int M}
-rule X <<Int 0 => X
 
 \vspace*{10pt}
 
@@ -693,6 +665,37 @@ New state
 \end{tikzpicture}
 \end{minipage}
 
+Result
+-----------------
+
+We finished the proof of the `reverse_bytes` function.
+
+. . .
+
+
+We ended up adding 32 axioms to KWasm.
+
+* 25 axioms that can be upstreamed into \lK's reasoning capabilities.
+* 7 relate to the `#get` and `#set` operations of KWasm, and can be used in any KWasm verification with memory access.
+
+Axiom Engineering
+-------
+
+> * \K supports adding new axioms (as rewrite rules), or new statements to Z3, to help the prover.
+> * Whenever we can, we choose to add lemmas to KWasm and upstream them into the \K tool when they are general enough.
+> * Axioms in \K apply unconditionally, so there is a risk of infinite rewrites. (No commutativity or associativity axioms!)
+> * We found a lexicographic product which the axioms always decrease.
+
+. . .
+
+$$
+(b, e, n)
+$$
+
+- $b$: Number and height in parse tree of certain operations, (for now `mod`, `<<`, and `>>`.)
+- $e$: Expression size.
+- $n$: Sum of absolute values of integers.
+
 Discussion & Conclusion
 =======================
 
@@ -714,7 +717,7 @@ Future Work
 
 . . .
 
-Open project, continued development is being planned.
+Open source project[^2], currently funded, development is ongoing.
 
 Thanks!
 -------
@@ -734,3 +737,4 @@ Cover image by Bogdan Stanciu.
 
 [^1]: <https://defipulse.com/>, as of 2020-01-25
 
+[^2]: <https://github.com/kframework/wasm-semantics>
