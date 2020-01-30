@@ -8,7 +8,7 @@ author:
 -   \tiny Opponent$\colon$Jakob Larsson
 date: January 30, 2020
 institute:
--   M.Sc. Thesis at Chalmers University of Technology, Gothenburg, Sweden
+-   M.Sc. Thesis at Chalmers University of Technology, Gothenburg, Sweden\newline Department of Computer Science and Engineering
 -   In collaboration with Runtime Verification, Inc., Urbana, IL, United States
 abstract: A smart contract is immutable, public bytecode which handles valuable assets. This makes it a prime target for formal methods. WebAssembly (Wasm) is emerging as bytecode format for smart contracts. KWasm is a mechanization of Wasm in the K framework which can be used for formal verification. The current project aims to verify a single smart contract in Wasm by completing unfinished parts of KWasm, making an Ethereum flavored embedding for the Wasm semantics, and incremententally using KWasm for more complex verification, with a focus on heap reasoning. In the process many arithmetic axioms are added to the reasoning capabilities of the K prover.
 theme: metropolis
@@ -72,7 +72,7 @@ Planned transition to Ewasm as part of Ethereum 2.0 roadmap.
 - Fast
 - Small byte code
 - Safe memory model
-- Compile target of C/C++, go, Rust, etc.
+- Compile target of C/C++, Go, Rust, etc.
 - Portable
 
 . . .
@@ -143,7 +143,7 @@ Overview
     * Completing KWasm
     * Ewasm embedding
 3. Proofs and axioms
-     * Example: Proving the helper function
+     * Example: Verifying the helper function
      * Axiom engineering
 4. Discussion
 
@@ -159,20 +159,24 @@ Why \lK?
 
 * Mature
     - Complex languages:
-    -   KEVM - 2018 [@hildenbrandt-saxena-zhu-rosu-k-evm]
-    -   Java 1.4 - 2015 [@bogdanas-rosu-k-java]
-    -   C11 - 2015 [@hathhorn-ellison-rosu-k-c]
-    -   KJS - 2015 [@park-stefanescu-rosu-k-js]
-    -   KLLVM <https://github.com/kframework/llvm-semantics>
-    -   KX86-64 <https://github.com/kframework/X86-64-semantics>
+      -   KEVM - 2018 [@hildenbrandt-saxena-zhu-rosu-k-evm]
+      -   Java 1.4 - 2015 [@bogdanas-rosu-k-java]
+      -   C11 - 2015 [@hathhorn-ellison-rosu-k-c]
+      -   KJS - 2015 [@park-stefanescu-rosu-k-js]
+      -   KLLVM <https://github.com/kframework/llvm-semantics>
+      -   KX86-64 <https://github.com/kframework/X86-64-semantics>
 
 . . .
 
-* Uses non-deterministic rewriting, same formalism as Wasm
+* Uses non-deterministic rewriting, same formalism as Wasm.
 
 . . .
 
 * The forerunner to KWasm, KEVM, has seen significant adoption, and we want to build on the success.
+
+. . .
+
+* KWasm was a mature prototype when we started---no need to start from scratch.
 
 Steps Towards Finishing KWasm
 ===========================
@@ -200,7 +204,7 @@ Ewasm embedding
 ---------------
 
 \center
-![](media/img/github-ewasm-screenshot.png){ width=90%}
+![](media/img/ewasm-contract.png){ width=90%}
 
 \flushleft
 
@@ -219,7 +223,7 @@ Verifying Wasm programs
 > 2. A verification claim is written like a rewrite rule. `rule A => B` should be read as "`A` will eventually always evaluate to `B`".
 > 3. A proof is (hopefully) constructed for the entire rewrite by composing rules in the semantics. Some equalities and side conditions are proved by Z3, the SMT solver.
 > 3. The automatic prover tries to construct a proof (with the help of Z3 to check constraint satisfiability) that every possible execution path starting in `A` eventually rewrites to `B`.
-> 4. We can help the prover by adding lemmas (which must be proven), or axioms (which are taken for true).
+> 4. We can help the prover by adding lemmas (which must be proven), or axioms (which are taken for true). These must be expressed as context-free rewrite rules, i.e. they can rewrite expressions but not step the machine.
 
 Verification Example: `reverse_bytes` Program Again
 -----------------
@@ -299,8 +303,8 @@ modInt (2 ^Int 64)
 First proof attempt
 -------------------
 
-> * Our approach will be to extend \lK's ability to reasoning about these kinds of arithmetic expressions, and about the `#getRange function`
-> * "Lemmas" will be added as context-free rewrite rules.
+> * Our approach will be to extend \lK's ability to reason about these kinds of arithmetic expressions, and about the `#getRange` function
+> * Axioms will be added as context-free rewrite rules.
 > * Each is simple and has been hand-verified, but not yet machine-verified.
 <!--
 > * We have chosen to add reasoning capabilities to \K over telling Z3 about the structure of memory. 
@@ -311,8 +315,11 @@ First proof attempt
 Least significant byte in original number, modified the first loop iteration:
 
 ```
-(((((( #getRange(BM, ADDR, 8) <<Int 56) modInt (2 ^Int 64)) >>Int 56) <<Int 56)
-       modInt (2 ^Int 64)) +Int 0) modInt (2 ^Int 64)
+(((((( #getRange(BM, ADDR, 8)
+       <<Int 56) modInt (2 ^Int 64))
+       >>Int 56)
+       <<Int 56) modInt (2 ^Int 64))
+       +Int 0) modInt (2 ^Int 64)
 ```
 
 First proof attempt
@@ -738,3 +745,4 @@ Cover image by Bogdan Stanciu.
 [^1]: <https://defipulse.com/>, as of 2020-01-25
 
 [^2]: <https://github.com/kframework/wasm-semantics>
+
