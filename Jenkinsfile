@@ -109,6 +109,12 @@ pipeline {
                           , string(name: 'UPDATE_DEPS_REPOSITORY', value: 'runtimeverification/polkadot-verification') \
                           , string(name: 'UPDATE_DEPS_SUBMODULE_DIR', value: 'deps/wasm-semantics')                    \
                           ]
+        build job: 'rv-devops/master', propagate: false, wait: false                                    \
+            , parameters: [ booleanParam(name: 'UPDATE_DEPS_SUBMODULE', value: true)                    \
+                          , string(name: 'PR_REVIEWER', value: 'hjorthjort')                            \
+                          , string(name: 'UPDATE_DEPS_REPOSITORY', value: 'kframework/ewasm-semantics') \
+                          , string(name: 'UPDATE_DEPS_SUBMODULE_DIR', value: 'deps/wasm-semantics')     \
+                          ]
       }
     }
   }
