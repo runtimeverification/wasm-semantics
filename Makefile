@@ -45,7 +45,7 @@ $(K_SUBMODULE)/make.timestamp:
 	touch $(K_SUBMODULE)/make.timestamp
 
 $(TANGLER):
-	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
+	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE) || exit 0
 
 # Building Definition
 # -------------------
