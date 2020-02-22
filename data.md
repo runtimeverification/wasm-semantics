@@ -145,11 +145,14 @@ We need helper functions to remove the identifiers from `FuncType`.
 We need helper functions to remove all the identifiers from a `ValTypes`.
 
 ```k
+    syntax AValType ::= unnameValType  ( ValType  ) [function]
     syntax ValTypes ::= unnameValTypes ( ValTypes ) [function]
  // ----------------------------------------------------------
-    rule unnameValTypes ( .ValTypes     ) => .ValTypes
-    rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
-    rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
+    rule unnameValType ( V          ) => V requires isAValType(V)
+    rule unnameValType ( { ID V }   ) => V
+
+    rule unnameValTypes ( .ValTypes ) => .ValTypes
+    rule unnameValTypes ( V VS      ) => unnameValType(V) unnameValTypes ( VS )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
@@ -264,6 +267,16 @@ We also add `undefined` as a value, which makes many partial functions in the se
  // --------------------------
 ```
 
+The `getXXXXType` takes a `Val` and projects out its `IValType` or `FValType`.
+
+```k
+    syntax IValType ::= getIValType ( IVal ) [function]
+    syntax FValType ::= getFValType ( FVal ) [function]
+ // -----------------------------------------------
+    rule getIValType( < ITYPE > N) => ITYPE
+    rule getFValType( < FTYPE > F) => FTYPE
+```
+
 ### Value Operations
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
@@ -358,11 +371,17 @@ One needs to unname the `ValTypes` first before calling the `#take` or `#drop` f
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(.ValTypes,   _)                              => .ValStack
-    rule #take(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
+    rule #take(.ValTypes,   _             ) => .ValStack
+    rule #take(TYPE VTYPES, VAL : VALSTACK) => VAL : #take(VTYPES, VALSTACK)
+      requires unnameValType(TYPE) ==K getIValType(project:IVal(VAL))
+    rule #take(TYPE VTYPES, VAL : VALSTACK) => VAL : #take(VTYPES, VALSTACK)
+      requires unnameValType(TYPE) ==K getFValType(project:FVal(VAL))
 
-    rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
-    rule #drop(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
+    rule #drop(.ValTypes,   VALSTACK      ) => VALSTACK
+    rule #drop(TYPE VTYPES, VAL : VALSTACK) => #drop(VTYPES, VALSTACK)
+      requires unnameValType(TYPE) ==K getIValType(project:IVal(VAL))
+    rule #drop(TYPE VTYPES, VAL : VALSTACK) => #drop(VTYPES, VALSTACK)
+      requires unnameValType(TYPE) ==K getFValType(project:FVal(VAL))
 
     rule #revs(VS) => #revs(VS, .ValStack)
 
