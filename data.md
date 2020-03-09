@@ -272,9 +272,9 @@ The `getXXXXType` takes a `Val` and projects out its `IValType` or `FValType`.
 ```k
     syntax IValType ::= getIValType ( IVal ) [function]
     syntax FValType ::= getFValType ( FVal ) [function]
- // -----------------------------------------------
-    rule getIValType( < ITYPE > N) => ITYPE
-    rule getFValType( < FTYPE > F) => FTYPE
+ // ---------------------------------------------------
+    rule getIValType( < ITYPE > N ) => ITYPE
+    rule getFValType( < FTYPE > F ) => FTYPE
 ```
 
 ### Value Operations
@@ -372,16 +372,12 @@ One needs to unname the `ValTypes` first before calling the `#take` or `#drop` f
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
     rule #take(.ValTypes,   _             ) => .ValStack
-    rule #take(TYPE VTYPES, VAL : VALSTACK) => VAL : #take(VTYPES, VALSTACK)
-      requires unnameValType(TYPE) ==K getIValType(project:IVal(VAL))
-    rule #take(TYPE VTYPES, VAL : VALSTACK) => VAL : #take(VTYPES, VALSTACK)
-      requires unnameValType(TYPE) ==K getFValType(project:FVal(VAL))
+    rule #take(TYPE VTYPES, VAL : VALSTACK) => VAL : #take(VTYPES, VALSTACK) requires unnameValType(TYPE) ==K getIValType(project:IVal(VAL))
+    rule #take(TYPE VTYPES, VAL : VALSTACK) => VAL : #take(VTYPES, VALSTACK) requires unnameValType(TYPE) ==K getFValType(project:FVal(VAL))
 
     rule #drop(.ValTypes,   VALSTACK      ) => VALSTACK
-    rule #drop(TYPE VTYPES, VAL : VALSTACK) => #drop(VTYPES, VALSTACK)
-      requires unnameValType(TYPE) ==K getIValType(project:IVal(VAL))
-    rule #drop(TYPE VTYPES, VAL : VALSTACK) => #drop(VTYPES, VALSTACK)
-      requires unnameValType(TYPE) ==K getFValType(project:FVal(VAL))
+    rule #drop(TYPE VTYPES, VAL : VALSTACK) => #drop(VTYPES, VALSTACK) requires unnameValType(TYPE) ==K getIValType(project:IVal(VAL))
+    rule #drop(TYPE VTYPES, VAL : VALSTACK) => #drop(VTYPES, VALSTACK) requires unnameValType(TYPE) ==K getFValType(project:FVal(VAL))
 
     rule #revs(VS) => #revs(VS, .ValStack)
 
