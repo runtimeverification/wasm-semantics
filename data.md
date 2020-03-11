@@ -132,6 +132,11 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
 
     syntax FuncType ::= VecType "->" VecType
  // ----------------------------------------
+
+    syntax Int ::= lengthValTypes ( ValTypes ) [function]
+ // -----------------------------------------------------
+    rule lengthValTypes(.ValTypes) => 0
+    rule lengthValTypes(V VS)      => 1 +Int lengthValTypes(VS)
 ```
 
 We need helper functions to remove the identifiers from `FuncType`.
@@ -338,25 +343,25 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 ```
 
 `#zero` will create a specified stack of zero values in a given type.
-`#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
-`#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
+`#take` will take the prefix of a given stack.
+`#drop` will drop the prefix of a given stack.
 One needs to unname the `ValTypes` first before calling the `#take` or `#drop` function.
 
 ```k
     syntax ValStack ::= #zero ( ValTypes )            [function]
-                      | #take ( ValTypes , ValStack ) [function]
-                      | #drop ( ValTypes , ValStack ) [function]
+                      | #take ( Int , ValStack )      [function]
+                      | #drop ( Int , ValStack )      [function]
                       | #revs ( ValStack )            [function]
                       | #revs ( ValStack , ValStack ) [function, klabel(#revsAux)]
  // ------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(.ValTypes,   _)                              => .ValStack
-    rule #take(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
+    rule #take(N, _)      => .ValStack               requires notBool N >Int 0
+    rule #take(N, V : VS) => V : #take(N -Int 1, VS) requires         N >Int 0
 
-    rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
-    rule #drop(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
+    rule #drop(N, VS)     => VS                  requires notBool N >Int 0
+    rule #drop(N, _ : VS) => #drop(N -Int 1, VS) requires         N >Int 0
 
     rule #revs(VS) => #revs(VS, .ValStack)
 
