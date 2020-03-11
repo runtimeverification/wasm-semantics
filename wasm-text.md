@@ -267,9 +267,9 @@ This is useful when specifying modules in the more lax KWasm format, where they 
       [macro]
 
     rule <k> ( table ID:Identifier funcref ( elem ES ) )
-         => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
-         ~> ( elem  ID (offset (i32.const 0) .Instrs) ES )
-         ...
+          => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
+          ~> ( elem  ID (offset (i32.const 0) .Instrs) ES )
+          ...
          </k>
 ```
 
