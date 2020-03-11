@@ -330,7 +330,7 @@ We keep track of the number of labels on the stack, incrementing and decrementin
     syntax Label ::= "label" VecType "{" Instrs "}" ValStack
  // --------------------------------------------------------
     rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
@@ -353,7 +353,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> br IDX   ~> (SS:Stmts => .) ... </k>
     rule <k> br IDX   ~> ( I:Instr => .) ... </k>
     rule <k> br 0     ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
     rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
@@ -717,7 +717,7 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Frame ::= "frame" Int ValTypes ValStack Map Int Map
  // ----------------------------------------------------------
     rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELDEPTH LABELIDS => . ... </k>
-         <valstack> VALSTACK => #take(unnameValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(lengthValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
          <labelDepth> _ => LABELDEPTH </labelDepth>
@@ -726,17 +726,17 @@ Unlike labels, only one frame can be "broken" through at a time.
 
 When we invoke a function, the element on the top of the stack will become the last parameter of the function.
 For example, when we call `(invoke "foo" (i64.const 100) (i64.const 43) (i32.const 22))`, `(i32.const 22)` will be on the top of `<valstack>`, but it will be the last parameter of this function invocation if this function takes 3 parameters.
-That is, whenever we want to `#take` or `#drop` an array of `params`, we need to reverse the array of `params` to make the type of the last parameter matching with the type of the valur on the top of stack.
+That is, whenever we want to `#take` or `#drop` an array of `params`, we need to reverse the array of `params` to make the type of the last parameter matching with the type of the value on the top of stack.
 The `#take` function will return the parameter stack in the reversed order, then we need to reverse the stack again to get the actual parameter array we want.
 
 ```k
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
-          => init_locals #revs(#take(#revt(unnameValTypes(TDOMAIN)), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
+          => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
           ~> init_localids TDOMAIN + TLOCALS
           ~> block [TRANGE] INSTRS end
-          ~> frame MODIDX TRANGE #drop(#revt(unnameValTypes(TDOMAIN)), VALSTACK) LOCAL DEPTH IDS
+          ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
