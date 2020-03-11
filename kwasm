@@ -20,7 +20,7 @@ KLAB_OUT="${KLAB_OUT:-$build_dir/klab}"
 KLAB_NODE_STACK_SIZE="${KLAB_NODE_STACK_SIZE:-30000}"
 export KLAB_OUT
 
-export K_OPTS="${K_OPTS:--Xmx8G}"
+export K_OPTS="${K_OPTS:--Xmx16G}"
 
 # Utilities
 # ---------
