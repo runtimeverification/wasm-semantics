@@ -238,11 +238,11 @@ We also supply rules for when the inlined definitions are encountered on top of 
 This is useful when specifying modules in the more lax KWasm format, where they can be declared as they are needed.
 
 ```k
-    syntax Identifier ::= "#memId" | "#tabId"
+    syntax Identifier ::= ".MemoryIdentifier" | ".TableIdentifier"
 
     syntax MemorySpec ::= "(" "data" DataString ")"
  // -----------------------------------------------
-    rule ( memory ( data DS ) ) => ( memory #memId (data DS) ) [macro]
+    rule ( memory ( data DS ) ) => ( memory .MemoryIdentifier (data DS) ) [macro]
 
     rule ( memory ID:Identifier ( data DS ) ) DEFS:Defns
       => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
@@ -258,7 +258,7 @@ This is useful when specifying modules in the more lax KWasm format, where they 
 
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
-    rule ( table funcref ( elem ES ) ) => ( table #tabId funcref (elem ES) ) [macro]
+    rule ( table funcref ( elem ES ) ) => ( table .TableIdentifier funcref (elem ES) ) [macro]
 
     rule ( table ID:Identifier funcref ( elem ES ) ) DEFS:Defns
       => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
