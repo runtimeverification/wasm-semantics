@@ -376,6 +376,7 @@ Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
     rule (X <<Int N) +Int (Y <<Int M) => (X +Int (Y <<Int (M -Int N))) <<Int N
       requires N <=Int M
       [simplification]
+      
     rule (X <<Int N) +Int (Y <<Int M) => ((X <<Int (N -Int M)) +Int Y) <<Int M
       requires N >Int M
       [simplification]
