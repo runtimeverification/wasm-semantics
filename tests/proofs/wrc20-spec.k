@@ -6,10 +6,9 @@ module WRC20-SPEC
     imports WRC20-LEMMAS
 
     // Main spec.
-    // There is no specified behavior yet.
-    // As long as the program parses correctly, the spec will pass.
-
-    rule <k> #wrc20 </k>
+    // There is no specified behavior yet, so this claim is commented out.
+    //
+    // rule <k> #wrc20 </k>
 
     // Reverse bytes spec.
 
