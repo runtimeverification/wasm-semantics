@@ -35,13 +35,22 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
 
 #### Rules for Expressions With Only Modulus
 
+These are given in pure modulus form, and in form with `#wrap`, which is modulus with a power of 2.
+
 ```k
     rule X modInt N => X
       requires 0 <=Int X
        andBool X  <Int N
       [simplification]
 
+    rule #wrap(N, X) => X
+      requires 0 <=Int X
+       andBool X  <Int (1 <<Int N)
+
     rule X modInt 1 => 0
+      [simplification]
+
+    rule #wrap(0, _) => 0
       [simplification]
 ```
 
@@ -51,6 +60,10 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
     rule (X modInt M) modInt N => X modInt M
       requires M >Int 0
        andBool M <=Int N
+      [simplification]
+
+    rule #wrap(N, #wrap(M, X)) => #wrap(M, X)
+      requires M <=Int N
       [simplification]
 ```
 
@@ -65,6 +78,10 @@ Since 0 <= x mod m < m <= n, (x mod m) mod n = x mod m
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
+      [simplification]
+
+    rule #wrap(N, #wrap(M, X)) => #wrap(N, X)
+      requires notBool (M <=Int N)
       [simplification]
 ```
 
@@ -94,6 +111,14 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+
+    rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
+      requires N <=Int M
+      [simplification]
+
+    rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
+      requires N <=Int M
+      [simplification]
 ```
 
 Proof:
@@ -114,6 +139,14 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
+      [simplification]
+
+    rule #wrap(N, #wrap(M, X) +Int Y) => #wrap(N, X +Int Y)
+      requires N <=Int M
+      [simplification]
+
+    rule #wrap(N, Y +Int #wrap(M, X)) => #wrap(N, X +Int Y)
+      requires N <=Int M
       [simplification]
 ```
 
