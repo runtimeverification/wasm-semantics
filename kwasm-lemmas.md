@@ -334,6 +334,11 @@ They are non-trivial in their implementation, but the following should obviously
        andBool #isByteMap(BM)
       [simplification]
 
+    rule #wrap(8, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
+      requires notBool (WIDTH ==Int 0)
+       andBool #isByteMap(BM)
+      [simplification]
+
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
       requires WIDTH ==Int 1
       [simplification]
@@ -384,13 +389,16 @@ module WRC20-LEMMAS
 This conversion turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
 
 ```k
-    rule X /Int 256 => X >>Int 8
+    rule X /Int 256 => X >>Int 8 [simplification]
 ```
 
 TODO: The two `#get` theorems below theorems handle special cases in this proof, but we should be able to use some more general theorems to prove them.
 
 ```k
     rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256       [simplification]
+
+    rule #wrap(8, #get(BM, ADDR) +Int (X +Int Y))    => #wrap(8, #get(BM, ADDR) +Int #wrap(8, X +Int Y)) [simplification]
+
     rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM) [simplification]
 ```
 
@@ -417,6 +425,13 @@ Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
     rule (X +Int (Y <<Int M)) modInt N => X +Int ((Y <<Int M) modInt N)
       requires N ==Int (1 <<Int log2Int(N))
        andBool N >=Int 256
+       andBool 0 <=Int X
+       andBool X <Int 256
+       andBool M >=Int 8
+      [simplification]
+
+    rule #wrap(N, (X +Int (Y <<Int M))) => X +Int (#wrap(N, Y <<Int M))
+      requires N >=Int 8
        andBool 0 <=Int X
        andBool X <Int 256
        andBool M >=Int 8
