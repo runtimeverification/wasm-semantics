@@ -1,7 +1,6 @@
 requires "kwasm-lemmas.k"
 
 module MEMORY-CONCRETE-TYPE-SPEC
-    imports WASM-TEXT
     imports MEMORY-CONCRETE-TYPE-LEMMAS
 
     rule <k> (i64.store16 (i32.const ADDR) (i64.load32_u (i32.const ADDR)):FoldedInstr):FoldedInstr

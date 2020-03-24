@@ -20,11 +20,199 @@ Basic logic
 Basic arithmetic
 ----------------
 
+// TODO: Upstream the lemmas in this section into K.
+
+### Modular Arithmetic
+
+Z3 is slow and unreliable in reasoning about modular arithmetic.
+Therefore we want to make structural simplifications wherever possible.
+
+`X modInt N` is undefined for `N ==Int 0`, so we must take care to check that `N =/=Int 0`.
+At the same time, we don't want to impose unnecessary side-conditions, so the non-zero condition can be implied by the other conditions.
+For example, `X modInt N ==Int Y` implies `N =/=Int 0`, because only non-zero `N` could have the right-hand side resolve to an `Int`.
+For simplicity, we impose that `N >Int 0`.
+Not however that K defines `X modInt N ==Int X modInt (-N)`.
+
+#### Rules for Expressions With Only Modulus
+
 ```k
     rule X modInt N => X
       requires 0 <=Int X
        andBool X  <Int N
       [simplification]
+
+    rule X modInt 1 => 0
+      [simplification]
+```
+
+`modInt` selects the least non-negative representative of a congruence class modulo `N`.
+
+```k
+    rule (X modInt M) modInt N => X modInt M
+      requires M >Int 0
+       andBool M <=Int N
+      [simplification]
+```
+
+Proof:
+
+```
+Since 0 <= x mod m < m <= n, (x mod m) mod n = x mod m
+```
+
+```k
+    rule (X modInt M) modInt N => X modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+```
+
+Proof:
+
+```
+Assume m = n * k for some k > 0.
+x = m * q + r, for a unique q and r s.t. 0 <= r < m
+(x mod m) mod n
+ = r mod n
+ = (n * ( k * q) + r) mod n
+ = m * q + r mod n
+ = x mod n
+```
+
+#### Modulus Over Addition
+
+```k
+    rule (X *Int M +Int Y) modInt N => Y modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+
+    rule (Y +Int X *Int M) modInt N => Y modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+```
+
+Proof:
+
+```
+Assume m = k * n for some k (side condition).
+x * m + y mod n = x * (k * n) + y mod n = y mod n
+```
+
+```k
+    rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+
+    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
+      requires M >Int 0
+       andBool N >Int 0
+       andBool M modInt N ==Int 0
+      [simplification]
+```
+
+Proof:
+
+```
+Assume m = l * n
+x = k * m + r, r < m
+x mod m + y = r + y
+(x + y) mod n
+  = k * m + r + y mod n
+  = k * l * n + r + y mod n
+  = r + y mod n
+  = (x mod m + y) mod n
+```
+
+#### Bit Shifting
+
+We want Z3 to understand what a bit-shift is.
+
+```k
+    rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
+    rule (X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
+
+    rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
+    rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
+
+    // The Haskell and Java backend accept negative shifts (the LLVM backend does not).
+    // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
+    rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
+    rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
+```
+
+```k
+    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+    rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+```
+
+Proof:
+```
+Let x' = x << m
+=> The least m bits of x' are 0.
+=> The least m bits of x' + y are the same as the least m bits of y, and there can be no carry in adding the least m bits.
+=> The least (m-n) bits of (x' + y) >> n are the same as the least (m-n) bits of (y >> n), or y[n..], and there can be no carry in adding the least (m-n) bits.
+=> ((x << m) + y) >> n is the same as adding x to the m'th and higher bits of y, and then concatenating the lesat (m-n) bytes of y[n..]
+=> ((x << m) + y) >> n = y[n..(m-1)] : (x + y[m..])
+=> ((x << m) + y) >> n
+ = ((x + y[m..]) << (m-n)) + y[n..(m-1)]
+ = (x << (m-n)) + (y[m..] << (m-n)) + y[n..(m-1)]
+ = (x << (m-n)) + (y[n..(m-1)] : y[m..])
+ = (x << (m-n)) + (y >> n)
+```
+
+The following rules decrease the modulus by rearranging it around a shift.
+
+```k
+    rule (X modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool POW modInt (2 ^Int N) ==Int 0
+      [simplification]
+
+    rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool POW modInt (2 ^Int N) ==Int 0
+      [simplification]
+```
+
+Proof sketch: Taking modulo `2^n * k` can only affect the the `n`-th and higher bits.
+A shift right by `n` bits can only erase bits up to the `n-1`-th bit.
+Therefore, we may as well shift first and then take the modulus, only we need to make sure the modulus acts on the shifted bits, by taking modulo `k` instead.
+The argument for the left shift is similar.
+
+```k
+    rule (X +Int (Y <<Int N)) modInt POW => X modInt POW
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool (2 ^Int N) modInt POW ==Int 0
+      [simplification]
+
+    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW
+      requires N  >=Int 0
+       andBool POW >Int 0
+       andBool (2 ^Int N) modInt POW ==Int 0
+      [simplification]
+```
+
+Proof: These follow from the fact that shifting left by `n` bits is simply multiplying by `2^n`, and from previously proven rules of modular arithmetic.
+
+### Basic Operations
+
+```k
+    rule X  +Int 0 => X [simplification]
+    rule 0  +Int X => X [simplification]
+    rule X <<Int 0 => X [simplification]
+    rule 0 <<Int X => 0 [simplification]
+    rule X >>Int 0 => X [simplification]
+    rule 0 >>Int X => 0 [simplification]
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
@@ -44,6 +232,13 @@ In this case, it's simpler (and safe) to simply discard the `#chop`, instead of 
     syntax Int ::= #minSigned  ( IValType ) [function]
  // --------------------------------------------------
     rule #minSigned(ITYPE) => 0 -Int #pow1(ITYPE)
+```
+
+Lookups
+-------
+
+```k
+    rule (MAP:Map [KEY <- VAL])[KEY] => VAL
 ```
 
 Memory
@@ -71,6 +266,13 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
+We can now state the intended semantics of `#get`.
+
+```k
+    rule 0              <=Int #get(BM, ADDR) => true requires #isByteMap(BM) [simplification]
+    rule #get(BM, ADDR)  <Int 256            => true requires #isByteMap(BM) [simplification]
+```
+
 With this invariant encoded, we can introduce the following lemma.
 
 ```k
@@ -79,9 +281,13 @@ With this invariant encoded, we can introduce the following lemma.
 
 From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
 Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
+A getting operation can safeley ignore setting operation on unrelated indices.
 
 ```k
     rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
+
+    rule #get(#set(BMAP, IDX', VAL), IDX) => VAL             requires         IDX ==Int IDX'
+    rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX) requires notBool IDX ==Int IDX'
 ```
 
 TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
@@ -89,6 +295,15 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
+
+    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
+      requires notBool (WIDTH ==Int 0)
+       andBool #isByteMap(BM)
+      [simplification]
+
+    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
+      requires WIDTH ==Int 1
+      [simplification]
 ```
 
 ```k
@@ -106,16 +321,91 @@ Concrete Memory
 ```k
 module MEMORY-CONCRETE-TYPE-LEMMAS
     imports KWASM-LEMMAS
+```
 
+```k
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)
+      [simplification]
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires          WIDTH >Int 0
+       andBool #isByteMap(BM)
+      [simplification]
 
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
+      [simplification]
 
 endmodule
 ```
+
+WRC20
+-----
+
+### Lemmas
+
+```k
+module WRC20-LEMMAS
+    imports KWASM-LEMMAS
+```
+
+This conversion turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
+
+```k
+    rule X /Int 256 => X >>Int 8
+```
+
+TODO: The two `#get` theorems below theorems handle special cases in this proof, but we should be able to use some more general theorems to prove them.
+
+```k
+    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256       [simplification]
+    rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM) [simplification]
+```
+
+TODO: The following theorems should be generalized and proven, and moved to the set of general lemmas.
+Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
+
+```k
+    rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+
+    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8 [simplification]
+
+    rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
+
+    rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8 [simplification]
+
+    rule (X <<Int N) +Int (Y <<Int M) => (X +Int (Y <<Int (M -Int N))) <<Int N
+      requires N <=Int M
+      [simplification]
+      
+    rule (X <<Int N) +Int (Y <<Int M) => ((X <<Int (N -Int M)) +Int Y) <<Int M
+      requires N >Int M
+      [simplification]
+
+    rule (X +Int (Y <<Int M)) modInt N => X +Int ((Y <<Int M) modInt N)
+      requires N ==Int (1 <<Int log2Int(N))
+       andBool N >=Int 256
+       andBool 0 <=Int X
+       andBool X <Int 256
+       andBool M >=Int 8
+      [simplification]
+```
+
+TODO: The following theorem should be proven, and moved to the set of general lemmas.
+
+```k
+    rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8)
+      requires N >=Int 8
+       andBool WIDTH >Int 1
+      [simplification]
+```
+
+```k
+endmodule
+```
+
+### Macros
+
+The following module gives macros for the wrc20 code so that its parts can be expressed succinctly in proofs.
 
 ```k
 module WRC20
@@ -125,11 +415,13 @@ module WRC20
 A module of shorthand commands for the WRC20 module.
 
 ```k
-    syntax Stmts ::= "#wrc20"
-    syntax Defns ::= "#wrc20Body"
-    syntax Defns ::= "#wrc20Imports"
-    syntax Defns ::= "#wrc20Functions"
- // ----------------------------------
+    syntax Stmts     ::= "#wrc20"
+    syntax Defns     ::= "#wrc20Body"
+    syntax Defns     ::= "#wrc20Imports"
+    syntax Defns     ::= "#wrc20Functions"
+    syntax Defns     ::= "#wrc20ReverseBytes"
+    syntax TypeDecls ::= "#wrc20ReverseBytesTypeDecls"
+ // --------------------------------------------------
     rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro]
 
     rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro]
@@ -300,7 +592,13 @@ A module of shorthand commands for the WRC20 module.
         .EmptyStmts
       )
 
-      (func String2Identifier("$i64.reverse_bytes") param i64 .ValTypes result i64 .ValTypes .TypeDecls local i64 i64 .ValTypes .LocalDecls
+      #wrc20ReverseBytes
+      [macro]
+
+    rule #wrc20ReverseBytesTypeDecls => param i64 .ValTypes result i64 .ValTypes .TypeDecls [macro]
+
+    rule #wrc20ReverseBytes =>
+      (func String2Identifier("$i64.reverse_bytes") #wrc20ReverseBytesTypeDecls local i64 i64 .ValTypes .LocalDecls
         block .TypeDecls
           loop .TypeDecls
             local.get 1
@@ -345,6 +643,95 @@ A module of shorthand commands for the WRC20 module.
     rule .Defns ++Defns DS' => DS'
     rule (D DS) ++Defns DS' => D (DS ++Defns DS')
 ```
+
+```k
+endmodule
+```
+
+TODO: Upstream these, but don't commit them with the WRC20 proof (they aren't needed).
+
+```k
+module GENERAL-ARITHMETIC-LEMMAS
+    imports WASM-TEXT
+```
+
+Integer division can not in general be distributed over addition.
+However, when one of the addends is a multiple of the divisior, it is safe.
+
+```k
+    rule (Y +Int X *Int M) /Int N => (Y /Int N) +Int (X *Int (M /Int N))   requires M modInt N ==Int 0 [simplification]
+```
+
+Proof:
+
+```
+m mod n = 0 => m = k * n
+y = l * n + r, where 0 <= r < n
+(y + x * m) / n
+  = (l * n + r + x * k * n) / n
+  = ((l + x * k) * n + r) / n
+  = l + x * k
+  = y / n + x * (m / n)
+```
+
+The more general cases for distributing division follow:
+
+```k
+    rule (X +Int Y) /Int Z =>        X /Int Z +Int Y /Int Z
+      requires         (X modInt Z) +Int (Y modInt Z) <Int Z
+      [simplification]
+
+    rule (X +Int Y) /Int Z => 1 +Int X /Int Z +Int Y /Int Z
+      requires notBool (X modInt Z) +Int (Y modInt Z) <Int Z
+      [simplification]
+```
+
+Proof:
+
+```
+x = k * z + r with 0 <= r < z
+y = l * z + s with 0 <= s < z
+Assumption:
+r + s < z
+Then
+(x + y) / z
+  = (k * z + r + l * z + s) / z
+  = ((k + l) * z + (r + s)) / z
+  = k + l
+  = (k * z + r) / z + (l * z + s) / z
+  = x / z + y / z
+
+If instead (r + s) >= z, then z <= (r + s) < 2z.
+Let t = r + s - z, so that 0 <= t < z
+Then
+(x + y) / z
+  = ((k + l) * z + (r + s)) / z
+  = ((k + l) * z + (r + s ) - z + z) / z
+  = ((k + l + 1) * z + t) / z
+  = k + l + 1
+  = x / z + y / z + 1
+```
+
+The next rules consider (some) cases where integers with disjoint 1-bits are added together.
+
+```k
+// TODO: These rules turn out to not be necessary for the wrc20 proof. Keep?
+    rule (X +Int Y) >>Int N => (Y >>Int N)
+      requires N  >=Int 0
+       andBool 0  <=Int X
+       andBool X   <Int 2 ^Int N
+       andBool Y modInt 2 ^Int N ==Int 0
+    [simplification]
+
+    rule (Y +Int X) >>Int N => (Y >>Int N)
+      requires N  >=Int 0
+       andBool 0  <=Int X
+       andBool X   <Int 2 ^Int N
+       andBool Y modInt 2 ^Int N ==Int 0
+      [simplification]
+```
+
+Proof sketch: The side conditions guarantee that the addition causes no carries, so that `x + y = x | y`, `|` being a bitwise `or`.
 
 ```k
 endmodule

@@ -147,9 +147,9 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax Defns  ::= EmptyStmts
     syntax Stmts  ::= Instrs | Defns
  // --------------------------------
-    rule          <k> .Stmts          => .       ... </k>
-    rule          <k> (S:Stmt .Stmts) => S       ... </k>
-    rule [step] : <k> (S:Stmt SS)     => S ~> SS ... </k> requires SS =/=K .Stmts
+    rule          <k> .Stmts                => .       ... </k>
+    rule          <k> (S:Stmt .Stmts):KItem => S       ... </k>
+    rule [step] : <k> (S:Stmt SS)           => S ~> SS ... </k> requires SS =/=K .Stmts
 ```
 
 ### Traps
@@ -264,9 +264,17 @@ Conversion Operation convert constant elements at the top of the stack to anothe
 ```k
     syntax PlainInstr ::= AValType "." CvtOp
  // ----------------------------------------
-    rule <k> ATYPE:AValType . CVTOP:CvtOp => ATYPE . CVTOP C1  ... </k>
-         <valstack> < SRCTYPE > C1 : VALSTACK => VALSTACK </valstack>
-      requires #cvtSourceType(CVTOP) ==K SRCTYPE
+    rule <k> ATYPE:AValType . CVTOP:Cvti32Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < i32 > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> ATYPE:AValType . CVTOP:Cvti64Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < i64 > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> ATYPE:AValType . CVTOP:Cvtf32Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < f32 > C1 : VALSTACK => VALSTACK </valstack>
+
+    rule <k> ATYPE:AValType . CVTOP:Cvtf64Op => ATYPE . CVTOP C1  ... </k>
+         <valstack> < f64 > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ValStack Operations
@@ -322,7 +330,7 @@ We keep track of the number of labels on the stack, incrementing and decrementin
     syntax Label ::= "label" VecType "{" Instrs "}" ValStack
  // --------------------------------------------------------
     rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
@@ -345,7 +353,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <k> br IDX   ~> (SS:Stmts => .) ... </k>
     rule <k> br IDX   ~> ( I:Instr => .) ... </k>
     rule <k> br 0     ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
-         <valstack> VALSTACK => #take(TYPES, VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
     rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
@@ -637,19 +645,24 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
-    rule <k> #checkTypeUse ( TDECLS:TypeDecls )
-       => #if notBool unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
-          #then (type (func TDECLS))
-          #else .K
-          #fi
-         ...
-         </k>
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <types> TYPES </types>
            ...
          </moduleInst>
+       requires notBool unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
+
+    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => . ... </k>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <types> TYPES </types>
+           ...
+         </moduleInst>
+       requires unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
+
     rule <k> #checkTypeUse ( (type TFIDF) )        => . ... </k>
     rule <k> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </k>
 ```
@@ -704,7 +717,7 @@ Unlike labels, only one frame can be "broken" through at a time.
     syntax Frame ::= "frame" Int ValTypes ValStack Map Int Map
  // ----------------------------------------------------------
     rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELDEPTH LABELIDS => . ... </k>
-         <valstack> VALSTACK => #take(unnameValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
+         <valstack> VALSTACK => #take(lengthValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
          <labelDepth> _ => LABELDEPTH </labelDepth>
@@ -713,17 +726,17 @@ Unlike labels, only one frame can be "broken" through at a time.
 
 When we invoke a function, the element on the top of the stack will become the last parameter of the function.
 For example, when we call `(invoke "foo" (i64.const 100) (i64.const 43) (i32.const 22))`, `(i32.const 22)` will be on the top of `<valstack>`, but it will be the last parameter of this function invocation if this function takes 3 parameters.
-That is, whenever we want to `#take` or `#drop` an array of `params`, we need to reverse the array of `params` to make the type of the last parameter matching with the type of the valur on the top of stack.
+That is, whenever we want to `#take` or `#drop` an array of `params`, we need to reverse the array of `params` to make the type of the last parameter matching with the type of the value on the top of stack.
 The `#take` function will return the parameter stack in the reversed order, then we need to reverse the stack again to get the actual parameter array we want.
 
 ```k
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
-          => init_locals #revs(#take(#revt(unnameValTypes(TDOMAIN)), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
+          => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
           ~> init_localids TDOMAIN + TLOCALS
           ~> block [TRANGE] INSTRS end
-          ~> frame MODIDX TRANGE #drop(#revt(unnameValTypes(TDOMAIN)), VALSTACK) LOCAL DEPTH IDS
+          ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
           ...
           </k>
          <valstack>  VALSTACK => .ValStack </valstack>
@@ -1452,42 +1465,36 @@ Imports must appear before any allocations in a module, due to validation.
 
 A subtle point is related to tables with inline `elem` definitions: since these may refer to functions by identifier, we need to make sure that tables definitions come after function definitions.
 
-`structureModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
+`sortModule` takes a list of definitions and returns a map with different groups of definitions, preserving the order within each group.
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax Map ::=  structureModule (     Defns) [function]
-                 | #structureModule (Map, Defns) [function]
-                 | #initialMap ()                [function]
- // -------------------------------------------------------
-    rule #initialMap ()
-      => "typeDecls" |-> .Defns
-         "imports"   |-> .Defns
-         "func/glob" |-> .Defns
-         "allocs"    |-> .Defns
-         "exports"   |-> .Defns
-         "inits"     |-> .Defns
-         "start"     |-> .Defns
+    syntax ModuleDecl ::= sortedModule ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, allocs: Defns, exports: Defns, inits: Defns, start: Defns )
+ // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    rule structureModule(DS) => #structureModule(#initialMap (), #reverse(DS, .Defns))
+    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
+                        | #sortModule ( Defns , ModuleDecl ) [function]
+ // -------------------------------------------------------------------
+    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), sortedModule(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, allocs: .Defns, exports: .Defns, inits: .Defns, start: .Defns))
 
-    rule #structureModule(M,                  .Defns) => M
-    rule #structureModule(M, (T:TypeDefn   DS:Defns)) => #structureModule(M ["typeDecls" <- (T {M ["typeDecls"]}:>Defns)], DS)
+    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
 
-    rule #structureModule(M, (I:ImportDefn DS:Defns)) => #structureModule(M ["imports"   <- (I {M ["imports"  ]}:>Defns)], DS)
+    rule #sortModule((T:TypeDefn   DS:Defns => DS), sortedModule(... types: (TS => T TS)))
 
-    rule #structureModule(M, (X:FuncDefn   DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
-    rule #structureModule(M, (X:GlobalDefn DS:Defns)) => #structureModule(M ["func/glob" <- (X {M ["func/glob"]}:>Defns)], DS)
+    rule #sortModule((I:ImportDefn DS:Defns => DS), sortedModule(... importDefns: (IS => I IS)))
 
-    rule #structureModule(M, (A:TableDefn  DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
-    rule #structureModule(M, (A:MemoryDefn DS:Defns)) => #structureModule(M ["allocs"    <- (A {M ["allocs"   ]}:>Defns)], DS)
+    rule #sortModule((X:FuncDefn   DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
+    rule #sortModule((X:GlobalDefn DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
 
-    rule #structureModule(M, (E:ExportDefn DS:Defns)) => #structureModule(M ["exports"   <- (E {M ["exports"  ]}:>Defns)], DS)
+    rule #sortModule((A:TableDefn  DS:Defns => DS), sortedModule(... allocs: (AS => A AS)))
+    rule #sortModule((A:MemoryDefn DS:Defns => DS), sortedModule(... allocs: (AS => A AS)))
 
-    rule #structureModule(M, (I:DataDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
-    rule #structureModule(M, (I:ElemDefn   DS:Defns)) => #structureModule(M ["inits"     <- (I {M ["inits"    ]}:>Defns)], DS)
+    rule #sortModule((E:ExportDefn DS:Defns => DS), sortedModule(... exports: (ES => E ES)))
 
-    rule #structureModule(M, (S:StartDefn  DS:Defns)) => #structureModule(M ["start"     <- (S .Defns)],                   DS)
+    rule #sortModule((I:DataDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
+    rule #sortModule((I:ElemDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
+
+    rule #sortModule((S:StartDefn  DS:Defns => DS), sortedModule(... start: (_ => S .Defns)))
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
@@ -1503,16 +1510,10 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
                         |     "module" OptionalId Map
  // -------------------------------------------------
-    rule <k> ( module OID:OptionalId DEFNS ) => module OID structureModule(DEFNS) ... </k>
+    rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
 
-    rule <k> module OID:OptionalId MOD
-          => MOD["typeDecls"]
-          ~> MOD["imports"  ]
-          ~> MOD["func/glob"]
-          ~> MOD["allocs"   ]
-          ~> MOD["exports"  ]
-          ~> MOD["inits"    ]
-          ~> MOD["start"    ]
+    rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, allocs: AS, exports: ES, inits: INIS, start: S)
+          => TS ~> IS ~> FGS ~> AS ~> ES ~> INIS ~> S
          ...
          </k>
          <curModIdx> _ => NEXT </curModIdx>

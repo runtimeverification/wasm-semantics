@@ -6,7 +6,7 @@ DEPS_DIR  := deps
 DEFN_DIR  := $(BUILD_DIR)/defn
 
 K_SUBMODULE := $(DEPS_DIR)/k
-K_RELEASE   := $(K_SUBMODULE)/k-distribution/target/release/k
+K_RELEASE   ?= $(K_SUBMODULE)/k-distribution/target/release/k
 K_BIN       := $(K_RELEASE)/bin
 K_LIB       := $(K_RELEASE)/lib
 
@@ -20,10 +20,9 @@ TANGLER                 := $(PANDOC_TANGLE_SUBMODULE)/tangle.lua
 LUA_PATH                := $(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
-.PHONY: all clean                                                          \
-        deps ocaml-deps haskell-deps                                       \
-        defn defn-llvm defn-haskell defn-ocaml defn-java                   \
-        build build-llvm build-haskell build-ocaml build-java              \
+.PHONY: all clean deps                                                     \
+        defn defn-llvm defn-haskell defn-java                              \
+        build build-llvm build-haskell build-java                          \
         test test-execution test-simple test-prove test-klab-prove         \
         test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
@@ -38,7 +37,7 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(K_SUBMODULE)/make.timestamp $(TANGLER) ocaml-deps
+deps: $(K_SUBMODULE)/make.timestamp $(TANGLER)
 
 $(K_SUBMODULE)/make.timestamp:
 	git submodule update --init --recursive
@@ -47,10 +46,6 @@ $(K_SUBMODULE)/make.timestamp:
 
 $(TANGLER):
 	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
-
-ocaml-deps:
-	eval $$(opam config env) \
-	    opam install --yes mlgmp zarith uuidm
 
 # Building Definition
 # -------------------
@@ -63,25 +58,21 @@ wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwa
 
 llvm_dir    := $(DEFN_DIR)/llvm
 haskell_dir := $(DEFN_DIR)/haskell
-ocaml_dir   := $(DEFN_DIR)/ocaml
 java_dir    := $(DEFN_DIR)/java
 
 llvm_defn    := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
 haskell_defn := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
-ocaml_defn   := $(patsubst %, $(ocaml_dir)/%, $(wasm_files))
 java_defn    := $(patsubst %, $(java_dir)/%, $(wasm_files))
 
 llvm_kompiled    := $(llvm_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
 haskell_kompiled := $(haskell_dir)/$(MAIN_DEFN_FILE)-kompiled/definition.kore
-ocaml_kompiled   := $(ocaml_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
 java_kompiled    := $(java_dir)/$(MAIN_DEFN_FILE)-kompiled/compiled.txt
 
 # Tangle definition from *.md files
 
-defn: defn-ocaml defn-java defn-haskell
+defn: defn-java defn-haskell
 defn-llvm: $(llvm_defn)
 defn-haskell: $(haskell_defn)
-defn-ocaml: $(ocaml_defn)
 defn-java: $(java_defn)
 
 $(llvm_dir)/%.k: %.md $(TANGLER)
@@ -89,10 +80,6 @@ $(llvm_dir)/%.k: %.md $(TANGLER)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
 $(haskell_dir)/%.k: %.md $(TANGLER)
-	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
-
-$(ocaml_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
@@ -104,11 +91,10 @@ $(java_dir)/%.k: %.md $(TANGLER)
 
 KOMPILE_OPTIONS    :=
 
-build: build-llvm build-haskell build-ocaml build-java
-build-llvm: $(llvm_kompiled)
+build: build-llvm build-haskell build-java
+build-llvm:    $(llvm_kompiled)
 build-haskell: $(haskell_kompiled)
-build-ocaml: $(ocaml_kompiled)
-build-java: $(java_kompiled)
+build-java:    $(java_kompiled)
 
 $(llvm_kompiled): $(llvm_defn)
 	$(K_BIN)/kompile --backend llvm                                           \
@@ -122,13 +108,6 @@ $(haskell_kompiled): $(haskell_defn)
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(ocaml_kompiled): $(ocaml_defn)
-	eval $$(opam config env)                                                  \
-	    $(K_BIN)/kompile -O3 --non-strict --backend ocaml                     \
-	    --directory $(ocaml_dir) -I $(ocaml_dir)                              \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
-	    $(KOMPILE_OPTIONS)
-
 $(java_kompiled): $(java_defn)
 	$(K_BIN)/kompile --backend java                                           \
 	    --directory $(java_dir) -I $(java_dir)                                \
@@ -139,16 +118,16 @@ $(java_kompiled): $(java_defn)
 # -------
 
 TEST  := ./kwasm
-CHECK := git --no-pager diff --no-index --ignore-all-space
+CHECK := git --no-pager diff --no-index --ignore-all-space -R
 
 TEST_CONCRETE_BACKEND       := llvm
 TEST_FLOAT_CONCRETE_BACKEND := java
 TEST_SYMBOLIC_BACKEND       := haskell
 
-tests/proofs/memory-concrete-type-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
-tests/proofs/memory-concrete-type-spec.k%prove: PROVE_OPTIONS=--z3-tactic "(or-else (using-params smt :random-seed 3 :timeout 1000) (using-params smt :random-seed 2 :timeout 2000) (using-params smt :random-seed 0))" --z3-impl-timeout 6000
+tests/proofs/memory-concrete-type-spec.k%prove: PROVE_OPTIONS=--z3-tactic "(or-else (using-params smt :random-seed 1))" --z3-impl-timeout 5000
 tests/proofs/memory-concrete-type-spec.k%prove: KPROVE_MODULE=MEMORY-CONCRETE-TYPE-LEMMAS
-tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=java
+tests/proofs/wrc20-spec.k%prove: KPROVE_MODULE=WRC20-LEMMAS
+tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=haskell
 
 KPROVE_MODULE := KWASM-LEMMAS
 
@@ -164,18 +143,18 @@ test: test-execution test-prove
 
 tests/%.run: tests/%
 	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
-	$(CHECK) tests/success-$(TEST_CONCRETE_BACKEND).out tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/success-$(TEST_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 
 tests/%.frun: tests/%
 	$(TEST) run --backend $(TEST_FLOAT_CONCRETE_BACKEND) $< > tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
-	$(CHECK) tests/success-$(TEST_FLOAT_CONCRETE_BACKEND).out tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
+	$(CHECK) tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out tests/success-$(TEST_FLOAT_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
 
 tests/%.run-term: tests/%
 	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	grep --after-context=2 "<k>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
-	$(CHECK) tests/success-k.out tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
+	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out-term tests/success-k.out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 
@@ -189,7 +168,7 @@ tests/%.prove: tests/%
 
 tests/%.cannot-prove: tests/%
 	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
-	$(CHECK) $<.expected $<.out
+	$(CHECK) $<.out $<.expected
 	rm -rf $<.err-log
 	rm -rf $<.out
 
@@ -226,7 +205,7 @@ test-conformance: test-conformance-parse test-conformance-supported
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 bad_proof_tests:=$(wildcard tests/bad-proofs/*-spec.k)
-slow_proof_tests:=tests/proofs/loops-spec.k
+slow_proof_tests:=tests/proofs/loops-spec.k tests/proofs/wrc20-spec.k
 quick_proof_tests:=$(filter-out $(slow_proof_tests), $(proof_tests))
 
 test-prove-good: $(proof_tests:=.prove)
@@ -236,20 +215,17 @@ test-prove: test-prove-good test-prove-bad
 
 ### KLab interactive
 
-test-klab-prove: $(quick_proof_tests:=.klab-prove)
+test-klab-prove: tests/proofs/simple-arithmetic-spec.k.klab-prove
 
 # Presentation
 # ------------
 
 media: presentations reports
 
-presentations: TO_FORMAT=beamer
-presentations: media/201803-presentation-ethcc.pdf    \
-               media/201903-presentation-edcon.pdf    \
-               media/201903-presentation-chalmers.pdf \
-               media/201906-presentation-wasm-on-blockchain.pdf
+media/%.pdf: TO_FORMAT=beamer
+presentations: $(patsubst %.md, %.pdf, $(wildcard media/*-presentation-*.md))
 
-reports: TO_FORMAT=latex
+media/201903-report-chalmers.pdf: TO_FORMAT=latex
 reports: media/201903-report-chalmers.pdf
 
 media/%.pdf: media/%.md media/citations.md
@@ -257,4 +233,3 @@ media/%.pdf: media/%.md media/citations.md
 
 media-clean:
 	rm media/*.pdf
-

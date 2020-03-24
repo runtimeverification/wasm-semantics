@@ -9,7 +9,7 @@
 unparsefile="tests/conformance/unparseable.txt"
 
 unparseable=$(cat $unparsefile)
-backends="llvm ocaml"
+backends="llvm"
 
 # Try all unparseable files, see if any new one parses and add them to the unsupported lists.
 # Keep the files sorted and without duplicates so the diff is easy to follow.

@@ -20,7 +20,7 @@ KLAB_OUT="${KLAB_OUT:-$build_dir/klab}"
 KLAB_NODE_STACK_SIZE="${KLAB_NODE_STACK_SIZE:-30000}"
 export KLAB_OUT
 
-export K_OPTS="${K_OPTS:--Xmx8G}"
+export K_OPTS="${K_OPTS:--Xmx16G}"
 
 # Utilities
 # ---------
@@ -73,7 +73,6 @@ run_klab() {
         --state-log --state-log-path "$KLAB_OUT/data" --state-log-id "$klab_log" \
         --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
         --output-flatten "_Map_ #And" \
-        --output-tokenize "listInstr <_>_ i32_WASM-DATA i64_WASM-DATA _:__WASM-DATA" \
         --no-alpha-renaming --restore-original-names --no-sort-collections \
         --output json \
         "$@"
@@ -94,18 +93,23 @@ view_klab() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (llvm|haskell|ocaml|java)] <pgm>  <K args>*
-           $0 kast       [--backend (llvm|haskell|ocaml|java)] <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell|java)]            <spec> <K args>* -m <def_module>
-           $0 klab-run                                         <pgm>  <K arg>*
-           $0 klab-prove                                       <spec> <K arg>* -m <def_module>
-           $0 klab-view                                        [<pgm>|<spec>]
+    usage: $0 run        [--backend (llvm|haskell|java)] <pgm>  <K args>*
+           $0 kast       [--backend (llvm|haskell|java)] <pgm>  <output format> <K args>*
+           $0 prove      [--backend (haskell|java)]      <spec> <K args>* -m <def_module>
+           $0 klab-run                                   <pgm>  <K arg>*
+           $0 klab-prove                                 <spec> <K arg>* -m <def_module>
+           $0 klab-view                                  [<pgm>|<spec>]
+
+           $0 [help|--help|version|--version]
 
        $0 run   : Run a single WebAssembly program
        $0 kast  : Parse a single WebAssembly program and output it in supported format
        $0 prove : Run a WebAssembly K proof
        $0 klab-(run|prove) : Run or prove a spec and dump StateLogs which KLab can read
        $0 klab-view : Launch KLab on the StateLog associated with the given program/spec.
+
+       $0 help    : Display this help message.
+       $0 version : Display the KWasm, K, Kore, and Z3 versions in use.
 
        Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.
@@ -123,8 +127,20 @@ usage_fatal() {
 }
 
 [[ ! -z ${1:-} ]] || usage_fatal "Must supply a command to run."
-if [[ "$1" == '--help' ]] || [ "$1" == 'help' ]; then
+if [[ "$1" == '--help' ]] || [[ "$1" == 'help' ]]; then
     usage
+    exit 0
+fi
+
+if [[ "$1" == 'version' ]] || [[ "$1" == '--version' ]]; then
+    notif "KWasm Version"
+    git rev-parse --short HEAD
+    notif "K Version"
+    kompile --version
+    notif "Kore Version"
+    kore-exec --version
+    notif "Z3 Version"
+    z3 --version
     exit 0
 fi
 
@@ -140,7 +156,6 @@ if [[ $# -gt 1 ]] && [[ $1 == '--backend' ]] || [[ $1 == '--definition' ]]; then
     shift 2
 fi
 backend_dir="$defn_dir/$backend"
-[[ ! "$backend" == "ocaml" ]] || eval $(opam config env)
 
 # get the run file
 [[ ! -z ${1:-} ]] || usage_fatal "Must supply a file to run on."
@@ -154,10 +169,10 @@ fi
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
 case "$run_command-$backend" in
-    run-@(llvm|haskell|ocaml|java)  ) run_krun                        "$@" ;;
-    kast-@(llvm|haskell|ocaml|java) ) run_kast                        "$@" ;;
-    prove-@(haskell|java)           ) run_prove                       "$@" ;;
-    klab-@(run|prove)-java          ) run_klab "${run_command#klab-}" "$@" ;;
-    klab-view-java                  ) view_klab                       "$@" ;;
+    run-@(llvm|haskell|java)  ) run_krun                        "$@"     ;;
+    kast-@(llvm|haskell|java) ) run_kast                        "$@"     ;;
+    prove-@(haskell|java)     ) run_prove                       "$@"     ;;
+    klab-@(run|prove)-java    ) run_klab "${run_command#klab-}" "$@"     ;;
+    klab-view-java            ) view_klab                       "$@"     ;;
     *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
 esac

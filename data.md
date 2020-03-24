@@ -132,6 +132,11 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
 
     syntax FuncType ::= VecType "->" VecType
  // ----------------------------------------
+
+    syntax Int ::= lengthValTypes ( ValTypes ) [function]
+ // -----------------------------------------------------
+    rule lengthValTypes(.ValTypes) => 0
+    rule lengthValTypes(V VS)      => 1 +Int lengthValTypes(VS)
 ```
 
 We need helper functions to remove the identifiers from `FuncType`.
@@ -344,25 +349,25 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 ```
 
 `#zero` will create a specified stack of zero values in a given type.
-`#take` will take the prefix of a given stack, checking that the value types match the supplied type-sequence.
-`#drop` will drop the prefix of a given stack, checking that the value types match the supplied type-sequence.
+`#take` will take the prefix of a given stack.
+`#drop` will drop the prefix of a given stack.
 One needs to unname the `ValTypes` first before calling the `#take` or `#drop` function.
 
 ```k
     syntax ValStack ::= #zero ( ValTypes )            [function]
-                      | #take ( ValTypes , ValStack ) [function]
-                      | #drop ( ValTypes , ValStack ) [function]
+                      | #take ( Int , ValStack )      [function]
+                      | #drop ( Int , ValStack )      [function]
                       | #revs ( ValStack )            [function]
                       | #revs ( ValStack , ValStack ) [function, klabel(#revsAux)]
  // ------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(.ValTypes,   _)                              => .ValStack
-    rule #take(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => < TYPE > VAL : #take(VTYPES, VALSTACK)
+    rule #take(N, _)      => .ValStack               requires notBool N >Int 0
+    rule #take(N, V : VS) => V : #take(N -Int 1, VS) requires         N >Int 0
 
-    rule #drop(.ValTypes,   VALSTACK)                       => VALSTACK
-    rule #drop(TYPE:AValType VTYPES, < TYPE > VAL:Number : VALSTACK) => #drop(VTYPES, VALSTACK)
+    rule #drop(N, VS)     => VS                  requires notBool N >Int 0
+    rule #drop(N, _ : VS) => #drop(N -Int 1, VS) requires         N >Int 0
 
     rule #revs(VS) => #revs(VS, .ValStack)
 
@@ -514,8 +519,8 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional]
- // --------------------------------------------------------------------
+    syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
+ // --------------------------------------------------------------------------------------
     rule #getRange(BM, START, WIDTH) => 0
       requires notBool (WIDTH >Int 0)  [concrete]
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
@@ -526,9 +531,9 @@ The function interprets the range of bytes as little-endian.
 `#set` sets a key in a map, removing the key if the value is 0.
 
 ```k
-    syntax Int     ::= #get (ByteMap , Int     ) [function, smtlib(mapGet)]
-    syntax ByteMap ::= #set (ByteMap , Int, Int) [function, smtlib(mapSet)]
- // -----------------------------------------------------------------------
+    syntax Int     ::= #get (ByteMap , Int     ) [function, functional, smtlib(mapGet)]
+    syntax ByteMap ::= #set (ByteMap , Int, Int) [function, functional, smtlib(mapSet)]
+ // -----------------------------------------------------------------------------------
     rule #get( ByteMap <| M |>, KEY ) => {M [KEY]}:>Int requires         KEY in_keys(M) [concrete]
     rule #get( ByteMap <| M |>, KEY ) => 0              requires notBool KEY in_keys(M)
 
