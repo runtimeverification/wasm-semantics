@@ -40,6 +40,9 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
       requires 0 <=Int X
        andBool X  <Int N
       [simplification]
+
+    rule X modInt 1 => 0
+      [simplification]
 ```
 
 `modInt` selects the least non-negative representative of a congruence class modulo `N`.
@@ -296,14 +299,10 @@ They are non-trivial in their implementation, but the following should obviously
     rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
       requires notBool (WIDTH ==Int 0)
        andBool #isByteMap(BM)
-      ensures 0 <=Int #get(BM, ADDR)
-       andBool #get(BM, ADDR) <Int 256
       [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
       requires WIDTH ==Int 1
-       ensures 0 <=Int #get(BM, ADDR)
-       andBool #get(BM, ADDR) <Int 256
       [simplification]
 ```
 
@@ -331,8 +330,6 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
       requires          WIDTH >Int 0
        andBool #isByteMap(BM)
-      ensures  0 <=Int #get(BM, START)
-       andBool #get(BM, START) <Int 256
       [simplification]
 
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
@@ -375,6 +372,22 @@ Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 
     rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8 [simplification]
+
+    rule (X <<Int N) +Int (Y <<Int M) => (X +Int (Y <<Int (M -Int N))) <<Int N
+      requires N <=Int M
+      [simplification]
+      
+    rule (X <<Int N) +Int (Y <<Int M) => ((X <<Int (N -Int M)) +Int Y) <<Int M
+      requires N >Int M
+      [simplification]
+
+    rule (X +Int (Y <<Int M)) modInt N => X +Int ((Y <<Int M) modInt N)
+      requires N ==Int (1 <<Int log2Int(N))
+       andBool N >=Int 256
+       andBool 0 <=Int X
+       andBool X <Int 256
+       andBool M >=Int 8
+      [simplification]
 ```
 
 TODO: The following theorem should be proven, and moved to the set of general lemmas.
