@@ -55,4 +55,17 @@ module WRC20-SPEC
        andBool #get(BM, ADDR +Int 6) ==Int #get(?BM', ADDR +Int 1 )
        andBool #get(BM, ADDR +Int 7) ==Int #get(?BM', ADDR +Int 0 )
 
+    // This lemma speeds things up, by reducing the number of iterations we do through the loop.
+    rule <k> #reverseLoop => br 0 ~> label [ .ValTypes ] { #reverseLoop } .ValStack ... </k>
+       <valstack> .ValStack </valstack>
+       <locals>
+          (0 |-> <i64> ORIGINAL)
+          (1 |-> <i64> (X => X +Int 1))
+          (2 |-> <i64> (SUM => #wrap(64, (#wrap(8, ORIGINAL >>Int (X *Int 8)) <<Int (56 -Int (8 *Int X))) +Int SUM)))
+       </locals>
+       <labelDepth> LD => LD +Int 1 </labelDepth>
+    requires 0 <=Int X
+     andBool X <Int 8
+     andBool #inUnsignedRange(i64, SUM)
+
 endmodule
