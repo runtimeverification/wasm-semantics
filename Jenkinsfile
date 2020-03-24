@@ -57,7 +57,7 @@ pipeline {
           }
         }
         stage('Test Conformance') {
-          options { timeout(time: 15, unit: 'MINUTES') }
+          options { timeout(time: 20, unit: 'MINUTES') }
           parallel {
             stage('Parse') {
               steps {
