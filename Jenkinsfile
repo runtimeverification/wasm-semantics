@@ -80,7 +80,7 @@ pipeline {
           }
         }
         stage('Test Proofs') {
-          options { timeout(time: 15, unit: 'MINUTES') }
+          options { timeout(time: 20, unit: 'MINUTES') }
           parallel {
             stage('Normal') {
               steps {
