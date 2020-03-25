@@ -84,6 +84,29 @@ The text format is a concrete syntax for Wasm.
 It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
 Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
 
+### Text Integers
+
+All integers given in the text format are automatically turned into regular integers.
+That means converting between hexadecimal and decimal when necessary, and removing underscores.
+
+**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
+
+```k
+    syntax WasmInt ::= Int
+    syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
+ // --------------------------------------------------------------------------
+    rule `WasmInt`(VAL) => WasmIntToken2Int(VAL)
+
+    syntax String ::= WasmIntToken2String    ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= WasmIntTokenString2Int ( String       ) [function]
+                    | WasmIntToken2Int       ( WasmIntToken ) [function]
+ // --------------------------------------------------------------------
+    rule WasmIntTokenString2Int(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+    rule WasmIntTokenString2Int(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+
+    rule WasmIntToken2Int(VAL) => WasmIntTokenString2Int(replaceAll(WasmIntToken2String(VAL), "_", ""))
+```
+
 ### Folded Instructions
 
 Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
@@ -207,28 +230,45 @@ In the text format, it is also allowed to have a conditional without the `else` 
 ### Memory and Tables
 
 Intitial memory data, and initial table elements can be given inline in the text format.
+We supply macros that will unfold these definitions when they are part of a body of definitions, such as in a module.
+This is to ensure that the unfolding happens before the different elements in a module are grouped together, so as to maintain their order.
+
+We also supply rules for when the inlined definitions are encountered on top of the `<k>` cell, so that they can be desugared on the fly.
+
+This is useful when specifying modules in the more lax KWasm format, where they can be declared as they are needed.
 
 ```k
+    syntax Identifier ::= ".MemoryIdentifier" | ".TableIdentifier"
+
     syntax MemorySpec ::= "(" "data" DataString ")"
  // -----------------------------------------------
-    rule <k> ( memory ( data DS ) ) => ( memory #freshId(NEXTID) (data DS) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+    rule ( memory ( data DS ) ) => ( memory .MemoryIdentifier (data DS) ) [macro]
+
+    rule ( memory ID:Identifier ( data DS ) ) DEFS:Defns
+      => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
+         ( data   ID (offset (i32.const 0) .Instrs) DS )
+         DEFS
+      [macro]
 
     rule <k> ( memory ID:Identifier ( data DS ) )
-          =>  memory { ID #lengthDataPages(DS) #lengthDataPages(DS) }
-          ~> ( data ID (offset (i32.const 0) .Instrs) DS )
+          => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
+          ~> ( data   ID (offset (i32.const 0) .Instrs) DS )
           ...
          </k>
-      requires #lengthDataPages(DS) <=Int #maxMemorySize()
 
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
-    rule <k> ( table funcref ( elem ES ) ) => ( table #freshId(NEXTID) funcref (elem ES) ) ... </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
+    rule ( table funcref ( elem ES ) ) => ( table .TableIdentifier funcref (elem ES) ) [macro]
+
+    rule ( table ID:Identifier funcref ( elem ES ) ) DEFS:Defns
+      => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
+         ( elem  ID (offset (i32.const 0) .Instrs) ES )
+         DEFS
+      [macro]
 
     rule <k> ( table ID:Identifier funcref ( elem ES ) )
-          =>  table { ID #lenElemSegment(ES) #lenElemSegment(ES) }
-          ~> ( elem ID (offset (i32.const 0) .Instrs) ES )
+          => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
+          ~> ( elem  ID (offset (i32.const 0) .Instrs) ES )
           ...
          </k>
 ```
@@ -310,20 +350,14 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // --------------------------------------------------------------
 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
- // -------------------------------------------------------
-    rule <k> ( global OID:OptionalId (import MOD NAME) TYP ) => ( import MOD NAME (global OID TYP) ) ... </k>
-
-    syntax FuncSpec ::= InlineImport TypeUse
- // ----------------------------------------
-    rule <k> ( func OID:OptionalId (import MOD NAME) TUSE ) => ( import MOD NAME (func OID TUSE) ) ... </k>
-
-    syntax TableSpec ::= InlineImport TableType
- // -------------------------------------------
-    rule <k> ( table OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table OID TT) ) ... </k>
-
+    syntax FuncSpec   ::= InlineImport TypeUse
+    syntax TableSpec  ::= InlineImport TableType
     syntax MemorySpec ::= InlineImport MemType
  // ------------------------------------------
-    rule <k> ( memory OID:OptionalId (import MOD NAME) MT:MemType ) => ( import MOD NAME (memory OID MT) ) ... </k>
+    rule ( global OID:OptionalId (import MOD NAME) TYP          ) => ( import MOD NAME (global OID TYP ) )  [macro]
+    rule ( func   OID:OptionalId (import MOD NAME) TUSE         ) => ( import MOD NAME (func   OID TUSE) )  [macro]
+    rule ( table  OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table  OID TT  ) )  [macro]
+    rule ( memory OID:OptionalId (import MOD NAME) MT:MemType   ) => ( import MOD NAME (memory OID MT  ) )  [macro]
 ```
 
 ```k
