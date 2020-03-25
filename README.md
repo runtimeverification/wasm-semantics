@@ -1,7 +1,7 @@
 KWasm: Semantics of WebAssembly in K
 ====================================
 
-### Want Support KWasm development?
+### Want to Support KWasm Development?
 [Contribute to our Gitcoin Grant.](https://gitcoin.co/grants/592/kewasm-and-kwasm)
 
 ---
