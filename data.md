@@ -273,8 +273,8 @@ The `#wrap` function wraps an integer to a given bit width.
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
-    syntax Int  ::= #wrap(Int, Int) [function]
- // ------------------------------------------
+    syntax Int  ::= #wrap(Int, Int) [function, functional]
+ // ------------------------------------------------------
     rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
 ```
 
