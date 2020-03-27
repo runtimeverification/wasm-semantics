@@ -346,12 +346,6 @@ They are non-trivial in their implementation, but the following should obviously
          andBool GET_ADDR >Int SET_ADDR
          andBool GET_ADDR <Int SET_ADDR +Int WIDTH
         [simplification]
-
-// rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #get(BM, GET_ADDR)
-//   requires #isByteMap(BM)
-//    andBool notBool(
-//      andBool GET_ADDR >Int SET_ADDR
-//      andBool GET_ADDR <Int SET_ADDR +Int WIDTH
 ```
 
 ```k
@@ -372,21 +366,12 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
 ```
 
 ```k
-//  rule #getRange(BM, START, WIDTH) => 0
-//    requires notBool (WIDTH >Int 0)
-//    [simplification]
-//  rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-//    requires          WIDTH >Int 0
-//     andBool #isByteMap(BM)
-//    [simplification]
-
-//  rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
-//    [simplification]
-
     rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, WIDTH -Int (N /Int 8))
       requires N modInt 8 ==Int 0
       [simplification]
+```
 
+```k
 endmodule
 ```
 
@@ -428,7 +413,7 @@ Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
     rule (X <<Int N) +Int (Y <<Int M) => (X +Int (Y <<Int (M -Int N))) <<Int N
       requires N <=Int M
       [simplification]
-      
+
     rule (X <<Int N) +Int (Y <<Int M) => ((X <<Int (N -Int M)) +Int Y) <<Int M
       requires N >Int M
       [simplification]
