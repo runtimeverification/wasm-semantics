@@ -145,7 +145,7 @@ x mod m + y = r + y
 
 #### Bit Shifting
 
-We want Z3 to understand what a bit-shift is.
+We want K to understand what a bit-shift is.
 
 ```k
     rule X <<Int N modInt M ==Int 0 => true
@@ -170,6 +170,7 @@ We want Z3 to understand what a bit-shift is.
 ```
 
 Proof:
+
 ```
 Let x' = x << m
 => The least m bits of x' are 0.
