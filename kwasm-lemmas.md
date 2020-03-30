@@ -151,7 +151,7 @@ x mod m + y = r + y
 We want K to understand what a bit-shift is.
 
 ```k
-    rule X <<Int N modInt M ==Int 0 => true
+    rule (X <<Int N) modInt M ==Int 0 => true
       requires M modInt (2 ^Int N) ==Int 0
       [simplification]
 
