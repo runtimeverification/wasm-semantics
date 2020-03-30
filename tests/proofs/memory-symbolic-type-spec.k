@@ -16,8 +16,8 @@ module MEMORY-SYMBOLIC-TYPE-SPEC
            <mdata> BM   </mdata>
            ...
          </memInst>
-       requires #chop(<i32> ADDR) ==K <i32> EA
-        andBool EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
+       requires #chop(<i32> ADDR) ==K <i32> ?EA
+        andBool ?EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
         andBool #isByteMap(BM)
 
 endmodule
