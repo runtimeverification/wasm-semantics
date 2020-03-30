@@ -344,7 +344,7 @@ They are non-trivial in their implementation, but the following should obviously
         [simplification]
 
     rule #get(#setRange(BM, SET_ADDR       , VAL        , WIDTH       ), GET_ADDR)
-        => #get(#setRange(BM, SET_ADDR +Int 1, VAL >>Int 8, WIDTH -Int 1), GET_ADDR)
+      => #get(#setRange(BM, SET_ADDR +Int 1, VAL >>Int 8, WIDTH -Int 1), GET_ADDR)
         requires #isByteMap(BM)
          andBool GET_ADDR >Int SET_ADDR
          andBool GET_ADDR <Int SET_ADDR +Int WIDTH
