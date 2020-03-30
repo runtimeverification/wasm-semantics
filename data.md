@@ -273,9 +273,10 @@ The `#wrap` function wraps an integer to a given bit width.
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
-    syntax Int  ::= #wrap(Int, Int) [function]
- // ------------------------------------------
-    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
+    syntax Int  ::= #wrap(Int, Int) [function, functional]
+ // ------------------------------------------------------
+    rule #wrap(WIDTH, N) => N &Int ((1 <<Int WIDTH) -Int 1) requires         WIDTH >Int 0 [concrete]
+    rule #wrap(WIDTH, N) => 0                               requires notBool WIDTH >Int 0
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
@@ -503,10 +504,11 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 ```k
     syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function]
  // ---------------------------------------------------------------
-    rule #setRange(BM, IDX,   _, WIDTH) => BM
+    rule #setRange(BM,   _,   _, WIDTH) => BM
       requires notBool (WIDTH >Int 0)
     rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
       requires          WIDTH >Int 0
+      [concrete]
 ```
 
 `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
@@ -515,10 +517,11 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
  // --------------------------------------------------------------------------------------
-    rule #getRange(BM, START, WIDTH) => 0
-      requires notBool (WIDTH >Int 0)  [concrete]
+    rule #getRange( _,     _, WIDTH) => 0
+      requires notBool (WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires          WIDTH >Int 0   [concrete]
+      requires          WIDTH >Int 0
+      [concrete]
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
