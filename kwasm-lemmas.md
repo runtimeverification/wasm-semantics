@@ -369,8 +369,9 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
 ```
 
 ```k
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, WIDTH -Int (N /Int 8))
+    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N /Int 8)
       requires 0 <=Int N
+       andBool N /Int 8 <=Int WIDTH
        andBool N modInt 8 ==Int 0
       [simplification]
 ```
