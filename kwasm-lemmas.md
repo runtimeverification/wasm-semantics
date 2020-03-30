@@ -42,7 +42,8 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
       [simplification]
 
     rule #wrap(N, X) => X
-      requires 0 <=Int X
+      requires 0 <=Int N
+       andBool 0 <=Int X
        andBool X  <Int (1 <<Int N)
       [simplification]
 
@@ -101,11 +102,13 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
       [simplification]
 
     rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
-      requires M >=Int N
+      requires 0 <=Int N
+       andBool N <=Int M
       [simplification]
 
     rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
-      requires M >=Int N
+      requires 0 <=Int N
+       andBool N <=Int M
       [simplification]
 ```
 
@@ -367,7 +370,8 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
 
 ```k
     rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, WIDTH -Int (N /Int 8))
-      requires N modInt 8 ==Int 0
+      requires 0 <=Int N
+       andBool N modInt 8 ==Int 0
       [simplification]
 ```
 
