@@ -463,7 +463,7 @@ A module of shorthand commands for the WRC20 module.
     syntax Defns      ::= "#wrc20Functions_fastBalance"
     syntax Defns      ::= "#wrc20ReverseBytes"
     syntax TypeDecls  ::= "#wrc20ReverseBytesTypeDecls"
- // -------------------------------------
+ // ---------------------------------------------------
     rule #wrc20 => ( module #wrc20Body ) [macro]
 
     rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions_fastBalance [macro]
