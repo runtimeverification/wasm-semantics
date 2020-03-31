@@ -457,16 +457,16 @@ module WRC20
 A module of shorthand commands for the WRC20 module.
 
 ```k
-    syntax Stmts     ::= "#wrc20"
-    syntax Defns     ::= "#wrc20Body"
-    syntax Defns     ::= "#wrc20Imports"
-    syntax Defns     ::= "#wrc20Functions"
-    syntax Defns     ::= "#wrc20ReverseBytes"
-    syntax TypeDecls ::= "#wrc20ReverseBytesTypeDecls"
- // --------------------------------------------------
-    rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro]
+    syntax ModuleDecl ::= "#wrc20"
+    syntax Defns      ::= "#wrc20Body"
+    syntax Defns      ::= "#wrc20Imports"
+    syntax Defns      ::= "#wrc20Functions_fastBalance"
+    syntax Defns      ::= "#wrc20ReverseBytes"
+    syntax TypeDecls  ::= "#wrc20ReverseBytesTypeDecls"
+ // ---------------------------------------------------
+    rule #wrc20 => ( module #wrc20Body ) [macro]
 
-    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro]
+    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions_fastBalance [macro]
 
     rule #wrc20Imports =>
       (func String2Identifier("$revert")          ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"revert\"") )          param i32 i32 .ValTypes .TypeDecls )
@@ -480,7 +480,7 @@ A module of shorthand commands for the WRC20 module.
       .Defns
       [macro]
 
-    rule #wrc20Functions =>
+    rule #wrc20Functions_fastBalance =>
       (func ( export #unparseWasmString("\"main\"") ) .TypeDecls .LocalDecls
         block .TypeDecls
           block .TypeDecls
@@ -548,11 +548,6 @@ A module of shorthand commands for the WRC20 module.
           i32.const 32
           call String2Identifier("$storageLoad")
           i32.const 32
-          i32.const 32
-          i64.load
-          call String2Identifier("$i64.reverse_bytes")
-          i64.store
-          i32.const 32
           i32.const 8
           call String2Identifier("$finish")
           .EmptyStmts
@@ -591,12 +586,14 @@ A module of shorthand commands for the WRC20 module.
           call String2Identifier("$storageLoad")
           i32.const 64
           i64.load
+          call String2Identifier("$i64.reverse_bytes")
           local.set 1
           i32.const 32
           i32.const 64
           call String2Identifier("$storageLoad")
           i32.const 64
           i64.load
+          call String2Identifier("$i64.reverse_bytes")
           local.set 2
           block .TypeDecls
             local.get 0
@@ -619,12 +616,14 @@ A module of shorthand commands for the WRC20 module.
           local.set 2
           i32.const 64
           local.get 1
+          call String2Identifier("$i64.reverse_bytes")
           i64.store
           i32.const 0
           i32.const 64
           call String2Identifier("$storageStore")
           i32.const 64
           local.get 2
+          call String2Identifier("$i64.reverse_bytes")
           i64.store
           i32.const 32
           i32.const 64
