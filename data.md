@@ -58,8 +58,8 @@ In the abstract syntax of Wasm, indicies are 32 bit unsigned integers.
 However, we extend the `Index` sort with another subsort, `Identifier`, in the text format.
 
 ```k
-    syntax Index ::= Int
- // --------------------
+    syntax Index ::= WasmInt
+ // ------------------------
 ```
 
 `Int` is the basic form of index, and indices always need to resolve to integers.
@@ -211,17 +211,11 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i64) => 18446744073709551616
 ```
 
-Here we define the rules about integer parsing.
-**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
+Here we define the rules about what integer formats can be used in Wasm.
+For the core language, only regular integers are allowed.
 
 ```k
-    syntax String ::= #parseWasmIntToken ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
-    syntax Int    ::= #parseWasmInt      ( String       )  [function]
-                    | WasmIntToken
- // ------------------------------
-    rule #parseWasmInt(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
-    rule #parseWasmInt(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-    rule WINT:WasmIntToken => #parseWasmInt(replaceAll(#parseWasmIntToken(WINT), "_", ""))   [macro]
+    syntax WasmInt ::= Int
 ```
 
 ### Type Mutability
@@ -279,9 +273,10 @@ The `#wrap` function wraps an integer to a given bit width.
  // -----------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
-    syntax Int  ::= #wrap(Int, Int) [function]
- // ------------------------------------------
-    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH) [concrete]
+    syntax Int  ::= #wrap(Int, Int) [function, functional]
+ // ------------------------------------------------------
+    rule #wrap(WIDTH, N) => N &Int ((1 <<Int WIDTH) -Int 1) requires         WIDTH >Int 0 [concrete]
+    rule #wrap(WIDTH, N) => 0                               requires notBool WIDTH >Int 0
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
@@ -509,10 +504,11 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 ```k
     syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function]
  // ---------------------------------------------------------------
-    rule #setRange(BM, IDX,   _, WIDTH) => BM
+    rule #setRange(BM,   _,   _, WIDTH) => BM
       requires notBool (WIDTH >Int 0)
     rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
       requires          WIDTH >Int 0
+      [concrete]
 ```
 
 `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
@@ -521,10 +517,11 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
  // --------------------------------------------------------------------------------------
-    rule #getRange(BM, START, WIDTH) => 0
-      requires notBool (WIDTH >Int 0)  [concrete]
+    rule #getRange( _,     _, WIDTH) => 0
+      requires notBool (WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires          WIDTH >Int 0   [concrete]
+      requires          WIDTH >Int 0
+      [concrete]
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
