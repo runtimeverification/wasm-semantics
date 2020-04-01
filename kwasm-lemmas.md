@@ -35,7 +35,7 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
 
 #### Rules for Expressions With Only Modulus
 
-These are given in pure modulus form, and in form with `#wrap`, which is modulus with a power of 2.
+These are given in pure modulus form, and in form with `#wrap`, which is modulus with a power of 2 for positive `N`.
 
 ```k
     rule X modInt N => X
@@ -50,9 +50,6 @@ These are given in pure modulus form, and in form with `#wrap`, which is modulus
       [simplification]
 
     rule X modInt 1 => 0
-      [simplification]
-
-    rule #wrap(0, _) => 0
       [simplification]
 ```
 
@@ -115,12 +112,12 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
       [simplification]
 
     rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
-      requires 0 <=Int N
+      requires 0 <=Int M
        andBool N <=Int M
       [simplification]
 
     rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
-      requires 0 <=Int N
+      requires 0 <=Int M
        andBool N <=Int M
       [simplification]
 ```
@@ -149,7 +146,7 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
       requires N <=Int M
       [simplification]
 
-    rule #wrap(N, Y +Int #wrap(M, X)) => #wrap(N, X +Int Y)
+    rule #wrap(N, X +Int #wrap(M, Y)) => #wrap(N, X +Int Y)
       requires N <=Int M
       [simplification]
 ```
@@ -351,8 +348,9 @@ They are non-trivial in their implementation, but the following should obviously
        andBool #isByteMap(BM)
       [simplification]
 
-    rule #wrap(8, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
-      requires notBool (WIDTH ==Int 0)
+    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
+      requires N ==Int 8
+       andBool notBool (WIDTH ==Int 0)
        andBool #isByteMap(BM)
       [simplification]
 
