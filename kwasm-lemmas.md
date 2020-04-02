@@ -514,6 +514,7 @@ A module of shorthand commands for the WRC20 module.
     syntax Defns      ::= "#wrc20Imports"
     syntax Defns      ::= "#wrc20Functions_fastBalance"
     syntax Defns      ::= "#wrc20ReverseBytes"
+    syntax Instr      ::= "#reverseLoop"
     syntax TypeDecls  ::= "#wrc20ReverseBytesTypeDecls"
  // ---------------------------------------------------
     rule #wrc20 => ( module #wrc20Body ) [macro]
