@@ -502,8 +502,8 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function]
- // ---------------------------------------------------------------
+    syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function, functional, smtlib(setRange)]
+ // ---------------------------------------------------------------------------------------------
     rule #setRange(BM,   _,   _, WIDTH) => BM
       requires notBool (WIDTH >Int 0)
     rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
