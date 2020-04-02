@@ -348,6 +348,10 @@ They are non-trivial in their implementation, but the following should obviously
        andBool #isByteMap(BM)
       [simplification]
 
+    rule #getRange(BM, ADDR, WIDTH) => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)
+      requires #get(BM, ADDR) ==Int 0
+       andBool WIDTH >Int 0
+
     rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
       requires N ==Int 8
        andBool notBool (WIDTH ==Int 0)
@@ -357,6 +361,21 @@ They are non-trivial in their implementation, but the following should obviously
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
       requires WIDTH ==Int 1
       [simplification]
+```
+
+`#getRange` over `#setRange`
+
+```k
+    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
+      => #wrap(GET_WIDTH *Int 8, VALUE)
+      requires         GET_WIDTH <=Int SET_WIDTH
+      [simplification]
+
+    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
+      => #wrap(SET_WIDTH *Int 8, VALUE)
+         +Int (#getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) <<Int (SET_WIDTH *Int 8))
+      requires notBool GET_WIDTH <=Int SET_WIDTH
+      [simplificaton]
 ```
 
 `#get` over `#setRange`.
