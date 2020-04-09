@@ -531,7 +531,6 @@ A module of shorthand commands for the WRC20 module.
     syntax Defns      ::= "#wrc20Imports"
     syntax Defns      ::= "#wrc20Functions_fastBalance"
     syntax Defns      ::= "#wrc20ReverseBytes"
-    syntax Instr      ::= "#reverseLoop"
     syntax TypeDecls  ::= "#wrc20ReverseBytesTypeDecls"
  // ---------------------------------------------------
     rule #wrc20 => ( module #wrc20Body ) [macro]
@@ -711,46 +710,42 @@ A module of shorthand commands for the WRC20 module.
     rule #wrc20ReverseBytes =>
       (func String2Identifier("$i64.reverse_bytes") #wrc20ReverseBytesTypeDecls local i64 i64 .ValTypes .LocalDecls
         block .TypeDecls
-          #reverseLoop
+          loop .TypeDecls
+            local.get 1
+            i64.const 8
+            i64.ge_u
+            br_if 1
+            local.get 0
+            i64.const 56
+            local.get 1
+            i64.const 8
+            i64.mul
+            i64.sub
+            i64.shl
+            i64.const 56
+            i64.shr_u
+            i64.const 56
+            i64.const 8
+            local.get 1
+            i64.mul
+            i64.sub
+            i64.shl
+            local.get 2
+            i64.add
+            local.set 2
+            local.get 1
+            i64.const 1
+            i64.add
+            local.set 1
+            br 0
+            .EmptyStmts
+          end
           .EmptyStmts
         end
         local.get 2
         .EmptyStmts
         )
       .Defns
-      [macro]
-
-    rule #reverseLoop
-      => loop .TypeDecls
-           local.get 1
-           i64.const 8
-           i64.ge_u
-           br_if 1
-           local.get 0
-           i64.const 56
-           local.get 1
-           i64.const 8
-           i64.mul
-           i64.sub
-           i64.shl
-           i64.const 56
-           i64.shr_u
-           i64.const 56
-           i64.const 8
-           local.get 1
-           i64.mul
-           i64.sub
-           i64.shl
-           local.get 2
-           i64.add
-           local.set 2
-           local.get 1
-           i64.const 1
-           i64.add
-           local.set 1
-           br 0
-           .EmptyStmts
-         end
       [macro]
 
     syntax Defns ::= Defns "++Defns" Defns [function, functional]
