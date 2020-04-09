@@ -433,13 +433,11 @@ module WRC20-LEMMAS
     imports KWASM-LEMMAS
 ```
 
-TODO: Remove anything that uses `modInt 2^N` where `N` is 8, 16, 32 or 64 -- we simplify those.
-
 These conversions turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
 
 ```k
-    rule X modInt N => #wrap( 8, X) requires N ==Int 256       [simplification]
-    rule X modInt N => #wrap(16, X) requires N ==Int 65536     [simplification]
+    rule X modInt N => #wrap( 8, X) requires N ==Int 256        [simplification]
+    rule X modInt N => #wrap(16, X) requires N ==Int 65536      [simplification]
     rule X modInt N => #wrap(32, X) requires N ==Int #pow(i32)  [simplification]
     rule X modInt N => #wrap(64, X) requires N ==Int #pow(i64)  [simplification]
 
