@@ -1,6 +1,11 @@
 KWasm: Semantics of WebAssembly in K
 ====================================
 
+### Want to Support KWasm Development?
+[Contribute to our Gitcoin Grant.](https://gitcoin.co/grants/592/kewasm-and-kwasm)
+
+---
+
 This repository presents a prototype formal semantics of [WebAssembly].
 It is currently under construction.
 For examples of current capabilities, see the unit tests under the `tests/simple` directory.
