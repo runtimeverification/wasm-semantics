@@ -41,6 +41,12 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
        andBool X  <Int N
       [simplification]
 
+    rule #wrap(N, X) => X
+      requires 0 <=Int N
+       andBool 0 <=Int X
+       andBool X  <Int (1 <<Int N)
+      [simplification]
+
     rule X modInt 1 => 0
       [simplification]
 ```
@@ -94,6 +100,16 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+
+    rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
+      requires 0 <=Int N
+       andBool N <=Int M
+      [simplification]
+
+    rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
+      requires 0 <=Int N
+       andBool N <=Int M
+      [simplification]
 ```
 
 Proof:
@@ -132,9 +148,13 @@ x mod m + y = r + y
 
 #### Bit Shifting
 
-We want Z3 to understand what a bit-shift is.
+We want K to understand what a bit-shift is.
 
 ```k
+    rule (X <<Int N) modInt M ==Int 0 => true
+      requires M modInt (2 ^Int N) ==Int 0
+      [simplification]
+
     rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
     rule (X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
 
@@ -153,6 +173,7 @@ We want Z3 to understand what a bit-shift is.
 ```
 
 Proof:
+
 ```
 Let x' = x << m
 => The least m bits of x' are 0.
@@ -269,8 +290,13 @@ We want to make the variant explicit, so we introduce the following helper, whic
 We can now state the intended semantics of `#get`.
 
 ```k
-    rule 0              <=Int #get(BM, ADDR) => true requires #isByteMap(BM) [simplification]
-    rule #get(BM, ADDR)  <Int 256            => true requires #isByteMap(BM) [simplification]
+    rule LOW            <=Int #get(BM, ADDR) => true
+      requires LOW <=Int 0
+       andBool #isByteMap(BM) [simplification]
+
+    rule #get(BM, ADDR)  <Int HIGH           => true
+      requires 256 <=Int HIGH
+       andBool #isByteMap(BM) [simplification]
 ```
 
 With this invariant encoded, we can introduce the following lemma.
@@ -295,6 +321,9 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
+    rule #setRange(BM, EA, VAL, WIDTH) => #set(BM, EA, #wrap(8, VAL))
+      requires WIDTH ==Int 1
+      [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
       requires notBool (WIDTH ==Int 0)
@@ -304,6 +333,22 @@ They are non-trivial in their implementation, but the following should obviously
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
       requires WIDTH ==Int 1
       [simplification]
+```
+
+`#get` over `#setRange`.
+
+```k
+    rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #wrap(8, VAL)
+        requires SET_ADDR ==Int GET_ADDR
+         andBool #isByteMap(BM)
+        [simplification]
+
+    rule #get(#setRange(BM, SET_ADDR       , VAL        , WIDTH       ), GET_ADDR)
+      => #get(#setRange(BM, SET_ADDR +Int 1, VAL >>Int 8, WIDTH -Int 1), GET_ADDR)
+        requires #isByteMap(BM)
+         andBool GET_ADDR >Int SET_ADDR
+         andBool GET_ADDR <Int SET_ADDR +Int WIDTH
+        [simplification]
 ```
 
 ```k
@@ -324,17 +369,14 @@ module MEMORY-CONCRETE-TYPE-LEMMAS
 ```
 
 ```k
-    rule #getRange(BM, START, WIDTH) => 0
-      requires notBool (WIDTH >Int 0)
+    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N /Int 8)
+      requires 0 <=Int N
+       andBool N /Int 8 <=Int WIDTH
+       andBool N modInt 8 ==Int 0
       [simplification]
-    rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires          WIDTH >Int 0
-       andBool #isByteMap(BM)
-      [simplification]
+```
 
-    rule #wrap(WIDTH, N) => N modInt (1 <<Int WIDTH)
-      [simplification]
-
+```k
 endmodule
 ```
 
@@ -376,7 +418,7 @@ Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
     rule (X <<Int N) +Int (Y <<Int M) => (X +Int (Y <<Int (M -Int N))) <<Int N
       requires N <=Int M
       [simplification]
-      
+
     rule (X <<Int N) +Int (Y <<Int M) => ((X <<Int (N -Int M)) +Int Y) <<Int M
       requires N >Int M
       [simplification]
@@ -415,16 +457,16 @@ module WRC20
 A module of shorthand commands for the WRC20 module.
 
 ```k
-    syntax Stmts     ::= "#wrc20"
-    syntax Defns     ::= "#wrc20Body"
-    syntax Defns     ::= "#wrc20Imports"
-    syntax Defns     ::= "#wrc20Functions"
-    syntax Defns     ::= "#wrc20ReverseBytes"
-    syntax TypeDecls ::= "#wrc20ReverseBytesTypeDecls"
- // --------------------------------------------------
-    rule #wrc20 => ( module #wrc20Body ) .EmptyStmts [macro]
+    syntax ModuleDecl ::= "#wrc20"
+    syntax Defns      ::= "#wrc20Body"
+    syntax Defns      ::= "#wrc20Imports"
+    syntax Defns      ::= "#wrc20Functions_fastBalance"
+    syntax Defns      ::= "#wrc20ReverseBytes"
+    syntax TypeDecls  ::= "#wrc20ReverseBytesTypeDecls"
+ // ---------------------------------------------------
+    rule #wrc20 => ( module #wrc20Body ) [macro]
 
-    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions [macro]
+    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions_fastBalance [macro]
 
     rule #wrc20Imports =>
       (func String2Identifier("$revert")          ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"revert\"") )          param i32 i32 .ValTypes .TypeDecls )
@@ -438,7 +480,7 @@ A module of shorthand commands for the WRC20 module.
       .Defns
       [macro]
 
-    rule #wrc20Functions =>
+    rule #wrc20Functions_fastBalance =>
       (func ( export #unparseWasmString("\"main\"") ) .TypeDecls .LocalDecls
         block .TypeDecls
           block .TypeDecls
@@ -506,11 +548,6 @@ A module of shorthand commands for the WRC20 module.
           i32.const 32
           call String2Identifier("$storageLoad")
           i32.const 32
-          i32.const 32
-          i64.load
-          call String2Identifier("$i64.reverse_bytes")
-          i64.store
-          i32.const 32
           i32.const 8
           call String2Identifier("$finish")
           .EmptyStmts
@@ -549,12 +586,14 @@ A module of shorthand commands for the WRC20 module.
           call String2Identifier("$storageLoad")
           i32.const 64
           i64.load
+          call String2Identifier("$i64.reverse_bytes")
           local.set 1
           i32.const 32
           i32.const 64
           call String2Identifier("$storageLoad")
           i32.const 64
           i64.load
+          call String2Identifier("$i64.reverse_bytes")
           local.set 2
           block .TypeDecls
             local.get 0
@@ -577,12 +616,14 @@ A module of shorthand commands for the WRC20 module.
           local.set 2
           i32.const 64
           local.get 1
+          call String2Identifier("$i64.reverse_bytes")
           i64.store
           i32.const 0
           i32.const 64
           call String2Identifier("$storageStore")
           i32.const 64
           local.get 2
+          call String2Identifier("$i64.reverse_bytes")
           i64.store
           i32.const 32
           i32.const 64
