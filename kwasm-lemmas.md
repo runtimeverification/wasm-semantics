@@ -343,8 +343,9 @@ They are non-trivial in their implementation, but the following should obviously
       requires WIDTH ==Int 1
       [simplification]
 
-    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
-      requires notBool (WIDTH ==Int 0)
+    rule #getRange(BM, ADDR, WIDTH) modInt BYTE_SIZE => #get(BM, ADDR)
+      requires BYTE_SIZE ==Int 256
+       andBool notBool (WIDTH ==Int 0)
        andBool #isByteMap(BM)
       [simplification]
 
@@ -459,7 +460,7 @@ TODO: The two `#get` theorems below theorems handle special cases in this proof,
       requires N ==Int 8
        andBool X modInt 256 ==Int 0
        andBool #isByteMap(BM)
-       [simplification]
+      [simplification]
 ```
 
 TODO: The following theorems should be generalized and proven, and moved to the set of general lemmas.
