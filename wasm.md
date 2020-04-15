@@ -478,7 +478,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn       ::= GlobalDefn
     syntax GlobalSpec ::= TextFormatGlobalType Instr
     syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
-                        |     "global" OptionalId GlobalType
+    syntax Stmt       ::=     "global" OptionalId GlobalType
  // --------------------------------------------------------
     rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
 
@@ -865,7 +865,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax TableType ::= Limits TableElemType
     syntax TableSpec ::= TableType
     syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
-                       |     "table" "{" OptionalId Int OptionalInt "}"
+    syntax Stmt      ::=     "table" "{" OptionalId Int OptionalInt "}"
  // -------------------------------------------------------------------
     rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .Int } ... </k>
       requires MIN <=Int #maxTableSize()
@@ -920,7 +920,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
-                        |     "memory" "{" OptionalId Int OptionalInt "}"
+    syntax Stmt       ::=     "memory" "{" OptionalId Int OptionalInt "}"
  // ---------------------------------------------------------------------
     rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .Int } ... </k>
       requires MIN <=Int #maxMemorySize()
@@ -1216,8 +1216,8 @@ A table index is optional and will be default to zero.
     syntax Defn     ::= ElemDefn
     syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
                       | "(" "elem"           Offset ElemSegment ")"
-                      |     "elem" "{" Index        ElemSegment "}"
-    syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
+    syntax Stmt     ::=     "elem" "{" Index        ElemSegment "}"
+                      | #initElements ( Int, Int, Map, Map, ElemSegment )
  // ---------------------------------------------------------------------
     // Default to table with index 0.
     rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
@@ -1254,7 +1254,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
     syntax Defn     ::= DataDefn
     syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
                       | "(" "data"           Offset DataString ")"
-                      |     "data" "{" Index        Bytes      "}"
+    syntax Stmt     ::=     "data" "{" Index        Bytes      "}"
  // --------------------------------------------------------------
     // Default to memory 0.
     rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
