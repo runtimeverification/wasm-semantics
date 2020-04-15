@@ -464,9 +464,8 @@ TODO: The two `#get` theorems below theorems handle special cases in this proof,
 
 TODO: The following theorems should be generalized and proven, and moved to the set of general lemmas.
 Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
-
-TODO: Some of these have concrete integers on the LHS.
-It's better to use a symbolic value and a side condition, e.g. `rule N => foo requires N ==Int 8`, because simplifications only apply when the LHS matches exactly.
+Also, some of these have concrete integers on the LHS.
+It may be better to use a symbolic value as a side condition, e.g. `rule N => foo requires N ==Int 8`, because simplifications rely on exact matching of the LHS.
 
 ```k
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
