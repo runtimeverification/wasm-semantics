@@ -477,12 +477,12 @@ The importing and exporting parts of specifications are dealt with in the respec
 
     syntax Defn       ::= GlobalDefn
     syntax GlobalSpec ::= TextFormatGlobalType Instr
-    syntax GlobalDefn ::=  "(" "global" OptionalId GlobalSpec ")"
-    syntax Alloc      ::= "allocglobal" OptionalId GlobalType
- // ---------------------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> allocglobal OID asGMut(TYP) ... </k>
+    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
+    syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
+ // ----------------------------------------------------------
+    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> allocglobal(OID, asGMut(TYP)) ... </k>
 
-    rule <k> allocglobal OID:OptionalId MUT:Mut TYP:AValType => . ... </k>
+    rule <k> allocglobal(OID:OptionalId, MUT:Mut TYP:AValType) => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -603,12 +603,12 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
 
 ```k
     syntax Defn     ::= TypeDefn
-    syntax TypeDefn ::=     "(type" OptionalId "(" "func" TypeDecls ")" ")"
-    syntax Alloc    ::= "alloctype" OptionalId            TypeDecls
+    syntax TypeDefn ::=    "(type" OptionalId "(" "func" TypeDecls ")" ")"
+    syntax Alloc    ::= alloctype (OptionalId,           TypeDecls)
  // ---------------------------------------------------------------
-    rule <k> (type ID (func TDECLS:TypeDecls)) => alloctype ID TDECLS ... </k>
+    rule <k> (type ID (func TDECLS:TypeDecls)) => alloctype(ID, TDECLS) ... </k>
 
-    rule <k> alloctype ID TDECLS => . ... </k>
+    rule <k> alloctype(ID, TDECLS) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -682,12 +682,12 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax Defn     ::= FuncDefn
     syntax FuncSpec ::= TypeUse LocalDecls Instrs
-    syntax FuncDefn ::=  "(" "func" OptionalId FuncSpec ")"
-    syntax Alloc    ::= "allocfunc" OptionalId TypeUse LocalDecls Instrs
- // --------------------------------------------------------------------
-    rule <k> ( func OID TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => allocfunc OID TUSE LDECLS INSTRS  ... </k>
+    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
+    syntax Alloc    ::= allocfunc (OptionalId, TypeUse, LocalDecls, Instrs)
+ // -----------------------------------------------------------------------
+    rule <k> ( func OID TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => allocfunc(OID, TUSE, LDECLS, INSTRS)  ... </k>
 
-    rule <k> allocfunc OID:OptionalId TUSE LDECLS INSTRS => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> allocfunc(OID, TUSE, LDECLS, INSTRS) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -870,12 +870,12 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn      ::= TableDefn
     syntax TableType ::= Limits TableElemType
     syntax TableSpec ::= TableType
-    syntax TableDefn ::=  "(" "table"     OptionalId TableSpec ")"
-    syntax Alloc     ::= "alloctable" "{" OptionalId Int OptionalInt "}"
- // --------------------------------------------------------------------
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable { OID MIN .Int } ... </k>
+    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
+    syntax Alloc     ::= alloctable (OptionalId, Int, OptionalInt)
+ // --------------------------------------------------------------
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable(OID, MIN, .Int) ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable { OID MIN MAX  } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable(OID, MIN,  MAX) ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
@@ -888,7 +888,7 @@ The importing and exporting parts of specifications are dealt with in the respec
          </moduleInst>
        requires MAP =/=K .Map
 
-    rule <k> alloctable { ID MIN MAX } => . ... </k>
+    rule <k> alloctable(ID, MIN, MAX) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -925,12 +925,12 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn       ::= MemoryDefn
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
-    syntax MemoryDefn ::=  "(" "memory" OptionalId MemorySpec ")"
-    syntax Alloc      ::= "allocmemory" "{" OptionalId Int OptionalInt "}"
- // ----------------------------------------------------------------------
-    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory { OID MIN .Int } ... </k>
+    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
+    syntax Alloc      ::= allocmemory (OptionalId, Int, OptionalInt)
+ // ----------------------------------------------------------------
+    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory(OID, MIN, .Int) ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory { OID MIN MAX  } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
@@ -943,7 +943,7 @@ The importing and exporting parts of specifications are dealt with in the respec
          </moduleInst>
       requires MAP =/=K .Map
 
-    rule <k> allocmemory { ID MIN MAX } => . ... </k>
+    rule <k> allocmemory(ID, MIN, MAX) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
