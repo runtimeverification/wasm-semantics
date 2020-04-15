@@ -348,9 +348,9 @@ They are non-trivial in their implementation, but the following should obviously
        andBool #isByteMap(BM)
       [simplification]
 
-    rule #getRange(BM, ADDR, WIDTH) => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)
-      requires #get(BM, ADDR) ==Int 0
-       andBool WIDTH >Int 0
+//  rule #getRange(BM, ADDR, WIDTH) => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)
+//    requires #get(BM, ADDR) ==Int 0
+//     andBool WIDTH >Int 0
 
     rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
       requires N ==Int 8
