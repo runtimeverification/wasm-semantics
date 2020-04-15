@@ -879,15 +879,6 @@ The importing and exporting parts of specifications are dealt with in the respec
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
-    rule <k> alloctable { _ _ _ } => trap ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <tabAddrs> MAP </tabAddrs>
-           ...
-         </moduleInst>
-       requires MAP =/=K .Map
-
     rule <k> alloctable(ID, MIN, MAX) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -933,15 +924,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
-
-    rule <k> allocmemory { _ _ _ } => trap ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> MAP </memAddrs>
-           ...
-         </moduleInst>
-      requires MAP =/=K .Map
 
     rule <k> allocmemory(ID, MIN, MAX) => . ... </k>
          <curModIdx> CUR </curModIdx>
