@@ -358,12 +358,12 @@ One needs to unname the `ValTypes` first before calling the `#take` or `#drop` f
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(N, .ValStack) => .ValStack               requires         N >Int 0
     rule #take(N, _)         => .ValStack               requires notBool N >Int 0
+    rule #take(N, .ValStack) => .ValStack               requires         N >Int 0
     rule #take(N, V : VS)    => V : #take(N -Int 1, VS) requires         N >Int 0
 
-    rule #drop(N, .ValStack) => .ValStack           requires         N >Int 0
     rule #drop(N, VS)        => VS                  requires notBool N >Int 0
+    rule #drop(N, .ValStack) => .ValStack           requires         N >Int 0
     rule #drop(N, _ : VS)    => #drop(N -Int 1, VS) requires         N >Int 0
 
     rule #revs(VS) => #revs(VS, .ValStack)
