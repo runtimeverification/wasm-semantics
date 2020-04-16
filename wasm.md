@@ -477,12 +477,12 @@ The importing and exporting parts of specifications are dealt with in the respec
 
     syntax Defn       ::= GlobalDefn
     syntax GlobalSpec ::= TextFormatGlobalType Instr
-    syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
-                        |     "global" OptionalId GlobalType
- // --------------------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> global OID asGMut(TYP) ... </k>
+    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
+    syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
+ // ----------------------------------------------------------
+    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> allocglobal(OID, asGMut(TYP)) ... </k>
 
-    rule <k> global OID:OptionalId MUT:Mut TYP:AValType => . ... </k>
+    rule <k> allocglobal(OID:OptionalId, MUT:Mut TYP:AValType) => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -603,9 +603,12 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
 
 ```k
     syntax Defn     ::= TypeDefn
-    syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
- // -------------------------------------------------------------------
-    rule <k> (type ID (func TDECLS:TypeDecls)) => . ... </k>
+    syntax TypeDefn ::=    "(type" OptionalId "(" "func" TypeDecls ")" ")"
+    syntax Alloc    ::= alloctype (OptionalId,           TypeDecls)
+ // ---------------------------------------------------------------
+    rule <k> (type ID (func TDECLS:TypeDecls)) => alloctype(ID, TDECLS) ... </k>
+
+    rule <k> alloctype(ID, TDECLS) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -679,9 +682,12 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax Defn     ::= FuncDefn
     syntax FuncSpec ::= TypeUse LocalDecls Instrs
-    syntax FuncDefn ::= "(" "func" OptionalId FuncSpec ")"
- // ------------------------------------------------------
-    rule <k> ( func OID:OptionalId TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => #checkTypeUse ( TUSE ) ... </k>
+    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
+    syntax Alloc    ::= allocfunc (OptionalId, TypeUse, LocalDecls, Instrs)
+ // -----------------------------------------------------------------------
+    rule <k> ( func OID TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => allocfunc(OID, TUSE, LDECLS, INSTRS)  ... </k>
+
+    rule <k> allocfunc(OID, TUSE, LDECLS, INSTRS) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -864,25 +870,16 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax Defn      ::= TableDefn
     syntax TableType ::= Limits TableElemType
     syntax TableSpec ::= TableType
-    syntax TableDefn ::= "(" "table"     OptionalId TableSpec ")"
-                       |     "table" "{" OptionalId Int OptionalInt "}"
- // -------------------------------------------------------------------
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => table { OID MIN .Int } ... </k>
+    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
+    syntax Alloc     ::= alloctable (OptionalId, Int, OptionalInt)
+ // --------------------------------------------------------------
+    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable(OID, MIN, .Int) ... </k>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => table { OID MIN MAX  } ... </k>
+    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable(OID, MIN,  MAX) ... </k>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
-    rule <k> table { _ _ _ } => trap ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <tabAddrs> MAP </tabAddrs>
-           ...
-         </moduleInst>
-       requires MAP =/=K .Map
-
-    rule <k> table { ID MIN MAX } => . ... </k>
+    rule <k> alloctable(ID, MIN, MAX) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -920,24 +917,15 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax MemType    ::= Limits
     syntax MemorySpec ::= MemType
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
-                        |     "memory" "{" OptionalId Int OptionalInt "}"
- // ---------------------------------------------------------------------
-    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => memory { OID MIN .Int } ... </k>
+    syntax Alloc      ::= allocmemory (OptionalId, Int, OptionalInt)
+ // ----------------------------------------------------------------
+    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory(OID, MIN, .Int) ... </k>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => memory { OID MIN MAX  } ... </k>
+    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </k>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
-    rule <k> memory { _ _ _ } => trap ... </k>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> MAP </memAddrs>
-           ...
-         </moduleInst>
-      requires MAP =/=K .Map
-
-    rule <k> memory { ID MIN MAX } => . ... </k>
+    rule <k> allocmemory(ID, MIN, MAX) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1469,13 +1457,13 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= sortedModule ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, allocs: Defns, exports: Defns, inits: Defns, start: Defns )
- // -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    syntax ModuleDecl ::= sortedModule ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, memsTables: Defns, exports: Defns, inits: Defns, start: Defns )
+ // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
                         | #sortModule ( Defns , ModuleDecl ) [function]
  // -------------------------------------------------------------------
-    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), sortedModule(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, allocs: .Defns, exports: .Defns, inits: .Defns, start: .Defns))
+    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), sortedModule(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, memsTables: .Defns, exports: .Defns, inits: .Defns, start: .Defns))
 
     rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
 
@@ -1486,8 +1474,8 @@ The groups are chosen to represent different stages of allocation and instantiat
     rule #sortModule((X:FuncDefn   DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
     rule #sortModule((X:GlobalDefn DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
 
-    rule #sortModule((A:TableDefn  DS:Defns => DS), sortedModule(... allocs: (AS => A AS)))
-    rule #sortModule((A:MemoryDefn DS:Defns => DS), sortedModule(... allocs: (AS => A AS)))
+    rule #sortModule((A:TableDefn  DS:Defns => DS), sortedModule(... memsTables: (AS => A AS)))
+    rule #sortModule((A:MemoryDefn DS:Defns => DS), sortedModule(... memsTables: (AS => A AS)))
 
     rule #sortModule((E:ExportDefn DS:Defns => DS), sortedModule(... exports: (ES => E ES)))
 
@@ -1512,7 +1500,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
  // -------------------------------------------------
     rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
 
-    rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, allocs: AS, exports: ES, inits: INIS, start: S)
+    rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
           => TS ~> IS ~> FGS ~> AS ~> ES ~> INIS ~> S
          ...
          </k>
@@ -1533,8 +1521,9 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
 
 ```k
-    rule <k> D:Defn => ( module .Defns ) ~> D ... </k>
+    rule <k> A:Alloc => ( module .Defns ) ~> A ... </k>
          <curModIdx> .Int </curModIdx>
+      [owise]
 ```
 
 After a module is instantiated, it should be saved somewhere.
