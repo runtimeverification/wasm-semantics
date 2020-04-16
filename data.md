@@ -346,7 +346,10 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 `#zero` will create a specified stack of zero values in a given type.
 `#take` will take the prefix of a given stack.
 `#drop` will drop the prefix of a given stack.
-One needs to unname the `ValTypes` first before calling the `#take` or `#drop` function.
+`#revs` will reverse a given stack.
+
+**NOTE**: `#take` and `#drop` are _total_, so in case they could not take/drop enough values before running out, they just return the empty `.ValStack`.
+Each call site _must_ ensure that this is desired behavior before using these functions.
 
 ```k
     syntax ValStack ::= #zero ( ValTypes )            [function]
