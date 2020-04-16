@@ -1523,6 +1523,7 @@ It is permissible to define modules without the `module` keyword, by simply stat
 ```k
     rule <k> A:Alloc => ( module .Defns ) ~> A ... </k>
          <curModIdx> .Int </curModIdx>
+      [owise]
 ```
 
 After a module is instantiated, it should be saved somewhere.
