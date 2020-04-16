@@ -5,7 +5,7 @@ These lemmas aid in verifying WebAssembly programs behavior.
 They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k
-module KWASM-LEMMAS
+module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
     imports WRC20
 ```
