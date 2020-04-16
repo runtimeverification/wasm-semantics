@@ -170,7 +170,7 @@ We want K to understand what a bit-shift is.
 
 ```k
     rule (X <<Int N) modInt M => 0
-      requires M modInt (2 ^Int N) ==Int 0
+      requires (2 ^Int N) modInt M ==Int 0
       [simplification]
 
     rule #wrap(M, X <<Int N) => 0
