@@ -2,7 +2,7 @@ WRC20
 =====
 
 ```k
-requires kwasm-lemmas.k
+requires "kwasm-lemmas.k"
 ```
 
 Lemmas
