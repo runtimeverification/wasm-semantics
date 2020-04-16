@@ -1,4 +1,4 @@
-requires "kwasm-lemmas.k"
+requires "wrc20.k"
 
 // This is the "fast transfer" version of the WRC20 spec by pauld.
 
