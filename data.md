@@ -336,9 +336,9 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 
 ```k
     syntax ValStack ::= ".ValStack"
-                   | Val      ":"  ValStack
-                   | ValStack "++" ValStack [function]
- // --------------------------------------------------
+                      | Val      ":"  ValStack
+                      | ValStack "++" ValStack [function, functional]
+ // -----------------------------------------------------------------
     rule .ValStack       ++ VALSTACK' => VALSTACK'
     rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')
 ```
