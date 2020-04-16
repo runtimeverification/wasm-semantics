@@ -169,8 +169,12 @@ x mod m + y = r + y
 We want K to understand what a bit-shift is.
 
 ```k
-    rule (X <<Int N) modInt M ==Int 0 => true
+    rule (X <<Int N) modInt M => 0
       requires M modInt (2 ^Int N) ==Int 0
+      [simplification]
+
+    rule #wrap(M, X <<Int N) => 0
+      requires M <=Int N
       [simplification]
 
     rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
@@ -437,11 +441,6 @@ module WRC20-LEMMAS
 These conversions turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
 
 ```k
-    rule X modInt N => #wrap( 8, X) requires N ==Int 256        [simplification]
-    rule X modInt N => #wrap(16, X) requires N ==Int 65536      [simplification]
-    rule X modInt N => #wrap(32, X) requires N ==Int #pow(i32)  [simplification]
-    rule X modInt N => #wrap(64, X) requires N ==Int #pow(i64)  [simplification]
-
     rule X /Int N => X >>Int 8  requires N ==Int 256 [simplification]
 ```
 
