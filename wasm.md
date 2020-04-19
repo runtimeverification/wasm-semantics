@@ -1196,7 +1196,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 
 ### Table initialization
 
-Tables can be initialized with element and the element type is always `funcref".
+Tables can be initialized with element and the element type is always `funcref`.
 The initialization of a table needs an offset and a list of functions, given as `Index`s.
 A table index is optional and will be default to zero.
 
