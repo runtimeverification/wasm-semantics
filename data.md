@@ -336,9 +336,9 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 
 ```k
     syntax ValStack ::= ".ValStack"
-                   | Val      ":"  ValStack
-                   | ValStack "++" ValStack [function]
- // --------------------------------------------------
+                      | Val      ":"  ValStack
+                      | ValStack "++" ValStack [function, functional]
+ // -----------------------------------------------------------------
     rule .ValStack       ++ VALSTACK' => VALSTACK'
     rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')
 ```
@@ -346,23 +346,28 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 `#zero` will create a specified stack of zero values in a given type.
 `#take` will take the prefix of a given stack.
 `#drop` will drop the prefix of a given stack.
-One needs to unname the `ValTypes` first before calling the `#take` or `#drop` function.
+`#revs` will reverse a given stack.
+
+**NOTE**: `#take` and `#drop` are _total_, so in case they could not take/drop enough values before running out, they just return the empty `.ValStack`.
+Each call site _must_ ensure that this is desired behavior before using these functions.
 
 ```k
     syntax ValStack ::= #zero ( ValTypes )            [function]
-                      | #take ( Int , ValStack )      [function]
-                      | #drop ( Int , ValStack )      [function]
-                      | #revs ( ValStack )            [function]
-                      | #revs ( ValStack , ValStack ) [function, klabel(#revsAux)]
- // ------------------------------------------------------------------------------
+                      | #take ( Int , ValStack )      [function, functional]
+                      | #drop ( Int , ValStack )      [function, functional]
+                      | #revs ( ValStack )            [function, functional]
+                      | #revs ( ValStack , ValStack ) [function, functional, klabel(#revsAux)]
+ // ------------------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
 
-    rule #take(N, _)      => .ValStack               requires notBool N >Int 0
-    rule #take(N, V : VS) => V : #take(N -Int 1, VS) requires         N >Int 0
+    rule #take(N, _)         => .ValStack               requires notBool N >Int 0
+    rule #take(N, .ValStack) => .ValStack               requires         N >Int 0
+    rule #take(N, V : VS)    => V : #take(N -Int 1, VS) requires         N >Int 0
 
-    rule #drop(N, VS)     => VS                  requires notBool N >Int 0
-    rule #drop(N, _ : VS) => #drop(N -Int 1, VS) requires         N >Int 0
+    rule #drop(N, VS)        => VS                  requires notBool N >Int 0
+    rule #drop(N, .ValStack) => .ValStack           requires         N >Int 0
+    rule #drop(N, _ : VS)    => #drop(N -Int 1, VS) requires         N >Int 0
 
     rule #revs(VS) => #revs(VS, .ValStack)
 
