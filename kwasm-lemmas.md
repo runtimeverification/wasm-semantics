@@ -5,7 +5,7 @@ These lemmas aid in verifying WebAssembly programs behavior.
 They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k
-module KWASM-LEMMAS
+module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
     imports WRC20
 ```
@@ -364,7 +364,7 @@ Concrete Memory
 ---------------
 
 ```k
-module MEMORY-CONCRETE-TYPE-LEMMAS
+module MEMORY-CONCRETE-TYPE-LEMMAS [symbolic]
     imports KWASM-LEMMAS
 ```
 
@@ -386,7 +386,7 @@ WRC20
 ### Lemmas
 
 ```k
-module WRC20-LEMMAS
+module WRC20-LEMMAS [symbolic]
     imports KWASM-LEMMAS
 ```
 
@@ -692,7 +692,7 @@ endmodule
 TODO: Upstream these, but don't commit them with the WRC20 proof (they aren't needed).
 
 ```k
-module GENERAL-ARITHMETIC-LEMMAS
+module GENERAL-ARITHMETIC-LEMMAS [symbolic]
     imports WASM-TEXT
 ```
 
