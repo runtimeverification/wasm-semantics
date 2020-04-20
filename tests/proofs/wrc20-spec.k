@@ -3,6 +3,7 @@ requires "wrc20.k"
 // This is the "fast transfer" version of the WRC20 spec by pauld.
 
 module WRC20-SPEC
+    imports WRC20
     imports WRC20-LEMMAS
 
     // Main spec.
