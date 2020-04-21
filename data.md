@@ -353,14 +353,16 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 Each call site _must_ ensure that this is desired behavior before using these functions.
 
 ```k
-    syntax ValStack ::= #zero ( ValTypes )            [function]
+    syntax ValStack ::= #zero ( ValTypes )            [function, functional]
                       | #take ( Int , ValStack )      [function, functional]
                       | #drop ( Int , ValStack )      [function, functional]
                       | #revs ( ValStack )            [function, functional]
                       | #revs ( ValStack , ValStack ) [function, functional, klabel(#revsAux)]
  // ------------------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
-    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
+    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0   : #zero(VTYPES)
+    rule #zero(FTYPE:FValType VTYPES) => < FTYPE > 0.0 : #zero(VTYPES)
+    rule #zero({ ID VT }      VTYPES) => #zero(VT VTYPES)
 
     rule #take(N, _)         => .ValStack               requires notBool N >Int 0
     rule #take(N, .ValStack) => .ValStack               requires         N >Int 0
