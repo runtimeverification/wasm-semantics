@@ -133,8 +133,8 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
     syntax FuncType ::= VecType "->" VecType
  // ----------------------------------------
 
-    syntax Int ::= lengthValTypes ( ValTypes ) [function]
- // -----------------------------------------------------
+    syntax Int ::= lengthValTypes ( ValTypes ) [function, functional]
+ // -----------------------------------------------------------------
     rule lengthValTypes(.ValTypes) => 0
     rule lengthValTypes(V VS)      => 1 +Int lengthValTypes(VS)
 ```
@@ -142,19 +142,19 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
 We need helper functions to remove the identifiers from `FuncType`.
 
 ```k
-    syntax FuncType ::= unnameFuncType ( FuncType ) [function]
- // ----------------------------------------------------------
+    syntax FuncType ::= unnameFuncType ( FuncType ) [function, functional]
+ // ----------------------------------------------------------------------
     rule unnameFuncType ( [ V1 ]->[ V2 ] ) => [ unnameValTypes ( V1 ) ]->[ V2 ]
 ```
 
 We need helper functions to remove all the identifiers from a `ValTypes`.
 
 ```k
-    syntax ValTypes ::= unnameValTypes ( ValTypes ) [function]
- // ----------------------------------------------------------
+    syntax ValTypes ::= unnameValTypes ( ValTypes ) [function, functional]
+ // ----------------------------------------------------------------------
     rule unnameValTypes ( .ValTypes     ) => .ValTypes
+    rule unnameValTypes ( { ID V }   VS ) => V unnameValTypes ( VS )
     rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
-    rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
@@ -167,18 +167,18 @@ All told, a `Type` can be a value type, vector of types, or function type.
 We can append two `ValTypes`s with the `_+_` operator.
 
 ```k
-    syntax ValTypes ::= ValTypes "+" ValTypes [function]
- // ----------------------------------------------------
-    rule .ValTypes + VTYPES            => VTYPES
-    rule (VT:ValType VTYPES) + VTYPES' => VT (VTYPES + VTYPES')
+    syntax ValTypes ::= ValTypes "+" ValTypes [function, functional]
+ // ----------------------------------------------------------------
+    rule .ValTypes   + VTYPES' => VTYPES'
+    rule (VT VTYPES) + VTYPES' => VT (VTYPES + VTYPES')
 ```
 
 Also we can reverse a `ValTypes` with `#revt`
 
 ```k
-    syntax ValTypes ::= #revt ( ValTypes )            [function]
-                      | #revt ( ValTypes , ValTypes ) [function, klabel(#revtAux)]
- // ------------------------------------------------------------------------------
+    syntax ValTypes ::= #revt ( ValTypes )            [function, functional]
+                      | #revt ( ValTypes , ValTypes ) [function, functional, klabel(#revtAux)]
+ // ------------------------------------------------------------------------------------------
     rule #revt(VT) => #revt(VT, .ValTypes)
 
     rule #revt(.ValTypes, VT') => VT'
@@ -216,6 +216,7 @@ For the core language, only regular integers are allowed.
 
 ```k
     syntax WasmInt ::= Int
+ // ----------------------
 ```
 
 ### Type Mutability
@@ -270,7 +271,7 @@ The `#wrap` function wraps an integer to a given bit width.
 
 ```k
     syntax IVal ::= #chop ( IVal ) [function, functional]
- // -----------------------------------------
+ // -----------------------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
     syntax Int  ::= #wrap(Int, Int) [function, functional]
@@ -352,14 +353,16 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 Each call site _must_ ensure that this is desired behavior before using these functions.
 
 ```k
-    syntax ValStack ::= #zero ( ValTypes )            [function]
+    syntax ValStack ::= #zero ( ValTypes )            [function, functional]
                       | #take ( Int , ValStack )      [function, functional]
                       | #drop ( Int , ValStack )      [function, functional]
                       | #revs ( ValStack )            [function, functional]
                       | #revs ( ValStack , ValStack ) [function, functional, klabel(#revsAux)]
  // ------------------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
-    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0 : #zero(VTYPES)
+    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0   : #zero(VTYPES)
+    rule #zero(FTYPE:FValType VTYPES) => < FTYPE > 0.0 : #zero(VTYPES)
+    rule #zero({ ID VT }      VTYPES) => #zero(VT VTYPES)
 
     rule #take(N, _)         => .ValStack               requires notBool N >Int 0
     rule #take(N, .ValStack) => .ValStack               requires         N >Int 0
