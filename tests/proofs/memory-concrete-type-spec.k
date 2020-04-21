@@ -19,7 +19,6 @@ module MEMORY-CONCRETE-TYPE-SPEC
          </memInst>
        requires
         ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
-        andBool #isByteMap(BM)
         andBool #inUnsignedRange(i32, ADDR)
 
 endmodule

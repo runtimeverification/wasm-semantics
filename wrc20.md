@@ -34,7 +34,6 @@ TODO: The `#get` theorems below theorems handle special cases in this proof, but
     rule (#get(BM, ADDR) +Int X)           >>Int N   => X >>Int 8
       requires N ==Int 8
        andBool X modInt 256 ==Int 0
-       andBool #isByteMap(BM)
       [simplification]
 ```
 
@@ -46,7 +45,7 @@ It may be better to use a symbolic value as a side condition, e.g. `rule N => fo
 ```k
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 
-    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires #isByteMap(BM) andBool N >=Int 8 [simplification]
+    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires N >=Int 8 [simplification]
 
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 
