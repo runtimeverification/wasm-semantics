@@ -69,10 +69,10 @@ Configuration
           <nextTabAddr> 0 </nextTabAddr>
           <mems>
             <memInst multiplicity="*" type="Map">
-              <mAddr> 0                  </mAddr>
-              <mmax>  .Int               </mmax>
-              <msize> 0                  </msize>
-              <mdata> ByteMap <| .Map |> </mdata>
+              <mAddr> 0      </mAddr>
+              <mmax>  .Int   </mmax>
+              <msize> 0      </msize>
+              <mdata> .Bytes </mdata>
             </memInst>
           </mems>
           <nextMemAddr> 0 </nextMemAddr>

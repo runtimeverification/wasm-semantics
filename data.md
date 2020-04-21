@@ -497,25 +497,15 @@ Byte Map
 --------
 
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
-To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
-The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
-We make a `ByteMap` sort so that the following functions only make sense over this sort.
-However, `ByteMap` is just a wrapper around regular `Map`s.
-
-```k
-    syntax ByteMap ::= "ByteMap" "<|" Map "|>"
- // ------------------------------------------
-```
 
 `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function, functional, smtlib(setRange)]
- // ---------------------------------------------------------------------------------------------
-    rule #setRange(BM,   _,   _, WIDTH) => BM
-      requires notBool (WIDTH >Int 0)
+    syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
+ // -----------------------------------------------------------------------------------------------
+    rule #setRange(BM, IDX,   _, WIDTH) => BM requires notBool (WIDTH >Int 0 andBool IDX >=Int 0 andBool 0 <=Int VAL)
     rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
-      requires          WIDTH >Int 0
+      requires WIDTH >Int 0 andBool IDX >=Int 0 andBool 0 <=Int VAL
       [concrete]
 ```
 
@@ -523,8 +513,8 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
- // --------------------------------------------------------------------------------------
+    syntax Int ::= #getRange ( Bytes , Int , Int ) [function, functional, smtlib(getRange)]
+ // ---------------------------------------------------------------------------------------
     rule #getRange( _,     _, WIDTH) => 0
       requires notBool (WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
@@ -536,14 +526,15 @@ The function interprets the range of bytes as little-endian.
 `#set` sets a key in a map, removing the key if the value is 0.
 
 ```k
-    syntax Int     ::= #get (ByteMap , Int     ) [function, functional, smtlib(mapGet)]
-    syntax ByteMap ::= #set (ByteMap , Int, Int) [function, functional, smtlib(mapSet)]
- // -----------------------------------------------------------------------------------
-    rule #get( ByteMap <| M |>, KEY ) => {M [KEY]}:>Int requires         KEY in_keys(M) [concrete]
-    rule #get( ByteMap <| M |>, KEY ) => 0              requires notBool KEY in_keys(M)
+    syntax Int   ::= #get ( Bytes , Int       ) [function, functional, smtlib(mapGet)]
+    syntax Bytes ::= #set ( Bytes , Int , Int ) [function, functional, smtlib(mapSet)]
+ // ----------------------------------------------------------------------------------
+    rule #get(BM, KEY) => BM [ KEY ] requires          0 <=Int KEY andBool KEY <Int lengthBytes(BM)
+    rule #get(BM, KEY) => 0          requires notBool (0 <=Int KEY andBool KEY <Int lengthBytes(BM))
 
-    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- undef] |> requires          VAL ==Int 0
-    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- VAL  ] |> requires notBool (VAL ==Int 0) [concrete]
+    rule #set(BM, KEY, _  ) => BM                                                      requires notBool 0 <=Int KEY
+    rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                       requires         0 <=Int KEY andBool         KEY <Int lengthBytes(BM)
+    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, lengthBytes(BM), KEY), KEY, VAL) requires                             notBool KEY <Int lengthBytes(BM)
 ```
 
 External Values
