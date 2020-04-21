@@ -1086,8 +1086,8 @@ The `align` parameter is for optimization only and is not allowed to influence t
     syntax AlignArg  ::= "align="  WasmInt
  // --------------------------------------
 
-    syntax Int ::= #getOffset ( MemArg ) [function]
- // -----------------------------------------------
+    syntax Int ::= #getOffset ( MemArg ) [function, functional]
+ // -----------------------------------------------------------
     rule #getOffset(           _:AlignArg) => 0
     rule #getOffset(offset= OS           ) => OS
     rule #getOffset(offset= OS _:AlignArg) => OS
@@ -1196,7 +1196,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 
 ### Table initialization
 
-Tables can be initialized with element and the element type is always `funcref".
+Tables can be initialized with element and the element type is always `funcref`.
 The initialization of a table needs an offset and a list of functions, given as `Index`s.
 A table index is optional and will be default to zero.
 
