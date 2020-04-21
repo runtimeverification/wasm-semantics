@@ -286,53 +286,30 @@ Lookups
 Memory
 ------
 
-Memory is represented by a byte map, where each key is an index and each entry either empty (0) or a byte (1 to 255).
-This invariant must be maintained by the semantics, and any failure to maintain it is a breach of the Wasm specification.
-We want to make the variant explicit, so we introduce the following helper, which simply signifies that we assume a well-formed byte map:
-
-```k
-    syntax Bool ::= #isByteMap ( ByteMap ) [function, functional, smtlib(isByteMap)]
-    syntax Bool ::= #isByte    ( KItem   ) [function, functional, smtlib(isByte)]
- // -----------------------------------------------------------------------------
-    rule #isByteMap(ByteMap <| .Map         |>) => true
-    rule #isByteMap(ByteMap <| (_ |-> V) M  |>) => #isByte(V) andBool #isByteMap(ByteMap <| M |>)
-    rule #isByteMap(ByteMap <| M [ _ <- V ] |>) => #isByte(V) andBool #isByteMap(ByteMap <| M |>)
-
-    rule #isByte(I:Int) => true
-      requires 0 <=Int I
-       andBool I <=Int 255
-    rule #isByte(I:Int) => false
-      requires notBool (0 <=Int I
-                        andBool I <=Int 255)
-    rule #isByte(I:KItem) => false
-      requires notBool isInt(I)
-```
-
 We can now state the intended semantics of `#get`.
 
 ```k
-    rule LOW            <=Int #get(BM, ADDR) => true
-      requires LOW <=Int 0
-       andBool #isByteMap(BM) [simplification]
-
-    rule #get(BM, ADDR)  <Int HIGH           => true
-      requires 256 <=Int HIGH
-       andBool #isByteMap(BM) [simplification]
+    rule LOW <=Int #get(BM, ADDR) => true requires LOW <=Int 0    [simplification]
+    rule #get(BM, ADDR) <Int HIGH => true requires 256 <=Int HIGH [simplification]
 ```
 
 With this invariant encoded, we can introduce the following lemma.
 
 ```k
-    rule #isByteMap(BMAP) impliesBool (0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256) => true [smt-lemma]
+    rule 0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256 => true [smt-lemma]
 ```
 
 From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
 Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
 A getting operation can safeley ignore setting operation on unrelated indices.
 
-```k
-    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
+**TODO**: This lemma is no longer technically true, because `#set` may make the `BMAP` larger (by padding zeros to the right).
 
+```
+    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
+```
+
+```k
     rule #get(#set(BMAP, IDX', VAL), IDX) => VAL             requires         IDX ==Int IDX'
     rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX) requires notBool IDX ==Int IDX'
 ```
@@ -349,13 +326,11 @@ They are non-trivial in their implementation, but the following should obviously
     rule #getRange(BM, ADDR, WIDTH) modInt BYTE_SIZE => #get(BM, ADDR)
       requires BYTE_SIZE ==Int 256
        andBool notBool (WIDTH <=Int 0)
-       andBool #isByteMap(BM)
       [simplification]
 
     rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
       requires N ==Int 8
        andBool notBool (WIDTH <=Int 0)
-       andBool #isByteMap(BM)
       [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
@@ -385,13 +360,11 @@ They are non-trivial in their implementation, but the following should obviously
 ```k
     rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #wrap(8, VAL)
         requires SET_ADDR ==Int GET_ADDR
-         andBool #isByteMap(BM)
         [simplification]
 
     rule #get(#setRange(BM, SET_ADDR       , VAL        , WIDTH       ), GET_ADDR)
       => #get(#setRange(BM, SET_ADDR +Int 1, VAL >>Int 8, WIDTH -Int 1), GET_ADDR)
-        requires #isByteMap(BM)
-         andBool GET_ADDR >Int SET_ADDR
+        requires GET_ADDR >Int SET_ADDR
          andBool GET_ADDR <Int SET_ADDR +Int WIDTH
         [simplification]
 ```
