@@ -375,7 +375,7 @@ They are non-trivial in their implementation, but the following should obviously
       => #wrap(SET_WIDTH *Int 8, VALUE)
       requires (notBool GET_WIDTH <=Int SET_WIDTH)
        andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
-      [simplificaton]
+      [simplification]
 
     rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
 ```
