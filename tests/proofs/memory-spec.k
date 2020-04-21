@@ -18,7 +18,6 @@ module MEMORY-SPEC
          </memInst>
        requires
         ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
-        andBool #isByteMap(BM)
         andBool #inUnsignedRange(i32, ADDR)
 
     rule <k> (ITYPE:IValType.store (i32.const ADDR) (ITYPE.load (i32.const ADDR)):Instr):Instr => . ... </k>
@@ -36,5 +35,4 @@ module MEMORY-SPEC
          </memInst>
        requires #chop(<i32> ADDR) ==K <i32> ?EA
         andBool ?EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
-        andBool #isByteMap(BM)
 endmodule
