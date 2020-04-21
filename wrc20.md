@@ -10,6 +10,7 @@ Lemmas
 
 ```k
 module WRC20-LEMMAS [symbolic]
+    imports WRC20
     imports KWASM-LEMMAS
 ```
 
