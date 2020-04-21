@@ -1086,8 +1086,8 @@ The `align` parameter is for optimization only and is not allowed to influence t
     syntax AlignArg  ::= "align="  WasmInt
  // --------------------------------------
 
-    syntax Int ::= #getOffset ( MemArg ) [function]
- // -----------------------------------------------
+    syntax Int ::= #getOffset ( MemArg ) [function, functional]
+ // -----------------------------------------------------------
     rule #getOffset(           _:AlignArg) => 0
     rule #getOffset(offset= OS           ) => OS
     rule #getOffset(offset= OS _:AlignArg) => OS
