@@ -54,7 +54,7 @@ MAIN_MODULE        := WASM-TEST
 MAIN_SYNTAX_MODULE := WASM-TEST-SYNTAX
 MAIN_DEFN_FILE     := test
 
-wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k
+wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k wrc20.k
 
 llvm_dir    := $(DEFN_DIR)/llvm
 haskell_dir := $(DEFN_DIR)/haskell
