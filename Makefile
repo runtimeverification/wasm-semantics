@@ -108,13 +108,12 @@ CHECK := git --no-pager diff --no-index --ignore-all-space -R
 TEST_CONCRETE_BACKEND := llvm
 TEST_SYMBOLIC_BACKEND := haskell
 
-tests/proofs/memory-concrete-type-spec.k%prove: KPROVE_MODULE=MEMORY-CONCRETE-TYPE-LEMMAS
-tests/proofs/wrc20-spec.k%prove: KPROVE_MODULE=WRC20-LEMMAS
-tests/proofs/locals-spec.k.prove: TEST_SYMBOLIC_BACKEND=haskell
-
 KPROVE_MODULE := KWASM-LEMMAS
 
-PROVE_OPTIONS ?=
+KPROVE_OPTIONS ?=
+
+tests/proofs/memory-concrete-type-spec.k%prove: KPROVE_MODULE = MEMORY-CONCRETE-TYPE-LEMMAS
+tests/proofs/wrc20-spec.k%prove:                KPROVE_MODULE = WRC20-LEMMAS
 
 tests/%/make.timestamp:
 	git submodule update --init -- tests/$*
@@ -142,7 +141,7 @@ tests/%.parse: tests/%
 
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) \
-	$(PROVE_OPTIONS)
+	$(KPROVE_OPTIONS)
 
 tests/%.cannot-prove: tests/%
 	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
