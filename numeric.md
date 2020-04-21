@@ -91,9 +91,9 @@ There are 7 unary operators for floats: `abs`, `neg`, `sqrt`, `floor`, `ceil`, `
     rule FTYPE . floor   F => < FTYPE > floorFloat (F)
     rule FTYPE . ceil    F => < FTYPE >  ceilFloat (F)
     rule FTYPE . trunc   F => < FTYPE > truncFloat (F)
-    rule FTYPE . nearest F => < FTYPE >  F                requires #isInfinityOrNaN (F)
-    rule FTYPE . nearest F => #round(FTYPE, Float2Int(F)) requires (notBool #isInfinityOrNaN (F)) andBool (Float2Int(F) =/=Int 0 orBool notBool signFloat(F))
-    rule FTYPE . nearest F => < FTYPE > -0.0              requires (notBool #isInfinityOrNaN (F)) andBool Float2Int(F) ==Int 0 andBool signFloat(F)
+    rule FTYPE . nearest F => < FTYPE >  F                requires          #isInfinityOrNaN (F)
+    rule FTYPE . nearest F => #round(FTYPE, Float2Int(F)) requires (notBool #isInfinityOrNaN (F)) andBool notBool (Float2Int(F) ==Int 0 andBool signFloat(F))
+    rule FTYPE . nearest F => < FTYPE > -0.0              requires (notBool #isInfinityOrNaN (F)) andBool          Float2Int(F) ==Int 0 andBool signFloat(F)
 ```
 
 ### Binary Operators
