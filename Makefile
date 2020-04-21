@@ -23,7 +23,7 @@ export LUA_PATH
 .PHONY: all clean deps                                                     \
         defn defn-llvm defn-haskell defn-java                              \
         build build-llvm build-haskell build-java                          \
-        test test-execution test-simple test-prove test-klab-prove         \
+        test test-execution test-simple test-prove                         \
         test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
@@ -58,22 +58,18 @@ wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwa
 
 llvm_dir    := $(DEFN_DIR)/llvm
 haskell_dir := $(DEFN_DIR)/haskell
-java_dir    := $(DEFN_DIR)/java
 
 llvm_defn    := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
 haskell_defn := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
-java_defn    := $(patsubst %, $(java_dir)/%, $(wasm_files))
 
 llvm_kompiled    := $(llvm_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
 haskell_kompiled := $(haskell_dir)/$(MAIN_DEFN_FILE)-kompiled/definition.kore
-java_kompiled    := $(java_dir)/$(MAIN_DEFN_FILE)-kompiled/compiled.txt
 
 # Tangle definition from *.md files
 
-defn: defn-java defn-haskell
+defn: defn-haskell defn-llvm
 defn-llvm: $(llvm_defn)
 defn-haskell: $(haskell_defn)
-defn-java: $(java_defn)
 
 $(llvm_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
@@ -83,18 +79,13 @@ $(haskell_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-$(java_dir)/%.k: %.md $(TANGLER)
-	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
-
 # Build definitions
 
 KOMPILE_OPTIONS    :=
 
-build: build-llvm build-haskell build-java
+build: build-llvm build-haskell
 build-llvm:    $(llvm_kompiled)
 build-haskell: $(haskell_kompiled)
-build-java:    $(java_kompiled)
 
 $(llvm_kompiled): $(llvm_defn)
 	$(K_BIN)/kompile --backend llvm                                           \
@@ -108,21 +99,14 @@ $(haskell_kompiled): $(haskell_defn)
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
-$(java_kompiled): $(java_defn)
-	$(K_BIN)/kompile --backend java                                           \
-	    --directory $(java_dir) -I $(java_dir)                                \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
-	    $(KOMPILE_OPTIONS)
-
 # Testing
 # -------
 
 TEST  := ./kwasm
 CHECK := git --no-pager diff --no-index --ignore-all-space -R
 
-TEST_CONCRETE_BACKEND       := llvm
-TEST_FLOAT_CONCRETE_BACKEND := java
-TEST_SYMBOLIC_BACKEND       := haskell
+TEST_CONCRETE_BACKEND := llvm
+TEST_SYMBOLIC_BACKEND := haskell
 
 tests/proofs/memory-concrete-type-spec.k%prove: KPROVE_MODULE=MEMORY-CONCRETE-TYPE-LEMMAS
 tests/proofs/wrc20-spec.k%prove: KPROVE_MODULE=WRC20-LEMMAS
@@ -171,10 +155,6 @@ tests/%.cannot-prove: tests/%
 	rm -rf $<.err-log
 	rm -rf $<.out
 
-tests/%.klab-prove: tests/%
-	$(TEST) klab-prove --backend java $< --format-failures --def-module $(KPROVE_MODULE) \
-	$(PROVE_OPTIONS)
-
 ### Execution Tests
 
 test-execution: test-simple test-simple-float
@@ -211,10 +191,6 @@ test-prove-good: $(proof_tests:=.prove)
 test-prove-bad:  $(bad_proof_tests:=.cannot-prove)
 
 test-prove: test-prove-good test-prove-bad
-
-### KLab interactive
-
-test-klab-prove: tests/proofs/simple-arithmetic-spec.k.klab-prove
 
 # Presentation
 # ------------
