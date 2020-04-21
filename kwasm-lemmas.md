@@ -349,13 +349,13 @@ They are non-trivial in their implementation, but the following should obviously
 
     rule #getRange(BM, ADDR, WIDTH) modInt BYTE_SIZE => #get(BM, ADDR)
       requires BYTE_SIZE ==Int 256
-       andBool notBool (WIDTH ==Int 0)
+       andBool notBool (WIDTH <=Int 0)
        andBool #isByteMap(BM)
       [simplification]
 
     rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
       requires N ==Int 8
-       andBool notBool (WIDTH ==Int 0)
+       andBool notBool (WIDTH <=Int 0)
        andBool #isByteMap(BM)
       [simplification]
 
