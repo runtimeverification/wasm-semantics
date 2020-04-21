@@ -11,19 +11,13 @@ pipeline {
       stages {
         stage('Dependencies') { steps { sh 'make deps'      } }
         stage('Build')        { steps { sh 'make build -j4' } }
-        stage('Test Execution') {
+        stage('Test') {
           options { timeout(time: 20, unit: 'MINUTES') }
           parallel {
-            stage('Simple LLVM')       { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-simple -j4'                } }
-            stage('Conformance Parse') { steps { sh 'make test-conformance-parse -j4'                                } }
-            stage('Conformance LLVM')  { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-conformance-supported -j4' } }
-          }
-        }
-        stage('Test Proofs') {
-          options { timeout(time: 20, unit: 'MINUTES') }
-          parallel {
-            stage('Normal') { steps { sh 'make test-prove -j4'      } }
-            stage('KLab')   { steps { sh 'make test-klab-prove -j4' } }
+            stage('Simple')            { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-simple -j4'                } }
+            stage('Conformance Parse') { steps { sh 'make test-conformance-parse -j2'                                } }
+            stage('Conformance')       { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-conformance-supported -j4' } }
+            stage('Proofs')            { steps { sh 'make test-prove -j2'                                            } }
           }
         }
       }
