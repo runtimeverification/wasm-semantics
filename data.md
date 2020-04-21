@@ -142,19 +142,19 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
 We need helper functions to remove the identifiers from `FuncType`.
 
 ```k
-    syntax FuncType ::= unnameFuncType ( FuncType ) [function]
- // ----------------------------------------------------------
+    syntax FuncType ::= unnameFuncType ( FuncType ) [function, functional]
+ // ----------------------------------------------------------------------
     rule unnameFuncType ( [ V1 ]->[ V2 ] ) => [ unnameValTypes ( V1 ) ]->[ V2 ]
 ```
 
 We need helper functions to remove all the identifiers from a `ValTypes`.
 
 ```k
-    syntax ValTypes ::= unnameValTypes ( ValTypes ) [function]
- // ----------------------------------------------------------
-    rule unnameValTypes ( .ValTypes     ) => .ValTypes
-    rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
-    rule unnameValTypes ( { ID V } VS )   => V unnameValTypes ( VS )
+    syntax ValTypes ::= unnameValTypes ( ValTypes ) [function, functional]
+ // ----------------------------------------------------------------------
+    rule unnameValTypes ( .ValTypes   ) => .ValTypes
+    rule unnameValTypes ( { ID V } VS ) => V unnameValTypes ( VS )
+    rule unnameValTypes ( V        VS ) => V unnameValTypes ( VS ) [owise]
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
