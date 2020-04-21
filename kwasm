@@ -63,50 +63,20 @@ run_prove() {
     kprove --directory "$backend_dir" "$run_file" "$@"
 }
 
-run_klab() {
-    local run_mode klab_log
-
-    run_mode="$1" ; shift
-    klab_log="$(basename "${run_file%-spec.k}")"
-
-    "$0" "$run_mode" --backend java "$run_file" \
-        --state-log --state-log-path "$KLAB_OUT/data" --state-log-id "$klab_log" \
-        --state-log-events OPEN,EXECINIT,SEARCHINIT,REACHINIT,REACHTARGET,REACHPROVED,NODE,RULE,SRULE,RULEATTEMPT,IMPLICATION,Z3QUERY,Z3RESULT,CLOSE \
-        --output-flatten "_Map_ #And" \
-        --no-alpha-renaming --restore-original-names --no-sort-collections \
-        --output json \
-        "$@"
-}
-
-view_klab() {
-    local klab_log
-
-    klab_log="$(basename "${run_file%-spec.k}")"
-
-    # klab often runs out of stack space when running long-running KWasm programs
-    # klab debug "$klab_log"
-    node --stack-size=$KLAB_NODE_STACK_SIZE $(dirname $(which klab))/../libexec/klab-debug "$klab_log"
-}
-
 # Main
 # ----
 
 usage() {
     echo "
-    usage: $0 run        [--backend (llvm|haskell|java)] <pgm>  <K args>*
-           $0 kast       [--backend (llvm|haskell|java)] <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell|java)]      <spec> <K args>* -m <def_module>
-           $0 klab-run                                   <pgm>  <K arg>*
-           $0 klab-prove                                 <spec> <K arg>* -m <def_module>
-           $0 klab-view                                  [<pgm>|<spec>]
+    usage: $0 run        [--backend (llvm|haskell)] <pgm>  <K args>*
+           $0 kast       [--backend (llvm|haskell)] <pgm>  <output format> <K args>*
+           $0 prove      [--backend (haskell)]      <spec> <K args>* -m <def_module>
 
            $0 [help|--help|version|--version]
 
        $0 run   : Run a single WebAssembly program
        $0 kast  : Parse a single WebAssembly program and output it in supported format
        $0 prove : Run a WebAssembly K proof
-       $0 klab-(run|prove) : Run or prove a spec and dump StateLogs which KLab can read
-       $0 klab-view : Launch KLab on the StateLog associated with the given program/spec.
 
        $0 help    : Display this help message.
        $0 version : Display the KWasm, K, Kore, and Z3 versions in use.
@@ -169,10 +139,8 @@ fi
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
 case "$run_command-$backend" in
-    run-@(llvm|haskell|java)  ) run_krun                        "$@"     ;;
-    kast-@(llvm|haskell|java) ) run_kast                        "$@"     ;;
-    prove-@(haskell|java)     ) run_prove                       "$@"     ;;
-    klab-@(run|prove)-java    ) run_klab "${run_command#klab-}" "$@"     ;;
-    klab-view-java            ) view_klab                       "$@"     ;;
+    run-@(llvm|haskell)  ) run_krun  "$@" ;;
+    kast-@(llvm|haskell) ) run_kast  "$@" ;;
+    prove-@(haskell)     ) run_prove "$@" ;;
     *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
 esac
