@@ -133,8 +133,8 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
     syntax FuncType ::= VecType "->" VecType
  // ----------------------------------------
 
-    syntax Int ::= lengthValTypes ( ValTypes ) [function]
- // -----------------------------------------------------
+    syntax Int ::= lengthValTypes ( ValTypes ) [function, functional]
+ // -----------------------------------------------------------------
     rule lengthValTypes(.ValTypes) => 0
     rule lengthValTypes(V VS)      => 1 +Int lengthValTypes(VS)
 ```
@@ -176,9 +176,9 @@ We can append two `ValTypes`s with the `_+_` operator.
 Also we can reverse a `ValTypes` with `#revt`
 
 ```k
-    syntax ValTypes ::= #revt ( ValTypes )            [function]
-                      | #revt ( ValTypes , ValTypes ) [function, klabel(#revtAux)]
- // ------------------------------------------------------------------------------
+    syntax ValTypes ::= #revt ( ValTypes )            [function, functional]
+                      | #revt ( ValTypes , ValTypes ) [function, functional, klabel(#revtAux)]
+ // ------------------------------------------------------------------------------------------
     rule #revt(VT) => #revt(VT, .ValTypes)
 
     rule #revt(.ValTypes, VT') => VT'
@@ -216,6 +216,7 @@ For the core language, only regular integers are allowed.
 
 ```k
     syntax WasmInt ::= Int
+ // ----------------------
 ```
 
 ### Type Mutability
