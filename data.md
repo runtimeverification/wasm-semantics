@@ -152,9 +152,9 @@ We need helper functions to remove all the identifiers from a `ValTypes`.
 ```k
     syntax ValTypes ::= unnameValTypes ( ValTypes ) [function, functional]
  // ----------------------------------------------------------------------
-    rule unnameValTypes ( .ValTypes   ) => .ValTypes
-    rule unnameValTypes ( { ID V } VS ) => V unnameValTypes ( VS )
-    rule unnameValTypes ( V        VS ) => V unnameValTypes ( VS ) [owise]
+    rule unnameValTypes ( .ValTypes     ) => .ValTypes
+    rule unnameValTypes ( { ID V }   VS ) => V unnameValTypes ( VS )
+    rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
