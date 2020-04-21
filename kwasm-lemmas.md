@@ -374,9 +374,11 @@ They are non-trivial in their implementation, but the following should obviously
 
     rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
       => #wrap(SET_WIDTH *Int 8, VALUE)
-         +Int (#getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) <<Int (SET_WIDTH *Int 8))
-      requires notBool GET_WIDTH <=Int SET_WIDTH
+      requires (notBool GET_WIDTH <=Int SET_WIDTH)
+       andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
       [simplificaton]
+
+    rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
 ```
 
 `#get` over `#setRange`.
