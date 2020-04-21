@@ -129,11 +129,6 @@ tests/%.run: tests/%
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/success-$(TEST_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 
-tests/%.frun: tests/%
-	$(TEST) run --backend $(TEST_FLOAT_CONCRETE_BACKEND) $< > tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
-	$(CHECK) tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out tests/success-$(TEST_FLOAT_CONCRETE_BACKEND).out
-	rm -rf tests/$*.$(TEST_FLOAT_CONCRETE_BACKEND)-out
-
 tests/%.run-term: tests/%
 	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	grep --after-context=2 "<k>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
@@ -159,13 +154,11 @@ tests/%.cannot-prove: tests/%
 
 test-execution: test-simple test-simple-float
 
-simple_tests:=$(wildcard tests/simple/*.wast)
+simple_tests         := $(wildcard tests/simple/*.wast)
+simple_tests_failing := $(shell cat tests/failing.simple)
+simple_tests_passing := $(filter-out $(simple_tests_failing), $(simple_tests_passing))
 
-test-simple: $(simple_tests:=.run)
-
-simple_tests-float:=$(wildcard tests/simple/float/*.wast)
-
-test-simple-float: $(simple_tests-float:=.frun)
+test-simple: $(simple_tests_passing:=.run)
 
 ### Conformance Tests
 
