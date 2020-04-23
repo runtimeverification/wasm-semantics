@@ -1,4 +1,4 @@
-FROM runtimeverificationinc/kframework-k:ubuntu-bionic-c88df08
+FROM runtimeverificationinc/kframework-k:ubuntu-bionic-524fd49
 
 RUN    sudo apt-get update           \
     && sudo apt-get upgrade --yes    \
