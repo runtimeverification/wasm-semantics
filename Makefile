@@ -155,7 +155,7 @@ test-execution: test-simple test-simple-float
 
 simple_tests         := $(wildcard tests/simple/*.wast)
 simple_tests_failing := $(shell cat tests/failing.simple)
-simple_tests_passing := $(filter-out $(simple_tests_failing), $(simple_tests_passing))
+simple_tests_passing := $(filter-out $(simple_tests_failing), $(simple_tests))
 
 test-simple: $(simple_tests_passing:=.run)
 
