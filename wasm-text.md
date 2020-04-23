@@ -80,6 +80,10 @@ module WASM-TEXT
     imports WASM
 ```
 
+```k
+    rule #preprocess(SS) => localIdToIdx<.Map> applyStmts SS
+```
+
 The text format is a concrete syntax for Wasm.
 It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
 Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
@@ -358,6 +362,121 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
     rule ( func   OID:OptionalId (import MOD NAME) TUSE         ) => ( import MOD NAME (func   OID TUSE) )  [macro]
     rule ( table  OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table  OID TT  ) )  [macro]
     rule ( memory OID:OptionalId (import MOD NAME) MT:MemType   ) => ( import MOD NAME (memory OID MT  ) )  [macro]
+```
+
+### Removing identifiers
+
+The text format allows using textual identifiers starting with `$` to identify elements.
+The core format only uses integer indices.
+These transformations replace identifiers with their corresponding integer values.
+
+#### General Module Transformer Pattern
+
+This function takes a Wasm module and visits every part of it, applying a transformation to each element.
+
+Note: K does not support polymorphic functions or mapping operations, which is why it requires some boilerplate.
+
+TODO: Implement a fold.
+
+```k
+    syntax Transform
+
+    syntax Instr  ::= Transform "applyInstr"  Instr  [function]
+    syntax Instrs ::= Transform "applyInstrs" Instrs [function]
+    syntax Defn   ::= Transform "applyDefn"   Defn   [function]
+    syntax Defns  ::= Transform "applyDefns"  Defns  [function]
+    syntax Stmt   ::= Transform "applyStmt"   Stmt   [function]
+    syntax Stmts  ::= Transform "applyStmts"  Stmts  [function]
+ // -----------------------------------------------------------
+    rule _ applyInstrs .Instrs => .Instrs
+    rule T applyInstrs S SS    => (T applyInstr S) (T applyInstrs SS)
+
+    rule _ applyDefns .Defns   => .Defns
+    rule T applyDefns S SS     => (T applyDefn S) (T applyDefns SS)
+
+    rule _ applyStmts .Stmts   => .Stmts
+    rule T applyStmts S SS     => (T applyStmt S) (T applyStmts SS)
+
+    rule T applyStmt ( module OID:OptionalId DS:Defns ) => ( module OID (T applyDefns DS ))
+
+    syntax FuncSpec   ::= Transform "applyFuncSpec"   FuncSpec   [function]
+    syntax TypeUse    ::= Transform "applyTypeUse"    TypeUse    [function]
+    syntax TypeDecl   ::= Transform "applyTypeDecl"   TypeDecl   [function]
+    syntax TypeDecls  ::= Transform "applyTypeDecls"  TypeDecls  [function]
+    syntax LocalDecl  ::= Transform "applyLocalDecl"  LocalDecls [function]
+    syntax LocalDecls ::= Transform "applyLocalDecls" LocalDecls [function]
+ // -----------------------------------------------------------------------
+    rule T applyFuncSpec EXP:InlineExport FS:FuncSpec  => EXP (T applyFuncSpec FS)
+    rule _ applyFuncSpec IMP:InlineImport TUSE:TypeUse => IMP TUSE
+
+    rule T applyTypeUse TDS:TypeDecls  => T applyTypeDecls TDS
+    rule T applyTypeUse (type TYP) TDS => T applyTypeUse (type TYP) T applyTypeDecls TDS
+
+    rule T applyTypeDecls .TypeDecls => .TypeDecls
+    rule T applyTypeDecls TD TDS     => T applyTypeDecl TD (T applyTypeDecls TDS)
+
+    rule T applyLocalDecls .LocalDecls => .LocalDecls
+    rule T applyLocalDecls LD LDS      => (T applyLocalDecl LD) (T applyLocalDecls LDS)
+```
+
+Notes:
+For a transformer, you must fully implement:
+* `applyInstr`
+* `applyDefn`
+* `applyTypeUse`, but only the case for `(type TYP)`
+* `applyTypeDecl`
+* `applyLocalDecl`
+
+The `Transform`s work like closures, carrying the context necessary for the application.
+Then we define the `apply*` functions for them individually.
+
+#### Removing Identifiers for Locals
+
+```k
+    syntax Transform  ::= "localIdToIdx" "<" Map ">"
+                        | "clearIds"
+    syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
+                        | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
+ // --------------------------------------------------------------------------------
+    rule localIdToIdx < C > applyDefn ( func OID:OptionalId FS:FuncSpec ) => ( func OID localIdToIdx<C> applyFuncSpec FS )
+    rule localIdToIdx < _ > applyFuncSpec T:TypeUse LS:LocalDecls IS:Instrs
+      => (clearIds applyTypeUse    T)
+         (clearIds applyLocalDecls LS)
+         (localIdToIdx < #ids2Idxs(T, LS) > applyInstrs IS)
+
+    rule localIdToIdx < M > applyInstr local.get ID:Identifier => local.get {M[ID]}:>Int
+    rule localIdToIdx < M > applyInstr local.set ID:Identifier => local.set {M[ID]}:>Int
+    rule localIdToIdx < M > applyInstr local.tee ID:Identifier => local.tee {M[ID]}:>Int
+
+    rule clearIds applyTypeDecl (param ID:Identifier AVT) => (param AVT)
+    rule clearIds applyTypeDecl TD                        => TD          [owise]
+    rule clearIds applyTypeUse  (type TYP)                => (type TYP)
+
+    rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
+
+    rule #ids2Idxs(_, .TypeDecls, .LocalDecls) => .Map
+    rule #ids2Idxs(N, (type _)    , LDS) => #ids2Idxs(N, .TypeDecls, LDS)
+    rule #ids2Idxs(N, (type _) TDS, LDS) => #ids2Idxs(N, TDS       , LDS)
+
+    rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
+      => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS) [owise]
+
+    rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
+      => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
+    rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
+```
+
+```
+    syntax {Sort1, Sort2} Sort1 ::= #apply(Function{Sort2, Sort1}, Sort2)   [function, functional]
+    syntax {Sort1, Sort2} List  ::= #mapList(Function{Sort2, Sort1}, List)  [function, functional]
+ // ---------------------------------------------------------------------------------------------
+    rule #mapList(_, .List)      => .List
+    rule #mapList(F, ListItem(I) L) => ListItem(#apply(F, I)) #mapList(F, L)
+
+    syntax {A} Function{A, A} ::= "id"
+ // ----------------------------------
+    rule #apply(id, X) => X
 ```
 
 ```k

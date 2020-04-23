@@ -16,7 +16,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> $PGM:Stmts </k>
+        <k> #preprocess($PGM:Stmts) </k>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
@@ -88,7 +88,11 @@ Configuration
         <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
         <nextFreshId> 0 </nextFreshId>
       </wasm>
+
+    syntax Stmts ::= #preprocess(Stmts) [function]
+ // ------------------------------------------------
 ```
+
 
 ### Assumptions and invariants
 
