@@ -88,13 +88,13 @@ build-llvm:    $(llvm_kompiled)
 build-haskell: $(haskell_kompiled)
 
 $(llvm_kompiled): $(llvm_defn)
-	$(K_BIN)/kompile --backend llvm                                           \
+	kompile --backend llvm                                                    \
 	    --directory $(llvm_dir) -I $(llvm_dir)                                \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
 $(haskell_kompiled): $(haskell_defn)
-	$(K_BIN)/kompile --backend haskell                                        \
+	kompile --backend haskell                                                 \
 	    --directory $(haskell_dir) -I $(haskell_dir)                          \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
