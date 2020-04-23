@@ -406,6 +406,7 @@ TODO: Implement a fold.
     rule T applyStmts S SS     => (T applyStmt S) (T applyStmts SS)
 
     rule T applyStmt ( module OID:OptionalId DS:Defns ) => ( module OID (T applyDefns DS ))
+    rule _ applyStmt S => S [owise]
 
     syntax FuncSpec   ::= Transform "applyFuncSpec"   FuncSpec   [function]
     syntax TypeUse    ::= Transform "applyTypeUse"    TypeUse    [function]
@@ -472,6 +473,9 @@ Then we define the `apply*` functions for them individually.
     rule clearIds applyTypeDecl TD                        => TD          [owise]
     rule clearIds applyTypeUse  (type TYP)                => (type TYP)
 
+    rule clearIds applyLocalDecl local ID:Identifier AVT:AValType => local AVT .ValTypes
+    rule clearIds applyLocalDecl LD                        => LD          [owise]
+
     rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
 
     rule #ids2Idxs(_, .TypeDecls, .LocalDecls) => .Map
@@ -480,7 +484,8 @@ Then we define the `apply*` functions for them individually.
 
     rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
       => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
-    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS) [owise]
+    rule #ids2Idxs(N, (param _) TDS, LDS)   => #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
 
     rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
       => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
