@@ -13,6 +13,7 @@ endmodule
 module WASM-SYNTAX
     imports WASM-TOKEN-SYNTAX
     imports WASM-DATA
+
 endmodule
 ```
 
@@ -131,20 +132,27 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
 ```k
     syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
  // ------------------------------------------------------------------
-    rule <k> ( block               TDECLS:TypeDecls INSTRS:Instrs ) => block    TDECLS INSTRS end ... </k>
-    rule <k> ( block ID:Identifier TDECLS:TypeDecls INSTRS:Instrs ) => block ID TDECLS INSTRS end ... </k>
+    rule ( block               TDECLS:TypeDecls INSTRS:Instrs ) => block    TDECLS INSTRS end [macro]
+    rule ( block ID:Identifier TDECLS:TypeDecls INSTRS:Instrs ) => block ID TDECLS INSTRS end [macro]
 
     syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
                          | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
  // -----------------------------------------------------------------------------------------------------------
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if OID TDECLS IS          end ... </k>
-    rule <k> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if     TDECLS IS else IS' end ... </k>
-    rule <k> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if  ID TDECLS IS else IS' end ... </k>
+    rule ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              IS'' => C ++ if OID TDECLS IS          end IS'' [macro]
+    rule ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) IS'' => C ++ if     TDECLS IS else IS' end IS'' [macro]
+    rule ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) IS'' => C ++ if  ID TDECLS IS else IS' end IS'' [macro]
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
  // -----------------------------------------------------------------
-    rule <k> ( loop               TDECLS:TypeDecls IS ) => loop    TDECLS IS end ... </k>
-    rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
+    rule ( loop               TDECLS:TypeDecls IS ) => loop    TDECLS IS end [macro]
+    rule ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end [macro]
+```
+
+```k
+    syntax Instrs ::= Instrs "++" Instrs [function, functional]
+ // -----------------------------------------------------------
+    rule .Instrs       ++ IS' => IS'
+    rule (I IS:Instrs) ++ IS' => I (IS ++ IS')
 ```
 
 ### Identifiers
