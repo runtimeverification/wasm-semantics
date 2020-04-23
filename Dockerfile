@@ -1,4 +1,5 @@
-FROM runtimeverificationinc/kframework-k:ubuntu-bionic-524fd49
+ARG K_COMMIT
+FROM runtimeverificationinc/kframework-k:ubuntu-bionic-${K_COMMIT}
 
 RUN    sudo apt-get update         \
     && sudo apt-get upgrade --yes  \
