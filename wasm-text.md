@@ -438,7 +438,9 @@ Then we define the `apply*` functions for them individually.
     syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                         | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
  // --------------------------------------------------------------------------------
-    rule localIdToIdx < C > applyDefn ( func OID:OptionalId FS:FuncSpec ) => ( func OID localIdToIdx<C> applyFuncSpec FS )
+    rule localIdToIdx < _ > applyDefn ( func OID:OptionalId FS:FuncSpec ) => ( func OID localIdToIdx< .Map > applyFuncSpec FS )
+    rule localIdToIdx < _ > applyDefn D => D [owise]
+
     rule localIdToIdx < _ > applyFuncSpec T:TypeUse LS:LocalDecls IS:Instrs
       => (clearIds applyTypeUse    T)
          (clearIds applyLocalDecls LS)
@@ -447,6 +449,16 @@ Then we define the `apply*` functions for them individually.
     rule localIdToIdx < M > applyInstr local.get ID:Identifier => local.get {M[ID]}:>Int
     rule localIdToIdx < M > applyInstr local.set ID:Identifier => local.set {M[ID]}:>Int
     rule localIdToIdx < M > applyInstr local.tee ID:Identifier => local.tee {M[ID]}:>Int
+
+    rule localIdToIdx < M > applyInstr block                TDECLS:TypeDecls IS end                => block    TDECLS (localIdToIdx < M > applyInstrs IS) end
+    rule localIdToIdx < M > applyInstr block ID:Identifier  TDECLS:TypeDecls IS end OID:OptionalId => block ID TDECLS (localIdToIdx < M > applyInstrs IS) end OID
+    rule localIdToIdx < M > applyInstr loop                 TDECLS:TypeDecls IS end                => loop     TDECLS (localIdToIdx < M > applyInstrs IS) end
+    rule localIdToIdx < M > applyInstr loop  ID:Identifier  TDECLS:TypeDecls IS end OID:OptionalId => loop  ID TDECLS (localIdToIdx < M > applyInstrs IS) end OID
+    rule localIdToIdx < M > applyInstr if    OID:OptionalId TDECLS:TypeDecls IS          end                => if OID TDECLS (localIdToIdx < M > applyInstrs IS) end
+    rule localIdToIdx < M > applyInstr if                   TDECLS:TypeDecls IS else IS' end                => if     TDECLS (localIdToIdx < M > applyInstrs IS) else (localIdToIdx < M > applyInstrs IS') end
+    rule localIdToIdx < M > applyInstr if     ID:Identifier TDECLS:TypeDecls IS else IS' end OID:OptionalId => if  ID TDECLS (localIdToIdx < M > applyInstrs IS) else (localIdToIdx < M > applyInstrs IS') end
+
+    rule localIdToIdx < _ > applyInstr I => I [owise]
 
     rule clearIds applyTypeDecl (param ID:Identifier AVT) => (param AVT)
     rule clearIds applyTypeDecl TD                        => TD          [owise]
