@@ -123,8 +123,9 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
  // ---------------------------------------------------------
-    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
-    rule <k> ( PI:PlainInstr           ):FoldedInstr =>       PI ... </k>
+    rule ( PI:PlainInstr IS:Instrs ):FoldedInstr IS':Instrs =>  IS ++Instrs PI                  IS' [macro]
+    rule ( PI:PlainInstr IS:Instrs ):FoldedInstr SS:Stmts   => (IS ++Instrs PI .Instrs) ++Stmts SS  [macro]
+    rule ( PI:PlainInstr           ):FoldedInstr            => PI                                   [macro]
 ```
 
 Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
@@ -138,9 +139,9 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
                          | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
  // -----------------------------------------------------------------------------------------------------------
-    rule ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              IS'' => C ++ if OID TDECLS IS          end IS'' [macro]
-    rule ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) IS'' => C ++ if     TDECLS IS else IS' end IS'' [macro]
-    rule ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) IS'' => C ++ if  ID TDECLS IS else IS' end IS'' [macro]
+    rule ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              IS'' => C ++Instrs if OID TDECLS IS          end IS'' [macro]
+    rule ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) IS'' => C ++Instrs if     TDECLS IS else IS' end IS'' [macro]
+    rule ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) IS'' => C ++Instrs if  ID TDECLS IS else IS' end IS'' [macro]
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
  // -----------------------------------------------------------------
@@ -149,10 +150,14 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
 ```
 
 ```k
-    syntax Instrs ::= Instrs "++" Instrs [function, functional]
- // -----------------------------------------------------------
-    rule .Instrs       ++ IS' => IS'
-    rule (I IS:Instrs) ++ IS' => I (IS ++ IS')
+    syntax Instrs ::= Instrs "++Instrs" Instrs [function, functional]
+    syntax Stmts  ::= Stmts  "++Stmts"  Stmts  [function, functional]
+ // -----------------------------------------------------------------
+    rule .Instrs       ++Instrs IS' => IS'
+    rule (I IS:Instrs) ++Instrs IS' => I (IS ++Instrs IS')
+
+    rule .Stmts       ++Stmts SS' => SS'
+    rule (S SS:Stmts) ++Stmts SS' => S (SS ++Stmts SS')
 ```
 
 ### Identifiers
