@@ -151,7 +151,7 @@ tests/%.cannot-prove: tests/%
 
 ### Execution Tests
 
-test-execution: test-simple test-simple-float
+test-execution: test-simple
 
 simple_tests         := $(wildcard tests/simple/*.wast)
 simple_tests_failing := $(shell cat tests/failing.simple)
