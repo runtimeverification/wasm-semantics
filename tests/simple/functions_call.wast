@@ -182,7 +182,7 @@
 (call $f2)
 #assertTopStack < i32 > 14247936 "nested method call"
 #assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
-#assertFunction $f1 [ { $a i32 } i32 ] -> [ i32 ] [ { $c i32 } ] "inner calling method"
+#assertFunction $f1 [ i32 i32 ] -> [ i32 ] [ i32 ] "inner calling method"
 
 (module
     (func $func (param i32 i32) (result i32) (local.get 0))
