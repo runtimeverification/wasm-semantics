@@ -3,7 +3,7 @@ requires "kwasm-lemmas.k"
 module MEMORY-SYMBOLIC-TYPE-SPEC
     imports KWASM-LEMMAS
 
-    rule <k> (ITYPE:IValType.store (i32.const ADDR) (ITYPE.load (i32.const ADDR)):Instr):Instr => . ... </k>
+    rule <k> (i32.const ADDR) (i32.const ADDR) (ITYPE.load) (ITYPE:IValType.store) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>

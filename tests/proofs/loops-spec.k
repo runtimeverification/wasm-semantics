@@ -40,7 +40,7 @@ module LOOPS-SPEC
     // Main claim.
     rule <k>
               block .TypeDecls
-                 ( loop .TypeDecls
+                 loop .TypeDecls
                      (local.get 0)
                      (local.get 1)
                      (ITYPE.add)
@@ -52,7 +52,7 @@ module LOOPS-SPEC
                      (ITYPE.eqz)
                      (br_if 1)
                      (br 0)
-                 )
+                 end
              end
           => .
           ...

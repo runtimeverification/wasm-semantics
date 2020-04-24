@@ -3,8 +3,8 @@ requires "kwasm-lemmas.k"
 module MEMORY-CONCRETE-TYPE-SPEC
     imports MEMORY-CONCRETE-TYPE-LEMMAS
 
-    rule <k> (i64.store16 (i32.const ADDR) (i64.load32_u (i32.const ADDR)):FoldedInstr):FoldedInstr
-          => . ... </k>
+    rule <k> (i64.load32_u) (i64.store16) => . ... </k>
+         <valstack> < i32 > ADDR : < i32 > ADDR : VS => VS </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
