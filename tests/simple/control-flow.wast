@@ -135,32 +135,55 @@ if (result i32) i32.const 1 else i32.const -1 end
 if (result i32) i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
 
-(i32.const -1)
-(if (i32.const 0) (then))
-#assertTopStack < i32 > -1 "if folded false empty"
+;; For now, we disallow certain syntactic sugars outside of modules.
 
-(i32.const -1)
-(if (result i32) (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
-#assertStack < i32 > 1 : < i32 > -1 : .ValStack "if folded true"
+(module
+    (func (export "a") (result i32)
+        (i32.const -1)
+        (if (i32.const 0) (then))
+    )
 
-(i32.const -1)
-(if (result i32) (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
-#assertStack < i32 > 2 : < i32 > -1 : .ValStack "if folded false"
+    ;; if folded true
+    (func (export "b") (result i32)
+        (if (result i32) (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
+    )
 
-(if (result i32) (i32.const 1) (then (unreachable)) (else (i32.const 1)))
-#assertTrap "if lazy first branch true"
+    ;; if folded false
+    (func (export "c") (result i32)
+        (if (result i32) (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
+    )
 
-(if (result i32) (i32.const 0) (then (unreachable)) (else (i32.const 1)))
-#assertTopStack < i32 > 1 "if lazy first branch false"
+    ;; if lazy first branch false
+    (func (export "d") (result i32)
+         (if (result i32) (i32.const 0) (then (unreachable)) (else (i32.const 1)))
+    )
 
-(if (result i32) (i32.const 1) (then (i32.const -1)) (else (unreachable)))
-#assertTopStack < i32 > -1 "if lazy second branch true"
+   ;; if lazy second branch true
+    (func (export "e") (result i32)
+         (if (result i32) (i32.const 1) (then (i32.const -1)) (else (unreachable)))
+    )
 
-(if (result i32) (i32.const 0) (then (i32.const -1)) (else (unreachable)))
-#assertTrap "if lazy second branch false"
+    (func (export "f") (result i32)
+         (if (result i32) (i32.const 1) (then (unreachable)) (else (i32.const 1)))
+    )
 
-(if (result i32) (unreachable) (then (i32.const -1)) (else (unreachable)))
-#assertTrap "if strict condition"
+    (func (export "g") (result i32)
+         (if (result i32) (i32.const 0) (then (i32.const -1)) (else (unreachable)))
+    )
+
+    (func (export "h") (result i32)
+         (if (result i32) (unreachable) (then (i32.const -1)) (else (unreachable)))
+    )
+)
+
+(assert_return (invoke "a") (i32.const -1))
+(assert_return (invoke "b") (i32.const 1))
+(assert_return (invoke "c") (i32.const 2))
+(assert_return (invoke "d") (i32.const 1))
+(assert_return (invoke "e") (i32.const -1))
+(assert_trap (invoke "f") "if lazy first branch true")
+(assert_trap (invoke "g") "if lazy second branch false")
+(assert_trap (invoke "h") "if strict condition")
 
 ;; Looping
 
