@@ -34,6 +34,8 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
 
 #### Rules for Expressions With Only Modulus
 
+These are given in pure modulus form, and in form with `#wrap`, which is modulus with a power of 2 for positive `N`.
+
 ```k
     rule X modInt N => X
       requires 0 <=Int X
@@ -57,6 +59,10 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
       requires M >Int 0
        andBool M <=Int N
       [simplification]
+
+    rule #wrap(N, #wrap(M, X)) => #wrap(M, X)
+      requires M <=Int N
+      [simplification]
 ```
 
 Proof:
@@ -70,6 +76,10 @@ Since 0 <= x mod m < m <= n, (x mod m) mod n = x mod m
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
+      [simplification]
+
+    rule #wrap(N, #wrap(M, X)) => #wrap(N, X)
+      requires notBool (M <=Int N)
       [simplification]
 ```
 
@@ -101,12 +111,12 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
       [simplification]
 
     rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
-      requires 0 <=Int N
+      requires 0 <=Int M
        andBool N <=Int M
       [simplification]
 
     rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
-      requires 0 <=Int N
+      requires 0 <=Int M
        andBool N <=Int M
       [simplification]
 ```
@@ -130,6 +140,14 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
+
+    rule #wrap(N, #wrap(M, X) +Int Y) => #wrap(N, X +Int Y)
+      requires N <=Int M
+      [simplification]
+
+    rule #wrap(N, X +Int #wrap(M, Y)) => #wrap(N, X +Int Y)
+      requires N <=Int M
+      [simplification]
 ```
 
 Proof:
@@ -150,8 +168,12 @@ x mod m + y = r + y
 We want K to understand what a bit-shift is.
 
 ```k
-    rule (X <<Int N) modInt M ==Int 0 => true
-      requires M modInt (2 ^Int N) ==Int 0
+    rule (X <<Int N) modInt M => 0
+      requires (2 ^Int N) modInt M ==Int 0
+      [simplification]
+
+    rule #wrap(M, X <<Int N) => 0
+      requires M <=Int N
       [simplification]
 
     rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
@@ -324,14 +346,38 @@ They are non-trivial in their implementation, but the following should obviously
       requires WIDTH ==Int 1
       [simplification]
 
-    rule #getRange(BM, ADDR, WIDTH) modInt 256 => #get(BM, ADDR)
-      requires notBool (WIDTH ==Int 0)
+    rule #getRange(BM, ADDR, WIDTH) modInt BYTE_SIZE => #get(BM, ADDR)
+      requires BYTE_SIZE ==Int 256
+       andBool notBool (WIDTH <=Int 0)
+       andBool #isByteMap(BM)
+      [simplification]
+
+    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
+      requires N ==Int 8
+       andBool notBool (WIDTH <=Int 0)
        andBool #isByteMap(BM)
       [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
       requires WIDTH ==Int 1
       [simplification]
+```
+
+`#getRange` over `#setRange`
+
+```k
+    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
+      => #wrap(GET_WIDTH *Int 8, VALUE)
+      requires         GET_WIDTH <=Int SET_WIDTH
+      [simplification]
+
+    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
+      => #wrap(SET_WIDTH *Int 8, VALUE)
+      requires (notBool GET_WIDTH <=Int SET_WIDTH)
+       andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
+      [simplification]
+
+    rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
 ```
 
 `#get` over `#setRange`.
