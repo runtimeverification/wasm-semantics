@@ -14,21 +14,34 @@ module WRC20-LEMMAS [symbolic]
     imports KWASM-LEMMAS
 ```
 
-This conversion turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
+These conversions turns out to be helpful in this particular proof, but we don't want to apply it on all KWasm proofs.
 
 ```k
-    rule X /Int 256 => X >>Int 8
+    rule X /Int N => X >>Int 8  requires N ==Int 256 [simplification]
 ```
 
-TODO: The two `#get` theorems below theorems handle special cases in this proof, but we should be able to use some more general theorems to prove them.
+TODO: The `#get` theorems below theorems handle special cases in this proof, but we should be able to use some more general theorems to prove them.
 
 ```k
-    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt 256 => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256       [simplification]
-    rule (#get(BM, ADDR) +Int X)           >>Int 8   => X >>Int 8 requires X modInt 256 ==Int 0 andBool #isByteMap(BM) [simplification]
+    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt N => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256
+      requires N ==Int 256
+      [simplification]
+
+    rule #wrap(N, #get(BM, ADDR) +Int (X +Int Y))    => #wrap(8, #get(BM, ADDR) +Int #wrap(8, X +Int Y))
+      requires N ==Int 8
+      [simplification]
+
+    rule (#get(BM, ADDR) +Int X)           >>Int N   => X >>Int 8
+      requires N ==Int 8
+       andBool X modInt 256 ==Int 0
+       andBool #isByteMap(BM)
+      [simplification]
 ```
 
 TODO: The following theorems should be generalized and proven, and moved to the set of general lemmas.
 Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
+Also, some of these have concrete integers on the LHS.
+It may be better to use a symbolic value as a side condition, e.g. `rule N => foo requires N ==Int 8`, because simplifications rely on exact matching of the LHS.
 
 ```k
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
@@ -50,6 +63,13 @@ Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
     rule (X +Int (Y <<Int M)) modInt N => X +Int ((Y <<Int M) modInt N)
       requires N ==Int (1 <<Int log2Int(N))
        andBool N >=Int 256
+       andBool 0 <=Int X
+       andBool X <Int 256
+       andBool M >=Int 8
+      [simplification]
+
+    rule #wrap(N, (X +Int (Y <<Int M))) => X +Int (#wrap(N, Y <<Int M))
+      requires N >=Int 8
        andBool 0 <=Int X
        andBool X <Int 256
        andBool M >=Int 8
