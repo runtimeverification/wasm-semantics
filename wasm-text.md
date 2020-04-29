@@ -81,10 +81,6 @@ module WASM-TEXT
     imports WASM
 ```
 
-```k
-    rule #preprocess(SS) => localIdToIdx<.Map> applyStmts SS
-```
-
 The text format is a concrete syntax for Wasm.
 It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
 Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
@@ -377,6 +373,67 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
     rule ( memory OID:OptionalId (import MOD NAME) MT:MemType   ) => ( import MOD NAME (memory OID MT  ) )  [macro]
 ```
 
+Desugaring
+----------
+
+```k
+    syntax Context ::= (localIds: Map, labelDepth: Int)
+    syntax {Sort} Sort ::= "#pp" "<" Context ">" "(" Sort ")"
+    syntax {Sort} Sort ::= #update (Sort) | #ready (Sort)
+ // ---------------------------------------------------------
+    rule #preprocess(SS) => #pp <( ... localIds: .Map, labelDepth: 0 )>(SS)
+    
+    rule #pp<C>(S:Stmt      SS:Stmts)      => #pp<C>(S) #pp<C>(SS) [anywhere]
+    rule #pp<C>(S:Defn      SS:Defns)      => #pp<C>(S) #pp<C>(SS) [anywhere]
+    rule #pp<C>(S:Instr     SS:Instrs)     => #pp<C>(S) #pp<C>(SS) [anywhere]
+    rule #pp<C>(S:TypeDecl  SS:TypeDecls)  => #pp<C>(S) #pp<C>(SS) [anywhere]
+    rule #pp<C>(S:LocalDecl SS:LocalDecls) => #pp<C>(S) #pp<C>(SS) [anywhere]
+
+    rule #pp<C>(( module OID DS:Defns )) => sortModule(#pp<C>(DS), OID) [anywhere]
+    rule #pp<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #pp<C>(FS)) [anywhere]
+
+    rule #pp<C>((export S) FS:FuncSpec) => (export S) #pp<C>(FS) [anywhere]
+    rule #pp<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #pp<C>(#update(T LS IS)) [anywhere]
+    rule #pp<(... localIds: (_ => #ids2Idxs(T, LS)))>(#update(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS)) [anywhere]
+    rule #pp<C>(#ready(T:TypeUse LS:LocalDecls IS:Instrs)) => #pp<C>(T) #pp<C>(LS) #pp<C>(IS) [anywhere]
+    
+    rule #pp<C>((type TYP) TDS:TypeDecls         ) => (type TYP) #pp<C>(TDS) [anywhere]
+    rule #pp<_>((param ID:Identifier AVT)        ) => (param AVT) [anywhere]
+    rule #pp<_>( local ID:Identifier AVT:AValType) => local AVT .ValTypes [anywhere]
+
+    rule #pp<(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int [anywhere]
+    rule #pp<(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int [anywhere]
+    rule #pp<(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int [anywhere]
+
+    rule #pp<_>(X:Stmts)     => X [owise]
+//  rule #pp<_>(X:Defns)     => X [owise]
+    rule #pp<_>(X:Instrs)    => X [owise]
+//  rule #pp<_>(X:Stmt)      => X [owise]
+//  rule #pp<_>(X:Defn)      => X [owise]
+    rule #pp<_>(X:Instr)     => X [owise]
+//  rule #pp<_>(X:TypeUse)   => X [owise]
+//  rule #pp<_>(X:TypeDecl)  => X [owise]
+//  rule #pp<_>(X:LocalDecl) => X [owise]
+
+    syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
+                        | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
+ // --------------------------------------------------------------------------------
+    rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
+
+    rule #ids2Idxs(_, .TypeDecls, .LocalDecls) => .Map
+    rule #ids2Idxs(N, (type _)    , LDS) => #ids2Idxs(N, .TypeDecls, LDS)
+    rule #ids2Idxs(N, (type _) TDS, LDS) => #ids2Idxs(N, TDS       , LDS)
+
+    rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
+      => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, (param _) TDS, LDS)   => #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
+
+    rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
+      => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
+    rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
+```
+
 ### Removing identifiers
 
 The text format allows using textual identifiers starting with `$` to identify elements.
@@ -391,7 +448,7 @@ Note: K does not support polymorphic functions or mapping operations, which is w
 
 TODO: Implement a fold.
 
-```k
+```
     syntax Transform
 
     syntax Instr  ::= Transform "applyInstr"  Instr  [function]
@@ -446,19 +503,13 @@ Then we define the `apply*` functions for them individually.
 
 #### Removing Identifiers for Locals
 
-```k
+```
     syntax Transform  ::= "localIdToIdx" "<" Map ">"
                         | "clearIds"
-    syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
-                        | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
  // --------------------------------------------------------------------------------
     rule localIdToIdx < _ > applyDefn ( func OID:OptionalId FS:FuncSpec ) => ( func OID localIdToIdx< .Map > applyFuncSpec FS )
     rule localIdToIdx < _ > applyDefn D => D [owise]
 
-    rule localIdToIdx < _ > applyFuncSpec T:TypeUse LS:LocalDecls IS:Instrs
-      => (clearIds applyTypeUse    T)
-         (clearIds applyLocalDecls LS)
-         (localIdToIdx < #ids2Idxs(T, LS) > applyInstrs IS)
 
     rule localIdToIdx < M > applyInstr local.get ID:Identifier => local.get {M[ID]}:>Int
     rule localIdToIdx < M > applyInstr local.set ID:Identifier => local.set {M[ID]}:>Int
@@ -474,27 +525,6 @@ Then we define the `apply*` functions for them individually.
 
     rule localIdToIdx < _ > applyInstr I => I [owise]
 
-    rule clearIds applyTypeDecl (param ID:Identifier AVT) => (param AVT)
-    rule clearIds applyTypeDecl TD                        => TD          [owise]
-    rule clearIds applyTypeUse  (type TYP)                => (type TYP)
-
-    rule clearIds applyLocalDecl local ID:Identifier AVT:AValType => local AVT .ValTypes
-    rule clearIds applyLocalDecl LD                        => LD          [owise]
-
-    rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
-
-    rule #ids2Idxs(_, .TypeDecls, .LocalDecls) => .Map
-    rule #ids2Idxs(N, (type _)    , LDS) => #ids2Idxs(N, .TypeDecls, LDS)
-    rule #ids2Idxs(N, (type _) TDS, LDS) => #ids2Idxs(N, TDS       , LDS)
-
-    rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
-      => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
-    rule #ids2Idxs(N, (param _) TDS, LDS)   => #ids2Idxs(N +Int 1, TDS, LDS)
-    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
-
-    rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
-      => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
-    rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
 ```
 
 ```
