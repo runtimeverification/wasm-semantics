@@ -1,8 +1,8 @@
 pipeline {
   agent {
     dockerfile {
+      label 'docker'
       additionalBuildArgs '--build-arg K_COMMIT=$(cd deps/k && git rev-parse --short=7 HEAD)'
-      reuseNode true
     }
   }
   options { ansiColor('xterm') }
