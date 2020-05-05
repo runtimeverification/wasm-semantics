@@ -5,11 +5,6 @@ requires "wrc20.k"
 module WRC20-SPEC
     imports WRC20-LEMMAS
 
-    // Main spec.
-    // There is no specified behavior yet, so this claim is commented out.
-    //
-    // rule <k> #wrc20 </k>
-
     // Reverse bytes spec.
 
     rule <k> #wrc20ReverseBytes // TODO: Have this pre-loaded in the store.
@@ -44,7 +39,6 @@ module WRC20-SPEC
       requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
        andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
        andBool #isByteMap(BM)
-//       andBool #inUnsignedRange(i64, X) X is not bound in the LHS
        andBool #inUnsignedRange(i32, ADDR)
       ensures  #get(BM, ADDR +Int 0) ==Int #get(?BM', ADDR +Int 7 )
        andBool #get(BM, ADDR +Int 1) ==Int #get(?BM', ADDR +Int 6 )
