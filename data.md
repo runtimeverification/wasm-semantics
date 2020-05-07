@@ -274,8 +274,8 @@ The `#wrap` function wraps an integer to a given bit width.
  // -----------------------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
-    syntax Int  ::= #wrap(Int, Int) [function, functional]
- // ------------------------------------------------------
+    syntax Int  ::= #wrap ( Int , Int ) [function, functional]
+ // ----------------------------------------------------------
     rule #wrap(WIDTH, N) => N &Int ((1 <<Int WIDTH) -Int 1) requires         WIDTH >Int 0 [concrete]
     rule #wrap(WIDTH, N) => 0                               requires notBool WIDTH >Int 0
 ```
@@ -515,10 +515,10 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange ( Bytes , Int , Int ) [function, functional, smtlib(getRange)]
  // ---------------------------------------------------------------------------------------
-    rule #getRange( _,     _, WIDTH) => 0
-      requires notBool (WIDTH >Int 0)
+    rule #getRange( _, START, WIDTH) => 0
+      requires notBool (START >=Int 0 andBool WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires          WIDTH >Int 0
+      requires          START >=Int 0 andBool WIDTH >Int 0
       [concrete]
 ```
 
@@ -534,7 +534,8 @@ The function interprets the range of bytes as little-endian.
 
     rule #set(BM, KEY, VAL) => BM                                               requires notBool (isByte(VAL) andBool 0 <=Int KEY)
     rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                requires          isByte(VAL) andBool KEY inBytes BM
-    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, KEY +Int 1, 0), KEY, VAL) requires          isByte(VAL) andBool notBool KEY <Int lengthBytes(BM)
+    rule #set(BM, KEY, VAL) => BM                                               requires          isByte(VAL) andBool (notBool KEY <Int lengthBytes(BM)) andBool VAL  ==Int 0
+    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, KEY +Int 1, 0), KEY, VAL) requires          isByte(VAL) andBool (notBool KEY <Int lengthBytes(BM)) andBool VAL =/=Int 0
 
     syntax Bool ::= isByte ( Int )      [function, functional, smtlib(isByte)]
                   | Int "inBytes" Bytes [function, functional, smtlib(inBytes)]
