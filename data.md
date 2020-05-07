@@ -525,8 +525,6 @@ The function interprets the range of bytes as little-endian.
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
 `#set` sets a key in a map, removing the key if the value is 0.
 
-**TODO**: Should we only do the `Bytes` update if `0 <= VAL < 256`?
-
 ```k
     syntax Int   ::= #get ( Bytes , Int       ) [function, functional, smtlib(mapGet)]
     syntax Bytes ::= #set ( Bytes , Int , Int ) [function, functional, smtlib(mapSet)]
