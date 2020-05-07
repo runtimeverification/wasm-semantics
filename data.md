@@ -525,10 +525,10 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
  // --------------------------------------------------------------------------------------
-    rule #getRange( _,     _, WIDTH) => 0
-      requires notBool (WIDTH >Int 0)
+    rule #getRange( _, START, WIDTH) => 0
+      requires notBool (START >=Int 0 andBool WIDTH >Int 0)
     rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires          WIDTH >Int 0
+      requires          START >=Int 0 andBool WIDTH >Int 0
       [concrete]
 ```
 
