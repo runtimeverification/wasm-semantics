@@ -1,4 +1,5 @@
 /.build/*
+/tests/*/*-out
 
 *.pdf
 *.sty
