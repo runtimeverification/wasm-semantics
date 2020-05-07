@@ -503,7 +503,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 ```k
     syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
-    rule #setRange(BM, IDX,   _, WIDTH) => BM requires notBool (WIDTH >Int 0 andBool IDX >=Int 0 andBool 0 <=Int VAL)
+    rule #setRange(BM, IDX, VAL, WIDTH) => BM requires notBool (WIDTH >Int 0 andBool IDX >=Int 0 andBool 0 <=Int VAL)
     rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
       requires WIDTH >Int 0 andBool IDX >=Int 0 andBool 0 <=Int VAL
       [concrete]
@@ -531,12 +531,18 @@ The function interprets the range of bytes as little-endian.
     syntax Int   ::= #get ( Bytes , Int       ) [function, functional, smtlib(mapGet)]
     syntax Bytes ::= #set ( Bytes , Int , Int ) [function, functional, smtlib(mapSet)]
  // ----------------------------------------------------------------------------------
-    rule #get(BM, KEY) => BM [ KEY ] requires          0 <=Int KEY andBool KEY <Int lengthBytes(BM)
-    rule #get(BM, KEY) => 0          requires notBool (0 <=Int KEY andBool KEY <Int lengthBytes(BM))
+    rule #get(BM, KEY) => BM [ KEY ] requires         KEY inBytes BM
+    rule #get(BM, KEY) => 0          requires notBool KEY inBytes BM
 
-    rule #set(BM, KEY, _  ) => BM                                                      requires notBool 0 <=Int KEY
-    rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                       requires         0 <=Int KEY andBool         KEY <Int lengthBytes(BM)
-    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, lengthBytes(BM), KEY), KEY, VAL) requires                             notBool KEY <Int lengthBytes(BM)
+    rule #set(BM, KEY, VAL) => BM                                                      requires notBool (isByte(VAL) andBool 0 <=Int KEY)
+    rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                       requires          isByte(VAL) andBool KEY inBytes BM
+    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, lengthBytes(BM), KEY), KEY, VAL) requires          isByte(VAL) andBool notBool KEY <Int lengthBytes(BM)
+
+    syntax Bool ::= isByte ( Int )      [function, functional, smtlib(isByte)]
+                  | Int "inBytes" Bytes [function, functional, smtlib(inBytes)]
+ // ---------------------------------------------------------------------------
+    rule isByte(I)    => 0 <=Int I andBool I <Int 256
+    rule I inBytes BM => 0 <=Int I andBool I <Int lengthBytes(BM)
 ```
 
 External Values
