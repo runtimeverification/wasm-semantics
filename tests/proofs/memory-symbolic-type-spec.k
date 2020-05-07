@@ -12,11 +12,10 @@ module MEMORY-SYMBOLIC-TYPE-SPEC
          </moduleInst>
          <memInst>
            <mAddr> MEMADDR </mAddr>
-           <msize> SIZE </msize>
-           <mdata> BM   </mdata>
+           <msize> SIZE    </msize>
+           <mdata> BM      </mdata>
            ...
          </memInst>
        requires #chop(<i32> ADDR) ==K <i32> ?EA
         andBool ?EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
-
 endmodule

@@ -286,85 +286,9 @@ Lookups
 Memory
 ------
 
-We can now state the intended semantics of `#get`.
-
 ```k
-    rule LOW <=Int #get(BM, ADDR) => true requires LOW <=Int 0    [simplification]
-    rule #get(BM, ADDR) <Int HIGH => true requires 256 <=Int HIGH [simplification]
-```
-
-With this invariant encoded, we can introduce the following lemma.
-
-```k
-    rule 0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256 => true [smt-lemma]
-```
-
-From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
-Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
-A getting operation can safeley ignore setting operation on unrelated indices.
-
-**TODO**: This lemma is no longer technically true, because `#set` may make the `BMAP` larger (by padding zeros to the right).
-
-```
-    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
-```
-
-```k
-    rule #get(#set(BMAP, IDX', VAL), IDX) => VAL             requires         IDX ==Int IDX'
-    rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX) requires notBool IDX ==Int IDX'
-```
-
-TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
-They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
-
-```k
-    rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
-    rule #setRange(BM, EA, VAL, WIDTH) => #set(BM, EA, #wrap(8, VAL))
-      requires WIDTH ==Int 1
-      [simplification]
-
-    rule #getRange(BM, ADDR, WIDTH) modInt BYTE_SIZE => #get(BM, ADDR)
-      requires BYTE_SIZE ==Int 256
-       andBool notBool (WIDTH <=Int 0)
-      [simplification]
-
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
-      requires N ==Int 8
-       andBool notBool (WIDTH <=Int 0)
-      [simplification]
-
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
-      requires WIDTH ==Int 1
-      [simplification]
-```
-
-`#getRange` over `#setRange`
-
-```k
-    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(GET_WIDTH *Int 8, VALUE)
-      requires         GET_WIDTH <=Int SET_WIDTH
-      [simplification]
-
-    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(SET_WIDTH *Int 8, VALUE)
-      requires (notBool GET_WIDTH <=Int SET_WIDTH)
-       andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
-      [simplification]
-```
-
-`#get` over `#setRange`.
-
-```k
-    rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #wrap(8, VAL)
-        requires SET_ADDR ==Int GET_ADDR
-        [simplification]
-
-    rule #get(#setRange(BM, SET_ADDR       , VAL        , WIDTH       ), GET_ADDR)
-      => #get(#setRange(BM, SET_ADDR +Int 1, VAL >>Int 8, WIDTH -Int 1), GET_ADDR)
-        requires GET_ADDR >Int SET_ADDR
-         andBool GET_ADDR <Int SET_ADDR +Int WIDTH
-        [simplification]
+    rule #setRange(BM, IDX, #getRange(BM, IDX, WIDTH), WIDTH) => BM [simplification]
+    rule #wrap(N, #getRange(BM, ADDR, M)) => #getRange(BM, ADDR, minInt(N /Int 8, M)) requires N %Int 8 ==Int 0 [simplification]
 ```
 
 ```k
@@ -373,28 +297,6 @@ endmodule
 
 Specialized Lemmas
 ==================
-
-The following are lemmas that should not be included in every proof, but are necessary for certain proofs.
-
-Concrete Memory
----------------
-
-```k
-module MEMORY-CONCRETE-TYPE-LEMMAS [symbolic]
-    imports KWASM-LEMMAS
-```
-
-```k
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N /Int 8)
-      requires 0 <=Int N
-       andBool N /Int 8 <=Int WIDTH
-       andBool N modInt 8 ==Int 0
-      [simplification]
-```
-
-```k
-endmodule
-```
 
 Arithmetic Lemmas
 -----------------
