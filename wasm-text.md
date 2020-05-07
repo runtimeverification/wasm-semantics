@@ -364,6 +364,7 @@ Desugaring
 ----------
 
 TODO:
+* Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 * Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
 
 ```k
