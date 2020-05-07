@@ -351,8 +351,6 @@ They are non-trivial in their implementation, but the following should obviously
       requires (notBool GET_WIDTH <=Int SET_WIDTH)
        andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
       [simplification]
-
-    rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
 ```
 
 `#get` over `#setRange`.
