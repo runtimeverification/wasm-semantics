@@ -16,7 +16,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> $PGM:Stmts </k>
+        <k> #preprocess($PGM:Stmts) </k>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
@@ -88,6 +88,10 @@ Configuration
         <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
         <nextFreshId> 0 </nextFreshId>
       </wasm>
+
+
+    syntax Stmts ::= #preprocess(Stmts) [function]
+ // ----------------------------------------------
 ```
 
 ### Assumptions and invariants
@@ -1496,7 +1500,6 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 ```k
     syntax Stmt       ::= ModuleDecl
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
-                        |     "module" OptionalId Map
  // -------------------------------------------------
     rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
 

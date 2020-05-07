@@ -360,6 +360,77 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
     rule ( memory OID:OptionalId (import MOD NAME) MT:MemType   ) => ( import MOD NAME (memory OID MT  ) )  [macro]
 ```
 
+Desugaring
+----------
+
+TODO:
+* Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
+
+```k
+    syntax Context ::= (localIds: Map, labelDepth: Int)
+    syntax Stmts ::= "#ppStmts" "<" Context ">" "(" Stmts ")" [function]
+    syntax Stmt ::= "#ppStmt" "<" Context ">" "(" Stmt ")" [function]
+    syntax Defns ::= "#ppDefns" "<" Context ">" "(" Defns ")" [function]
+    syntax Defn ::= "#ppDefn" "<" Context ">" "(" Defn ")" [function]
+    syntax FuncSpec ::= "#ppFuncSpec" "<" Context ">" "(" FuncSpec ")" [function]
+    syntax TypeUse ::= "#ppTypeUse" "<" Context ">" "(" TypeUse ")" [function]
+    syntax LocalDecls ::= "#ppLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
+    syntax Instrs ::= "#ppInstrs" "<" Context ">" "(" Instrs ")" [function]
+    syntax Instr ::= "#ppInstr" "<" Context ">" "(" Instr ")" [function]
+    syntax {Sort} Sort ::= #update (Sort) | #ready (Sort)
+ // -----------------------------------------------------
+    rule #preprocess(SS) => #ppStmts<( ... localIds: .Map, labelDepth: 0 )>(SS)
+
+    rule #ppStmt<C>(( module _:OptionalId DS )) => ( module #ppDefns<C>(DS) )
+    rule #ppStmt<_>(S) => S [owise]
+
+    rule #ppDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #ppFuncSpec<C>(FS))
+    rule #ppDefn<C>(D:Defn) => D [owise]
+
+    rule #ppFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #ppFuncSpec<C>(FS)
+    rule #ppFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #ppFuncSpec<C>(#update(T LS IS))
+    rule #ppFuncSpec<(... localIds: (_ => #ids2Idxs(T, LS)))>(#update(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
+    rule #ppFuncSpec<C>(#ready(T:TypeUse LS:LocalDecls IS:Instrs)) => #ppTypeUse<C>(T) #ppLocalDecls<C>(LS) #ppInstrs<C>(IS)
+
+    rule #ppTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
+    rule #ppTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#ppTypeUse<C>(TDS)}:>TypeDecls
+    rule #ppTypeUse<_>(TU) => TU [owise]
+    rule #ppLocalDecls<C>( local ID:Identifier AVT:AValType LDS:LocalDecls) => local AVT .ValTypes #ppLocalDecls<C>(LDS)
+    rule #ppLocalDecls<_>(.LocalDecls) => .LocalDecls
+
+    rule #ppInstr<(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+    rule #ppInstr<(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+    rule #ppInstr<(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+
+    // Lists
+    rule #ppStmts<C>(D:Stmt DS:Stmts) => #ppStmt<C>(D) #ppStmts<C>(DS)
+    rule #ppStmts<_>(.Stmts) => .Stmts
+
+    rule #ppDefns<C>(D:Defn DS:Defns) => #ppDefn<C>(D) #ppDefns<C>(DS)
+    rule #ppDefns<_>(.Defns) => .Defns
+
+    rule #ppInstrs<C>(D:Instr DS:Instrs) => #ppInstr<C>(D) #ppInstrs<C>(DS)
+    rule #ppInstrs<_>(.Instrs) => .Instrs
+
+    syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
+                        | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
+ // --------------------------------------------------------------------------------
+    rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
+
+    rule #ids2Idxs(_, .TypeDecls, .LocalDecls) => .Map
+    rule #ids2Idxs(N, (type _)    , LDS) => #ids2Idxs(N, .TypeDecls, LDS)
+    rule #ids2Idxs(N, (type _) TDS, LDS) => #ids2Idxs(N, TDS       , LDS)
+
+    rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
+      => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, (param _) TDS, LDS)   => #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
+
+    rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
+      => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
+    rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
+```
+
 ```k
 endmodule
 ```
