@@ -364,8 +364,10 @@ Desugaring
 ----------
 
 TODO:
+* Remove identifiers in freestanding functions, not just ones encapsulated in modules.
 * Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 * Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
+* Remove module names
 
 ```k
     syntax Context ::= (localIds: Map, labelDepth: Int)
@@ -382,7 +384,7 @@ TODO:
  // -----------------------------------------------------
     rule #preprocess(SS) => #ppStmts<( ... localIds: .Map, labelDepth: 0 )>(SS)
 
-    rule #ppStmt<C>(( module _:OptionalId DS )) => ( module #ppDefns<C>(DS) )
+    rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )
     rule #ppStmt<_>(S) => S [owise]
 
     rule #ppDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #ppFuncSpec<C>(FS))
