@@ -398,12 +398,17 @@ TODO:
     rule #ppTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
     rule #ppTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#ppTypeUse<C>(TDS)}:>TypeDecls
     rule #ppTypeUse<_>(TU) => TU [owise]
+
     rule #ppLocalDecls<C>( local ID:Identifier AVT:AValType LDS:LocalDecls) => local AVT .ValTypes #ppLocalDecls<C>(LDS)
-    rule #ppLocalDecls<_>(.LocalDecls) => .LocalDecls
+    rule #ppLocalDecls<_>(LS) => LS [owise]
+
+    rule #ppInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#ppInstr<C>(PI)}:>PlainInstr #ppInstrs<C>(IS))
+    rule #ppInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #ppInstr<C>(PI)
 
     rule #ppInstr<(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
     rule #ppInstr<(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
     rule #ppInstr<(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+    rule #ppInstr<_>(I) => I [owise]
 
     // Lists
     rule #ppStmts<C>(D:Stmt DS:Stmts) => #ppStmt<C>(D) #ppStmts<C>(DS)
