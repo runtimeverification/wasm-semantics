@@ -534,9 +534,9 @@ The function interprets the range of bytes as little-endian.
     rule #get(BM, KEY) => BM [ KEY ] requires         KEY inBytes BM
     rule #get(BM, KEY) => 0          requires notBool KEY inBytes BM
 
-    rule #set(BM, KEY, VAL) => BM                                                      requires notBool (isByte(VAL) andBool 0 <=Int KEY)
-    rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                       requires          isByte(VAL) andBool KEY inBytes BM
-    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, lengthBytes(BM), KEY), KEY, VAL) requires          isByte(VAL) andBool notBool KEY <Int lengthBytes(BM)
+    rule #set(BM, KEY, VAL) => BM                                               requires notBool (isByte(VAL) andBool 0 <=Int KEY)
+    rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                requires          isByte(VAL) andBool KEY inBytes BM
+    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, KEY +Int 1, 0), KEY, VAL) requires          isByte(VAL) andBool notBool KEY <Int lengthBytes(BM)
 
     syntax Bool ::= isByte ( Int )      [function, functional, smtlib(isByte)]
                   | Int "inBytes" Bytes [function, functional, smtlib(inBytes)]
