@@ -371,7 +371,7 @@ TODO:
 * Look at more desugarings in the text file and incorporate them here, whenever they are not macros.
 
 ```k
-    syntax Context ::= ctx(localIds: Map, labelDepth: Int)
+    syntax Context ::= ctx(localIds: Map)
     syntax Stmts ::= "#ppStmts" "<" Context ">" "(" Stmts ")" [function]
     syntax Stmt ::= "#ppStmt" "<" Context ">" "(" Stmt ")" [function]
     syntax Defns ::= "#ppDefns" "<" Context ">" "(" Defns ")" [function]
@@ -383,7 +383,7 @@ TODO:
     syntax Instr ::= "#ppInstr" "<" Context ">" "(" Instr ")" [function]
     syntax FuncSpec ::= "#update" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
  // --------------------------------------------------------------------------
-    rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map, labelDepth: 0 )>(SS)
+    rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map)>(SS)
 
     rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )
     rule #ppStmt<_>(S) => S [owise]
