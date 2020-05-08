@@ -381,8 +381,8 @@ TODO:
     syntax LocalDecls ::= "#ppLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
     syntax Instrs ::= "#ppInstrs" "<" Context ">" "(" Instrs ")" [function]
     syntax Instr ::= "#ppInstr" "<" Context ">" "(" Instr ")" [function]
-    syntax {Sort} Sort ::= #update (Sort) | #ready (Sort)
- // -----------------------------------------------------
+    syntax FuncSpec ::= "#update" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
+ // --------------------------------------------------------------------------
     rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map, labelDepth: 0 )>(SS)
 
     rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )
