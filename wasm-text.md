@@ -411,6 +411,9 @@ TODO:
     rule #ppInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
     rule #ppInstr<_>(I) => I [owise]
 
+    // TODO: Add descending into block instructions
+    // Also add tests for it.
+
     // Lists
     rule #ppStmts<C>(D:Stmt DS:Stmts) => #ppStmt<C>(D) #ppStmts<C>(DS)
     rule #ppStmts<_>(.Stmts) => .Stmts
