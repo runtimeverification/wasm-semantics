@@ -17,7 +17,7 @@
     end
   )
 
-  (func (export "baz") (param $a i32) (result i32)
+  (func (export "baf") (param $a i32) (result i32)
     i32.const 1
     if (result i32)
       local.get $a
