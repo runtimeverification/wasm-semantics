@@ -364,6 +364,7 @@ Desugaring
 ----------
 
 TODO:
+* Desugar BlockInstr here, by adding labelDepth and labelIds.
 * Remove identifiers in freestanding functions, not just ones encapsulated in modules.
 * Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 * Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
@@ -411,8 +412,16 @@ TODO:
     rule #ppInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
     rule #ppInstr<_>(I) => I [owise]
 
-    // TODO: Add descending into block instructions
-    // Also add tests for it.
+     rule #ppInstr<C>(block TDS:TypeDecls IS:Instrs end) => block TDS #ppInstrs<C>(IS) end
+     rule #ppInstr<C>(loop  TDS:TypeDecls IS:Instrs end) => loop  TDS #ppInstrs<C>(IS) end
+     rule #ppInstr<C>(if    TDS:TypeDecls IS:Instrs else IS':Instrs end) => if TDS #ppInstrs<C>(IS) else #ppInstrs<C>(IS') end
+
+    // Sugared block instructions.
+    rule #ppInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) => block ID TDS #ppInstrs<C>(IS) end OID
+    rule #ppInstr<C>(loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId) => loop ID TDECLS #ppInstrs<C>(IS) end OID'
+    rule #ppInstr<C>(if TDECLS:TypeDecls IS end) => if TDECLS #ppInstrs<C>(IS) end
+    rule #ppInstr<C>(if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId) => if ID TDECLS #ppInstrs<C>(IS) end OID''
+    rule #ppInstr<C>(if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDECLS #ppInstrs<C>(IS) else OID' IS' end OID''
 
     // Lists
     rule #ppStmts<C>(D:Stmt DS:Stmts) => #ppStmt<C>(D) #ppStmts<C>(DS)
