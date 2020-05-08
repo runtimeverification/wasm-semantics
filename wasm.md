@@ -1307,6 +1307,7 @@ Exports make functions, tables, memories and globals available for importing int
 ```k
     syntax Defn       ::= ExportDefn
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
+    syntax Alloc      ::= ExportDefn
  // -------------------------------------------------------------------
     rule <k> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1331,6 +1332,7 @@ The value of a global gets copied when it is imported.
                         | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+    syntax Alloc      ::= ImportDefn
  // -----------------------------------------------------------------------------------------------
     rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
