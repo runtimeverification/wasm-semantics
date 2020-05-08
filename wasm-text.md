@@ -387,6 +387,7 @@ TODO:
     rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map)>(SS)
 
     rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )
+    rule #ppStmt<C>(D:Defn) => #ppDefn<C>(D)
     rule #ppStmt<_>(S) => S [owise]
 
     rule #ppDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #ppFuncSpec<C>(FS))
