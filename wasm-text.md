@@ -371,7 +371,7 @@ TODO:
 * Look at more desugarings in the text file and incorporate them here, whenever they are not macros.
 
 ```k
-    syntax Context ::= (localIds: Map, labelDepth: Int)
+    syntax Context ::= ctx(localIds: Map, labelDepth: Int)
     syntax Stmts ::= "#ppStmts" "<" Context ">" "(" Stmts ")" [function]
     syntax Stmt ::= "#ppStmt" "<" Context ">" "(" Stmt ")" [function]
     syntax Defns ::= "#ppDefns" "<" Context ">" "(" Defns ")" [function]
@@ -383,7 +383,7 @@ TODO:
     syntax Instr ::= "#ppInstr" "<" Context ">" "(" Instr ")" [function]
     syntax {Sort} Sort ::= #update (Sort) | #ready (Sort)
  // -----------------------------------------------------
-    rule #preprocess(SS) => #ppStmts<( ... localIds: .Map, labelDepth: 0 )>(SS)
+    rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map, labelDepth: 0 )>(SS)
 
     rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )
     rule #ppStmt<_>(S) => S [owise]
@@ -393,7 +393,7 @@ TODO:
 
     rule #ppFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #ppFuncSpec<C>(FS)
     rule #ppFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #ppFuncSpec<C>(#update(T LS IS))
-    rule #ppFuncSpec<(... localIds: (_ => #ids2Idxs(T, LS)))>(#update(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
+    rule #ppFuncSpec<ctx(... localIds: (_ => #ids2Idxs(T, LS)))>(#update(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
     rule #ppFuncSpec<C>(#ready(T:TypeUse LS:LocalDecls IS:Instrs)) => #ppTypeUse<C>(T) #ppLocalDecls<C>(LS) #ppInstrs<C>(IS)
 
     rule #ppTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
@@ -406,9 +406,9 @@ TODO:
     rule #ppInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#ppInstr<C>(PI)}:>PlainInstr #ppInstrs<C>(IS))
     rule #ppInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #ppInstr<C>(PI)
 
-    rule #ppInstr<(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
-    rule #ppInstr<(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
-    rule #ppInstr<(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+    rule #ppInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+    rule #ppInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+    rule #ppInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
     rule #ppInstr<_>(I) => I [owise]
 
     // Lists
