@@ -403,8 +403,9 @@ TODO:
     rule #ppTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#ppTypeUse<C>(TDS)}:>TypeDecls
     rule #ppTypeUse<_>(TU) => TU [owise]
 
-    rule #ppLocalDecls<C>( local ID:Identifier AVT:AValType LDS:LocalDecls) => local AVT .ValTypes #ppLocalDecls<C>(LDS)
-    rule #ppLocalDecls<_>(LS) => LS [owise]
+    rule #ppLocalDecls<C>(local ID:Identifier AVT:AValType LDS:LocalDecls) => local AVT .ValTypes #ppLocalDecls<C>(LDS)
+    rule #ppLocalDecls<C>(local               VTS:ValTypes LDS:LocalDecls) => local VTS           #ppLocalDecls<C>(LDS)
+    rule #ppLocalDecls<_>(.LocalDecls) => .LocalDecls [owise]
 
     rule #ppInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#ppInstr<C>(PI)}:>PlainInstr #ppInstrs<C>(IS))
     rule #ppInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #ppInstr<C>(PI)

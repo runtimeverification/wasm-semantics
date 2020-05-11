@@ -138,4 +138,8 @@
 
 #assertFunction $far [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased outside module"
 
+(func $fir (local i64) (local $a i32))
+
+#assertFunction $fir [ ] -> [ ] [ i64 i32 ] "identifiers are erased inside module"
+
 #clearConfig
