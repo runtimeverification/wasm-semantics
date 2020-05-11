@@ -365,6 +365,7 @@ Desugaring
 
 TODO:
 * Desugar BlockInstr here, by adding labelDepth and labelIds.
+* Then desugar the folded versions of the block instructions here as well.
 * Remove identifiers in freestanding functions, not just ones encapsulated in modules.
 * Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 * Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
@@ -419,10 +420,15 @@ TODO:
 
     // Sugared block instructions.
     rule #ppInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) => block ID TDS #ppInstrs<C>(IS) end OID
-    rule #ppInstr<C>(loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId) => loop ID TDECLS #ppInstrs<C>(IS) end OID'
-    rule #ppInstr<C>(if TDECLS:TypeDecls IS end) => if TDECLS #ppInstrs<C>(IS) end
-    rule #ppInstr<C>(if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId) => if ID TDECLS #ppInstrs<C>(IS) end OID''
-    rule #ppInstr<C>(if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDECLS #ppInstrs<C>(IS) else OID' #ppInstrs<C>(IS') end OID''
+    rule #ppInstr<C>(loop ID:Identifier TDS:TypeDecls IS end OID':OptionalId) => loop ID TDS #ppInstrs<C>(IS) end OID'
+    rule #ppInstr<C>(if OID:OptionalId TDS:TypeDecls IS end OID'':OptionalId) => if OID TDS #ppInstrs<C>(IS) end OID''
+    rule #ppInstr<C>(if ID:Identifier TDS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDS #ppInstrs<C>(IS) else OID' #ppInstrs<C>(IS') end OID''
+
+    // Folded block instructions.
+    rule #ppInstr<C>((block OID:OptionalId TDS IS)) => (block OID TDS #ppInstrs<C>(IS))
+    rule #ppInstr<C>((loop  OID:OptionalId TDS IS)) => (loop  OID TDS #ppInstrs<C>(IS))
+    rule #ppInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS))) => (if OID TDS #ppInstrs<C>(COND) (then #ppInstrs<C>(IS)))
+    rule #ppInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #ppInstrs<C>(COND) (then #ppInstrs<C>(IS)) (else #ppInstrs<C>(IS')))
 
     // Lists
     rule #ppStmts<C>(D:Stmt DS:Stmts) => #ppStmt<C>(D) #ppStmts<C>(DS)
