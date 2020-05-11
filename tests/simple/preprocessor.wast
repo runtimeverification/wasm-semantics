@@ -26,6 +26,15 @@
     end
   )
 
+  (func (export "bag") (param $a i32) (result i32)
+    i32.const 0
+    if (result i32)
+      local.get $a
+    else
+      local.get $a
+    end
+  )
+
   (func $far (param $a i32) (result i32) (local $b i64)
     local.get $a
   )
@@ -35,6 +44,7 @@
 (assert_return (invoke "bar" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "baz" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "baf" (i32.const 7)) (i32.const 7))
+(assert_return (invoke "bag" (i32.const 7)) (i32.const 7))
 
 #assertFunction $far [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased inside module"
 
@@ -65,6 +75,15 @@
   end
 )
 
+(func (export "bag") (param $a i32) (result i32)
+  i32.const 0
+  if (result i32)
+    local.get $a
+  else
+    local.get $a
+  end
+)
+
 (func $far (param $a i32) (result i32) (local $b i64)
   local.get $a
 )
@@ -73,6 +92,7 @@
 (assert_return (invoke "bar" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "baz" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "baf" (i32.const 7)) (i32.const 7))
+(assert_return (invoke "bag" (i32.const 7)) (i32.const 7))
 
 #assertFunction $far [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased outside module"
 

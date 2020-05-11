@@ -422,7 +422,7 @@ TODO:
     rule #ppInstr<C>(loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId) => loop ID TDECLS #ppInstrs<C>(IS) end OID'
     rule #ppInstr<C>(if TDECLS:TypeDecls IS end) => if TDECLS #ppInstrs<C>(IS) end
     rule #ppInstr<C>(if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId) => if ID TDECLS #ppInstrs<C>(IS) end OID''
-    rule #ppInstr<C>(if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDECLS #ppInstrs<C>(IS) else OID' IS' end OID''
+    rule #ppInstr<C>(if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDECLS #ppInstrs<C>(IS) else OID' #ppInstrs<C>(IS') end OID''
 
     // Lists
     rule #ppStmts<C>(D:Stmt DS:Stmts) => #ppStmt<C>(D) #ppStmts<C>(DS)
