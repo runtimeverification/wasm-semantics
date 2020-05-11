@@ -373,18 +373,18 @@ TODO:
 * Look at more desugarings in the text file and incorporate them here, whenever they are not macros.
 
 ```k
-    syntax Context ::= ctx(localIds: Map)
-    syntax Stmts ::= "#ppStmts" "<" Context ">" "(" Stmts ")" [function]
-    syntax Stmt ::= "#ppStmt" "<" Context ">" "(" Stmt ")" [function]
-    syntax Defns ::= "#ppDefns" "<" Context ">" "(" Defns ")" [function]
-    syntax Defn ::= "#ppDefn" "<" Context ">" "(" Defn ")" [function]
-    syntax FuncSpec ::= "#ppFuncSpec" "<" Context ">" "(" FuncSpec ")" [function]
-    syntax TypeUse ::= "#ppTypeUse" "<" Context ">" "(" TypeUse ")" [function]
+    syntax Context    ::= ctx(localIds: Map)
+    syntax Stmts      ::= "#ppStmts" "<" Context ">" "(" Stmts ")" [function]
+    syntax Stmt       ::= "#ppStmt" "<" Context ">" "(" Stmt ")" [function]
+    syntax Defns      ::= "#ppDefns" "<" Context ">" "(" Defns ")" [function]
+    syntax Defn       ::= "#ppDefn" "<" Context ">" "(" Defn ")" [function]
+    syntax FuncSpec   ::= "#ppFuncSpec" "<" Context ">" "(" FuncSpec ")" [function]
+    syntax TypeUse    ::= "#ppTypeUse" "<" Context ">" "(" TypeUse ")" [function]
     syntax LocalDecls ::= "#ppLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
-    syntax Instrs ::= "#ppInstrs" "<" Context ">" "(" Instrs ")" [function]
-    syntax Instr ::= "#ppInstr" "<" Context ">" "(" Instr ")" [function]
-    syntax FuncSpec ::= "#update" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
- // --------------------------------------------------------------------------
+    syntax Instrs     ::= "#ppInstrs" "<" Context ">" "(" Instrs ")" [function]
+    syntax Instr      ::= "#ppInstr" "<" Context ">" "(" Instr ")" [function]
+    syntax FuncSpec   ::= "#update" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
+ // ----------------------------------------------------------------------------
     rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map)>(SS)
 
     rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )

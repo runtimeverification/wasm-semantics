@@ -1290,7 +1290,7 @@ Exports make functions, tables, memories and globals available for importing int
     syntax Defn       ::= ExportDefn
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
     syntax Alloc      ::= ExportDefn
- // -------------------------------------------------------------------
+ // --------------------------------
     rule <k> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1315,7 +1315,7 @@ The value of a global gets copied when it is imported.
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
     syntax Alloc      ::= ImportDefn
- // -----------------------------------------------------------------------------------------------
+ // --------------------------------
     rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1484,7 +1484,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 ```k
     syntax Stmt       ::= ModuleDecl
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
- // -------------------------------------------------
+ // -------------------------------------------------------
     rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
 
     rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
