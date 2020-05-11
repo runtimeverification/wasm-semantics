@@ -25,7 +25,7 @@
     (return)
 )
 
-#assertFunction $add [ { $a i32 } i32 ] -> [ i32 ] [ ] "function string-named add"
+#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 #assertNextTypeIdx 1
 
 ;; Remove return statement
@@ -42,7 +42,7 @@
 (i32.const 0)
 (call_indirect (type $a-cool-type))
 #assertTopStack < i32 > 15 "call function 0 no return"
-#assertFunction $0 [ { $a i32 } { $b i32 } ] -> [ i32 ] [ ] "call function 0 exists no return"
+#assertFunction $0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
 #assertNextTypeIdx 1
 
 ;; More complicated function with locals
