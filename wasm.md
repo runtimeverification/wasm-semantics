@@ -20,7 +20,6 @@ Configuration
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
-          <localIds>  .Map </localIds>
           <curModIdx> .Int </curModIdx>
           <labelDepth> 0   </labelDepth>
           <labelIds>  .Map </labelIds>
@@ -425,19 +424,6 @@ The various `init_local` variants assist in setting up the `locals` cell.
           </k>
 ```
 
-`init_localids` help setting up ids for local indices.
-
-```k
-    syntax Instr ::=  "init_localids" ValTypes
-                   | "#init_localids" Int ValTypes
- // ----------------------------------------------
-    rule <k> init_localids VTYPES => #init_localids 0 VTYPES ... </k>
-    rule <k> #init_localids I:Int .ValTypes     => .                          ... </k>
-    rule <k> #init_localids I:Int V:AValType VS => #init_localids I +Int 1 VS ... </k>
-    rule <k> #init_localids I:Int { ID V }   VS => #init_localids I +Int 1 VS ... </k>
-         <localIds> LOCALIDS => LOCALIDS [ ID <- I ] </localIds>
-```
-
 The `*_local` instructions are defined here.
 
 ```k
@@ -741,7 +727,6 @@ The `#take` function will return the parameter stack in the reversed order, then
  // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
-          ~> init_localids TDOMAIN + TLOCALS
           ~> block [TRANGE] INSTRS end
           ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
           ...
