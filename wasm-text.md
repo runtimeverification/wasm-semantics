@@ -372,19 +372,25 @@ TODO:
 * Remove module names
 * Look at more desugarings in the text file and incorporate them here, whenever they are not macros.
 
+The function `#preprocess(SS)` takes the textual version of a Wasm program and desugars it.
+The `Context` contains information of how to map text-level identifiers to corresponding indices.
+
 ```k
     syntax Context    ::= ctx(localIds: Map)
-    syntax Stmts      ::= "#ppStmts" "<" Context ">" "(" Stmts ")" [function]
-    syntax Stmt       ::= "#ppStmt" "<" Context ">" "(" Stmt ")" [function]
-    syntax Defns      ::= "#ppDefns" "<" Context ">" "(" Defns ")" [function]
-    syntax Defn       ::= "#ppDefn" "<" Context ">" "(" Defn ")" [function]
-    syntax FuncSpec   ::= "#ppFuncSpec" "<" Context ">" "(" FuncSpec ")" [function]
-    syntax TypeUse    ::= "#ppTypeUse" "<" Context ">" "(" TypeUse ")" [function]
-    syntax LocalDecls ::= "#ppLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
-    syntax Instrs     ::= "#ppInstrs" "<" Context ">" "(" Instrs ")" [function]
-    syntax Instr      ::= "#ppInstr" "<" Context ">" "(" Instr ")" [function]
-    syntax FuncSpec   ::= "#update" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
- // ----------------------------------------------------------------------------
+ // ----------------------------------------
+```
+
+The program is traversed in full once, context beting gathered along the way.
+Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
+
+```k
+    syntax Stmt       ::= "#ppStmt"       "<" Context ">" "(" Stmt       ")" [function]
+    syntax Defn       ::= "#ppDefn"       "<" Context ">" "(" Defn       ")" [function]
+    syntax Instr      ::= "#ppInstr"      "<" Context ">" "(" Instr      ")" [function]
+    syntax FuncSpec   ::= "#ppFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
+    syntax TypeUse    ::= "#ppTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl  ::= "#ppLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
+ // -----------------------------------------------------------------------------------
     rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map)>(SS)
 
     rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )
@@ -403,9 +409,8 @@ TODO:
     rule #ppTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#ppTypeUse<C>(TDS)}:>TypeDecls
     rule #ppTypeUse<_>(TU) => TU [owise]
 
-    rule #ppLocalDecls<C>(local ID:Identifier AVT:AValType LDS:LocalDecls) => local AVT .ValTypes #ppLocalDecls<C>(LDS)
-    rule #ppLocalDecls<C>(local               VTS:ValTypes LDS:LocalDecls) => local VTS           #ppLocalDecls<C>(LDS)
-    rule #ppLocalDecls<_>(.LocalDecls) => .LocalDecls [owise]
+    rule #ppLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
+    rule #ppLocalDecl<C>(LD) => LD [owise]
 
     rule #ppInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#ppInstr<C>(PI)}:>PlainInstr #ppInstrs<C>(IS))
     rule #ppInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #ppInstr<C>(PI)
@@ -430,16 +435,28 @@ TODO:
     rule #ppInstr<C>((loop  OID:OptionalId TDS IS)) => (loop  OID TDS #ppInstrs<C>(IS))
     rule #ppInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS))) => (if OID TDS #ppInstrs<C>(COND) (then #ppInstrs<C>(IS)))
     rule #ppInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #ppInstrs<C>(COND) (then #ppInstrs<C>(IS)) (else #ppInstrs<C>(IS')))
+```
 
-    // Lists
-    rule #ppStmts<C>(D:Stmt DS:Stmts) => #ppStmt<C>(D) #ppStmts<C>(DS)
+Lists.
+
+```k
+    syntax Stmts      ::= "#ppStmts"      "<" Context ">" "(" Stmts      ")" [function]
+    syntax Defns      ::= "#ppDefns"      "<" Context ">" "(" Defns      ")" [function]
+    syntax Instrs     ::= "#ppInstrs"     "<" Context ">" "(" Instrs     ")" [function]
+    syntax LocalDecls ::= "#ppLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
+ // -----------------------------------------------------------------------------------
+
+    rule #ppStmts<C>(S:Stmt SS:Stmts) => #ppStmt<C>(S) #ppStmts<C>(SS)
     rule #ppStmts<_>(.Stmts) => .Stmts
 
     rule #ppDefns<C>(D:Defn DS:Defns) => #ppDefn<C>(D) #ppDefns<C>(DS)
     rule #ppDefns<_>(.Defns) => .Defns
 
-    rule #ppInstrs<C>(D:Instr DS:Instrs) => #ppInstr<C>(D) #ppInstrs<C>(DS)
+    rule #ppInstrs<C>(I:Instr IS:Instrs) => #ppInstr<C>(I) #ppInstrs<C>(IS)
     rule #ppInstrs<_>(.Instrs) => .Instrs
+
+    rule #ppLocalDecls<C>(LD:LocalDecl LDS:LocalDecls) => #ppLocalDecl<C>(LD) #ppLocalDecls<C>(LDS)
+    rule #ppLocalDecls<_>(.LocalDecls) => .LocalDecls
 
     syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                         | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
@@ -458,6 +475,9 @@ TODO:
     rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
       => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
     rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
+
+    syntax FuncSpec   ::= "#update" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
+ // ----------------------------------------------------------------------------
 ```
 
 ```k
