@@ -445,20 +445,17 @@ The `*_local` instructions are defined here.
                         | "local.set" Index
                         | "local.tee" Index
  //----------------------------------------
-    rule <k> local.get TFIDX => . ... </k>
+    rule <k> local.get I:Int => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> VALUE ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> VALUE ... </locals>
 
-    rule <k> local.set TFIDX => . ... </k>
+    rule <k> local.set I:Int => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> (_ => VALUE) ... </locals>
 
-    rule <k> local.tee TFIDX => . ... </k>
+    rule <k> local.tee I:Int => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> (_ => VALUE) ... </locals>
 ```
 
 ### Globals
