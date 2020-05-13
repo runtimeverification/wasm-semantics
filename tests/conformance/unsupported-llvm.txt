@@ -1,6 +1,5 @@
 address.wast
 align.wast
-br.wast
 call_indirect.wast
 const.wast
 data.wast
@@ -13,16 +12,8 @@ f64_bitwise.wast
 f64_cmp.wast
 float_memory.wast
 float_misc.wast
-func.wast
 imports.wast
-labels.wast
 left-to-right.wast
-local_get.wast
-local_set.wast
-local_tee.wast
-loop.wast
 memory_redundancy.wast
 memory_trap.wast
-return.wast
 traps.wast
-unreachable.wast
