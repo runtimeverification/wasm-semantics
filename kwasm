@@ -60,7 +60,12 @@ run_kast() {
 }
 
 run_prove() {
-    kprove --directory "$backend_dir" "$run_file" "$@"
+    export K_OPTS=-Xmx8G
+    haskell_backend_command="$k_release_dir/bin/kore-exec"
+    if $repl; then
+        haskell_backend_command="$k_release_dir/bin/kore-repl --repl-script $kwasm_dir/kast.kscript"
+    fi
+    kprove --directory "$backend_dir" "$run_file" "$@" --haskell-backend-command "$haskell_backend_command"
 }
 
 # Main
@@ -68,9 +73,10 @@ run_prove() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (llvm|haskell)] <pgm>  <K args>*
-           $0 kast       [--backend (llvm|haskell)] <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell)]      <spec> <K args>* -m <def_module>
+    usage: $0 run        [--backend (llvm|haskell)]      <pgm>  <K args>*
+           $0 kast       [--backend (llvm|haskell)]      <pgm>  <output format> <K args>*
+           $0 prove      [--backend (haskell)] [--repl]  <spec> <K args>* -m <def_module>
+
 
            $0 [help|--help|version|--version]
 
@@ -118,13 +124,21 @@ run_command="$1"; shift
 
 [[ ! -z ${1:-} ]] || usage_fatal "Must supply a file to work on."
 
-backend='llvm'
+backend="llvm"
+repl=false
 [[ ! "$run_command" == 'prove' ]] || backend='haskell'
-[[ ! "$run_command" =~ klab*   ]] || backend='java'
-if [[ $# -gt 1 ]] && [[ $1 == '--backend' ]] || [[ $1 == '--definition' ]]; then
-    backend="${2#wasm-}"
-    shift 2
-fi
+args=()
+while [[ $# -gt 0 ]]; do
+    arg="$1"
+    case $arg in
+        --backend)    args+=("$arg" "$2") ; backend="$2"      ; shift 2 ;;
+        --repl)       args+=("$arg")      ; repl=true         ; shift   ;;
+        *)            break                                             ;;
+    esac
+done
+
+! $repl || [[ "$backend" == "haskell" ]] || fatal "REPL option only available for Haskell backend."
+
 backend_dir="$defn_dir/$backend"
 
 # get the run file
@@ -138,6 +152,7 @@ if [[ "$run_file" == '-' ]]; then
 fi
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
+! $repl || [[ "$backend" == "haskell" ]] || fatal "REPL option only available for Haskell backend."
 case "$run_command-$backend" in
     run-@(llvm|haskell)  ) run_krun  "$@" ;;
     kast-@(llvm|haskell) ) run_kast  "$@" ;;
