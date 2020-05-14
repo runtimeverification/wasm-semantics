@@ -503,9 +503,9 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 ```k
     syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
-    rule #setRange(BM, IDX, VAL, WIDTH) => BM requires notBool (WIDTH >Int 0 andBool IDX >=Int 0 andBool 0 <=Int VAL)
+    rule #setRange(BM, IDX, VAL, WIDTH) => BM requires notBool (IDX >=Int 0 andBool WIDTH >Int 0 andBool 0 <=Int VAL)
     rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
-      requires WIDTH >Int 0 andBool IDX >=Int 0 andBool 0 <=Int VAL
+      requires IDX >=Int 0 andBool WIDTH >Int 0 andBool 0 <=Int VAL
       [concrete]
 ```
 
@@ -515,10 +515,9 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange ( Bytes , Int , Int ) [function, functional, smtlib(getRange)]
  // ---------------------------------------------------------------------------------------
-    rule #getRange( _, START, WIDTH) => 0
-      requires notBool (START >=Int 0 andBool WIDTH >Int 0)
-    rule #getRange(BM, START, WIDTH) => #get(BM, START) +Int (#getRange(BM, START +Int 1, WIDTH -Int 1) *Int 256)
-      requires          START >=Int 0 andBool WIDTH >Int 0
+    rule #getRange( _, IDX, WIDTH) => 0 requires notBool (IDX >=Int 0 andBool WIDTH >Int 0)
+    rule #getRange(BM, IDX, WIDTH) => #get(BM, IDX) +Int (#getRange(BM, IDX +Int 1, WIDTH -Int 1) *Int 256)
+      requires IDX >=Int 0 andBool WIDTH >Int 0
       [concrete]
 ```
 
