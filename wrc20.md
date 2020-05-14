@@ -20,23 +20,6 @@ These conversions turns out to be helpful in this particular proof, but we don't
     rule X /Int N => X >>Int 8  requires N ==Int 256 [simplification]
 ```
 
-TODO: The `#get` theorems below theorems handle special cases in this proof, but we should be able to use some more general theorems to prove them.
-
-```k
-    rule (#get(BM, ADDR) +Int (X +Int Y)) modInt N => (#get(BM, ADDR) +Int ((X +Int Y) modInt 256)) modInt 256
-      requires N ==Int 256
-      [simplification]
-
-    rule #wrap(N, #get(BM, ADDR) +Int (X +Int Y))    => #wrap(8, #get(BM, ADDR) +Int #wrap(8, X +Int Y))
-      requires N ==Int 8
-      [simplification]
-
-    rule (#get(BM, ADDR) +Int X)           >>Int N   => X >>Int 8
-      requires N ==Int 8
-       andBool X modInt 256 ==Int 0
-      [simplification]
-```
-
 TODO: The following theorems should be generalized and proven, and moved to the set of general lemmas.
 Perhaps using `requires N ==Int 2 ^Int log2Int(N)`?
 Also, some of these have concrete integers on the LHS.
@@ -72,15 +55,6 @@ It may be better to use a symbolic value as a side condition, e.g. `rule N => fo
        andBool 0 <=Int X
        andBool X <Int 256
        andBool M >=Int 8
-      [simplification]
-```
-
-TODO: The following theorem should be proven, and moved to the set of general lemmas.
-
-```k
-    rule #getRange(BM, ADDR, WIDTH)  >>Int N => #getRange(BM, ADDR +Int 1, WIDTH -Int 1)  >>Int (N -Int 8)
-      requires N >=Int 8
-       andBool WIDTH >Int 1
       [simplification]
 ```
 
