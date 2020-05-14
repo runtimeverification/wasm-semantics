@@ -363,22 +363,33 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 Desugaring
 ----------
 
+The text format is one of the concrete formats of Wasm.
+Every concrete format maps to a common structure, described as an abstract syntax.
+The function `text2abstract` is a partial function which maps valid programs in the text format to the abstract format.
+Some classes of invalid programs, such as those where an identifier appears in a context in which it is not declared, are undefined.
+
+The function deals with the desugarings which are context dependent.
+Other desugarings are either left for runtime or expressed as macros (for now).
+
 TODO:
 * Desugar BlockInstr here, by adding labelDepth and labelIds.
 * Then desugar the folded versions of the block instructions here as well.
 * Remove identifiers in freestanding functions, not just ones encapsulated in modules.
-* Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 * Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
 * Remove module names
 * Look at more desugarings in the text file and incorporate them here, whenever they are not macros.
+* Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 
-The function `text2abstract(SS)` takes the textual version of a Wasm program and desugars it.
+### The Context
+
 The `Context` contains information of how to map text-level identifiers to corresponding indices.
 
 ```k
     syntax Context    ::= ctx(localIds: Map)
  // ----------------------------------------
 ```
+
+### Traversing the Text Format
 
 The program is traversed in full once, context beting gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
@@ -437,7 +448,10 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
 ```
 
-Lists.
+### List Functions
+
+The following are helper functions.
+They distribute the functions above over lists.
 
 ```k
     syntax Stmts      ::= "#t2aStmts"      "<" Context ">" "(" Stmts      ")" [function]
@@ -456,7 +470,13 @@ Lists.
 
     rule #t2aLocalDecls<C>(LD:LocalDecl LDS:LocalDecls) => #t2aLocalDecl<C>(LD) #t2aLocalDecls<C>(LDS)
     rule #t2aLocalDecls<_>(.LocalDecls) => .LocalDecls
+```
 
+### Functions for Gathering Context
+
+The following are helper functions for gathering and updating context.
+
+```k
     syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                         | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
  // --------------------------------------------------------------------------------
