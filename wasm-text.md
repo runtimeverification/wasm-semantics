@@ -372,12 +372,9 @@ The function deals with the desugarings which are context dependent.
 Other desugarings are either left for runtime or expressed as macros (for now).
 
 TODO:
-* Desugar BlockInstr here, by adding labelDepth and labelIds.
-* Then desugar the folded versions of the block instructions here as well.
-* Remove identifiers in freestanding functions, not just ones encapsulated in modules.
+
 * Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
-* Remove module names
-* Look at more desugarings in the text file and incorporate them here, whenever they are not macros.
+* Remove module names.
 * Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 
 ### The Context
@@ -397,7 +394,6 @@ Since we do not have polymorphic functions available, we define one function per
 ```k
     syntax Stmt       ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
     syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
-    syntax Instr      ::= "#t2aInstr"      "<" Context ">" "(" Instr      ")" [function]
     syntax FuncSpec   ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
     syntax TypeUse    ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
     syntax LocalDecl  ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
@@ -422,20 +418,115 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
     rule #t2aLocalDecl<C>(LD) => LD [owise]
+```
+
+### Instructions
+
+TODO: Desugar folded instructions.
+
+```k
+    syntax Instr ::= "#t2aInstr" "<" Context ">" "(" Instr ")" [function]
+ // ---------------------------------------------------------------------
 
     rule #t2aInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#t2aInstr<C>(PI)}:>PlainInstr #t2aInstrs<C>(IS))
     rule #t2aInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #t2aInstr<C>(PI)
+```
 
+#### Basic Instructions
+
+```k
+    rule #t2aInstr<_>(unreachable)      => unreachable
+    rule #t2aInstr<_>(nop)              => nop
+    rule #t2aInstr<_>(br L)             => br L
+    rule #t2aInstr<_>(br_if L)          => br_if L
+    rule #t2aInstr<_>(br_table ES)      => br_table ES
+    rule #t2aInstr<_>(return)           => return
+    rule #t2aInstr<_>(call F)           => call F
+    rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
+```
+
+#### Parametric Instructions
+
+```k
+    rule #t2aInstr<_>(drop)   => drop
+    rule #t2aInstr<_>(select) => select
+```
+
+#### Locals and Globals
+
+```k
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
-    rule #t2aInstr<_>(I) => I [owise]
+    
+    rule #t2aInstr<_>(global.get I) => global.get I
+    rule #t2aInstr<_>(global.set I) => global.set I
+```
 
+#### Memory Instructions
+
+```k
+    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOpM) => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOpM) => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOpM) => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOpM) => FTYPE.OP
+    rule #t2aInstr<_>(memory.size)           => memory.size
+    rule #t2aInstr<_>(memory.grow)           => memory.grow
+
+//  rule #t2aInstr<_>(i32.load M:MemArg)     => i32.load M:MemArg
+//  rule #t2aInstr<_>(i64.load M:MemArg)     => i64.load M:MemArg
+//  rule #t2aInstr<_>(f32.load M:MemArg)     => f32.load M:MemArg
+//  rule #t2aInstr<_>(f64.load M:MemArg)     => f64.load M:MemArg
+//  rule #t2aInstr<_>(i32.load8_s M:MemArg)  => i32.load8_s M:MemArg
+//  rule #t2aInstr<_>(i32.load8_u M:MemArg)  => i32.load8_u M:MemArg
+//  rule #t2aInstr<_>(i32.load16_s M:MemArg) => i32.load16_s M:MemArg
+//  rule #t2aInstr<_>(i32.load16_u M:MemArg) => i32.load16_u M:MemArg
+//  rule #t2aInstr<_>(i64.load8_s M:MemArg)  => i64.load8_s M:MemArg
+//  rule #t2aInstr<_>(i64.load8_u M:MemArg)  => i64.load8_u M:MemArg
+//  rule #t2aInstr<_>(i64.load16_s M:MemArg) => i64.load16_s M:MemArg
+//  rule #t2aInstr<_>(i64.load16_u M:MemArg) => i64.load16_u M:MemArg
+//  rule #t2aInstr<_>(i64.load32_s M:MemArg) => i64.load32_s M:MemArg
+//  rule #t2aInstr<_>(i64.load32_u M:MemArg) => i64.load32_u M:MemArg
+//  rule #t2aInstr<_>(i32.store M:MemArg)    => i32.store M:MemArg
+//  rule #t2aInstr<_>(i64.store M:MemArg)    => i64.store M:MemArg
+//  rule #t2aInstr<_>(f32.store M:MemArg)    => f32.store M:MemArg
+//  rule #t2aInstr<_>(f64.store M:MemArg)    => f64.store M:MemArg
+//  rule #t2aInstr<_>(i32.store8 M:MemArg)   => i32.store8 M:MemArg
+//  rule #t2aInstr<_>(i32.store16 M:MemArg)  => i32.store16 M:MemArg
+//  rule #t2aInstr<_>(i64.store8 M:MemArg)   => i64.store8 M:MemArg
+//  rule #t2aInstr<_>(i64.store16 M:MemArg)  => i64.store16 M:MemArg
+//  rule #t2aInstr<_>(i64.store32 M:MemArg)  => i64.store32 M:MemArg
+```
+
+#### Numeric Instructions
+
+```k
+    rule #t2aInstr<_>(ITYPE:IValType.const I) => ITYPE.const I
+    rule #t2aInstr<_>(FTYPE:FValType.const N) => FTYPE.const N
+    rule #t2aInstr<_>(ITYPE.OP:IUnOp)         => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE.OP:FUnOp)         => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE.OP:IBinOp)        => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE.OP:FBinOp)        => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE.OP:TestOp)        => ITYPE.OP
+    rule #t2aInstr<_>(ITYPE.OP:IRelOp)        => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE.OP:FRelOp)        => FTYPE.OP
+    rule #t2aInstr<_>(ATYPE.OP:CvtOp)         => ATYPE.OP
+```
+
+#### Block Instructions
+
+There are several formats of block instructions, and the text-to-abstract transformation must be distributed over them.
+
+TODO:
+
+* Desugar BlockInstr here, by adding labelDepth and labelIds to context.
+* Then desugar the folded versions of the block instructions here as well.
+
+```k
      rule #t2aInstr<C>(block TDS:TypeDecls IS:Instrs end) => block TDS #t2aInstrs<C>(IS) end
      rule #t2aInstr<C>(loop  TDS:TypeDecls IS:Instrs end) => loop  TDS #t2aInstrs<C>(IS) end
      rule #t2aInstr<C>(if    TDS:TypeDecls IS:Instrs else IS':Instrs end) => if TDS #t2aInstrs<C>(IS) else #t2aInstrs<C>(IS') end
 
-    // Sugared block instructions.
     rule #t2aInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) => block ID TDS #t2aInstrs<C>(IS) end OID
     rule #t2aInstr<C>(loop ID:Identifier TDS:TypeDecls IS end OID':OptionalId) => loop ID TDS #t2aInstrs<C>(IS) end OID'
     rule #t2aInstr<C>(if OID:OptionalId TDS:TypeDecls IS end OID'':OptionalId) => if OID TDS #t2aInstrs<C>(IS) end OID''
@@ -446,6 +537,20 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aInstr<C>((loop  OID:OptionalId TDS IS)) => (loop  OID TDS #t2aInstrs<C>(IS))
     rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
     rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
+```
+
+TODO: Remove before review.
+
+```
+    rule #t2aInstr<C>(I) => I [owise]
+```
+
+#### KWasm Administrative Instructions
+
+The following instructions are not part of the official Wasm text format.
+
+```k
+
 ```
 
 ### List Functions
