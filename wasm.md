@@ -16,7 +16,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> #preprocess($PGM:Stmts) </k>
+        <k> text2abstract($PGM:Stmts) </k>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
@@ -89,8 +89,8 @@ Configuration
       </wasm>
 
 
-    syntax Stmts ::= #preprocess(Stmts) [function]
- // ----------------------------------------------
+    syntax Stmts ::= text2abstract(Stmts) [function]
+ // ------------------------------------------------
 ```
 
 ### Assumptions and invariants

@@ -372,7 +372,7 @@ TODO:
 * Remove module names
 * Look at more desugarings in the text file and incorporate them here, whenever they are not macros.
 
-The function `#preprocess(SS)` takes the textual version of a Wasm program and desugars it.
+The function `text2abstract(SS)` takes the textual version of a Wasm program and desugars it.
 The `Context` contains information of how to map text-level identifiers to corresponding indices.
 
 ```k
@@ -384,79 +384,78 @@ The program is traversed in full once, context beting gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
 
 ```k
-    syntax Stmt       ::= "#ppStmt"       "<" Context ">" "(" Stmt       ")" [function]
-    syntax Defn       ::= "#ppDefn"       "<" Context ">" "(" Defn       ")" [function]
-    syntax Instr      ::= "#ppInstr"      "<" Context ">" "(" Instr      ")" [function]
-    syntax FuncSpec   ::= "#ppFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
-    syntax TypeUse    ::= "#ppTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl  ::= "#ppLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
+    syntax Stmt       ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
+    syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
+    syntax Instr      ::= "#t2aInstr"      "<" Context ">" "(" Instr      ")" [function]
+    syntax FuncSpec   ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
+    syntax TypeUse    ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl  ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
  // -----------------------------------------------------------------------------------
-    rule #preprocess(SS) => #ppStmts<ctx( ... localIds: .Map)>(SS)
+    rule text2abstract(SS) => #t2aStmts<ctx( ... localIds: .Map)>(SS)
 
-    rule #ppStmt<C>(( module OID:OptionalId DS )) => ( module OID #ppDefns<C>(DS) )
-    rule #ppStmt<C>(D:Defn) => #ppDefn<C>(D)
-    rule #ppStmt<_>(S) => S [owise]
+    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
+    rule #t2aStmt<C>(D:Defn) => #t2aDefn<C>(D)
+    rule #t2aStmt<_>(S) => S [owise]
 
-    rule #ppDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #ppFuncSpec<C>(FS))
-    rule #ppDefn<C>(D:Defn) => D [owise]
+    rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
+    rule #t2aDefn<C>(D:Defn) => D [owise]
 
-    rule #ppFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #ppFuncSpec<C>(FS)
-    rule #ppFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #ppFuncSpec<C>(#update(T LS IS))
-    rule #ppFuncSpec<ctx(... localIds: (_ => #ids2Idxs(T, LS)))>(#update(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
-    rule #ppFuncSpec<C>(#ready(T:TypeUse LS:LocalDecls IS:Instrs)) => #ppTypeUse<C>(T) #ppLocalDecls<C>(LS) #ppInstrs<C>(IS)
+    rule #t2aFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #t2aFuncSpec<C>(FS)
+    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #t2aFuncSpec<C>(#update(T LS IS))
+    rule #t2aFuncSpec<ctx(... localIds: (_ => #ids2Idxs(T, LS)))>(#update(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
+    rule #t2aFuncSpec<C>(#ready(T:TypeUse LS:LocalDecls IS:Instrs)) => #t2aTypeUse<C>(T) #t2aLocalDecls<C>(LS) #t2aInstrs<C>(IS)
 
-    rule #ppTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
-    rule #ppTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#ppTypeUse<C>(TDS)}:>TypeDecls
-    rule #ppTypeUse<_>(TU) => TU [owise]
+    rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
+    rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
+    rule #t2aTypeUse<_>(TU) => TU [owise]
 
-    rule #ppLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
-    rule #ppLocalDecl<C>(LD) => LD [owise]
+    rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
+    rule #t2aLocalDecl<C>(LD) => LD [owise]
 
-    rule #ppInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#ppInstr<C>(PI)}:>PlainInstr #ppInstrs<C>(IS))
-    rule #ppInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #ppInstr<C>(PI)
+    rule #t2aInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#t2aInstr<C>(PI)}:>PlainInstr #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #t2aInstr<C>(PI)
 
-    rule #ppInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
-    rule #ppInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
-    rule #ppInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
-    rule #ppInstr<_>(I) => I [owise]
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+    rule #t2aInstr<_>(I) => I [owise]
 
-     rule #ppInstr<C>(block TDS:TypeDecls IS:Instrs end) => block TDS #ppInstrs<C>(IS) end
-     rule #ppInstr<C>(loop  TDS:TypeDecls IS:Instrs end) => loop  TDS #ppInstrs<C>(IS) end
-     rule #ppInstr<C>(if    TDS:TypeDecls IS:Instrs else IS':Instrs end) => if TDS #ppInstrs<C>(IS) else #ppInstrs<C>(IS') end
+     rule #t2aInstr<C>(block TDS:TypeDecls IS:Instrs end) => block TDS #t2aInstrs<C>(IS) end
+     rule #t2aInstr<C>(loop  TDS:TypeDecls IS:Instrs end) => loop  TDS #t2aInstrs<C>(IS) end
+     rule #t2aInstr<C>(if    TDS:TypeDecls IS:Instrs else IS':Instrs end) => if TDS #t2aInstrs<C>(IS) else #t2aInstrs<C>(IS') end
 
     // Sugared block instructions.
-    rule #ppInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) => block ID TDS #ppInstrs<C>(IS) end OID
-    rule #ppInstr<C>(loop ID:Identifier TDS:TypeDecls IS end OID':OptionalId) => loop ID TDS #ppInstrs<C>(IS) end OID'
-    rule #ppInstr<C>(if OID:OptionalId TDS:TypeDecls IS end OID'':OptionalId) => if OID TDS #ppInstrs<C>(IS) end OID''
-    rule #ppInstr<C>(if ID:Identifier TDS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDS #ppInstrs<C>(IS) else OID' #ppInstrs<C>(IS') end OID''
+    rule #t2aInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) => block ID TDS #t2aInstrs<C>(IS) end OID
+    rule #t2aInstr<C>(loop ID:Identifier TDS:TypeDecls IS end OID':OptionalId) => loop ID TDS #t2aInstrs<C>(IS) end OID'
+    rule #t2aInstr<C>(if OID:OptionalId TDS:TypeDecls IS end OID'':OptionalId) => if OID TDS #t2aInstrs<C>(IS) end OID''
+    rule #t2aInstr<C>(if ID:Identifier TDS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
 
     // Folded block instructions.
-    rule #ppInstr<C>((block OID:OptionalId TDS IS)) => (block OID TDS #ppInstrs<C>(IS))
-    rule #ppInstr<C>((loop  OID:OptionalId TDS IS)) => (loop  OID TDS #ppInstrs<C>(IS))
-    rule #ppInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS))) => (if OID TDS #ppInstrs<C>(COND) (then #ppInstrs<C>(IS)))
-    rule #ppInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #ppInstrs<C>(COND) (then #ppInstrs<C>(IS)) (else #ppInstrs<C>(IS')))
+    rule #t2aInstr<C>((block OID:OptionalId TDS IS)) => (block OID TDS #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>((loop  OID:OptionalId TDS IS)) => (loop  OID TDS #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
+    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
 ```
 
 Lists.
 
 ```k
-    syntax Stmts      ::= "#ppStmts"      "<" Context ">" "(" Stmts      ")" [function]
-    syntax Defns      ::= "#ppDefns"      "<" Context ">" "(" Defns      ")" [function]
-    syntax Instrs     ::= "#ppInstrs"     "<" Context ">" "(" Instrs     ")" [function]
-    syntax LocalDecls ::= "#ppLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
- // -----------------------------------------------------------------------------------
+    syntax Stmts      ::= "#t2aStmts"      "<" Context ">" "(" Stmts      ")" [function]
+    syntax Defns      ::= "#t2aDefns"      "<" Context ">" "(" Defns      ")" [function]
+    syntax Instrs     ::= "#t2aInstrs"     "<" Context ">" "(" Instrs     ")" [function]
+    syntax LocalDecls ::= "#t2aLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
+ // ------------------------------------------------------------------------------------
+    rule #t2aStmts<C>(S:Stmt SS:Stmts) => #t2aStmt<C>(S) #t2aStmts<C>(SS)
+    rule #t2aStmts<_>(.Stmts) => .Stmts
 
-    rule #ppStmts<C>(S:Stmt SS:Stmts) => #ppStmt<C>(S) #ppStmts<C>(SS)
-    rule #ppStmts<_>(.Stmts) => .Stmts
+    rule #t2aDefns<C>(D:Defn DS:Defns) => #t2aDefn<C>(D) #t2aDefns<C>(DS)
+    rule #t2aDefns<_>(.Defns) => .Defns
 
-    rule #ppDefns<C>(D:Defn DS:Defns) => #ppDefn<C>(D) #ppDefns<C>(DS)
-    rule #ppDefns<_>(.Defns) => .Defns
+    rule #t2aInstrs<C>(I:Instr IS:Instrs) => #t2aInstr<C>(I) #t2aInstrs<C>(IS)
+    rule #t2aInstrs<_>(.Instrs) => .Instrs
 
-    rule #ppInstrs<C>(I:Instr IS:Instrs) => #ppInstr<C>(I) #ppInstrs<C>(IS)
-    rule #ppInstrs<_>(.Instrs) => .Instrs
-
-    rule #ppLocalDecls<C>(LD:LocalDecl LDS:LocalDecls) => #ppLocalDecl<C>(LD) #ppLocalDecls<C>(LDS)
-    rule #ppLocalDecls<_>(.LocalDecls) => .LocalDecls
+    rule #t2aLocalDecls<C>(LD:LocalDecl LDS:LocalDecls) => #t2aLocalDecl<C>(LD) #t2aLocalDecls<C>(LDS)
+    rule #t2aLocalDecls<_>(.LocalDecls) => .LocalDecls
 
     syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                         | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
