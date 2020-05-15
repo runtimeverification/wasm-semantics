@@ -77,7 +77,6 @@ usage() {
            $0 kast       [--backend (llvm|haskell)]      <pgm>  <output format> <K args>*
            $0 prove      [--backend (haskell)] [--repl]  <spec> <K args>* -m <def_module>
 
-
            $0 [help|--help|version|--version]
 
        $0 run   : Run a single WebAssembly program
