@@ -320,6 +320,9 @@ TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
 They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
 
 ```k
+    rule 0 <=Int #getRange(_, _, _)      => true                                          [simplification]
+    rule #getRange(_, _, WIDTH) <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX [simplification]
+
     rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
