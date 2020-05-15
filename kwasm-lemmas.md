@@ -291,7 +291,9 @@ Memory
 
     rule #wrap(M, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(M /Int 8, WIDTH))              requires M  >Int 0 andBool M %Int 8 ==Int 0                            [simplification]
     rule #getRange(BM, ADDR, WIDTH) >>Int M   => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (M -Int 8) requires M >=Int 8 andBool ADDR >=Int 0 andBool WIDTH >Int 0           [simplification]
-    rule #getRange(BM, ADDR, N) modInt 256    => #getRange(BM, ADDR, 1)                                    requires N >Int 0                                                      [simplification]
+
+    rule 0 <=Int #getRange(_, _, _)      => true                                          [simplification]
+    rule #getRange(_, _, WIDTH) <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX [simplification]
 ```
 
 ```k
