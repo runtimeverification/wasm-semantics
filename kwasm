@@ -131,9 +131,9 @@ args=()
 while [[ $# -gt 0 ]]; do
     arg="$1"
     case $arg in
-        --backend)    args+=("$arg" "$2") ; backend="$2"      ; shift 2 ;;
-        --repl)       args+=("$arg")      ; repl=true         ; shift   ;;
-        *)            break                                             ;;
+        --backend)    args+=("$arg" "$2") ; backend="$2" ; shift 2 ;;
+        --repl)       args+=("$arg")      ; repl=true    ; shift   ;;
+        *)            break                                        ;;
     esac
 done
 
