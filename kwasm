@@ -152,7 +152,6 @@ if [[ "$run_file" == '-' ]]; then
 fi
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
 
-! $repl || [[ "$backend" == "haskell" ]] || fatal "REPL option only available for Haskell backend."
 case "$run_command-$backend" in
     run-@(llvm|haskell)  ) run_krun  "$@" ;;
     kast-@(llvm|haskell) ) run_kast  "$@" ;;
