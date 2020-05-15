@@ -289,9 +289,9 @@ Memory
 ```k
     rule #setRange(BM, IDX, #getRange(BM, IDX, WIDTH), WIDTH) => BM [simplification]
 
-    rule #wrap(M, #getRange(BM, ADDR, N))  => #getRange(BM, ADDR, minInt(M /Int 8, N))              requires M >Int 0 andBool M %Int 8 ==Int 0               [simplification]
-    rule #getRange(BM, ADDR, N) >>Int M    => #getRange(BM, ADDR +Int 1, N -Int 1) >>Int (M -Int 8) requires M >=Int 8 andBool ADDR >=Int 0 andBool N >Int 0 [simplification]
-    rule #getRange(BM, ADDR, N) modInt 256 => #getRange(BM, ADDR, 1)                                requires N >Int 0                                        [simplification]
+    rule #wrap(M, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(M /Int 8, WIDTH))              requires M  >Int 0 andBool M %Int 8 ==Int 0                            [simplification]
+    rule #getRange(BM, ADDR, WIDTH) >>Int M   => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (M -Int 8) requires M >=Int 8 andBool ADDR >=Int 0 andBool WIDTH >Int 0           [simplification]
+    rule #getRange(BM, ADDR, N) modInt 256    => #getRange(BM, ADDR, 1)                                    requires N >Int 0                                                      [simplification]
 ```
 
 ```k
