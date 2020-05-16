@@ -503,10 +503,8 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 ```k
     syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
-    rule #setRange(BM, IDX, VAL, WIDTH) => BM requires notBool (IDX >=Int 0 andBool WIDTH >Int 0 andBool 0 <=Int VAL)
-    rule #setRange(BM, IDX, VAL, WIDTH) => #setRange(#set(BM, IDX, VAL modInt 256), IDX +Int 1, VAL /Int 256, WIDTH -Int 1)
-      requires IDX >=Int 0 andBool WIDTH >Int 0 andBool 0 <=Int VAL
-      [concrete]
+    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <=Int VAL andBool WIDTH >Int 0)
+    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <=Int VAL andBool WIDTH >Int 0  [concrete]
 ```
 
 `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
@@ -515,10 +513,8 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange ( Bytes , Int , Int ) [function, functional, smtlib(getRange)]
  // ---------------------------------------------------------------------------------------
-    rule #getRange( _, IDX, WIDTH) => 0 requires notBool (IDX >=Int 0 andBool WIDTH >Int 0)
-    rule #getRange(BM, IDX, WIDTH) => #get(BM, IDX) +Int (#getRange(BM, IDX +Int 1, WIDTH -Int 1) *Int 256)
-      requires IDX >=Int 0 andBool WIDTH >Int 0
-      [concrete]
+    rule #getRange( _, ADDR, WIDTH) => 0                                                                       requires notBool WIDTH >Int 0
+    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) +Int (#getRange(BM, ADDR +Int 1, WIDTH -Int 1) *Int 256) requires         WIDTH >Int 0 [concrete]
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
