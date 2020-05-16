@@ -28,8 +28,6 @@ It may be better to use a symbolic value as a side condition, e.g. `rule N => fo
 ```k
     rule X *Int 256 >>Int N => (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 
-    rule (#get(BM, IDX) +Int (X <<Int 8)) >>Int N => X >>Int (N -Int 8) requires N >=Int 8 [simplification]
-
     rule (Y +Int X *Int 256) >>Int N => (Y >>Int N) +Int (X >>Int (N -Int 8))   requires  N >=Int 8 [simplification]
 
     rule (X <<Int 8) +Int (Y <<Int 16) => (X +Int (Y <<Int 8)) <<Int 8 [simplification]
