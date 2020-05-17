@@ -8,6 +8,7 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
     imports INT-SYMBOLIC
+    imports BYTES-KORE
 ```
 
 Basic logic
