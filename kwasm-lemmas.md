@@ -379,6 +379,12 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #setRange(BM, ADDR, #getRange(BM, ADDR, WIDTH), WIDTH) => BM [simplification]
+    rule #setRange(BM, ADDR, VAL1 +Int (VAL2 <<Int SHIFT), WIDTH)
+      => #setRange(#setRange(BM, ADDR, VAL1, minInt(#byteWidth(VAL1), WIDTH)), ADDR +Int #byteWidth(VAL1), VAL2, WIDTH -Int #byteWidth(VAL1))
+      requires 0 <=Int ADDR
+       andBool 0  <Int WIDTH
+       andBool #byteWidth(VAL1) *Int 8 ==Int SHIFT
+      [simplification]
 
     rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
       => #wrap(GET_WIDTH, VALUE)
@@ -392,6 +398,10 @@ They are non-trivial in their implementation, but the following should obviously
       [simplification]
 
     rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
+
+    syntax Int ::= #byteWidth ( Int ) [function]
+ // --------------------------------------------
+    rule #byteWidth(#getRange(_, _, N)) => N
 ```
 
 `#get` over `#setRange`.
