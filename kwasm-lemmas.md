@@ -7,6 +7,7 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 ```k
 module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
+    imports BYTES-KORE
 ```
 
 Basic logic
