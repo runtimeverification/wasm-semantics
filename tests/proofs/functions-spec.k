@@ -14,6 +14,8 @@ module FUNCTIONS-SPEC
     rule <k> #getRange(BM, ADDR, 3) modInt (2 ^Int (8 *Int 3)) => #getRange(BM, ADDR, 3) ... </k>
     rule <k> #getRange(BM, ADDR, 7) modInt (2 ^Int (8 *Int 3)) => #getRange(BM, ADDR, 3) ... </k>
 
+    rule <k> #getRange(BM, ADDR, 2) >>Int 8 => #getRange(BM, ADDR +Int 1, 1) ... </k> requires 0 <=Int ADDR
+
     rule <k> ( ( #getRange ( BM , ADDR +Int 1 , 1 ) modInt 256 ) +Int ( #getRange ( BM , ADDR , 1 ) modInt 256 <<Int 8 ) ) <<Int 48
           => (   #getRange ( BM , ADDR +Int 1 , 1 )              +Int ( #getRange ( BM , ADDR , 1 )            <<Int 8 ) ) <<Int 48
          ...
