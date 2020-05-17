@@ -36,29 +36,14 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
 
 #### Rules for Expressions With Only Modulus
 
-These are given in pure modulus form, and in form with `#wrap`, which is modulus with a power of 2 for positive `N`.
-
-```k
-    rule #wrap(N, X) => X
-      requires 0 <=Int N
-       andBool 0 <=Int X
-       andBool X  <Int (1 <<Int N)
-      [simplification]
-
-    rule X modInt 1 => 0
-      [simplification]
-```
-
 `modInt` selects the least non-negative representative of a congruence class modulo `N`.
 
 ```k
+    rule X modInt 1 => 0 [simplification]
+
     rule (X modInt M) modInt N => X modInt M
       requires M >Int 0
        andBool M <=Int N
-      [simplification]
-
-    rule #wrap(N, #wrap(M, X)) => #wrap(M, X)
-      requires M <=Int N
       [simplification]
 ```
 
@@ -73,10 +58,6 @@ Since 0 <= x mod m < m <= n, (x mod m) mod n = x mod m
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
-      [simplification]
-
-    rule #wrap(N, #wrap(M, X)) => #wrap(N, X)
-      requires notBool (M <=Int N)
       [simplification]
 ```
 
@@ -106,16 +87,6 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
-
-    rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
-      requires 0 <=Int M
-       andBool N <=Int M
-      [simplification]
-
-    rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
-      requires 0 <=Int M
-       andBool N <=Int M
-      [simplification]
 ```
 
 Proof:
@@ -136,14 +107,6 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
-      [simplification]
-
-    rule #wrap(N, #wrap(M, X) +Int Y) => #wrap(N, X +Int Y)
-      requires N <=Int M
-      [simplification]
-
-    rule #wrap(N, X +Int #wrap(M, Y)) => #wrap(N, X +Int Y)
-      requires N <=Int M
       [simplification]
 ```
 
@@ -167,10 +130,6 @@ We want K to understand what a bit-shift is.
 ```k
     rule (X <<Int N) modInt M => 0
       requires (2 ^Int N) modInt M ==Int 0
-      [simplification]
-
-    rule #wrap(M, X <<Int N) => 0
-      requires M <=Int N
       [simplification]
 
     rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]

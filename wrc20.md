@@ -47,13 +47,6 @@ It may be better to use a symbolic value as a side condition, e.g. `rule N => fo
        andBool X <Int 256
        andBool M >=Int 8
       [simplification]
-
-    rule #wrap(N, (X +Int (Y <<Int M))) => X +Int (#wrap(N, Y <<Int M))
-      requires N >=Int 8
-       andBool 0 <=Int X
-       andBool X <Int 256
-       andBool M >=Int 8
-      [simplification]
 ```
 
 ```k

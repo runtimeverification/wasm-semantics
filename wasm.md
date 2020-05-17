@@ -999,10 +999,10 @@ The value is encoded as bytes and stored at the "effective address", which is th
 
     syntax StoreOp ::= "store" | "store8" | "store16" | "store32"
  // -------------------------------------------------------------
-    rule <k> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL            } ... </k>
-    rule <k> _     . store8  EA VAL => store { 1                EA #wrap(8,  VAL) } ... </k>
-    rule <k> _     . store16 EA VAL => store { 2                EA #wrap(16, VAL) } ... </k>
-    rule <k> i64   . store32 EA VAL => store { 4                EA #wrap(32, VAL) } ... </k>
+    rule <k> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL           } ... </k>
+    rule <k> _     . store8  EA VAL => store { 1                EA #wrap(1, VAL) } ... </k>
+    rule <k> _     . store16 EA VAL => store { 2                EA #wrap(2, VAL) } ... </k>
+    rule <k> i64   . store32 EA VAL => store { 4                EA #wrap(4, VAL) } ... </k>
 ```
 
 The assorted load operations take an address of type `i32`.
