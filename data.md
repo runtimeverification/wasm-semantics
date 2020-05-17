@@ -504,8 +504,9 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
     syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
     rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                requires notBool (0 <=Int VAL andBool WIDTH >Int 0  andBool 0 <=Int ADDR)
-    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(padRightBytes(BM, ADDR +Int 1, 0), ADDR, VAL, WIDTH)                    requires         (0 <=Int VAL andBool WIDTH >Int 0) andBool ADDR >=Int lengthBytes(BM) [concrete(ADDR)]
-    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(BM [ ADDR <- VAL modInt 256 ], ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <=Int VAL andBool WIDTH >Int 0  andBool ADDR inBytes BM            [concrete(ADDR, VAL)]
+    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                requires         (0 <=Int VAL andBool WIDTH >Int 0) andBool ADDR >=Int lengthBytes(BM) andBool VAL  ==Int 0
+    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(padRightBytes(BM, ADDR +Int 1, 0), ADDR, VAL, WIDTH)                    requires         (0 <=Int VAL andBool WIDTH >Int 0) andBool ADDR >=Int lengthBytes(BM) andBool VAL =/=Int 0 [concrete(BM, ADDR)]
+    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(BM [ ADDR <- VAL modInt 256 ], ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <=Int VAL andBool WIDTH >Int 0  andBool ADDR inBytes BM                                 [concrete(BM, ADDR, VAL)]
 ```
 
 `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
