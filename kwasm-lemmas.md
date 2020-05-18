@@ -142,11 +142,11 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
       [simplification]
 
     rule #wrap(N, #wrap(M, X) +Int Y) => #wrap(N, X +Int Y)
-      requires (N *Int 8) <=Int M
+      requires N <=Int M
       [simplification]
 
     rule #wrap(N, X +Int #wrap(M, Y)) => #wrap(N, X +Int Y)
-      requires (N *Int 8) <=Int M
+      requires N <=Int M
       [simplification]
 ```
 
