@@ -524,6 +524,10 @@ The following instructions are not part of the official Wasm text format.
 They are currently supported in KWasm text files, but may be deprecated.
 
 ```k
+    rule #t2aInstr<C>(trap) => trap
+
+    rule #t2aInstr<C>(block VT:VecType IS:Instrs end) => block VT #t2aInstrs<C>(IS) end
+
     rule #t2aInstr<_>(init_local I V) => init_local I V
     rule #t2aInstr<_>(init_locals VS) => init_locals VS
 ```
