@@ -36,4 +36,14 @@ module FUNCTIONS-SPEC
           => BM
          ...
          </k>
+
+    rule <k> #getRange ( #setRange ( BM , ADDR +Int 7 , VAL , 1 ) , ADDR +Int 3 , 1 ) => #getRange ( BM , ADDR +Int 3 , 1 ) ... </k>
+
+    rule <k> #getRange ( #setRange ( BM , ADDR +Int 7 , VAL , 1 ) , ADDR +Int 7 , 1 ) => VAL ... </k> requires 0 <=Int ADDR andBool 0 <=Int VAL andBool VAL <Int 256
+
+    rule <k> #getRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( BM , ADDR , #getRange ( BM , ADDR +Int 7 , 1 ) , 1 ) , ADDR +Int 1 , #getRange ( BM , ADDR +Int 6 , 1 ) , 1 ) , ADDR +Int 2 , #getRange ( BM , ADDR +Int 5 , 1 ) , 1 ) , ADDR +Int 3 , #getRange ( BM , ADDR +Int 4 , 1 ) , 1 ) , ADDR +Int 4 , #getRange ( BM , ADDR +Int 3 , 1 ) , 1 ) , ADDR +Int 5 , #getRange ( BM , ADDR +Int 2 , 1 ) , 1 ) , ADDR +Int 6 , #getRange ( BM , ADDR +Int 1 , 1 ) , 1 ) , ADDR +Int 7 , #getRange ( BM , ADDR , 1 ) , 1 ) , ADDR +Int 3 , 1 )
+          => #getRange ( BM , ADDR +Int 4 , 1 )
+         ...
+         </k>
+      requires 0 <=Int ADDR
 endmodule

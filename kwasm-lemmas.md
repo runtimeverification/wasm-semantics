@@ -245,6 +245,16 @@ Memory
     rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH -Int 1) modInt MAX              requires MAX <=Int 2 ^Int (8 *Int (WIDTH -Int 1))            [simplification]
     rule #getRange(BM, ADDR, WIDTH) >>Int M    => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (M -Int 8) requires M >=Int 8 andBool ADDR >=Int 0 andBool WIDTH >Int 0 [simplification]
 
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => VAL
+      requires 0 <=Int ADDR
+       andBool 0  <Int WIDTH
+       andBool 0 <=Int VAL andBool VAL <Int 2 ^Int (8 *Int WIDTH)
+       andBool ADDR'  ==Int ADDR
+       andBool WIDTH' ==Int WIDTH
+       [simplification]
+
     rule 0 <=Int #getRange(_, _, _)      => true                                          [simplification]
     rule #getRange(_, _, WIDTH) <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX [simplification]
 
