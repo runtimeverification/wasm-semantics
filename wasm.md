@@ -998,12 +998,12 @@ Sort `Signedness` is defined in module `BYTES`.
 
 ```k
     syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
- // ----------------------------------------------------------
+                   | IValType "." LoadOp Int
+ // ----------------------------------------
 
     syntax PlainInstr ::= IValType "." LoadOpM
                         | FValType "." LoadOpM
-                        | IValType "." LoadOp Int
- // ---------------------------------------------
+ // ------------------------------------------
 
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
  // -----------------------------------------
