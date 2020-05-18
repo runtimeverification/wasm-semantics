@@ -310,43 +310,16 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
-We can now state the intended semantics of `#get`.
-
-```k
-    rule LOW            <=Int #get(BM, ADDR) => true
-      requires LOW <=Int 0
-       andBool #isByteMap(BM) [simplification]
-
-    rule #get(BM, ADDR)  <Int HIGH           => true
-      requires 256 <=Int HIGH
-       andBool #isByteMap(BM) [simplification]
-```
-
 With this invariant encoded, we can introduce the following lemma.
 
 ```k
     rule #isByteMap(BMAP) impliesBool (0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256) => true [smt-lemma]
 ```
 
-From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
-Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
-A getting operation can safeley ignore setting operation on unrelated indices.
-
-```k
-    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
-
-    rule #get(#set(BMAP, IDX', VAL), IDX) => VAL             requires         IDX ==Int IDX'
-    rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX) requires notBool IDX ==Int IDX'
-```
-
 TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
 They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
 
 ```k
-    rule #setRange(BM, EA, VAL, WIDTH) => #set(BM, EA, #wrap(1, VAL))
-      requires WIDTH ==Int 1
-      [simplification]
-
     rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
@@ -368,10 +341,6 @@ They are non-trivial in their implementation, but the following should obviously
 
     rule #wrap(MAX_WIDTH, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(MAX_WIDTH, WIDTH))
       requires #isByteMap(BM)
-      [simplification]
-
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
-      requires WIDTH ==Int 1
       [simplification]
 ```
 
@@ -412,22 +381,6 @@ They are non-trivial in their implementation, but the following should obviously
     syntax Int ::= #byteWidth ( Int ) [function]
  // --------------------------------------------
     rule #byteWidth(#getRange(_, _, N)) => N
-```
-
-`#get` over `#setRange`.
-
-```k
-    rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #wrap(1, VAL)
-        requires SET_ADDR ==Int GET_ADDR
-         andBool #isByteMap(BM)
-        [simplification]
-
-    rule #get(#setRange(BM, SET_ADDR       , VAL        , WIDTH       ), GET_ADDR)
-      => #get(#setRange(BM, SET_ADDR +Int 1, VAL >>Int 8, WIDTH -Int 1), GET_ADDR)
-        requires #isByteMap(BM)
-         andBool GET_ADDR >Int SET_ADDR
-         andBool GET_ADDR <Int SET_ADDR +Int WIDTH
-        [simplification]
 ```
 
 ```k
