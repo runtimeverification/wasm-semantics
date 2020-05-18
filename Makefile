@@ -21,8 +21,8 @@ LUA_PATH                := $(PANDOC_TANGLE_SUBMODULE)/?.lua;;
 export LUA_PATH
 
 .PHONY: all clean deps                                                     \
-        defn defn-llvm defn-haskell defn-java                              \
-        build build-llvm build-haskell build-java                          \
+        defn defn-llvm defn-haskell                                        \
+        build build-llvm build-haskell                                     \
         test test-execution test-simple test-prove                         \
         test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
