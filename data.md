@@ -512,8 +512,8 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 ```k
     syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function, functional, smtlib(setRange)]
  // ---------------------------------------------------------------------------------------------
-    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (WIDTH >Int 0 andBool 0 <=Int VAL)
-    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          WIDTH >Int 0 andBool 0 <=Int VAL
+    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <=Int ADDR andBool 0 <Int WIDTH andBool 0 <=Int VAL)
+    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <=Int ADDR andBool 0 <Int WIDTH andBool 0 <=Int VAL
       [concrete]
 ```
 
@@ -523,8 +523,8 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
  // --------------------------------------------------------------------------------------
-    rule #getRange( _, ADDR, WIDTH) => 0                                                                       requires notBool WIDTH >Int 0
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) +Int (#getRange(BM, ADDR +Int 1, WIDTH -Int 1) *Int 256) requires         WIDTH >Int 0
+    rule #getRange( _, ADDR, WIDTH) => 0                                                                       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
+    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) +Int (#getRange(BM, ADDR +Int 1, WIDTH -Int 1) *Int 256) requires          0 <Int WIDTH andBool 0 <=Int ADDR
       [concrete]
 ```
 
