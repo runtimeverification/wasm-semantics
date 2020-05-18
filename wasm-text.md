@@ -409,8 +409,8 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aDefn<C>(D:Defn) => D [owise]
 
     rule #t2aFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #t2aFuncSpec<C>(FS)
-    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #t2aFuncSpec<C>(#update(T LS IS))
-    rule #t2aFuncSpec<ctx(... localIds: (_ => #ids2Idxs(T, LS)))>(#update(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
+    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #t2aFuncSpec<C>(#updating(T LS IS))
+    rule #t2aFuncSpec<ctx(... localIds: (_ => #ids2Idxs(T, LS)))>(#updating(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
     rule #t2aFuncSpec<C>(#ready(T:TypeUse LS:LocalDecls IS:Instrs)) => #t2aTypeUse<C>(T) #t2aLocalDecls<C>(LS) #t2aInstrs<C>(IS)
 
     rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
@@ -463,9 +463,8 @@ TODO: Desugar folded instructions.
     rule #t2aInstr<_>(local.get I:Int) => local.get I
     rule #t2aInstr<_>(local.set I:Int) => local.set I
     rule #t2aInstr<_>(local.tee I:Int) => local.tee I
-
-    rule #t2aInstr<_>(global.get I) => global.get I
-    rule #t2aInstr<_>(global.set I) => global.set I
+    rule #t2aInstr<_>(global.get I)    => global.get I
+    rule #t2aInstr<_>(global.set I)    => global.set I
 ```
 
 #### Memory Instructions
@@ -473,10 +472,10 @@ TODO: Desugar folded instructions.
 ```k
     rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOpM) => ITYPE.OP
     rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOpM) => FTYPE.OP
-    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOpM) => ITYPE.OP
-    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOpM) => FTYPE.OP
-    rule #t2aInstr<_>(memory.size)           => memory.size
-    rule #t2aInstr<_>(memory.grow)           => memory.grow
+    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOpM)  => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOpM)  => FTYPE.OP
+    rule #t2aInstr<_>(memory.size)                => memory.size
+    rule #t2aInstr<_>(memory.grow)                => memory.grow
 ```
 
 #### Numeric Instructions
@@ -504,20 +503,19 @@ TODO:
 * Then desugar the folded versions of the block instructions here as well.
 
 ```k
-     rule #t2aInstr<C>(block TDS:TypeDecls IS:Instrs end) => block TDS #t2aInstrs<C>(IS) end
-     rule #t2aInstr<C>(loop  TDS:TypeDecls IS:Instrs end) => loop  TDS #t2aInstrs<C>(IS) end
-     rule #t2aInstr<C>(if    TDS:TypeDecls IS:Instrs else IS':Instrs end) => if TDS #t2aInstrs<C>(IS) else #t2aInstrs<C>(IS') end
+    rule #t2aInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) =>  block  ID TDS #t2aInstrs<C>(IS) end OID
+    rule #t2aInstr<C>(block TDS:TypeDecls IS:Instrs end)             =>  block     TDS #t2aInstrs<C>(IS) end
+    rule #t2aInstr<C>((block OID:OptionalId TDS IS))                 => (block OID TDS #t2aInstrs<C>(IS))
 
-    rule #t2aInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) => block ID TDS #t2aInstrs<C>(IS) end OID
-    rule #t2aInstr<C>(loop ID:Identifier TDS:TypeDecls IS end OID':OptionalId) => loop ID TDS #t2aInstrs<C>(IS) end OID'
-    rule #t2aInstr<C>(if OID:OptionalId TDS:TypeDecls IS end OID'':OptionalId) => if OID TDS #t2aInstrs<C>(IS) end OID''
-    rule #t2aInstr<C>(if ID:Identifier TDS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) => if ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
+    rule #t2aInstr<C>(loop  TDS:TypeDecls IS:Instrs end)                       =>  loop     TDS #t2aInstrs<C>(IS) end
+    rule #t2aInstr<C>(loop ID:Identifier TDS:TypeDecls IS end OID':OptionalId) =>  loop ID  TDS #t2aInstrs<C>(IS) end OID'
+    rule #t2aInstr<C>((loop  OID:OptionalId TDS IS))                           => (loop OID TDS #t2aInstrs<C>(IS))
 
-    // Folded block instructions.
-    rule #t2aInstr<C>((block OID:OptionalId TDS IS)) => (block OID TDS #t2aInstrs<C>(IS))
-    rule #t2aInstr<C>((loop  OID:OptionalId TDS IS)) => (loop  OID TDS #t2aInstrs<C>(IS))
-    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
-    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
+    rule #t2aInstr<C>(if TDS:TypeDecls IS:Instrs else IS':Instrs end)                                  =>  if     TDS #t2aInstrs<C>(IS) else #t2aInstrs<C>(IS') end
+    rule #t2aInstr<C>(if OID:OptionalId TDS:TypeDecls IS end OID'':OptionalId)                         =>  if OID TDS #t2aInstrs<C>(IS) end OID''
+    rule #t2aInstr<C>(if ID:Identifier TDS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) =>  if  ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
+    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS)))                                => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
+    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS')))                     => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
 ```
 
 #### KWasm Administrative Instructions
@@ -533,7 +531,7 @@ They are currently supported in KWasm text files, but may be deprecated.
 ### List Functions
 
 The following are helper functions.
-They distribute the functions above over lists.
+They distribute the text-to-abstract functions above over lists.
 
 ```k
     syntax Stmts      ::= "#t2aStmts"      "<" Context ">" "(" Stmts      ")" [function]
@@ -577,8 +575,8 @@ The following are helper functions for gathering and updating context.
       => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
     rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
 
-    syntax FuncSpec   ::= "#update" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
- // ----------------------------------------------------------------------------
+    syntax FuncSpec   ::= "#updating" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
+ // ------------------------------------------------------------------------------
 ```
 
 ```k
