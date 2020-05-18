@@ -112,8 +112,7 @@ KPROVE_MODULE := KWASM-LEMMAS
 
 KPROVE_OPTIONS ?=
 
-tests/proofs/memory-concrete-type-spec.k.prove: KPROVE_MODULE = MEMORY-CONCRETE-TYPE-LEMMAS
-tests/proofs/wrc20-spec.k.prove:                KPROVE_MODULE = WRC20-LEMMAS
+tests/proofs/wrc20-spec.k.prove: KPROVE_MODULE = WRC20-LEMMAS
 
 tests/%/make.timestamp:
 	git submodule update --init -- tests/$*
