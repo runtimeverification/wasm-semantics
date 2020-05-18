@@ -358,6 +358,10 @@ They are non-trivial in their implementation, but the following should obviously
        andBool #isByteMap(BM)
       [simplification]
 
+    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N)
+      requires 0 <=Int N andBool N <=Int WIDTH
+      [simplification]
+
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
       requires WIDTH ==Int 1
       [simplification]
@@ -402,26 +406,6 @@ endmodule
 
 Specialized Lemmas
 ==================
-
-The following are lemmas that should not be included in every proof, but are necessary for certain proofs.
-
-Concrete Memory
----------------
-
-```k
-module MEMORY-CONCRETE-TYPE-LEMMAS [symbolic]
-    imports KWASM-LEMMAS
-```
-
-```k
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N)
-      requires 0 <=Int N andBool N <=Int WIDTH
-      [simplification]
-```
-
-```k
-endmodule
-```
 
 Arithmetic Lemmas
 -----------------
