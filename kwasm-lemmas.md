@@ -341,7 +341,6 @@ TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
 They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
 
 ```k
-    rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
     rule #setRange(BM, EA, VAL, WIDTH) => #set(BM, EA, #wrap(1, VAL))
       requires WIDTH ==Int 1
       [simplification]
@@ -383,6 +382,8 @@ They are non-trivial in their implementation, but the following should obviously
 `#getRange` over `#setRange`
 
 ```k
+    rule #setRange(BM, ADDR, #getRange(BM, ADDR, WIDTH), WIDTH) => BM [simplification]
+
     rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
       => #wrap(GET_WIDTH, VALUE)
       requires         GET_WIDTH <=Int SET_WIDTH
