@@ -452,13 +452,17 @@ TODO: Desugar folded instructions.
     rule #t2aInstr<_>(select) => select
 ```
 
-#### Locals and Globals
+#### Variable Instructions
 
 ```k
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
-    
+
+    rule #t2aInstr<_>(local.get I:Int) => local.get I
+    rule #t2aInstr<_>(local.set I:Int) => local.set I
+    rule #t2aInstr<_>(local.tee I:Int) => local.tee I
+
     rule #t2aInstr<_>(global.get I) => global.get I
     rule #t2aInstr<_>(global.set I) => global.set I
 ```
