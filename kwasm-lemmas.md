@@ -399,6 +399,16 @@ They are non-trivial in their implementation, but the following should obviously
 
     rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
 
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => VAL
+      requires 0 <=Int ADDR
+       andBool 0  <Int WIDTH
+       andBool 0 <=Int VAL andBool VAL <Int 2 ^Int (8 *Int WIDTH)
+       andBool ADDR'  ==Int ADDR
+       andBool WIDTH' ==Int WIDTH
+       [simplification]
+
     syntax Int ::= #byteWidth ( Int ) [function]
  // --------------------------------------------
     rule #byteWidth(#getRange(_, _, N)) => N
