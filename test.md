@@ -449,7 +449,7 @@ This checks that the last allocated memory has the given size and max value.
            </memInst>
            ...
          </mems>
-      requires #get(BM, KEY) ==Int VAL
+      requires #getRange(BM, KEY, 1) ==Int VAL
 ```
 
 ### Module Assertions
