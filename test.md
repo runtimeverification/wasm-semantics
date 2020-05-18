@@ -348,7 +348,6 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
            <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
-         <nextFuncAddr> NEXT </nextFuncAddr>
          <funcs>
            <funcDef>
              <fAddr>  FADDR </fAddr>
