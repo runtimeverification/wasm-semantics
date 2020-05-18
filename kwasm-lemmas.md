@@ -346,9 +346,15 @@ They are non-trivial in their implementation, but the following should obviously
       requires WIDTH ==Int 1
       [simplification]
 
-    rule #getRange(BM, ADDR, WIDTH) modInt BYTE_SIZE => #get(BM, ADDR)
-      requires BYTE_SIZE ==Int 256
-       andBool notBool (WIDTH <=Int 0)
+    rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH)
+      requires 0 <Int MAX andBool 0 <Int WIDTH
+       andBool 2 ^Int (8 *Int WIDTH) <=Int MAX
+       andBool #isByteMap(BM)
+      [simplification]
+
+    rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH -Int 1) modInt MAX
+      requires 0 <Int MAX andBool 0 <Int WIDTH
+       andBool MAX <=Int 2 ^Int (8 *Int (WIDTH -Int 1))
        andBool #isByteMap(BM)
       [simplification]
 
