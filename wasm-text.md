@@ -401,7 +401,8 @@ Since we do not have polymorphic functions available, we define one function per
     rule text2abstract(SS) => #t2aStmts<ctx( ... localIds: .Map)>(SS)
 
     rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
-    rule #t2aStmt<C>(D:Defn) => #t2aDefn<C>(D)
+    rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
+    rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
     rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
@@ -552,9 +553,11 @@ TODO: Remove before review.
 #### KWasm Administrative Instructions
 
 The following instructions are not part of the official Wasm text format.
+They are currently supported in KWasm text files, but may be deprecated.
 
 ```k
-
+    rule #t2aInstr<_>(init_local I V) => init_local I V
+    rule #t2aInstr<_>(init_locals VS) => init_locals VS
 ```
 
 ### List Functions
