@@ -364,14 +364,8 @@ They are non-trivial in their implementation, but the following should obviously
        andBool #isByteMap(BM)
       [simplification]
 
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
-      requires N ==Int 1
-       andBool notBool (WIDTH <=Int 0)
-       andBool #isByteMap(BM)
-      [simplification]
-
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N)
-      requires 0 <=Int N andBool N <=Int WIDTH
+    rule #wrap(MAX_WIDTH, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(MAX_WIDTH, WIDTH))
+      requires #isByteMap(BM)
       [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
