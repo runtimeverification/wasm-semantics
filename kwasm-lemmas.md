@@ -182,7 +182,7 @@ We want K to understand what a bit-shift is.
     rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
     rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
 
-    // The Haskell and Java backend accept negative shifts (the LLVM backend does not).
+    // The Haskell backend accepts negative shifts (the LLVM backend does not).
     // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
     rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
     rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
