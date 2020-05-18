@@ -27,8 +27,8 @@ TODO: The `#get` theorems below theorems handle special cases in this proof, but
       requires N ==Int 256
       [simplification]
 
-    rule #wrap(N, #get(BM, ADDR) +Int (X +Int Y))    => #wrap(8, #get(BM, ADDR) +Int #wrap(8, X +Int Y))
-      requires N ==Int 8
+    rule #wrap(N, #get(BM, ADDR) +Int (X +Int Y))    => #wrap(1, #get(BM, ADDR) +Int #wrap(1, X +Int Y))
+      requires N ==Int 1
       [simplification]
 
     rule (#get(BM, ADDR) +Int X)           >>Int N   => X >>Int 8
@@ -69,7 +69,7 @@ It may be better to use a symbolic value as a side condition, e.g. `rule N => fo
       [simplification]
 
     rule #wrap(N, (X +Int (Y <<Int M))) => X +Int (#wrap(N, Y <<Int M))
-      requires N >=Int 8
+      requires N >=Int 1
        andBool 0 <=Int X
        andBool X <Int 256
        andBool M >=Int 8

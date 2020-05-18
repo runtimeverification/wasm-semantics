@@ -267,17 +267,17 @@ We also add `undefined` as a value, which makes many partial functions in the se
 ### Value Operations
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
-The `#wrap` function wraps an integer to a given bit width.
+The `#wrap` function wraps an integer to a given byte width.
 
 ```k
     syntax IVal ::= #chop ( IVal ) [function, functional]
  // -----------------------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
-    syntax Int  ::= #wrap(Int, Int) [function, functional]
- // ------------------------------------------------------
-    rule #wrap(WIDTH, N) => N &Int ((1 <<Int WIDTH) -Int 1) requires         WIDTH >Int 0 [concrete]
-    rule #wrap(WIDTH, N) => 0                               requires notBool WIDTH >Int 0
+    syntax Int ::= #wrap ( Int , Int ) [function, functional]
+ // ---------------------------------------------------------
+    rule #wrap(WIDTH, N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         WIDTH >Int 0 [concrete]
+    rule #wrap(WIDTH, N) => 0                                        requires notBool WIDTH >Int 0
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
