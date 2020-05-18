@@ -87,10 +87,6 @@ Configuration
         <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
         <nextFreshId> 0 </nextFreshId>
       </wasm>
-
-
-    syntax Stmts ::= text2abstract(Stmts) [function]
- // ------------------------------------------------
 ```
 
 ### Assumptions and invariants
@@ -103,6 +99,16 @@ The highest address in a memory instance divided by the `#pageSize()` constant (
 
 Since memory data is bytes, all integers in the `Map` in the `<mdata>` cell are bounded to be between 1 and 255, inclusive.
 All places in the data with no entry are considered zero bytes.
+
+### Translations to Abstract Syntax
+
+Before execution, the program is translated from the text-format concrete syntax tree into an abstract syntax tree using the following function.
+It's full definition is found in the `wasm-text.md` file.
+
+```k
+    syntax Stmts ::= text2abstract(Stmts) [function]
+ // ------------------------------------------------
+```
 
 Instructions
 ------------
