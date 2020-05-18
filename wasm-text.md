@@ -503,19 +503,19 @@ TODO:
 * Then desugar the folded versions of the block instructions here as well.
 
 ```k
-    rule #t2aInstr<C>(block ID:Identifier TDS IS end OID:OptionalId) =>  block  ID TDS #t2aInstrs<C>(IS) end OID
-    rule #t2aInstr<C>(block TDS:TypeDecls IS:Instrs end)             =>  block     TDS #t2aInstrs<C>(IS) end
-    rule #t2aInstr<C>((block OID:OptionalId TDS IS))                 => (block OID TDS #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>( block                TDS:TypeDecls IS end)     =>  block     TDS #t2aInstrs<C>(IS) end
+    rule #t2aInstr<C>( block  ID:Identifier TDS           IS end OID) =>  block  ID TDS #t2aInstrs<C>(IS) end OID
+    rule #t2aInstr<C>((block OID:OptionalId TDS           IS))        => (block OID TDS #t2aInstrs<C>(IS))
 
-    rule #t2aInstr<C>(loop  TDS:TypeDecls IS:Instrs end)                       =>  loop     TDS #t2aInstrs<C>(IS) end
-    rule #t2aInstr<C>(loop ID:Identifier TDS:TypeDecls IS end OID':OptionalId) =>  loop ID  TDS #t2aInstrs<C>(IS) end OID'
-    rule #t2aInstr<C>((loop  OID:OptionalId TDS IS))                           => (loop OID TDS #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>( loop                 TDS IS end)      =>  loop     TDS #t2aInstrs<C>(IS) end
+    rule #t2aInstr<C>( loop  ID:Identifier  TDS IS end OID') =>  loop ID  TDS #t2aInstrs<C>(IS) end OID'
+    rule #t2aInstr<C>((loop OID:OptionalId  TDS IS))         => (loop OID TDS #t2aInstrs<C>(IS))
 
-    rule #t2aInstr<C>(if TDS:TypeDecls IS:Instrs else IS':Instrs end)                                  =>  if     TDS #t2aInstrs<C>(IS) else #t2aInstrs<C>(IS') end
-    rule #t2aInstr<C>(if OID:OptionalId TDS:TypeDecls IS end OID'':OptionalId)                         =>  if OID TDS #t2aInstrs<C>(IS) end OID''
-    rule #t2aInstr<C>(if ID:Identifier TDS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId) =>  if  ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
-    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS)))                                => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
-    rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS')))                     => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
+    rule #t2aInstr<C>( if                TDS IS else IS'                 end)       =>  if     TDS #t2aInstrs<C>(IS) else      #t2aInstrs<C>(IS') end
+    rule #t2aInstr<C>( if  ID:Identifier TDS IS else OID':OptionalId IS' end OID'') =>  if  ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
+    rule #t2aInstr<C>( if OID:OptionalId TDS IS                          end OID'') =>  if OID TDS #t2aInstrs<C>(IS)                              end OID''
+    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS)))                       => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
+    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS) (else IS')))            => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
 ```
 
 #### KWasm Administrative Instructions
