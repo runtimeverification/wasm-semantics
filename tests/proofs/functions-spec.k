@@ -11,12 +11,13 @@ module FUNCTIONS-SPEC
 
     rule <k> #setRange(BM, ADDR, #wrap(2, #getRange(BM, ADDR, 4)), 2) => BM ... </k> requires #isByteMap(BM) andBool 0 <=Int ADDR
 
-    rule <k> #getRange(BM, ADDR, 0)                            => 0                      ... </k> requires #isByteMap(BM)
-    rule <k> #getRange(BM, ADDR, WIDTH)                        => 0                      ... </k> requires #isByteMap(BM) andBool ADDR <Int 0
-    rule <k> #getRange(BM, ADDR, 1) modInt 256                 => #getRange(BM, ADDR, 1) ... </k> requires #isByteMap(BM)
-    rule <k> #getRange(BM, ADDR, 3) modInt 256                 => #getRange(BM, ADDR, 1) ... </k> requires #isByteMap(BM)
-    rule <k> #getRange(BM, ADDR, 3) modInt (2 ^Int (8 *Int 3)) => #getRange(BM, ADDR, 3) ... </k> requires #isByteMap(BM)
-    rule <k> #getRange(BM, ADDR, 7) modInt (2 ^Int (8 *Int 3)) => #getRange(BM, ADDR, 3) ... </k> requires #isByteMap(BM)
+    rule <k> #getRange(BM, ADDR, 0)                            => 0                             ... </k> requires #isByteMap(BM)
+    rule <k> #getRange(BM, ADDR, WIDTH)                        => 0                             ... </k> requires #isByteMap(BM) andBool ADDR <Int 0
+    rule <k> #getRange(BM, ADDR, 1) modInt 256                 => #getRange(BM, ADDR       , 1) ... </k> requires #isByteMap(BM)
+    rule <k> #getRange(BM, ADDR, 3) modInt 256                 => #getRange(BM, ADDR       , 1) ... </k> requires #isByteMap(BM)
+    rule <k> #getRange(BM, ADDR, 3) modInt (2 ^Int (8 *Int 3)) => #getRange(BM, ADDR       , 3) ... </k> requires #isByteMap(BM)
+    rule <k> #getRange(BM, ADDR, 7) modInt (2 ^Int (8 *Int 3)) => #getRange(BM, ADDR       , 3) ... </k> requires #isByteMap(BM)
+    rule <k> #getRange(BM, ADDR, 2) >>Int 8                    => #getRange(BM, ADDR +Int 1, 1) ... </k> requires #isByteMap(BM) andBool 0 <=Int ADDR
 
     rule <k> ( ( #getRange ( BM , ADDR +Int 1 , 1 ) modInt 256 ) +Int ( #getRange ( BM , ADDR , 1 ) modInt 256 <<Int 8 ) ) <<Int 48
           => (   #getRange ( BM , ADDR +Int 1 , 1 )              +Int ( #getRange ( BM , ADDR , 1 )            <<Int 8 ) ) <<Int 48

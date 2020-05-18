@@ -346,6 +346,13 @@ They are non-trivial in their implementation, but the following should obviously
       requires WIDTH ==Int 1
       [simplification]
 
+    rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
+      requires 0 <=Int ADDR
+       andBool 0 <Int WIDTH
+       andBool 8 *Int WIDTH <=Int SHIFT
+       andBool #isByteMap(BM)
+      [simplification]
+
     rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH)
       requires 0 <Int MAX andBool 0 <Int WIDTH
        andBool 2 ^Int (8 *Int WIDTH) <=Int MAX
