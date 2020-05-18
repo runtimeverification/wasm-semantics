@@ -347,8 +347,8 @@ They are non-trivial in their implementation, but the following should obviously
 
     rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
       requires 0 <=Int ADDR
-       andBool 0 <Int WIDTH
-       andBool 8 *Int WIDTH <=Int SHIFT
+       andBool 0  <Int WIDTH
+       andBool 8 <=Int SHIFT
        andBool #isByteMap(BM)
       [simplification]
 
