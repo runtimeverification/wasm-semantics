@@ -477,30 +477,6 @@ TODO: Desugar folded instructions.
     rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOpM) => FTYPE.OP
     rule #t2aInstr<_>(memory.size)           => memory.size
     rule #t2aInstr<_>(memory.grow)           => memory.grow
-
-//  rule #t2aInstr<_>(i32.load M:MemArg)     => i32.load M:MemArg
-//  rule #t2aInstr<_>(i64.load M:MemArg)     => i64.load M:MemArg
-//  rule #t2aInstr<_>(f32.load M:MemArg)     => f32.load M:MemArg
-//  rule #t2aInstr<_>(f64.load M:MemArg)     => f64.load M:MemArg
-//  rule #t2aInstr<_>(i32.load8_s M:MemArg)  => i32.load8_s M:MemArg
-//  rule #t2aInstr<_>(i32.load8_u M:MemArg)  => i32.load8_u M:MemArg
-//  rule #t2aInstr<_>(i32.load16_s M:MemArg) => i32.load16_s M:MemArg
-//  rule #t2aInstr<_>(i32.load16_u M:MemArg) => i32.load16_u M:MemArg
-//  rule #t2aInstr<_>(i64.load8_s M:MemArg)  => i64.load8_s M:MemArg
-//  rule #t2aInstr<_>(i64.load8_u M:MemArg)  => i64.load8_u M:MemArg
-//  rule #t2aInstr<_>(i64.load16_s M:MemArg) => i64.load16_s M:MemArg
-//  rule #t2aInstr<_>(i64.load16_u M:MemArg) => i64.load16_u M:MemArg
-//  rule #t2aInstr<_>(i64.load32_s M:MemArg) => i64.load32_s M:MemArg
-//  rule #t2aInstr<_>(i64.load32_u M:MemArg) => i64.load32_u M:MemArg
-//  rule #t2aInstr<_>(i32.store M:MemArg)    => i32.store M:MemArg
-//  rule #t2aInstr<_>(i64.store M:MemArg)    => i64.store M:MemArg
-//  rule #t2aInstr<_>(f32.store M:MemArg)    => f32.store M:MemArg
-//  rule #t2aInstr<_>(f64.store M:MemArg)    => f64.store M:MemArg
-//  rule #t2aInstr<_>(i32.store8 M:MemArg)   => i32.store8 M:MemArg
-//  rule #t2aInstr<_>(i32.store16 M:MemArg)  => i32.store16 M:MemArg
-//  rule #t2aInstr<_>(i64.store8 M:MemArg)   => i64.store8 M:MemArg
-//  rule #t2aInstr<_>(i64.store16 M:MemArg)  => i64.store16 M:MemArg
-//  rule #t2aInstr<_>(i64.store32 M:MemArg)  => i64.store32 M:MemArg
 ```
 
 #### Numeric Instructions
@@ -542,12 +518,6 @@ TODO:
     rule #t2aInstr<C>((loop  OID:OptionalId TDS IS)) => (loop  OID TDS #t2aInstrs<C>(IS))
     rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
     rule #t2aInstr<C>((if OID:OptionalId TDS:TypeDecls COND (then IS) (else IS'))) => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
-```
-
-TODO: Remove before review.
-
-```
-    rule #t2aInstr<C>(I) => I [owise]
 ```
 
 #### KWasm Administrative Instructions
