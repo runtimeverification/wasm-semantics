@@ -16,10 +16,6 @@ test_logs="$build_dir/logs"
 mkdir -p "$test_logs"
 test_log="$test_logs/tests.log"
 
-KLAB_OUT="${KLAB_OUT:-$build_dir/klab}"
-KLAB_NODE_STACK_SIZE="${KLAB_NODE_STACK_SIZE:-30000}"
-export KLAB_OUT
-
 export K_OPTS="${K_OPTS:--Xmx16G}"
 
 # Utilities
@@ -91,8 +87,6 @@ usage() {
              <K args> are any arguments you want to pass to K when executing/proving.
              <output format> is the format for Kast to output the term in.
              <def_module> is the module to take as axioms for verification.
-
-       KLab: Make sure that the 'klab/bin' directory is on your PATH to use this option.
 "
 }
 
