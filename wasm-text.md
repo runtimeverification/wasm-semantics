@@ -380,10 +380,16 @@ TODO:
 ### The Context
 
 The `Context` contains information of how to map text-level identifiers to corresponding indices.
+Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
 
 ```k
     syntax Context ::= ctx(localIds: Map)
- // -------------------------------------
+                     | #updateLocalIds    ( Context , Map )        [function, functional]
+                     | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
+ // -------------------------------------------------------------------------------------
+    rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
+    rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
+    rule #updateLocalIdsAux(C, _, true) => C
 ```
 
 ### Traversing the Text Format
@@ -409,9 +415,11 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aDefn<C>(D:Defn) => D [owise]
 
     rule #t2aFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #t2aFuncSpec<C>(FS)
-    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs) => #t2aFuncSpec<C>(#updating(T LS IS))
-    rule #t2aFuncSpec<ctx(... localIds: (_ => #ids2Idxs(T, LS)))>(#updating(T:TypeUse LS:LocalDecls IS:Instrs) => #ready(T LS IS))
-    rule #t2aFuncSpec<C>(#ready(T:TypeUse LS:LocalDecls IS:Instrs)) => #t2aTypeUse<C>(T) #t2aLocalDecls<C>(LS) #t2aInstrs<C>(IS)
+    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs)
+      => #t2aTypeUse   <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
+         #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
+         #t2aInstrs    <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
+
 
     rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
     rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
@@ -577,9 +585,6 @@ The following are helper functions for gathering and updating context.
     rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
       => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
     rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
-
-    syntax FuncSpec   ::= "#updating" "(" FuncSpec ")" | "#ready" "(" FuncSpec ")"
- // ------------------------------------------------------------------------------
 ```
 
 ```k
