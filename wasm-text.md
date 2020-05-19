@@ -382,8 +382,8 @@ TODO:
 The `Context` contains information of how to map text-level identifiers to corresponding indices.
 
 ```k
-    syntax Context    ::= ctx(localIds: Map)
- // ----------------------------------------
+    syntax Context ::= ctx(localIds: Map)
+ // -------------------------------------
 ```
 
 ### Traversing the Text Format
@@ -428,7 +428,6 @@ TODO: Desugar folded instructions.
 ```k
     syntax Instr ::= "#t2aInstr" "<" Context ">" "(" Instr ")" [function]
  // ---------------------------------------------------------------------
-
     rule #t2aInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#t2aInstr<C>(PI)}:>PlainInstr #t2aInstrs<C>(IS))
     rule #t2aInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #t2aInstr<C>(PI)
 ```
@@ -561,9 +560,9 @@ They distribute the text-to-abstract functions above over lists.
 The following are helper functions for gathering and updating context.
 
 ```k
-    syntax Map        ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
-                        | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
- // --------------------------------------------------------------------------------
+    syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
+                 | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
+ // -------------------------------------------------------------------------
     rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
 
     rule #ids2Idxs(_, .TypeDecls, .LocalDecls) => .Map
@@ -572,7 +571,7 @@ The following are helper functions for gathering and updating context.
 
     rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
       => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
-    rule #ids2Idxs(N, (param _) TDS, LDS)   => #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, (param _)   TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS)
     rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
 
     rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
