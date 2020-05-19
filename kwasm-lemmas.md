@@ -320,8 +320,9 @@ TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
 They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
 
 ```k
-    rule 0 <=Int #getRange(_, _, _)      => true                                          [simplification]
-    rule #getRange(_, _, WIDTH) <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX [simplification]
+    rule 0 <=Int #getRange(_, _, _)                    => true                                                       [simplification]
+    rule #getRange(_, _, WIDTH)               <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX              [simplification]
+    rule (#getRange(_, _, WIDTH) <<Int SHIFT) <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
       requires 0 <=Int ADDR
@@ -342,9 +343,19 @@ They are non-trivial in their implementation, but the following should obviously
        andBool #isByteMap(BM)
       [simplification]
 
+    rule (#getRange(_, _, WIDTH) #as VAL1 +Int ((#getRange(_, _, _) <<Int SHIFT) #as VAL2)) modInt MAX => VAL1 +Int VAL2
+      requires VAL1 <Int MAX
+       andBool VAL2 <Int MAX
+       andBool #distinctBits(VAL1, VAL2)
+      [simplification]
+
     rule #wrap(MAX_WIDTH, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(MAX_WIDTH, WIDTH))
       requires #isByteMap(BM)
       [simplification]
+
+    syntax Bool ::= #distinctBits ( Int , Int ) [function]
+ // ------------------------------------------------------
+    rule #distinctBits(#getRange(_, _, WIDTH), #getRange(_, _, _) <<Int SHIFT) => true requires WIDTH *Int 8 <=Int SHIFT
 ```
 
 `#getRange` over `#setRange`

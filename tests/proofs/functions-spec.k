@@ -44,6 +44,12 @@ module FUNCTIONS-SPEC
          </k>
       requires #isByteMap(BM)
 
+    rule <k> (#getRange(BM, ADDR +Int 1, 1) +Int (#getRange (BM, ADDR, 1) <<Int 8)) modInt 65536 <<Int 8
+          => (#getRange(BM, ADDR +Int 1, 1) +Int (#getRange (BM, ADDR, 1) <<Int 8))              <<Int 8
+         ...
+         </k>
+      requires #isByteMap(BM)
+
     rule <k> #getRange ( #setRange ( BM , ADDR +Int 7 , VAL , 1 ) , ADDR +Int 3 , 1 ) => #getRange ( BM , ADDR +Int 3 , 1 ) ... </k> requires #isByteMap(BM)
 
     rule <k> #getRange ( #setRange ( BM , ADDR +Int 7 , VAL , 1 ) , ADDR +Int 7 , 1 ) => VAL ... </k> requires 0 <=Int ADDR andBool 0 <=Int VAL andBool VAL <Int 256 andBool #isByteMap(BM)
