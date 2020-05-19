@@ -46,7 +46,7 @@ For example, to prove the specification `tests/proofs/simple-arithmetic-spec.k`:
 You can optionally override the default backend using the `--backend BACKEND` flag:
 
 ```sh
-./kwasm run   --backend java    tests/simple/arithmetic.wast
+./kwasm run   --backend llvm    tests/simple/arithmetic.wast
 ./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k -m KWASM-LEMMAS
 ```
 
@@ -55,8 +55,8 @@ Installing/Building
 
 ### K Backends
 
-There are three backends of K available, the LLVM backend for concrete execution, and the Haskell/Java backends for symbolic reasoning and proofs.
-This repository generates the build-products for the backends in `.build/defn/llvm`, `.build/defn/haskell`, and `.build/defn/java`.
+There are two backends of K available, the LLVM backend for concrete execution, and the Haskell backend for symbolic reasoning and proofs.
+This repository generates the build-products for the backends in `.build/defn/llvm` and `.build/defn/haskell`.
 
 ### Dependencies
 
@@ -110,7 +110,7 @@ And then build the semantics:
 make build
 ```
 
-To only build specific backends, you can do `make build-llvm`, `make build-java`, or `make build-haskell`.
+To only build a specific backend, you can do `make build-llvm` or `make build-haskell`.
 
 ### Media and documents
 

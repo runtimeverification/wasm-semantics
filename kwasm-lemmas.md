@@ -45,7 +45,7 @@ These are given in pure modulus form, and in form with `#wrap`, which is modulus
     rule #wrap(N, X) => X
       requires 0 <=Int N
        andBool 0 <=Int X
-       andBool X  <Int (1 <<Int N)
+       andBool X  <Int (1 <<Int (N *Int 8))
       [simplification]
 
     rule X modInt 1 => 0
@@ -112,12 +112,12 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
 
     rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
       requires 0 <=Int M
-       andBool N <=Int M
+       andBool (N *Int 8) <=Int M
       [simplification]
 
     rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
       requires 0 <=Int M
-       andBool N <=Int M
+       andBool (N *Int 8) <=Int M
       [simplification]
 ```
 
@@ -173,7 +173,7 @@ We want K to understand what a bit-shift is.
       [simplification]
 
     rule #wrap(M, X <<Int N) => 0
-      requires M <=Int N
+      requires (M *Int 8) <=Int N
       [simplification]
 
     rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
@@ -182,7 +182,7 @@ We want K to understand what a bit-shift is.
     rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
     rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
 
-    // The Haskell and Java backend accept negative shifts (the LLVM backend does not).
+    // The Haskell backend accepts negative shifts (the LLVM backend does not).
     // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
     rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
     rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
@@ -342,7 +342,7 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
-    rule #setRange(BM, EA, VAL, WIDTH) => #set(BM, EA, #wrap(8, VAL))
+    rule #setRange(BM, EA, VAL, WIDTH) => #set(BM, EA, #wrap(1, VAL))
       requires WIDTH ==Int 1
       [simplification]
 
@@ -353,9 +353,13 @@ They are non-trivial in their implementation, but the following should obviously
       [simplification]
 
     rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
-      requires N ==Int 8
+      requires N ==Int 1
        andBool notBool (WIDTH <=Int 0)
        andBool #isByteMap(BM)
+      [simplification]
+
+    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N)
+      requires 0 <=Int N andBool N <=Int WIDTH
       [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
@@ -367,12 +371,12 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(GET_WIDTH *Int 8, VALUE)
+      => #wrap(GET_WIDTH, VALUE)
       requires         GET_WIDTH <=Int SET_WIDTH
       [simplification]
 
     rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(SET_WIDTH *Int 8, VALUE)
+      => #wrap(SET_WIDTH, VALUE)
       requires (notBool GET_WIDTH <=Int SET_WIDTH)
        andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
       [simplification]
@@ -383,7 +387,7 @@ They are non-trivial in their implementation, but the following should obviously
 `#get` over `#setRange`.
 
 ```k
-    rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #wrap(8, VAL)
+    rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #wrap(1, VAL)
         requires SET_ADDR ==Int GET_ADDR
          andBool #isByteMap(BM)
         [simplification]
@@ -402,28 +406,6 @@ endmodule
 
 Specialized Lemmas
 ==================
-
-The following are lemmas that should not be included in every proof, but are necessary for certain proofs.
-
-Concrete Memory
----------------
-
-```k
-module MEMORY-CONCRETE-TYPE-LEMMAS [symbolic]
-    imports KWASM-LEMMAS
-```
-
-```k
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N /Int 8)
-      requires 0 <=Int N
-       andBool N /Int 8 <=Int WIDTH
-       andBool N modInt 8 ==Int 0
-      [simplification]
-```
-
-```k
-endmodule
-```
 
 Arithmetic Lemmas
 -----------------
