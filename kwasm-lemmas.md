@@ -354,17 +354,6 @@ Lemmas about `#getRange` and `#setRange` simplification:
        andBool WIDTH1 *Int 8 ==Int SHIFT
       [simplification]
 
-    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(GET_WIDTH, VALUE)
-      requires         GET_WIDTH <=Int SET_WIDTH
-      [simplification]
-
-    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(SET_WIDTH, VALUE)
-      requires (notBool GET_WIDTH <=Int SET_WIDTH)
-       andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
-      [simplification]
-
     rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
 
     rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
