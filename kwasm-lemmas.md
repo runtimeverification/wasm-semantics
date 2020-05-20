@@ -339,7 +339,7 @@ They are non-trivial in their implementation, but the following should obviously
 
     rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH -Int 1) modInt MAX
       requires 0 <Int MAX andBool 0 <Int WIDTH
-       andBool MAX <=Int 2 ^Int (8 *Int (WIDTH -Int 1))
+       andBool 2 ^Int (8 *Int (WIDTH -Int 1)) modInt MAX ==Int 0
        andBool #isByteMap(BM)
       [simplification]
 
