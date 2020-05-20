@@ -1,8 +1,10 @@
 /.build/*
+/tests/*/*-out
 
 *.pdf
 *.sty
 
 .krun*
+.kprove*
 .kompile*
 

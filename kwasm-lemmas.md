@@ -255,6 +255,8 @@ Proof: These follow from the fact that shifting left by `n` bits is simply multi
     rule 0 <<Int X => 0 [simplification]
     rule X >>Int 0 => X [simplification]
     rule 0 >>Int X => 0 [simplification]
+
+    rule (X +Int N) +Int M => X +Int (N +Int M) [concrete(N, M), symbolic(X), simplification]
 ```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
@@ -308,68 +310,50 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
-We can now state the intended semantics of `#get`.
+Lemmas about `#getRange` and `#setRange` simplification:
 
 ```k
-    rule LOW            <=Int #get(BM, ADDR) => true
-      requires LOW <=Int 0
-       andBool #isByteMap(BM) [simplification]
+    rule 0 <=Int #getRange(_, _, _) => true                                             [simplification]
+    rule 0 <=Int VAL <<Int SHIFT    => true requires 0 <=Int VAL  andBool 0 <=Int SHIFT [simplification]
+    rule 0 <=Int VAL1 +Int VAL2     => true requires 0 <=Int VAL1 andBool 0 <=Int VAL2  [simplification]
 
-    rule #get(BM, ADDR)  <Int HIGH           => true
-      requires 256 <=Int HIGH
-       andBool #isByteMap(BM) [simplification]
-```
+    rule #getRange(_, _, WIDTH)             <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
+    rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
+    rule VAL1 +Int VAL2                     <Int MAX => true requires VAL1 <Int MAX andBool VAL2 <Int MAX andBool #distinctBits(VAL1, VAL2) [simplification]
 
-With this invariant encoded, we can introduce the following lemma.
-
-```k
-    rule #isByteMap(BMAP) impliesBool (0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256) => true [smt-lemma]
-```
-
-From the semantics, it should be clear that setting the index in a bytemap to the value already contained there will leave the map unchanged.
-Conversely, setting an index in a map to a value `VAL` and then retrieving the value at that index will yield `VAL`.
-A getting operation can safeley ignore setting operation on unrelated indices.
-
-```k
-    rule #set(BMAP, IDX, #get(BMAP, IDX)) => BMAP [smt-lemma]
-
-    rule #get(#set(BMAP, IDX', VAL), IDX) => VAL             requires         IDX ==Int IDX'
-    rule #get(#set(BMAP, IDX', VAL), IDX) => #get(BMAP, IDX) requires notBool IDX ==Int IDX'
-```
-
-TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
-They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
-
-```k
-    rule #setRange(BM, EA, #getRange(BM, EA, WIDTH), WIDTH) => BM
-    rule #setRange(BM, EA, VAL, WIDTH) => #set(BM, EA, #wrap(1, VAL))
-      requires WIDTH ==Int 1
-      [simplification]
-
-    rule #getRange(BM, ADDR, WIDTH) modInt BYTE_SIZE => #get(BM, ADDR)
-      requires BYTE_SIZE ==Int 256
-       andBool notBool (WIDTH <=Int 0)
+    rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
+      requires 0 <=Int ADDR
+       andBool 0  <Int WIDTH
+       andBool 8 <=Int SHIFT
        andBool #isByteMap(BM)
       [simplification]
 
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #get(BM, ADDR)
-      requires N ==Int 1
-       andBool notBool (WIDTH <=Int 0)
+    rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH -Int 1) modInt MAX
+      requires 0 <Int MAX andBool 0 <Int WIDTH
+       andBool 2 ^Int (8 *Int (WIDTH -Int 1)) modInt MAX ==Int 0
        andBool #isByteMap(BM)
       [simplification]
 
-    rule #wrap(N, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, N)
-      requires 0 <=Int N andBool N <=Int WIDTH
+    rule #wrap(MAX_WIDTH, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(MAX_WIDTH, WIDTH))
+      requires #isByteMap(BM)
       [simplification]
 
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR)
-      requires WIDTH ==Int 1
-      [simplification]
+    syntax Bool ::= #distinctBits ( Int , Int ) [function]
+ // ------------------------------------------------------
+    rule #distinctBits(#getRange(_, _, WIDTH), #getRange(_, _, _) <<Int SHIFT) => true requires WIDTH *Int 8 <=Int SHIFT
 ```
 
 `#getRange` over `#setRange`
 
 ```k
+    rule #setRange(BM, ADDR, #getRange(BM, ADDR, WIDTH), WIDTH) => BM [simplification]
+    rule #setRange(BM, ADDR, (#getRange(_, _, WIDTH1) #as VAL1) +Int (VAL2 <<Int SHIFT), WIDTH)
+      => #setRange(#setRange(BM, ADDR, VAL1, minInt(WIDTH1, WIDTH)), ADDR +Int WIDTH1, VAL2, WIDTH -Int WIDTH1)
+      requires 0 <=Int ADDR
+       andBool 0  <Int WIDTH
+       andBool WIDTH1 *Int 8 ==Int SHIFT
+      [simplification]
+
     rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
       => #wrap(GET_WIDTH, VALUE)
       requires         GET_WIDTH <=Int SET_WIDTH
@@ -382,22 +366,16 @@ They are non-trivial in their implementation, but the following should obviously
       [simplification]
 
     rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
-```
 
-`#get` over `#setRange`.
-
-```k
-    rule #get(#setRange(BM, SET_ADDR, VAL, WIDTH), GET_ADDR) => #wrap(1, VAL)
-        requires SET_ADDR ==Int GET_ADDR
-         andBool #isByteMap(BM)
-        [simplification]
-
-    rule #get(#setRange(BM, SET_ADDR       , VAL        , WIDTH       ), GET_ADDR)
-      => #get(#setRange(BM, SET_ADDR +Int 1, VAL >>Int 8, WIDTH -Int 1), GET_ADDR)
-        requires #isByteMap(BM)
-         andBool GET_ADDR >Int SET_ADDR
-         andBool GET_ADDR <Int SET_ADDR +Int WIDTH
-        [simplification]
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
+    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => VAL
+      requires 0 <=Int ADDR
+       andBool 0  <Int WIDTH
+       andBool 0 <=Int VAL andBool VAL <Int 2 ^Int (8 *Int WIDTH)
+       andBool ADDR'  ==Int ADDR
+       andBool WIDTH' ==Int WIDTH
+       [simplification]
 ```
 
 ```k
