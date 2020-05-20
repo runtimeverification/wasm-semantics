@@ -89,7 +89,9 @@ Most instructions, those in the sort `PlainInstr`, have identical keywords in th
 All integers given in the text format are automatically turned into regular integers.
 That means converting between hexadecimal and decimal when necessary, and removing underscores.
 
-**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
+**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet.
+In the future should investigate which direction the subsort should go.
+(`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
 
 ```k
     syntax WasmInt ::= Int
@@ -371,11 +373,16 @@ Some classes of invalid programs, such as those where an identifier appears in a
 The function deals with the desugarings which are context dependent.
 Other desugarings are either left for runtime or expressed as macros (for now).
 
-TODO:
+**TODO:**
 
-* Get rid of inline type declarations. The text format allows specifying the type directly in the function header using the `param` and `result` keywords. However, these will either be desugared to a new top-level `type` declaration or they must match an existing one. In the abstract format, a function's type is a pointer to a top-level `type` declaration. This could either be done by doing an initial pass to gather all type declarations, or they could be desugared locally, which is similar to what we do currently: `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID)`.
-* Remove module names.
-* Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
+-   Get rid of inline type declarations.
+    The text format allows specifying the type directly in the function header using the `param` and `result` keywords.
+    However, these will either be desugared to a new top-level `type` declaration or they must match an existing one.
+    In the abstract format, a function's type is a pointer to a top-level `type` declaration.
+    This could either be done by doing an initial pass to gather all type declarations, or they could be desugared locally, which is similar to what we do currently: `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID)`.
+-   Remove module names.
+-   Give the text format and abstract format different sorts, and have `text2abstract` handle the conversion.
+    Then identifiers and other text-only constructs can be completely removed from the abstract format.
 
 ### The Context
 
@@ -431,7 +438,7 @@ Since we do not have polymorphic functions available, we define one function per
 
 ### Instructions
 
-TODO: Desugar folded instructions.
+**TODO:** Desugar folded instructions.
 
 ```k
     syntax Instr ::= "#t2aInstr" "<" Context ">" "(" Instr ")" [function]
@@ -504,10 +511,10 @@ TODO: Desugar folded instructions.
 
 There are several formats of block instructions, and the text-to-abstract transformation must be distributed over them.
 
-TODO:
+**TODO:**
 
-* Desugar BlockInstr here, by adding labelDepth and labelIds to context.
-* Then desugar the folded versions of the block instructions here as well.
+-   Desugar BlockInstr here, by adding labelDepth and labelIds to context.
+-   Then desugar the folded versions of the block instructions here as well.
 
 ```k
     rule #t2aInstr<C>( block                TDS:TypeDecls IS end)     =>  block     TDS #t2aInstrs<C>(IS) end
