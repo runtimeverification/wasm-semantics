@@ -288,10 +288,10 @@ The `#round` function casts a `f64` float to a `f32` float.
 ```k
     syntax FVal ::= #round ( FValType , Number ) [function]
  // -------------------------------------------------------
-    rule #round( f64 , N:Float) => < f64 > roundFloat(N, 53, 11) [concrete]
-    rule #round( f32 , N:Float) => < f32 > roundFloat(N, 24, 8)  [concrete]
-    rule #round( f64 , N:Int  ) => < f64 >  Int2Float(N, 53, 11) [concrete]
-    rule #round( f32 , N:Int  ) => < f32 >  Int2Float(N, 24, 8)  [concrete]
+    rule #round(f64 , N:Float) => < f64 > roundFloat(N, 53, 11) [concrete]
+    rule #round(f32 , N:Float) => < f32 > roundFloat(N, 24, 8)  [concrete]
+    rule #round(f64 , N:Int  ) => < f64 >  Int2Float(N, 53, 11) [concrete]
+    rule #round(f32 , N:Int  ) => < f32 >  Int2Float(N, 24, 8)  [concrete]
 ```
 
 ### Signed Interpretation
