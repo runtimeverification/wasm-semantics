@@ -89,7 +89,9 @@ Most instructions, those in the sort `PlainInstr`, have identical keywords in th
 All integers given in the text format are automatically turned into regular integers.
 That means converting between hexadecimal and decimal when necessary, and removing underscores.
 
-**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet. In the future should investigate which direction the subsort should go. (`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
+**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet.
+In the future should investigate which direction the subsort should go.
+(`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
 
 ```k
     syntax WasmInt ::= Int
@@ -358,6 +360,238 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
     rule ( func   OID:OptionalId (import MOD NAME) TUSE         ) => ( import MOD NAME (func   OID TUSE) )  [macro]
     rule ( table  OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table  OID TT  ) )  [macro]
     rule ( memory OID:OptionalId (import MOD NAME) MT:MemType   ) => ( import MOD NAME (memory OID MT  ) )  [macro]
+```
+
+Desugaring
+----------
+
+The text format is one of the concrete formats of Wasm.
+Every concrete format maps to a common structure, described as an abstract syntax.
+The function `text2abstract` is a partial function which maps valid programs in the text format to the abstract format.
+Some classes of invalid programs, such as those where an identifier appears in a context in which it is not declared, are undefined.
+
+The function deals with the desugarings which are context dependent.
+Other desugarings are either left for runtime or expressed as macros (for now).
+
+**TODO:**
+
+-   Get rid of inline type declarations.
+    The text format allows specifying the type directly in the function header using the `param` and `result` keywords.
+    However, these will either be desugared to a new top-level `type` declaration or they must match an existing one.
+    In the abstract format, a function's type is a pointer to a top-level `type` declaration.
+    This could either be done by doing an initial pass to gather all type declarations, or they could be desugared locally, which is similar to what we do currently: `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID)`.
+-   Remove module names.
+-   Give the text format and abstract format different sorts, and have `text2abstract` handle the conversion.
+    Then identifiers and other text-only constructs can be completely removed from the abstract format.
+
+### The Context
+
+The `Context` contains information of how to map text-level identifiers to corresponding indices.
+Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
+
+```k
+    syntax Context ::= ctx(localIds: Map)
+                     | #updateLocalIds    ( Context , Map )        [function, functional]
+                     | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
+ // -------------------------------------------------------------------------------------
+    rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
+    rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
+    rule #updateLocalIdsAux(C, _, true) => C
+```
+
+### Traversing the Text Format
+
+The program is traversed in full once, context beting gathered along the way.
+Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
+
+```k
+    syntax Stmt      ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
+    syntax Defn      ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
+    syntax FuncSpec  ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
+    syntax TypeUse   ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
+ // -----------------------------------------------------------------------------------
+    rule text2abstract(SS) => #t2aStmts<ctx( ... localIds: .Map)>(SS)
+
+    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
+    rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
+    rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
+    rule #t2aStmt<_>(S) => S [owise]
+
+    rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
+    rule #t2aDefn<C>(D:Defn) => D [owise]
+
+    rule #t2aFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #t2aFuncSpec<C>(FS)
+    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs)
+      => #t2aTypeUse   <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
+         #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
+         #t2aInstrs    <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
+
+
+    rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
+    rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
+    rule #t2aTypeUse<_>(TU) => TU [owise]
+
+    rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
+    rule #t2aLocalDecl<C>(LD) => LD [owise]
+```
+
+### Instructions
+
+**TODO:** Desugar folded instructions.
+
+```k
+    syntax Instr ::= "#t2aInstr" "<" Context ">" "(" Instr ")" [function]
+ // ---------------------------------------------------------------------
+    rule #t2aInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#t2aInstr<C>(PI)}:>PlainInstr #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #t2aInstr<C>(PI)
+```
+
+#### Basic Instructions
+
+```k
+    rule #t2aInstr<_>(unreachable)      => unreachable
+    rule #t2aInstr<_>(nop)              => nop
+    rule #t2aInstr<_>(br L)             => br L
+    rule #t2aInstr<_>(br_if L)          => br_if L
+    rule #t2aInstr<_>(br_table ES)      => br_table ES
+    rule #t2aInstr<_>(return)           => return
+    rule #t2aInstr<_>(call F)           => call F
+    rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
+```
+
+#### Parametric Instructions
+
+```k
+    rule #t2aInstr<_>(drop)   => drop
+    rule #t2aInstr<_>(select) => select
+```
+
+#### Variable Instructions
+
+```k
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+
+    rule #t2aInstr<_>(local.get I:Int) => local.get I
+    rule #t2aInstr<_>(local.set I:Int) => local.set I
+    rule #t2aInstr<_>(local.tee I:Int) => local.tee I
+    rule #t2aInstr<_>(global.get I)    => global.get I
+    rule #t2aInstr<_>(global.set I)    => global.set I
+```
+
+#### Memory Instructions
+
+```k
+    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOpM) => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOpM) => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOpM)  => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOpM)  => FTYPE.OP
+    rule #t2aInstr<_>(memory.size)                => memory.size
+    rule #t2aInstr<_>(memory.grow)                => memory.grow
+```
+
+#### Numeric Instructions
+
+```k
+    rule #t2aInstr<_>(ITYPE:IValType.const I) => ITYPE.const I
+    rule #t2aInstr<_>(FTYPE:FValType.const N) => FTYPE.const N
+    rule #t2aInstr<_>(ITYPE.OP:IUnOp)         => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE.OP:FUnOp)         => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE.OP:IBinOp)        => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE.OP:FBinOp)        => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE.OP:TestOp)        => ITYPE.OP
+    rule #t2aInstr<_>(ITYPE.OP:IRelOp)        => ITYPE.OP
+    rule #t2aInstr<_>(FTYPE.OP:FRelOp)        => FTYPE.OP
+    rule #t2aInstr<_>(ATYPE.OP:CvtOp)         => ATYPE.OP
+```
+
+#### Block Instructions
+
+There are several formats of block instructions, and the text-to-abstract transformation must be distributed over them.
+
+**TODO:**
+
+-   Desugar BlockInstr here, by adding labelDepth and labelIds to context.
+-   Then desugar the folded versions of the block instructions here as well.
+
+```k
+    rule #t2aInstr<C>( block                TDS:TypeDecls IS end)     =>  block     TDS #t2aInstrs<C>(IS) end
+    rule #t2aInstr<C>( block  ID:Identifier TDS           IS end OID) =>  block  ID TDS #t2aInstrs<C>(IS) end OID
+    rule #t2aInstr<C>((block OID:OptionalId TDS           IS))        => (block OID TDS #t2aInstrs<C>(IS))
+
+    rule #t2aInstr<C>( loop                 TDS IS end)      =>  loop     TDS #t2aInstrs<C>(IS) end
+    rule #t2aInstr<C>( loop  ID:Identifier  TDS IS end OID') =>  loop ID  TDS #t2aInstrs<C>(IS) end OID'
+    rule #t2aInstr<C>((loop OID:OptionalId  TDS IS))         => (loop OID TDS #t2aInstrs<C>(IS))
+
+    rule #t2aInstr<C>( if                TDS IS else IS'                 end)       =>  if     TDS #t2aInstrs<C>(IS) else      #t2aInstrs<C>(IS') end
+    rule #t2aInstr<C>( if  ID:Identifier TDS IS else OID':OptionalId IS' end OID'') =>  if  ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
+    rule #t2aInstr<C>( if OID:OptionalId TDS IS                          end OID'') =>  if OID TDS #t2aInstrs<C>(IS)                              end OID''
+    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS)))                       => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
+    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS) (else IS')))            => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
+```
+
+#### KWasm Administrative Instructions
+
+The following instructions are not part of the official Wasm text format.
+They are currently supported in KWasm text files, but may be deprecated.
+
+```k
+    rule #t2aInstr<C>(trap) => trap
+
+    rule #t2aInstr<C>(block VT:VecType IS:Instrs end) => block VT #t2aInstrs<C>(IS) end
+
+    rule #t2aInstr<_>(init_local I V) => init_local I V
+    rule #t2aInstr<_>(init_locals VS) => init_locals VS
+```
+
+### List Functions
+
+The following are helper functions.
+They distribute the text-to-abstract functions above over lists.
+
+```k
+    syntax Stmts      ::= "#t2aStmts"      "<" Context ">" "(" Stmts      ")" [function]
+    syntax Defns      ::= "#t2aDefns"      "<" Context ">" "(" Defns      ")" [function]
+    syntax Instrs     ::= "#t2aInstrs"     "<" Context ">" "(" Instrs     ")" [function]
+    syntax LocalDecls ::= "#t2aLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
+ // ------------------------------------------------------------------------------------
+    rule #t2aStmts<C>(S:Stmt SS:Stmts) => #t2aStmt<C>(S) #t2aStmts<C>(SS)
+    rule #t2aStmts<_>(.Stmts) => .Stmts
+
+    rule #t2aDefns<C>(D:Defn DS:Defns) => #t2aDefn<C>(D) #t2aDefns<C>(DS)
+    rule #t2aDefns<_>(.Defns) => .Defns
+
+    rule #t2aInstrs<C>(I:Instr IS:Instrs) => #t2aInstr<C>(I) #t2aInstrs<C>(IS)
+    rule #t2aInstrs<_>(.Instrs) => .Instrs
+
+    rule #t2aLocalDecls<C>(LD:LocalDecl LDS:LocalDecls) => #t2aLocalDecl<C>(LD) #t2aLocalDecls<C>(LDS)
+    rule #t2aLocalDecls<_>(.LocalDecls) => .LocalDecls
+```
+
+### Functions for Gathering Context
+
+The following are helper functions for gathering and updating context.
+
+```k
+    syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
+                 | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
+ // -------------------------------------------------------------------------
+    rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
+
+    rule #ids2Idxs(_, .TypeDecls, .LocalDecls) => .Map
+    rule #ids2Idxs(N, (type _)    , LDS) => #ids2Idxs(N, .TypeDecls, LDS)
+    rule #ids2Idxs(N, (type _) TDS, LDS) => #ids2Idxs(N, TDS       , LDS)
+
+    rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
+      => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, (param _)   TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
+
+    rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
+      => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
+    rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
 ```
 
 ```k
