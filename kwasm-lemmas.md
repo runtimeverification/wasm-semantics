@@ -320,10 +320,13 @@ TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
 They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
 
 ```k
-    rule 0 <=Int #getRange(_, _, _)                    => true                                                                                [simplification]
-    rule #getRange(_, _, WIDTH)               <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
-    rule (#getRange(_, _, WIDTH) <<Int SHIFT) <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
-    rule VAL1 +Int VAL2                       <Int MAX => true requires VAL1 <Int MAX andBool VAL2 <Int MAX andBool #distinctBits(VAL1, VAL2) [simplification]
+    rule 0 <=Int #getRange(_, _, _) => true                                            [simplification]
+    rule 0 <=Int VAL <<Int SHIFT    => true requires 0 <=Int VAL andBool 0 <=Int SHIFT [simplification]
+    rule 0 <=Int VAL1 +Int VAL2     => true requires 0 <=Int VAL1 andBool 0 <=Int VAL2 [simplification]
+
+    rule #getRange(_, _, WIDTH)             <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
+    rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
+    rule VAL1 +Int VAL2                     <Int MAX => true requires VAL1 <Int MAX andBool VAL2 <Int MAX andBool #distinctBits(VAL1, VAL2) [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
       requires 0 <=Int ADDR
