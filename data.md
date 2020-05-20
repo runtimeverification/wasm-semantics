@@ -276,8 +276,8 @@ The `#wrap` function wraps an integer to a given byte width.
 
     syntax Int ::= #wrap ( Int , Int ) [function, functional]
  // ---------------------------------------------------------
-    rule #wrap(WIDTH, N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         WIDTH >Int 0 [concrete]
-    rule #wrap(WIDTH, N) => 0                                        requires notBool WIDTH >Int 0
+    rule #wrap(WIDTH, N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH [concrete]
+    rule #wrap(WIDTH, N) => 0                                        requires notBool 0 <Int WIDTH
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
