@@ -362,11 +362,11 @@ They are non-trivial in their implementation, but the following should obviously
 
 ```k
     rule #setRange(BM, ADDR, #getRange(BM, ADDR, WIDTH), WIDTH) => BM [simplification]
-    rule #setRange(BM, ADDR, VAL1 +Int (VAL2 <<Int SHIFT), WIDTH)
-      => #setRange(#setRange(BM, ADDR, VAL1, minInt(#byteWidth(VAL1), WIDTH)), ADDR +Int #byteWidth(VAL1), VAL2, WIDTH -Int #byteWidth(VAL1))
+    rule #setRange(BM, ADDR, (#getRange(_, _, WIDTH1) #as VAL1) +Int (VAL2 <<Int SHIFT), WIDTH)
+      => #setRange(#setRange(BM, ADDR, VAL1, minInt(WIDTH1, WIDTH)), ADDR +Int WIDTH1, VAL2, WIDTH -Int WIDTH1)
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
-       andBool #byteWidth(VAL1) *Int 8 ==Int SHIFT
+       andBool WIDTH1 *Int 8 ==Int SHIFT
       [simplification]
 
     rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
@@ -391,10 +391,6 @@ They are non-trivial in their implementation, but the following should obviously
        andBool ADDR'  ==Int ADDR
        andBool WIDTH' ==Int WIDTH
        [simplification]
-
-    syntax Int ::= #byteWidth ( Int ) [function]
- // --------------------------------------------
-    rule #byteWidth(#getRange(_, _, N)) => N
 ```
 
 ```k
