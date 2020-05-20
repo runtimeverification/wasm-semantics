@@ -276,8 +276,8 @@ The `#wrap` function wraps an integer to a given byte width.
 
     syntax Int ::= #wrap ( Int , Int ) [function, functional]
  // ---------------------------------------------------------
-    rule #wrap(WIDTH, N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         WIDTH >Int 0 [concrete]
-    rule #wrap(WIDTH, N) => 0                                        requires notBool WIDTH >Int 0
+    rule #wrap(WIDTH, N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH [concrete]
+    rule #wrap(WIDTH, N) => 0                                        requires notBool 0 <Int WIDTH
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
@@ -288,10 +288,10 @@ The `#round` function casts a `f64` float to a `f32` float.
 ```k
     syntax FVal ::= #round ( FValType , Number ) [function]
  // -------------------------------------------------------
-    rule #round( f64 , N:Float) => < f64 > roundFloat(N, 53, 11) [concrete]
-    rule #round( f32 , N:Float) => < f32 > roundFloat(N, 24, 8)  [concrete]
-    rule #round( f64 , N:Int  ) => < f64 >  Int2Float(N, 53, 11) [concrete]
-    rule #round( f32 , N:Int  ) => < f32 >  Int2Float(N, 24, 8)  [concrete]
+    rule #round(f64 , N:Float) => < f64 > roundFloat(N, 53, 11) [concrete]
+    rule #round(f32 , N:Float) => < f32 > roundFloat(N, 24, 8)  [concrete]
+    rule #round(f64 , N:Int  ) => < f64 >  Int2Float(N, 53, 11) [concrete]
+    rule #round(f32 , N:Int  ) => < f32 >  Int2Float(N, 24, 8)  [concrete]
 ```
 
 ### Signed Interpretation
@@ -325,7 +325,7 @@ Function `#bool` converts a `Bool` into an `Int`.
 ```k
     syntax Int ::= #bool ( Bool ) [function, functional]
  // ----------------------------------------------------
-    rule #bool( B:Bool ) => 1 requires B
+    rule #bool( B:Bool ) => 1 requires         B
     rule #bool( B:Bool ) => 0 requires notBool B
 ```
 
@@ -512,8 +512,8 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 ```k
     syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function, functional, smtlib(setRange)]
  // ---------------------------------------------------------------------------------------------
-    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <=Int ADDR andBool 0 <Int WIDTH andBool 0 <=Int VAL)
-    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <=Int ADDR andBool 0 <Int WIDTH andBool 0 <=Int VAL
+    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
+    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
       [concrete]
 ```
 

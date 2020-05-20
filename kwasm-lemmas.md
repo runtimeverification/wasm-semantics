@@ -310,7 +310,7 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
-Lemmas about `#getRange` and `#setRange` simplification:
+Bounds on `#getRange`:
 
 ```k
     rule 0 <=Int #getRange(_, _, _) => true                                             [simplification]
@@ -321,6 +321,22 @@ Lemmas about `#getRange` and `#setRange` simplification:
     rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
     rule VAL1 +Int VAL2                     <Int MAX => true requires VAL1 <Int MAX andBool VAL2 <Int MAX andBool #distinctBits(VAL1, VAL2) [simplification]
 
+    syntax Bool ::= #distinctBits ( Int , Int ) [function]
+ // ------------------------------------------------------
+    rule #distinctBits(#getRange(_, _, WIDTH), #getRange(_, _, _) <<Int SHIFT) => true requires WIDTH *Int 8 <=Int SHIFT
+```
+
+`#wrap` over `#getRange`:
+
+```k
+    rule #wrap(MAX_WIDTH, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(MAX_WIDTH, WIDTH))
+      requires #isByteMap(BM)
+      [simplification]
+```
+
+Arithmetic over `#getRange`:
+
+```k
     rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
@@ -333,40 +349,11 @@ Lemmas about `#getRange` and `#setRange` simplification:
        andBool 2 ^Int (8 *Int (WIDTH -Int 1)) modInt MAX ==Int 0
        andBool #isByteMap(BM)
       [simplification]
-
-    rule #wrap(MAX_WIDTH, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(MAX_WIDTH, WIDTH))
-      requires #isByteMap(BM)
-      [simplification]
-
-    syntax Bool ::= #distinctBits ( Int , Int ) [function]
- // ------------------------------------------------------
-    rule #distinctBits(#getRange(_, _, WIDTH), #getRange(_, _, _) <<Int SHIFT) => true requires WIDTH *Int 8 <=Int SHIFT
 ```
 
-`#getRange` over `#setRange`
+`#getRange` over `#setRange`:
 
 ```k
-    rule #setRange(BM, ADDR, #getRange(BM, ADDR, WIDTH), WIDTH) => BM [simplification]
-    rule #setRange(BM, ADDR, (#getRange(_, _, WIDTH1) #as VAL1) +Int (VAL2 <<Int SHIFT), WIDTH)
-      => #setRange(#setRange(BM, ADDR, VAL1, minInt(WIDTH1, WIDTH)), ADDR +Int WIDTH1, VAL2, WIDTH -Int WIDTH1)
-      requires 0 <=Int ADDR
-       andBool 0  <Int WIDTH
-       andBool WIDTH1 *Int 8 ==Int SHIFT
-      [simplification]
-
-    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(GET_WIDTH, VALUE)
-      requires         GET_WIDTH <=Int SET_WIDTH
-      [simplification]
-
-    rule #getRange(#setRange(BM, EA, VALUE, SET_WIDTH), EA, GET_WIDTH)
-      => #wrap(SET_WIDTH, VALUE)
-      requires (notBool GET_WIDTH <=Int SET_WIDTH)
-       andBool #getRange(BM, EA +Int SET_WIDTH, GET_WIDTH -Int SET_WIDTH) ==Int 0
-      [simplification]
-
-    rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
-
     rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
     rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
     rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => VAL
@@ -376,6 +363,18 @@ Lemmas about `#getRange` and `#setRange` simplification:
        andBool ADDR'  ==Int ADDR
        andBool WIDTH' ==Int WIDTH
        [simplification]
+```
+
+`#setRange` over `#getRange`
+
+```k
+    rule #setRange(BM, ADDR, #getRange(BM, ADDR, WIDTH), WIDTH) => BM [simplification]
+    rule #setRange(BM, ADDR, (#getRange(_, _, WIDTH1) #as VAL1) +Int (VAL2 <<Int SHIFT), WIDTH)
+      => #setRange(#setRange(BM, ADDR, VAL1, minInt(WIDTH1, WIDTH)), ADDR +Int WIDTH1, VAL2, WIDTH -Int WIDTH1)
+      requires 0 <=Int ADDR
+       andBool 0  <Int WIDTH
+       andBool WIDTH1 *Int 8 ==Int SHIFT
+      [simplification]
 ```
 
 ```k
