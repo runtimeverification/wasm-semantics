@@ -373,7 +373,7 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 
 TODO:
 
-* Get rid of inline type declarations (only allow types defined first, inline type declarations serve as documentation and identifier bindings). Something like `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID) or something)`
+* Get rid of inline type declarations. The text format allows specifying the type directly in the function header using the `param` and `result` keywords. However, these will either be desugared to a new top-level `type` declaration or they must match an existing one. In the abstract format, a function's type is a pointer to a top-level `type` declaration. This could either be done by doing an initial pass to gather all type declarations, or they could be desugared locally, which is similar to what we do currently: `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID)`.
 * Remove module names.
 * Give the text format and core format different types, and have the preprocessing handle the conversion. So that identifiers don't even exist in the core type.
 
