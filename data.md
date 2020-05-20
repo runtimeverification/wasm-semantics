@@ -325,7 +325,7 @@ Function `#bool` converts a `Bool` into an `Int`.
 ```k
     syntax Int ::= #bool ( Bool ) [function, functional]
  // ----------------------------------------------------
-    rule #bool( B:Bool ) => 1 requires B
+    rule #bool( B:Bool ) => 1 requires         B
     rule #bool( B:Bool ) => 0 requires notBool B
 ```
 
