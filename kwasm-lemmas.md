@@ -310,14 +310,7 @@ We want to make the variant explicit, so we introduce the following helper, whic
       requires notBool isInt(I)
 ```
 
-With this invariant encoded, we can introduce the following lemma.
-
-```k
-    rule #isByteMap(BMAP) impliesBool (0 <=Int #get(BMAP, IDX) andBool #get(BMAP, IDX) <Int 256) => true [smt-lemma]
-```
-
-TODO: We should inspect the two functions `#getRange` and `#setRange` closer.
-They are non-trivial in their implementation, but the following should obviously hold from the intended semantics.
+Lemmas about `#getRange` and `#setRange` simplification:
 
 ```k
     rule 0 <=Int #getRange(_, _, _) => true                                            [simplification]
