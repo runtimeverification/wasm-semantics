@@ -313,8 +313,6 @@ We want to make the variant explicit, so we introduce the following helper, whic
 Bounds on `#getRange`:
 
 ```k
-    rule #getRange(ByteMap <| .Map |>, _, _) => 0 [simplification]
-
     rule 0 <=Int #getRange(_, _, _) => true                                             [simplification]
     rule 0 <=Int VAL <<Int SHIFT    => true requires 0 <=Int VAL  andBool 0 <=Int SHIFT [simplification]
     rule 0 <=Int VAL1 +Int VAL2     => true requires 0 <=Int VAL1 andBool 0 <=Int VAL2  [simplification]
