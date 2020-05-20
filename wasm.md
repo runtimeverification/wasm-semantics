@@ -1253,9 +1253,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          </moduleInst>
          <memInst>
            <mAddr> ADDR </mAddr>
-           <mdata> DATA
-                  => #setRange(DATA, OFFSET, Bytes2Int(DSBYTES, LE, Unsigned), lengthBytes(DSBYTES))
-           </mdata>
+           <mdata> DATA => #setRange(DATA, OFFSET, Bytes2Int(DSBYTES, LE, Unsigned), lengthBytes(DSBYTES)) </mdata>
            ...
          </memInst>
 

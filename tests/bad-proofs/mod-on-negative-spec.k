@@ -3,8 +3,5 @@ requires "kwasm-lemmas.k"
 module MOD-ON-NEGATIVE-SPEC
     imports KWASM-LEMMAS
 
-    rule <k> (nop ~> X modInt N ) => X ... </k>
-      requires X <=Int 0
-       andBool 0  <Int N
-
+    rule <k> X modInt N => X ... </k> requires 0 <Int N andBool X <=Int 0
 endmodule
