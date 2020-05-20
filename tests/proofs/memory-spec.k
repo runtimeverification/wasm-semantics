@@ -12,8 +12,8 @@ module MEMORY-SPEC
          </moduleInst>
          <memInst>
            <mAddr> MEMADDR </mAddr>
-           <msize> SIZE </msize>
-           <mdata> BM   </mdata>
+           <msize> SIZE    </msize>
+           <mdata> BM      </mdata>
            ...
          </memInst>
        requires
