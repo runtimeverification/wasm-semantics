@@ -512,8 +512,8 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 ```k
     syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function, functional, smtlib(setRange)]
  // ---------------------------------------------------------------------------------------------
-    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <=Int ADDR andBool 0 <Int WIDTH andBool 0 <=Int VAL)
-    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <=Int ADDR andBool 0 <Int WIDTH andBool 0 <=Int VAL
+    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
+    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
       [concrete]
 ```
 
