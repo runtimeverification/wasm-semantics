@@ -25,7 +25,7 @@
     (return)
 )
 
-#assertFunction $add [ { $a i32 } i32 ] -> [ i32 ] [ ] "function string-named add"
+#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 #assertNextTypeIdx 1
 
 ;; Remove return statement
@@ -42,7 +42,7 @@
 (i32.const 0)
 (call_indirect (type $a-cool-type))
 #assertTopStack < i32 > 15 "call function 0 no return"
-#assertFunction $0 [ { $a i32 } { $b i32 } ] -> [ i32 ] [ ] "call function 0 exists no return"
+#assertFunction $0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
 #assertNextTypeIdx 1
 
 ;; More complicated function with locals
@@ -182,7 +182,7 @@
 (call $f2)
 #assertTopStack < i32 > 14247936 "nested method call"
 #assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
-#assertFunction $f1 [ { $a i32 } i32 ] -> [ i32 ] [ { $c i32 } ] "inner calling method"
+#assertFunction $f1 [ i32 i32 ] -> [ i32 ] [ i32 ] "inner calling method"
 
 (module
     (func $func (param i32 i32) (result i32) (local.get 0))

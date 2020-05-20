@@ -16,11 +16,10 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> $PGM:Stmts </k>
+        <k> text2abstract($PGM:Stmts) </k>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
-          <localIds>  .Map </localIds>
           <curModIdx> .Int </curModIdx>
           <labelDepth> 0   </labelDepth>
           <labelIds>  .Map </labelIds>
@@ -100,6 +99,16 @@ The highest address in a memory instance divided by the `#pageSize()` constant (
 
 Since memory data is bytes, all integers in the `Map` in the `<mdata>` cell are bounded to be between 1 and 255, inclusive.
 All places in the data with no entry are considered zero bytes.
+
+### Translations to Abstract Syntax
+
+Before execution, the program is translated from the text-format concrete syntax tree into an abstract syntax tree using the following function.
+It's full definition is found in the `wasm-text.md` file.
+
+```k
+    syntax Stmts ::= text2abstract(Stmts) [function]
+ // ------------------------------------------------
+```
 
 Instructions
 ------------
@@ -421,19 +430,6 @@ The various `init_local` variants assist in setting up the `locals` cell.
           </k>
 ```
 
-`init_localids` help setting up ids for local indices.
-
-```k
-    syntax Instr ::=  "init_localids" ValTypes
-                   | "#init_localids" Int ValTypes
- // ----------------------------------------------
-    rule <k> init_localids VTYPES => #init_localids 0 VTYPES ... </k>
-    rule <k> #init_localids I:Int .ValTypes     => .                          ... </k>
-    rule <k> #init_localids I:Int V:AValType VS => #init_localids I +Int 1 VS ... </k>
-    rule <k> #init_localids I:Int { ID V }   VS => #init_localids I +Int 1 VS ... </k>
-         <localIds> LOCALIDS => LOCALIDS [ ID <- I ] </localIds>
-```
-
 The `*_local` instructions are defined here.
 
 ```k
@@ -441,20 +437,17 @@ The `*_local` instructions are defined here.
                         | "local.set" Index
                         | "local.tee" Index
  //----------------------------------------
-    rule <k> local.get TFIDX => . ... </k>
+    rule <k> local.get I:Int => . ... </k>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> VALUE ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> VALUE ... </locals>
 
-    rule <k> local.set TFIDX => . ... </k>
+    rule <k> local.set I:Int => . ... </k>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> (_ => VALUE) ... </locals>
 
-    rule <k> local.tee TFIDX => . ... </k>
+    rule <k> local.tee I:Int => . ... </k>
          <valstack> VALUE : VALSTACK </valstack>
-         <locals> ... #ContextLookup(IDS , TFIDX) |-> (_ => VALUE) ... </locals>
-         <localIds> IDS </localIds>
+         <locals> ... I |-> (_ => VALUE) ... </locals>
 ```
 
 ### Globals
@@ -740,7 +733,6 @@ The `#take` function will return the parameter stack in the reversed order, then
  // -------------------------------------
     rule <k> ( invoke FADDR )
           => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
-          ~> init_localids TDOMAIN + TLOCALS
           ~> block [TRANGE] INSTRS end
           ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
           ...
@@ -1012,12 +1004,12 @@ Sort `Signedness` is defined in module `BYTES`.
 
 ```k
     syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
- // ----------------------------------------------------------
+                   | IValType "." LoadOp Int
+ // ----------------------------------------
 
     syntax PlainInstr ::= IValType "." LoadOpM
                         | FValType "." LoadOpM
-                        | IValType "." LoadOp Int
- // ---------------------------------------------
+ // ------------------------------------------
 
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
  // -----------------------------------------
@@ -1301,7 +1293,8 @@ Exports make functions, tables, memories and globals available for importing int
 ```k
     syntax Defn       ::= ExportDefn
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
- // -------------------------------------------------------------------
+    syntax Alloc      ::= ExportDefn
+ // --------------------------------
     rule <k> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1325,7 +1318,8 @@ The value of a global gets copied when it is imported.
                         | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
- // -----------------------------------------------------------------------------------------------
+    syntax Alloc      ::= ImportDefn
+ // --------------------------------
     rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1494,8 +1488,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 ```k
     syntax Stmt       ::= ModuleDecl
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
-                        |     "module" OptionalId Map
- // -------------------------------------------------
+ // -------------------------------------------------------
     rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
 
     rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
