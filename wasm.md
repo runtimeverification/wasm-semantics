@@ -1257,10 +1257,6 @@ The `data` initializer simply puts these bytes into the specified memory, starti
            ...
          </memInst>
 
-    syntax Int ::= #lengthDataPages ( DataString ) [function]
- // ---------------------------------------------------------
-    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
-
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------
     rule I1 up/Int I2 => (I1 +Int (I2 -Int 1)) /Int I2 requires I2 >Int 0

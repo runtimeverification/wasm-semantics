@@ -258,6 +258,10 @@ This is useful when specifying modules in the more lax KWasm format, where they 
           ...
          </k>
 
+    syntax Int ::= #lengthDataPages ( DataString ) [function]
+ // ---------------------------------------------------------
+    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
+
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
     rule ( table funcref ( elem ES ) ) => ( table .TableIdentifier funcref (elem ES) ) [macro]
