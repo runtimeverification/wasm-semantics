@@ -13,6 +13,7 @@ else
 endif
 K_BIN := $(K_RELEASE)/bin
 K_LIB := $(K_RELEASE)/lib
+export K_RELEASE
 
 K_BUILD_TYPE := Debug
 
