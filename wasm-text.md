@@ -292,8 +292,8 @@ Note that it is possible to define multiple exports inline, i.e. export a single
 
     syntax GlobalSpec ::= InlineExport GlobalSpec
  // ---------------------------------------------
-    rule <k> ( global                  EXPO:InlineExport SPEC:GlobalSpec )
-          => ( global #freshId(NEXTID) EXPO              SPEC            )
+    rule <k> ( global                         EXPO:InlineExport SPEC:GlobalSpec )
+          => ( global #freshIdRuntime(NEXTID) EXPO              SPEC            )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
@@ -306,8 +306,8 @@ Note that it is possible to define multiple exports inline, i.e. export a single
 
     syntax FuncSpec   ::= InlineExport FuncSpec
  // -------------------------------------------
-    rule <k> ( func                  EXPO:InlineExport SPEC:FuncSpec )
-          => ( func #freshId(NEXTID) EXPO              SPEC          )
+    rule <k> ( func                         EXPO:InlineExport SPEC:FuncSpec )
+          => ( func #freshIdRuntime(NEXTID) EXPO              SPEC          )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
@@ -320,8 +320,8 @@ Note that it is possible to define multiple exports inline, i.e. export a single
 
     syntax TableSpec  ::= InlineExport TableSpec
  // --------------------------------------------
-    rule <k> ( table                  EXPO:InlineExport SPEC:TableSpec )
-          => ( table #freshId(NEXTID) EXPO              SPEC           )
+    rule <k> ( table                         EXPO:InlineExport SPEC:TableSpec )
+          => ( table #freshIdRuntime(NEXTID) EXPO              SPEC           )
           ...
          </k>
          <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
@@ -377,6 +377,19 @@ Some classes of invalid programs, such as those where an identifier appears in a
 The function deals with the desugarings which are context dependent.
 Other desugarings are either left for runtime or expressed as macros (for now).
 
+### Unfolding Definitions
+
+```k
+    syntax Defns ::= unfoldDefns  ( Defns )       [function]
+                   | #unfoldDefns ( Defns , Int ) [function]
+ // --------------------------------------------------------
+    rule unfoldDefns(DS) => #unfoldDefns(DS, 0)
+    rule #unfoldDefns(.Defns, _) => .Defns
+    rule #unfoldDefns(D:Defn DS, I) => D #unfoldDefns(DS, I) [owise]
+```
+
+## Replacing Identifiers and Unfolding Instructions
+
 **TODO:**
 
 -   Get rid of inline type declarations.
@@ -417,7 +430,7 @@ Since we do not have polymorphic functions available, we define one function per
  // -----------------------------------------------------------------------------------
     rule text2abstract(SS) => #t2aStmts<ctx( ... localIds: .Map)>(SS)
 
-    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
+    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(unfoldDefns(DS)) )
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]

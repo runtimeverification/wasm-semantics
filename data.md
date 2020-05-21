@@ -36,6 +36,7 @@ And we use `OptionalId` to handle the case where an identifier could be omitted.
 ```k
     syntax Identifier ::= IdentifierToken
                         | #freshId ( Int )
+                        | #freshIdRuntime ( Int )
     syntax OptionalId ::= "" [klabel(.Identifier)]
                         | Identifier
  // --------------------------------
