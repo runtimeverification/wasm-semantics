@@ -240,27 +240,7 @@ We also supply rules for when the inlined definitions are encountered on top of 
 This is useful when specifying modules in the more lax KWasm format, where they can be declared as they are needed.
 
 ```k
-    syntax Identifier ::= ".MemoryIdentifier" | ".TableIdentifier"
-
-    syntax MemorySpec ::= "(" "data" DataString ")"
- // -----------------------------------------------
-    rule ( memory ( data DS ) ) => ( memory .MemoryIdentifier (data DS) ) [macro]
-
-    rule ( memory ID:Identifier ( data DS ) ) DEFS:Defns
-      => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
-         ( data   ID (offset (i32.const 0) .Instrs) DS )
-         DEFS
-      [macro]
-
-    rule <k> ( memory ID:Identifier ( data DS ) )
-          => ( memory ID #lengthDataPages(DS) #lengthDataPages(DS) ):MemoryDefn
-          ~> ( data   ID (offset (i32.const 0) .Instrs) DS )
-          ...
-         </k>
-
-    syntax Int ::= #lengthDataPages ( DataString ) [function]
- // ---------------------------------------------------------
-    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
+    syntax Identifier ::= ".TableIdentifier"
 
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
@@ -332,19 +312,6 @@ Note that it is possible to define multiple exports inline, i.e. export a single
           ...
          </k>
 
-    syntax MemorySpec ::= InlineExport MemorySpec
- // ---------------------------------------------
-    rule <k> ( memory                  EXPO:InlineExport SPEC:MemorySpec )
-          => ( memory #freshId(NEXTID) EXPO              SPEC            )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec )
-          => ( export ENAME ( memory ID ) )
-          ~> ( memory ID SPEC )
-          ...
-         </k>
 ```
 
 ### Imports
@@ -358,12 +325,10 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
     syntax FuncSpec   ::= InlineImport TypeUse
     syntax TableSpec  ::= InlineImport TableType
-    syntax MemorySpec ::= InlineImport MemType
- // ------------------------------------------
+ // --------------------------------------------
     rule ( global OID:OptionalId (import MOD NAME) TYP          ) => ( import MOD NAME (global OID TYP ) )  [macro]
     rule ( func   OID:OptionalId (import MOD NAME) TUSE         ) => ( import MOD NAME (func   OID TUSE) )  [macro]
     rule ( table  OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table  OID TT  ) )  [macro]
-    rule ( memory OID:OptionalId (import MOD NAME) MT:MemType   ) => ( import MOD NAME (memory OID MT  ) )  [macro]
 ```
 
 Desugaring
@@ -386,6 +351,38 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     rule unfoldDefns(DS) => #unfoldDefns(DS, 0)
     rule #unfoldDefns(.Defns, _) => .Defns
     rule #unfoldDefns(D:Defn DS, I) => D #unfoldDefns(DS, I) [owise]
+```
+
+#### Unfolding Memories
+
+```k
+    syntax MemorySpec ::= "(" "data" DataString ")"
+ // -----------------------------------------------
+    rule #unfoldDefns(( memory             ( data DATA ) ) DS, I)
+      => #unfoldDefns(( memory #freshId(I) ( data DATA ) ) DS, I +Int 1)
+
+    rule #unfoldDefns(( memory ID:Identifier ( data DATA ) ) DS, I)
+      => ( memory ID #lengthDataPages(DATA) #lengthDataPages(DATA) ):MemoryDefn
+         ( data   ID (offset (i32.const 0) .Instrs) DATA )
+         #unfoldDefns(DS, I)
+
+    syntax Int ::= #lengthDataPages ( DataString ) [function]
+ // ---------------------------------------------------------
+    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
+
+    syntax MemorySpec ::= InlineImport MemType
+ // ------------------------------------------
+    rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I)
+      => ( import MOD NAME (memory OID MT  ) ) #unfoldDefns(DS, I)
+
+    syntax MemorySpec ::= InlineExport MemorySpec
+ // ---------------------------------------------
+    rule #unfoldDefns(( memory                 EXPO:InlineExport SPEC:MemorySpec ) DS, I)
+      => #unfoldDefns(( memory #freshId(I:Int) EXPO              SPEC            ) DS, I +Int 1)
+
+    rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I)
+      => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I)
+
 ```
 
 ## Replacing Identifiers and Unfolding Instructions
