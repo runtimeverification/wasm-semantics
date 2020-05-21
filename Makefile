@@ -6,10 +6,10 @@ DEPS_DIR  := deps
 DEFN_DIR  := $(BUILD_DIR)/defn
 
 K_SUBMODULE := $(DEPS_DIR)/k
-ifneq (,$(shell which kompile))
-  K_RELEASE ?= $(dir $(shell which kompile))..
-else
+ifneq (,$(wildcard deps/k/k-distribution/target/release/k/bin/*))
   K_RELEASE ?= $(K_SUBMODULE)/k-distribution/target/release/k
+else
+  K_RELEASE ?= $(dir $(shell which kompile))..
 endif
 K_BIN := $(K_RELEASE)/bin
 K_LIB := $(K_RELEASE)/lib
