@@ -229,36 +229,6 @@ In the text format, it is also allowed to have a conditional without the `else` 
        andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
 ```
 
-### Memory and Tables
-
-Intitial memory data, and initial table elements can be given inline in the text format.
-We supply macros that will unfold these definitions when they are part of a body of definitions, such as in a module.
-This is to ensure that the unfolding happens before the different elements in a module are grouped together, so as to maintain their order.
-
-We also supply rules for when the inlined definitions are encountered on top of the `<k>` cell, so that they can be desugared on the fly.
-
-This is useful when specifying modules in the more lax KWasm format, where they can be declared as they are needed.
-
-```k
-    syntax Identifier ::= ".TableIdentifier"
-
-    syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
- // -------------------------------------------------------------
-    rule ( table funcref ( elem ES ) ) => ( table .TableIdentifier funcref (elem ES) ) [macro]
-
-    rule ( table ID:Identifier funcref ( elem ES ) ) DEFS:Defns
-      => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
-         ( elem  ID (offset (i32.const 0) .Instrs) ES )
-         DEFS
-      [macro]
-
-    rule <k> ( table ID:Identifier funcref ( elem ES ) )
-          => ( table ID #lenElemSegment(ES) #lenElemSegment(ES) funcref ):TableDefn
-          ~> ( elem  ID (offset (i32.const 0) .Instrs) ES )
-          ...
-         </k>
-```
-
 ### Exports
 
 Exports can be declared like regular functions, memories, etc., by giving an inline export declaration.
@@ -297,21 +267,6 @@ Note that it is possible to define multiple exports inline, i.e. export a single
           ~> ( func ID SPEC )
           ...
          </k>
-
-    syntax TableSpec  ::= InlineExport TableSpec
- // --------------------------------------------
-    rule <k> ( table                         EXPO:InlineExport SPEC:TableSpec )
-          => ( table #freshIdRuntime(NEXTID) EXPO              SPEC           )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( table ID:Identifier ( export ENAME ) SPEC:TableSpec )
-          => ( export ENAME ( table ID ) )
-          ~> ( table ID SPEC )
-          ...
-         </k>
-
 ```
 
 ### Imports
@@ -324,11 +279,9 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
     syntax FuncSpec   ::= InlineImport TypeUse
-    syntax TableSpec  ::= InlineImport TableType
  // --------------------------------------------
     rule ( global OID:OptionalId (import MOD NAME) TYP          ) => ( import MOD NAME (global OID TYP ) )  [macro]
     rule ( func   OID:OptionalId (import MOD NAME) TUSE         ) => ( import MOD NAME (func   OID TUSE) )  [macro]
-    rule ( table  OID:OptionalId (import MOD NAME) TT:TableType ) => ( import MOD NAME (table  OID TT  ) )  [macro]
 ```
 
 Desugaring
@@ -351,6 +304,33 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     rule unfoldDefns(DS) => #unfoldDefns(DS, 0)
     rule #unfoldDefns(.Defns, _) => .Defns
     rule #unfoldDefns(D:Defn DS, I) => D #unfoldDefns(DS, I) [owise]
+```
+
+#### Unfolding Tables
+
+```k
+    syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
+ // -------------------------------------------------------------
+    rule #unfoldDefns(( table funcref         ( elem ELEM ) ) DS, I)
+      => #unfoldDefns(( table #freshId(I) funcref ( elem ELEM ) ) DS, I +Int 1)
+
+    rule #unfoldDefns(( table ID:Identifier funcref ( elem ELEM ) ) DS, I)
+      => ( table ID #lenElemSegment(ELEM) #lenElemSegment(ELEM) funcref ):TableDefn
+         ( elem  ID (offset (i32.const 0) .Instrs) ELEM )
+         #unfoldDefns(DS, I)
+
+    syntax TableSpec  ::= InlineImport TableType
+ // --------------------------------------------
+    rule #unfoldDefns(( table OID:OptionalId (import MOD NAME) TT:TableType ) DS, I)
+      => ( import MOD NAME (table OID TT) ) #unfoldDefns(DS, I)
+
+    syntax TableSpec  ::= InlineExport TableSpec
+ // --------------------------------------------
+    rule #unfoldDefns(( table EXPO:InlineExport SPEC:TableSpec ) DS, I)
+      => #unfoldDefns(( table #freshId(I) EXPO SPEC ), I +Int 1)
+
+    rule #unfoldDefns(( table ID:Identifier ( export ENAME ) SPEC:TableSpec ) DS, I)
+      => ( export ENAME ( table ID ) ) #unfoldDefns(( table ID SPEC ) DS, I)
 ```
 
 #### Unfolding Memories

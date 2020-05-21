@@ -38,7 +38,10 @@
 
 (i32.const 7)
 (i32.const 8)
-(table funcref (elem $0))
+
+(table 1 funcref)
+(elem (i32.const 0) $0)
+
 (i32.const 0)
 (call_indirect (type $a-cool-type))
 #assertTopStack < i32 > 15 "call function 0 no return"
