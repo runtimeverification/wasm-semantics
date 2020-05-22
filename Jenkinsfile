@@ -1,5 +1,10 @@
 pipeline {
-  agent { dockerfile { reuseNode true } }
+  agent {
+    dockerfile {
+      label 'docker'
+      additionalBuildArgs '--build-arg K_COMMIT=$(cd deps/k && git rev-parse --short=7 HEAD) --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g)'
+    }
+  }
   options { ansiColor('xterm') }
   stages {
     stage('Init title') {
@@ -9,8 +14,7 @@ pipeline {
     stage('Build and Test') {
       when { changeRequest() }
       stages {
-        stage('Dependencies') { steps { sh 'make deps'      } }
-        stage('Build')        { steps { sh 'make build -j4' } }
+        stage('Build') { steps { sh 'make build -j4' } }
         stage('Test') {
           options { timeout(time: 25, unit: 'MINUTES') }
           parallel {

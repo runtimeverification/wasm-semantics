@@ -1,54 +1,14 @@
-FROM runtimeverificationinc/ubuntu:bionic
+ARG K_COMMIT
+FROM runtimeverificationinc/kframework-k:ubuntu-bionic-${K_COMMIT}
 
-RUN    apt-get update           \
-    && apt-get upgrade --yes    \
-    && apt-get install --yes    \
-            autoconf            \
-            bison               \
-            clang-8             \
-            cmake               \
-            curl                \
-            flex                \
-            gcc                 \
-            libboost-test-dev   \
-            libcrypto++-dev     \
-            libffi-dev          \
-            libjemalloc-dev     \
-            libmpfr-dev         \
-            libprocps-dev       \
-            libprotobuf-dev     \
-            libsecp256k1-dev    \
-            libssl-dev          \
-            libtool             \
-            libyaml-dev         \
-            libz3-dev           \
-            lld-8               \
-            llvm-8-tools        \
-            make                \
-            maven               \
-            netcat-openbsd      \
-            openjdk-11-jdk      \
-            pandoc              \
-            pkg-config          \
-            protobuf-compiler   \
-            python3             \
-            python-pygments     \
-            python-recommonmark \
-            python-sphinx       \
-            rapidjson-dev       \
-            time                \
-            z3                  \
-            zlib1g-dev
+RUN    apt-get update         \
+    && apt-get upgrade --yes  \
+    && apt-get install --yes  \
+                       pandoc
 
-ADD deps/k/haskell-backend/src/main/native/haskell-backend/scripts/install-stack.sh /.install-stack/
-RUN /.install-stack/install-stack.sh
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN groupadd -g $GROUP_ID user && useradd -m -u $USER_ID -s /bin/sh -g user user
 
 USER user:user
-
-ADD --chown=user:user deps/k/haskell-backend/src/main/native/haskell-backend/stack.yaml /home/user/.tmp-haskell/
-ADD --chown=user:user deps/k/haskell-backend/src/main/native/haskell-backend/kore/package.yaml /home/user/.tmp-haskell/kore/
-RUN    cd /home/user/.tmp-haskell \
-    && stack build --only-snapshot
-
-ENV LD_LIBRARY_PATH=/usr/local/lib
-ENV PATH=/home/user/.local/bin:/home/user/.cargo/bin:$PATH
+WORKDIR /home/user

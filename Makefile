@@ -6,9 +6,14 @@ DEPS_DIR  := deps
 DEFN_DIR  := $(BUILD_DIR)/defn
 
 K_SUBMODULE := $(DEPS_DIR)/k
-K_RELEASE   ?= $(K_SUBMODULE)/k-distribution/target/release/k
-K_BIN       := $(K_RELEASE)/bin
-K_LIB       := $(K_RELEASE)/lib
+ifneq (,$(wildcard deps/k/k-distribution/target/release/k/bin/*))
+  K_RELEASE ?= $(K_SUBMODULE)/k-distribution/target/release/k
+else
+  K_RELEASE ?= $(dir $(shell which kompile))..
+endif
+K_BIN := $(K_RELEASE)/bin
+K_LIB := $(K_RELEASE)/lib
+export K_RELEASE
 
 K_BUILD_TYPE := Debug
 
@@ -88,13 +93,13 @@ build-llvm:    $(llvm_kompiled)
 build-haskell: $(haskell_kompiled)
 
 $(llvm_kompiled): $(llvm_defn)
-	$(K_BIN)/kompile --backend llvm                                           \
+	kompile --backend llvm                                                    \
 	    --directory $(llvm_dir) -I $(llvm_dir)                                \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
 
 $(haskell_kompiled): $(haskell_defn)
-	$(K_BIN)/kompile --backend haskell                                        \
+	kompile --backend haskell                                                 \
 	    --directory $(haskell_dir) -I $(haskell_dir)                          \
 	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
 	    $(KOMPILE_OPTIONS)
