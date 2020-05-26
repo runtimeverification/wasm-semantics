@@ -377,6 +377,7 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 -   Give the text format and abstract format different sorts, and have `text2abstract` handle the conversion.
     Then identifiers and other text-only constructs can be completely removed from the abstract format.
 
+
 ### The Context
 
 The `Context` contains information of how to map text-level identifiers to corresponding indices.
