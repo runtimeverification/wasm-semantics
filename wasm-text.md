@@ -239,21 +239,6 @@ Note that it is possible to define multiple exports inline, i.e. export a single
 ```k
     syntax InlineExport  ::= "(" "export" WasmString ")"
  // ----------------------------------------------------
-
-    syntax GlobalSpec ::= InlineExport GlobalSpec
- // ---------------------------------------------
-    rule <k> ( global                         EXPO:InlineExport SPEC:GlobalSpec )
-          => ( global #freshIdRuntime(NEXTID) EXPO              SPEC            )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec )
-          => ( export ENAME ( global ID ) )
-          ~> ( global ID SPEC )
-          ...
-         </k>
-
 ```
 
 ### Imports
@@ -263,10 +248,6 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 ```k
     syntax InlineImport ::= "(" "import" WasmString WasmString ")"
  // --------------------------------------------------------------
-
-    syntax GlobalSpec ::= InlineImport TextFormatGlobalType
- // --------------------------------------------
-    rule ( global OID:OptionalId (import MOD NAME) TYP          ) => ( import MOD NAME (global OID TYP ) )  [macro]
 ```
 
 Desugaring
@@ -365,6 +346,29 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I)
       => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I)
 
+```
+
+#### Unfolding Globals
+
+```k
+    syntax GlobalSpec ::= InlineImport TextFormatGlobalType
+ // -------------------------------------------------------
+    rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I)
+      => ( import MOD NAME (global OID TYP ) ) #unfoldDefns(DS, I)
+
+    syntax GlobalSpec ::= InlineExport GlobalSpec
+ // ---------------------------------------------
+    rule #unfoldDefns(( memory                 EXPO:InlineExport SPEC:MemorySpec ) DS, I)
+      => #unfoldDefns(( memory #freshId(I:Int) EXPO              SPEC            ) DS, I +Int 1)
+
+    rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I)
+      => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I)
+
+    rule #unfoldDefns(( global EXPO:InlineExport SPEC:GlobalSpec ) DS, I)
+      => #unfoldDefns(( global #freshId(I) EXPO SPEC ) DS, I +Int 1)
+
+    rule #unfoldDefns(( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec ) DS, I)
+          => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
 ## Replacing Identifiers and Unfolding Instructions
