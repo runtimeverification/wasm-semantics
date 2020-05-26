@@ -372,7 +372,7 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     The text format allows specifying the type directly in the function header using the `param` and `result` keywords.
     However, these will either be desugared to a new top-level `type` declaration or they must match an existing one.
     In the abstract format, a function's type is a pointer to a top-level `type` declaration.
-    This could either be done by doing an initial pass to gather all type declarations, or they could be desugared locally, which is similar to what we do currently: `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID)`.
+    This could either be done by doing an initial pass to gather all type declarations, or they could be desugared locally, which is similar to what we do currently: `(func (type X) TDS:TDecls ... ) => (func (type X))` and `(func TDS:TDecls ...) => (type TDECLS) (func (type NEXT_TYPE_ID))`.
 -   Remove module names.
 -   Give the text format and abstract format different sorts, and have `text2abstract` handle the conversion.
     Then identifiers and other text-only constructs can be completely removed from the abstract format.
