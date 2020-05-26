@@ -261,7 +261,7 @@ Some classes of invalid programs, such as those where an identifier appears in a
 The function deals with the desugarings which are context dependent.
 Other desugarings are either left for runtime or expressed as macros (for now).
 
-### Unfolding Definitions
+### Unfolding Abbreviations
 
 ```k
     syntax Defns ::= unfoldDefns  ( Defns )       [function]
@@ -272,7 +272,7 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     rule #unfoldDefns(D:Defn DS, I) => D #unfoldDefns(DS, I) [owise]
 ```
 
-#### Unfolding Functions
+#### Functions
 
 ```k
     syntax FuncSpec   ::= InlineImport TypeUse
@@ -289,12 +289,12 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( func ID ) ) #unfoldDefns(( func ID SPEC ) DS, I)
 ```
 
-#### Unfolding Tables
+#### Tables
 
 ```k
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
-    rule #unfoldDefns(( table funcref         ( elem ELEM ) ) DS, I)
+    rule #unfoldDefns(( table funcref ( elem ELEM ) ) DS, I)
       => #unfoldDefns(( table #freshId(I) funcref ( elem ELEM ) ) DS, I +Int 1)
 
     rule #unfoldDefns(( table ID:Identifier funcref ( elem ELEM ) ) DS, I)
@@ -316,12 +316,12 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( table ID ) ) #unfoldDefns(( table ID SPEC ) DS, I)
 ```
 
-#### Unfolding Memories
+#### Memories
 
 ```k
     syntax MemorySpec ::= "(" "data" DataString ")"
  // -----------------------------------------------
-    rule #unfoldDefns(( memory             ( data DATA ) ) DS, I)
+    rule #unfoldDefns(( memory ( data DATA ) ) DS, I)
       => #unfoldDefns(( memory #freshId(I) ( data DATA ) ) DS, I +Int 1)
 
     rule #unfoldDefns(( memory ID:Identifier ( data DATA ) ) DS, I)
@@ -340,35 +340,28 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 
     syntax MemorySpec ::= InlineExport MemorySpec
  // ---------------------------------------------
-    rule #unfoldDefns(( memory                 EXPO:InlineExport SPEC:MemorySpec ) DS, I)
-      => #unfoldDefns(( memory #freshId(I:Int) EXPO              SPEC            ) DS, I +Int 1)
+    rule #unfoldDefns(( memory EXPO:InlineExport SPEC:MemorySpec ) DS, I)
+      => #unfoldDefns(( memory #freshId(I:Int) EXPO SPEC ) DS, I +Int 1)
 
     rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I)
       => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I)
-
 ```
 
-#### Unfolding Globals
+#### Globals
 
 ```k
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I)
-      => ( import MOD NAME (global OID TYP ) ) #unfoldDefns(DS, I)
+      => ( import MOD NAME (global OID TYP ) ) #unfoldDefns(DS, I) 
 
     syntax GlobalSpec ::= InlineExport GlobalSpec
  // ---------------------------------------------
-    rule #unfoldDefns(( memory                 EXPO:InlineExport SPEC:MemorySpec ) DS, I)
-      => #unfoldDefns(( memory #freshId(I:Int) EXPO              SPEC            ) DS, I +Int 1)
-
-    rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I)
-      => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I)
-
     rule #unfoldDefns(( global EXPO:InlineExport SPEC:GlobalSpec ) DS, I)
       => #unfoldDefns(( global #freshId(I) EXPO SPEC ) DS, I +Int 1)
 
     rule #unfoldDefns(( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec ) DS, I)
-          => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
+      => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
 ## Replacing Identifiers and Unfolding Instructions
