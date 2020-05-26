@@ -404,7 +404,8 @@ Since we do not have polymorphic functions available, we define one function per
     syntax TypeUse   ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
     syntax LocalDecl ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
  // -----------------------------------------------------------------------------------
-    rule text2abstract(SS) => #t2aStmts<ctx( ... localIds: .Map)>(SS)
+    rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
+    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(SS) [owise]
 
     rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(unfoldDefns(DS)) )
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
