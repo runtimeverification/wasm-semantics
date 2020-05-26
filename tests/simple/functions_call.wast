@@ -5,12 +5,13 @@
 #assertType 0 [ i32 i32 ] -> [ i32 ]
 #assertNextTypeIdx 1
 
-(func $0 (export "000") (type $a-cool-type)
+(func $0 (type $a-cool-type)
     (local.get 0)
     (local.get 1)
     (i32.add)
     (return)
 )
+(export "000" (func $0))
 
 #assertNextTypeIdx 1
 (assert_return (invoke "000" (i32.const 7) (i32.const 8)) (i32.const 15))
@@ -81,24 +82,26 @@
 
 ;; Function with empty declarations of types
 
-(func $1 param i64 i64 result result i64 param local
-    (local.get 0)
-    (return)
-)
+(module
+  (func $1 param i64 i64 result result i64 param local
+      (local.get 0)
+      (return)
+  )
 
-(func $1 (param i64 i64) (result i64)
-    (local.get 0)
-    (return)
-)
-(func (export "cool") (result i64)
-     i64.const 10
-     i64.const 11
-     call $1
+  (func $1 (param i64 i64) (result i64)
+      (local.get 0)
+      (return)
+  )
+  (func (export "cool") (result i64)
+      i64.const 10
+      i64.const 11
+      call $1
+  )
 )
 
 (assert_return (invoke "cool") (i64.const 10))
 #assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
-#assertNextTypeIdx 5
+#assertNextTypeIdx 2
 
 ;; Function with just a name
 

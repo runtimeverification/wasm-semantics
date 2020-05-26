@@ -254,19 +254,6 @@ Note that it is possible to define multiple exports inline, i.e. export a single
           ...
          </k>
 
-    syntax FuncSpec   ::= InlineExport FuncSpec
- // -------------------------------------------
-    rule <k> ( func                         EXPO:InlineExport SPEC:FuncSpec )
-          => ( func #freshIdRuntime(NEXTID) EXPO              SPEC          )
-          ...
-         </k>
-         <nextFreshId> NEXTID => NEXTID +Int 1 </nextFreshId>
-
-    rule <k> ( func ID:Identifier ( export ENAME ) SPEC:FuncSpec )
-          => ( export ENAME ( func ID ) )
-          ~> ( func ID SPEC )
-          ...
-         </k>
 ```
 
 ### Imports
@@ -278,10 +265,8 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // --------------------------------------------------------------
 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
-    syntax FuncSpec   ::= InlineImport TypeUse
  // --------------------------------------------
     rule ( global OID:OptionalId (import MOD NAME) TYP          ) => ( import MOD NAME (global OID TYP ) )  [macro]
-    rule ( func   OID:OptionalId (import MOD NAME) TUSE         ) => ( import MOD NAME (func   OID TUSE) )  [macro]
 ```
 
 Desugaring
@@ -304,6 +289,23 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     rule unfoldDefns(DS) => #unfoldDefns(DS, 0)
     rule #unfoldDefns(.Defns, _) => .Defns
     rule #unfoldDefns(D:Defn DS, I) => D #unfoldDefns(DS, I) [owise]
+```
+
+#### Unfolding Functions
+
+```k
+    syntax FuncSpec   ::= InlineImport TypeUse
+ // ------------------------------------------
+    rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I)
+      => ( import MOD NAME (func OID TUSE) ) #unfoldDefns(DS, I)
+
+    syntax FuncSpec   ::= InlineExport FuncSpec
+ // -------------------------------------------
+    rule #unfoldDefns(( func EXPO:InlineExport SPEC:FuncSpec ) DS, I)
+      => #unfoldDefns(( func #freshId(I) EXPO  SPEC) DS, I +Int 1)
+
+    rule #unfoldDefns(( func ID:Identifier ( export ENAME ) SPEC:FuncSpec ) DS, I)
+      => ( export ENAME ( func ID ) ) #unfoldDefns(( func ID SPEC ) DS, I)
 ```
 
 #### Unfolding Tables
