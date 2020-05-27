@@ -250,6 +250,47 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // --------------------------------------------------------------
 ```
 
+### Modules
+
+Modules are defined as a sequence of definitions, that may come in any order.
+The only requirements are that all imports must precede all other definitions, and that there may be at most one start function.
+
+```k
+    syntax Stmt       ::= ModuleDecl
+    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
+ // -------------------------------------------------------
+    rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
+
+    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
+                        | #sortModule ( Defns , ModuleDecl ) [function]
+ // -------------------------------------------------------------------
+    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), #emptyModule(OID))
+
+    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
+
+    rule #sortModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
+
+    rule #sortModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
+
+    rule #sortModule((X:FuncDefn   DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
+    rule #sortModule((X:GlobalDefn DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
+
+    rule #sortModule((A:TableDefn  DS:Defns => DS), #module(... memsTables: (AS => A AS)))
+    rule #sortModule((A:MemoryDefn DS:Defns => DS), #module(... memsTables: (AS => A AS)))
+
+    rule #sortModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
+
+    rule #sortModule((I:DataDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
+    rule #sortModule((I:ElemDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
+
+    rule #sortModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
+
+    syntax Defns ::= #reverse(Defns, Defns) [function]
+ // --------------------------------------------------
+    rule #reverse(       .Defns  , ACC) => ACC
+    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
+```
+
 Desugaring
 ----------
 
