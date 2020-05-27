@@ -438,7 +438,7 @@ Record updates can currently not be done in a function rule which also does othe
     rule #updateLocalIdsAux(C, _, true) => C
 ```
 
-### Traversing the Text Format
+### Traversing Modules
 
 The program is traversed in full once, context beting gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
