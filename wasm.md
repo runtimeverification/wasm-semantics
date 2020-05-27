@@ -1504,14 +1504,6 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
          </moduleInstances>
 ```
 
-It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
-
-```k
-    rule <k> A:Alloc => ( module .Defns ) ~> A ... </k>
-         <curModIdx> .Int </curModIdx>
-      [owise]
-```
-
 After a module is instantiated, it should be saved somewhere.
 How this is done is up to the embedder.
 
