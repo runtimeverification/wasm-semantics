@@ -19,6 +19,18 @@ module WASM-TEST
     imports WASM-TEXT
 ```
 
+Bare Allocations
+----------------
+
+We allow allocations to appear outside of modules, for example interleaved with assertions in tests.
+This is purely a KWasm feature, which is useful for testing.
+
+```k
+    rule <k> A:Alloc => ( module .Defns ) ~> A ... </k>
+         <curModIdx> .Int </curModIdx>
+      [owise]
+```
+
 Auxiliary
 ---------
 
