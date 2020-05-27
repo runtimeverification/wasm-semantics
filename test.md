@@ -26,7 +26,7 @@ We allow allocations to appear outside of modules, for example interleaved with 
 This is purely a KWasm feature, which is useful for testing.
 
 ```k
-    rule <k> A:Alloc => ( module .Defns ) ~> A ... </k>
+    rule <k> A:Alloc => #emptyModule() ~> A ... </k>
          <curModIdx> .Int </curModIdx>
       [owise]
 ```
@@ -238,7 +238,7 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
     rule <k> (assert_malformed  MOD            DESC) => . ... </k>
     rule <k> (assert_invalid    MOD            DESC) => . ... </k>
     rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
-    rule <k> (assert_trap       MOD:ModuleDecl DESC) => MOD ~> #assertTrap DESC ... </k>
+    rule <k> (assert_trap       MOD:ModuleDecl DESC) => text2abstract(MOD .Stmts) ~> #assertTrap DESC ... </k>
 ```
 
 And we implement some helper assertions to help testing.
