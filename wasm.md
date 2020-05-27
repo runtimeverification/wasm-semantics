@@ -1447,49 +1447,15 @@ The groups are chosen to represent different stages of allocation and instantiat
     syntax ModuleDecl ::= #module ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, memsTables: Defns, exports: Defns, inits: Defns, start: Defns )
  // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    syntax ModuleDecl ::= #emptyModule() [function, functional]
- // -----------------------------------------------------------
-    rule #emptyModule() => #module(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, memsTables: .Defns, exports: .Defns, inits: .Defns, start: .Defns)
-
-    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
-                        | #sortModule ( Defns , ModuleDecl ) [function]
- // -------------------------------------------------------------------
-    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), #emptyModule())
-
-    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
-
-    rule #sortModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
-
-    rule #sortModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
-
-    rule #sortModule((X:FuncDefn   DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
-    rule #sortModule((X:GlobalDefn DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
-
-    rule #sortModule((A:TableDefn  DS:Defns => DS), #module(... memsTables: (AS => A AS)))
-    rule #sortModule((A:MemoryDefn DS:Defns => DS), #module(... memsTables: (AS => A AS)))
-
-    rule #sortModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
-
-    rule #sortModule((I:DataDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
-    rule #sortModule((I:ElemDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
-
-    rule #sortModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
-
-    syntax Defns ::= #reverse(Defns, Defns) [function]
- // --------------------------------------------------
-    rule #reverse(       .Defns  , ACC) => ACC
-    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
+    syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
+ // ---------------------------------------------------------------------
+    rule #emptyModule(OID) => #module(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, memsTables: .Defns, exports: .Defns, inits: .Defns, start: .Defns)
 ```
 
 A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    syntax Stmt       ::= ModuleDecl
-    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
- // -------------------------------------------------------
-    rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
-
     rule <k> #module(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
           => TS ~> IS ~> FGS ~> AS ~> ES ~> INIS ~> S
          ...
