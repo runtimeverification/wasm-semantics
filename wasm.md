@@ -1444,32 +1444,36 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= sortedModule ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, memsTables: Defns, exports: Defns, inits: Defns, start: Defns )
- // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    syntax ModuleDecl ::= #module ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, memsTables: Defns, exports: Defns, inits: Defns, start: Defns )
+ // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    syntax ModuleDecl ::= #emptyModule() [function, functional]
+ // -----------------------------------------------------------
+    rule #emptyModule() => #module(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, memsTables: .Defns, exports: .Defns, inits: .Defns, start: .Defns)
 
     syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
                         | #sortModule ( Defns , ModuleDecl ) [function]
  // -------------------------------------------------------------------
-    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), sortedModule(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, memsTables: .Defns, exports: .Defns, inits: .Defns, start: .Defns))
+    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), #emptyModule())
 
     rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
 
-    rule #sortModule((T:TypeDefn   DS:Defns => DS), sortedModule(... types: (TS => T TS)))
+    rule #sortModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
 
-    rule #sortModule((I:ImportDefn DS:Defns => DS), sortedModule(... importDefns: (IS => I IS)))
+    rule #sortModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
 
-    rule #sortModule((X:FuncDefn   DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
-    rule #sortModule((X:GlobalDefn DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
+    rule #sortModule((X:FuncDefn   DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
+    rule #sortModule((X:GlobalDefn DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
 
-    rule #sortModule((A:TableDefn  DS:Defns => DS), sortedModule(... memsTables: (AS => A AS)))
-    rule #sortModule((A:MemoryDefn DS:Defns => DS), sortedModule(... memsTables: (AS => A AS)))
+    rule #sortModule((A:TableDefn  DS:Defns => DS), #module(... memsTables: (AS => A AS)))
+    rule #sortModule((A:MemoryDefn DS:Defns => DS), #module(... memsTables: (AS => A AS)))
 
-    rule #sortModule((E:ExportDefn DS:Defns => DS), sortedModule(... exports: (ES => E ES)))
+    rule #sortModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
 
-    rule #sortModule((I:DataDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
-    rule #sortModule((I:ElemDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
+    rule #sortModule((I:DataDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
+    rule #sortModule((I:ElemDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
 
-    rule #sortModule((S:StartDefn  DS:Defns => DS), sortedModule(... start: (_ => S .Defns)))
+    rule #sortModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
@@ -1486,7 +1490,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
  // -------------------------------------------------------
     rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
 
-    rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
+    rule <k> #module(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
           => TS ~> IS ~> FGS ~> AS ~> ES ~> INIS ~> S
          ...
          </k>
