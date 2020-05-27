@@ -310,7 +310,7 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     syntax TableSpec  ::= InlineExport TableSpec
  // --------------------------------------------
     rule #unfoldDefns(( table EXPO:InlineExport SPEC:TableSpec ) DS, I)
-      => #unfoldDefns(( table #freshId(I) EXPO SPEC ), I +Int 1)
+      => #unfoldDefns(( table #freshId(I) EXPO SPEC ) DS, I +Int 1)
 
     rule #unfoldDefns(( table ID:Identifier ( export ENAME ) SPEC:TableSpec ) DS, I)
       => ( export ENAME ( table ID ) ) #unfoldDefns(( table ID SPEC ) DS, I)
