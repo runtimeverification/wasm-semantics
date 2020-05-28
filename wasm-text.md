@@ -259,40 +259,10 @@ The only requirements are that all imports must precede all other definitions, a
     syntax Stmt       ::= ModuleDecl
     syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
  // -------------------------------------------------------
-
-    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
-                        | #sortModule ( Defns , ModuleDecl ) [function]
- // -------------------------------------------------------------------
-    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), #emptyModule(OID))
-
-    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
-
-    rule #sortModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
-
-    rule #sortModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
-
-    rule #sortModule((X:FuncDefn   DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
-    rule #sortModule((X:GlobalDefn DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
-
-    rule #sortModule((A:TableDefn  DS:Defns => DS), #module(... memsTables: (AS => A AS)))
-    rule #sortModule((A:MemoryDefn DS:Defns => DS), #module(... memsTables: (AS => A AS)))
-
-    rule #sortModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
-
-    rule #sortModule((I:DataDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
-    rule #sortModule((I:ElemDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
-
-    rule #sortModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
-
-    syntax Defns ::= #reverse(Defns, Defns) [function]
- // --------------------------------------------------
-    rule #reverse(       .Defns  , ACC) => ACC
-    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
 ```
 
 Desugaring
 ----------
-
 The text format is one of the concrete formats of Wasm.
 Every concrete format maps to a common structure, described as an abstract syntax.
 The function `text2abstract` is a partial function which maps valid programs in the text format to the abstract format.
@@ -409,7 +379,49 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
+### Sorting Modules
+
+The text format allows definitions to appear in any order in a module.
+In the abstract format, the module is a record, one for each type of definition.
+The following functions convert the text format module, given as a list of definitions, into the abstract format.
+In doing so, the respective ordering of all types of definitions are preserved.
+
+```k
+    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
+                        | #sortModule ( Defns , ModuleDecl ) [function]
+ // -------------------------------------------------------------------
+    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), #emptyModule(OID))
+
+    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
+
+    rule #sortModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
+
+    rule #sortModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
+
+    rule #sortModule((X:FuncDefn   DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
+    rule #sortModule((X:GlobalDefn DS:Defns => DS), #module(... funcsGlobals: (FGS => X FGS)))
+
+    rule #sortModule((A:TableDefn  DS:Defns => DS), #module(... memsTables: (AS => A AS)))
+    rule #sortModule((A:MemoryDefn DS:Defns => DS), #module(... memsTables: (AS => A AS)))
+
+    rule #sortModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
+
+    rule #sortModule((I:DataDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
+    rule #sortModule((I:ElemDefn   DS:Defns => DS), #module(... inits: (IS => I IS)))
+
+    rule #sortModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
+
+    syntax Defns ::= #reverse(Defns, Defns) [function]
+ // --------------------------------------------------
+    rule #reverse(       .Defns  , ACC) => ACC
+    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
+```
+
 ## Replacing Identifiers and Unfolding Instructions
+
+The desugaring is done on the module level.
+First, if the program is just a list of definitions, that's an abbreviation for a single module.
+If not, we distribute the text to abstract transformation out over all the statements in the file.
 
 **TODO:**
 
