@@ -72,9 +72,9 @@
   </wasm>
 #And
   {
-    notBool N ==Int 0
+    false
   #Equals
-    true
+    N ==Int 0
   }
 #And
   {

@@ -7,6 +7,7 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 ```k
 module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
+    imports BYTES-KORE
 ```
 
 Basic logic
@@ -288,28 +289,6 @@ Lookups
 Memory
 ------
 
-Memory is represented by a byte map, where each key is an index and each entry either empty (0) or a byte (1 to 255).
-This invariant must be maintained by the semantics, and any failure to maintain it is a breach of the Wasm specification.
-We want to make the variant explicit, so we introduce the following helper, which simply signifies that we assume a well-formed byte map:
-
-```k
-    syntax Bool ::= #isByteMap ( ByteMap ) [function, functional, smtlib(isByteMap)]
-    syntax Bool ::= #isByte    ( KItem   ) [function, functional, smtlib(isByte)]
- // -----------------------------------------------------------------------------
-    rule #isByteMap(ByteMap <| .Map         |>) => true
-    rule #isByteMap(ByteMap <| (_ |-> V) M  |>) => #isByte(V) andBool #isByteMap(ByteMap <| M |>)
-    rule #isByteMap(ByteMap <| M [ _ <- V ] |>) => #isByte(V) andBool #isByteMap(ByteMap <| M |>)
-
-    rule #isByte(I:Int) => true
-      requires 0 <=Int I
-       andBool I <=Int 255
-    rule #isByte(I:Int) => false
-      requires notBool (0 <=Int I
-                        andBool I <=Int 255)
-    rule #isByte(I:KItem) => false
-      requires notBool isInt(I)
-```
-
 Bounds on `#getRange`:
 
 ```k
@@ -330,7 +309,6 @@ Bounds on `#getRange`:
 
 ```k
     rule #wrap(MAX_WIDTH, #getRange(BM, ADDR, WIDTH)) => #getRange(BM, ADDR, minInt(MAX_WIDTH, WIDTH))
-      requires #isByteMap(BM)
       [simplification]
 ```
 
@@ -341,13 +319,11 @@ Arithmetic over `#getRange`:
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
        andBool 8 <=Int SHIFT
-       andBool #isByteMap(BM)
       [simplification]
 
     rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH -Int 1) modInt MAX
       requires 0 <Int MAX andBool 0 <Int WIDTH
        andBool 2 ^Int (8 *Int (WIDTH -Int 1)) modInt MAX ==Int 0
-       andBool #isByteMap(BM)
       [simplification]
 ```
 
