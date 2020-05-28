@@ -264,7 +264,7 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ### Unfolding Abbreviations
 
 ```k
-    syntax Stmts ::= unfoldStmts  ( Stmts )
+    syntax Stmts ::= unfoldStmts  ( Stmts )       [function]
     syntax Defns ::= unfoldDefns  ( Defns )       [function]
                    | #unfoldDefns ( Defns , Int ) [function]
  // --------------------------------------------------------
