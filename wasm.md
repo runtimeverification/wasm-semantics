@@ -1444,20 +1444,20 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= #module ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, memsTables: Defns, exports: Defns, inits: Defns, start: Defns )
- // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    syntax ModuleDecl ::= #module ( id: OptionalId, types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns)
+ // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
  // ---------------------------------------------------------------------
-    rule #emptyModule(OID) => #module(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, memsTables: .Defns, exports: .Defns, inits: .Defns, start: .Defns)
+    rule #emptyModule(OID) =>  #module (... id: OID, types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns)
 ```
 
 A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    rule <k> #module(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
-          => TS ~> IS ~> FGS ~> AS ~> ES ~> INIS ~> S
+    rule <k> #module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES)
+          => TS ~> IS ~> FS ~> GS ~> MS ~> TABS ~> ES ~> EL ~> DAT ~> S
          ...
          </k>
          <curModIdx> _ => NEXT </curModIdx>
