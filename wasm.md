@@ -85,7 +85,6 @@ Configuration
           <nextGlobAddr> 0 </nextGlobAddr>
         </mainStore>
         <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
-        <nextFreshId> 0 </nextFreshId>
       </wasm>
 ```
 
