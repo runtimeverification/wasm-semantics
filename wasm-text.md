@@ -389,27 +389,27 @@ In doing so, the respective ordering of all types of definitions are preserved.
 ```k
     syntax Stmts ::= structureModules ( Stmts ) [function]
  // ------------------------------------------------------
-    rule structureModules((module OID:OptionalId DS) SS) => sortModule((module OID DS)) structureModules(SS)
+    rule structureModules((module OID:OptionalId DS) SS) => structureModule((module OID DS)) structureModules(SS)
     rule structureModules(.Stmts) => .Stmts
     rule structureModules(S SS) => S strucutreModules(SS) [owise]
 
-    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
-                        | #sortModule ( Defns , ModuleDecl ) [function]
- // -------------------------------------------------------------------
-    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), #emptyModule(OID))
+    syntax ModuleDecl ::=  structureModule ( Defns , OptionalId ) [function]
+                        | #structureModule ( Defns , ModuleDecl ) [function]
+ // ------------------------------------------------------------------------
+    rule structureModule(DEFNS, OID) => #structureModule(#reverse(DEFNS, .Defns), #emptyModule(OID))
 
-    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
+    rule #structureModule(.Defns, SORTED_MODULE) => SORTED_MODULE
 
-    rule #sortModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
-    rule #sortModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
-    rule #sortModule((X:FuncDefn   DS:Defns => DS), #module(... funcs: (FS => X FS)))
-    rule #sortModule((X:GlobalDefn DS:Defns => DS), #module(... globals: (GS => X GS)))
-    rule #sortModule((T:TableDefn  DS:Defns => DS), #module(... tables: (TS => T TS)))
-    rule #sortModule((M:MemoryDefn DS:Defns => DS), #module(... mems: (MS => M MS)))
-    rule #sortModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
-    rule #sortModule((I:DataDefn   DS:Defns => DS), #module(... data: (IS => I IS)))
-    rule #sortModule((I:ElemDefn   DS:Defns => DS), #module(... elem: (IS => I IS)))
-    rule #sortModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
+    rule #structureModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
+    rule #structureModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
+    rule #structureModule((X:FuncDefn   DS:Defns => DS), #module(... funcs: (FS => X FS)))
+    rule #structureModule((X:GlobalDefn DS:Defns => DS), #module(... globals: (GS => X GS)))
+    rule #structureModule((T:TableDefn  DS:Defns => DS), #module(... tables: (TS => T TS)))
+    rule #structureModule((M:MemoryDefn DS:Defns => DS), #module(... mems: (MS => M MS)))
+    rule #structureModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
+    rule #structureModule((I:DataDefn   DS:Defns => DS), #module(... data: (IS => I IS)))
+    rule #structureModule((I:ElemDefn   DS:Defns => DS), #module(... elem: (IS => I IS)))
+    rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
