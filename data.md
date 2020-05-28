@@ -497,21 +497,12 @@ Byte Map
 --------
 
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
-To avoid storing many zeros in what may be sparse memory, we implement memory as maps, and store only non-zero bytes.
-The maps store integers, but maintains the invariant that each stored integer is between 1 and 255, inclusive.
-We make a `ByteMap` sort so that the following functions only make sense over this sort.
-However, `ByteMap` is just a wrapper around regular `Map`s.
-
-```k
-    syntax ByteMap ::= "ByteMap" "<|" Map "|>"
- // ------------------------------------------
-```
 
 `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax ByteMap ::= #setRange(ByteMap, Int, Int, Int) [function, functional, smtlib(setRange)]
- // ---------------------------------------------------------------------------------------------
+    syntax Bytes ::= #setRange(Bytes, Int, Int, Int) [function, functional, smtlib(setRange)]
+ // -----------------------------------------------------------------------------------------
     rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
     rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
       [concrete]
@@ -521,34 +512,34 @@ However, `ByteMap` is just a wrapper around regular `Map`s.
 The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Int ::= #getRange (ByteMap, Int , Int) [function, functional, smtlib(getRange)]
- // --------------------------------------------------------------------------------------
+    syntax Int ::= #getRange(Bytes, Int, Int) [function, functional, smtlib(getRange)]
+ // ----------------------------------------------------------------------------------
     rule #getRange( _, ADDR, WIDTH) => 0                                                                       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
     rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) +Int (#getRange(BM, ADDR +Int 1, WIDTH -Int 1) *Int 256) requires          0 <Int WIDTH andBool 0 <=Int ADDR
       [concrete]
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
-`#set` sets a key in a map, removing the key if the value is 0.
+`#set` sets a key in a map, extending the map when necessary, but only when setting non-zero values.
+`#set` is total made total by ignoring invalid setting operations, i.e. trying to set an non-byte value or a negative key.
 
 ```k
-    syntax Int     ::= #get (ByteMap , Int     ) [function, functional, smtlib(mapGet)]
-    syntax ByteMap ::= #set (ByteMap , Int, Int) [function, functional, smtlib(mapSet)]
- // -----------------------------------------------------------------------------------
-    rule #get( ByteMap <| M |>, KEY ) => {M [KEY]}:>Int requires         KEY inBytes ByteMap <| M |> [concrete]
-    rule #get( ByteMap <| M |>, KEY ) => 0              requires notBool KEY inBytes ByteMap <| M |>
+    syntax Int   ::= #get (Bytes, Int     ) [function, functional, smtlib(bytesGet)]
+    syntax Bytes ::= #set (Bytes, Int, Int) [function, functional, smtlib(bytesSet)]
+ // --------------------------------------------------------------------------------
+    rule #get(BM, KEY) => BM [KEY] requires         KEY inBytes BM [concrete]
+    rule #get(BM, KEY) => 0        requires notBool KEY inBytes BM
 
-    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- undef] |> requires notBool (VAL =/=Int 0 andBool isByte(VAL))
-    rule #set( ByteMap <| M |>, KEY, VAL ) => ByteMap <| M [KEY <- VAL]   |> requires          VAL =/=Int 0 andBool isByte(VAL)  [concrete]
+    rule #set(BM, KEY, VAL) => BM                                               requires notBool (isByte(VAL) andBool 0 <=Int KEY)
+    rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                requires          isByte(VAL) andBool KEY inBytes BM
+    rule #set(BM, KEY, VAL) => BM                                               requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool         VAL ==Int 0
+    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, KEY +Int 1, 0), KEY, VAL) requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool notBool VAL ==Int 0 [concrete]
 
-    syntax Bool ::= isByte ( Int )        [function, functional, smtlib(isByte)]
-                  | Int "inBytes" ByteMap [function, functional, smtlib(inBytes)]
- // -----------------------------------------------------------------------------
-    rule isByte(I)                  => 0 <=Int I andBool I <Int 256
-    rule I inBytes ByteMap <| BM |> => false requires notBool I in_keys(BM)
-    rule I inBytes ByteMap <| BM |> => false requires         I in_keys(BM) andBool notBool isInt(BM[I])
-    rule I inBytes ByteMap <| BM |> => false requires         I in_keys(BM) andBool         isInt(BM[I]) andBool notBool isByte({BM[I]}:>Int)
-    rule I inBytes ByteMap <| BM |> => true  requires         I in_keys(BM) andBool         isInt(BM[I]) andBool         isByte({BM[I]}:>Int)
+    syntax Bool ::= isByte ( Int )      [function, functional, smtlib(isByte)]
+                  | Int "inBytes" Bytes [function, functional, smtlib(inBytes)]
+ // ---------------------------------------------------------------------------
+    rule isByte(I)    => 0 <=Int I andBool I <Int 256
+    rule I inBytes BM => 0 <=Int I andBool I <Int lengthBytes(BM)
 ```
 
 External Values
