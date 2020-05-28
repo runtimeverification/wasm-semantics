@@ -264,9 +264,14 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ### Unfolding Abbreviations
 
 ```k
+    syntax Stmts ::= unfoldStmts  ( Stmts )
     syntax Defns ::= unfoldDefns  ( Defns )       [function]
                    | #unfoldDefns ( Defns , Int ) [function]
  // --------------------------------------------------------
+    rule unfoldStmts(( module OID:OptionalId DS) SS) => ( module OID unfoldDefns(DS) ) unfoldStmts(SS)
+    rule unfoldStmts(.Stmts) => .Stmts
+    rule unfoldStmts(S SS) => S unfoldStmts(SS) [owise]
+
     rule unfoldDefns(DS) => #unfoldDefns(DS, 0)
     rule #unfoldDefns(.Defns, _) => .Defns
     rule #unfoldDefns(D:Defn DS, I) => D #unfoldDefns(DS, I) [owise]
@@ -406,9 +411,9 @@ Since we do not have polymorphic functions available, we define one function per
     syntax LocalDecl ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
  // -----------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
-    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(SS) [owise]
+    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(unfoldStmts(SS)) [owise]
 
-    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(unfoldDefns(DS)) )
+    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
