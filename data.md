@@ -520,7 +520,8 @@ The function interprets the range of bytes as little-endian.
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
-`#set` sets a key in a map, removing the key if the value is 0.
+`#set` sets a key in a map, extending the map when necessary, but only when setting non-zero values.
+`#set` is total made total by ignoring invalid setting operations, i.e. trying to set an non-byte value or a negative key.
 
 ```k
     syntax Int   ::= #get (Bytes, Int     ) [function, functional, smtlib(bytesGet)]
