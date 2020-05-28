@@ -387,6 +387,12 @@ The following functions convert the text format module, given as a list of defin
 In doing so, the respective ordering of all types of definitions are preserved.
 
 ```k
+    syntax Stmts ::= structureModules ( Stmts ) [function]
+ // ------------------------------------------------------
+    rule structureModules((module OID:OptionalId DS) SS) => sortModule((module OID DS)) structureModules(SS)
+    rule structureModules(.Stmts) => .Stmts
+    rule structureModules(S SS) => S strucutreModules(SS) [owise]
+
     syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
                         | #sortModule ( Defns , ModuleDecl ) [function]
  // -------------------------------------------------------------------
@@ -457,7 +463,7 @@ Since we do not have polymorphic functions available, we define one function per
     syntax LocalDecl ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
  // -----------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
-    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(unfoldStmts(SS)) [owise]
+    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(structureModules(unfoldStmts(SS))) [owise]
 
     rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
