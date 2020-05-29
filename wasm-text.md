@@ -389,9 +389,9 @@ In doing so, the respective ordering of all types of definitions are preserved.
 ```k
     syntax Stmts ::= structureModules ( Stmts ) [function]
  // ------------------------------------------------------
-    rule structureModules((module OID:OptionalId DS) SS) => structureModule((module OID DS)) structureModules(SS)
+    rule structureModules((module OID:OptionalId DS) SS) => structureModule(DS, OID) structureModules(SS)
     rule structureModules(.Stmts) => .Stmts
-    rule structureModules(S SS) => S strucutreModules(SS) [owise]
+    rule structureModules(S SS) => S structureModules(SS) [owise]
 
     syntax ModuleDecl ::=  structureModule ( Defns , OptionalId ) [function]
                         | #structureModule ( Defns , ModuleDecl ) [function]
@@ -465,7 +465,8 @@ Since we do not have polymorphic functions available, we define one function per
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
     rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(structureModules(unfoldStmts(SS))) [owise]
 
-    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
+    // TODO: Write code to distribute the #t2aDefns over module.
+    rule #t2aStmt<C>(#module(... funcs: FS => #t2aDefns(FS)))
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
