@@ -60,7 +60,4 @@
   <deterministicMemoryGrowth>
     true
   </deterministicMemoryGrowth>
-  <nextFreshId>
-    0
-  </nextFreshId>
 </wasm >

@@ -92,23 +92,26 @@
 
 #clearConfig
 
-(func (export "foo") (param $a i32) (result i32)
+(func $foo (param $a i32) (result i32)
   local.get $a
 )
+(export "foo" (func $foo))
 
-(func (export "bar") (param $a i32) (result i32)
+(func $bar (param $a i32) (result i32)
   block (result i32)
     local.get $a
   end
 )
+ (export "bar" (func $bar))
 
-(func (export "baz") (param $a i32) (result i32)
+(func $baz (param $a i32) (result i32)
   loop (result i32)
     local.get $a
   end
 )
+(export "baz" (func $baz))
 
-(func (export "baf") (param $a i32) (result i32)
+(func $baf (param $a i32) (result i32)
   i32.const 1
   if (result i32)
     local.get $a
@@ -116,8 +119,9 @@
     local.get $a
   end
 )
+(export "baf" (func $baf))
 
-(func (export "bag") (param $a i32) (result i32)
+(func $bag (param $a i32) (result i32)
   i32.const 0
   if (result i32)
     local.get $a
@@ -125,6 +129,7 @@
     local.get $a
   end
 )
+(export "bag" (func $bag))
 
 (func $far (param $a i32) (result i32) (local $b i64)
   local.get $a

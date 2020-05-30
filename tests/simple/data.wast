@@ -1,7 +1,11 @@
 ;; Instantiating with data
 
+(module
 (memory $an-ident (data "WASM" "2\2E0"))
+)
+
 (memory.size)
+
 #assertTopStack < i32 > 1 "size of stack"
 #assertMemoryData (0, 87) "text to ascii W"
 #assertMemoryData (1, 65) "text to ascii A"
@@ -14,8 +18,10 @@
 
 #clearConfig
 
+(module
 (memory 1 1)
 (data (offset (i32.const 100)) "W" "AS" "M")
+)
 #assertMemoryData (100, 87) "text to ascii W"
 #assertMemoryData (101, 65) "text to ascii A"
 #assertMemoryData (102, 83) "text to ascii S"
@@ -24,17 +30,22 @@
 
 #clearConfig
 
+(module
 (memory (data))
-
+)
 #clearConfig
 
+(module
 (memory (data "W"))
+)
 #assertMemoryData (0, 87) "text to ascii W"
 #assertMemory 0 1 1 "memorys string length"
 
 #clearConfig
 
+(module
 (memory (data "\"\t\n\n\t\'\"\r\u{090A}"))
+)
 #assertMemoryData (0, 34) "text to ascii special"
 #assertMemoryData (1, 9) "text to ascii special"
 #assertMemoryData (2, 10) "text to ascii special"

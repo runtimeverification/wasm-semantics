@@ -66,9 +66,6 @@
     <deterministicMemoryGrowth>
       _70
     </deterministicMemoryGrowth>
-    <nextFreshId>
-      _80
-    </nextFreshId>
   </wasm>
 #And
   {

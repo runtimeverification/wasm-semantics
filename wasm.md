@@ -85,7 +85,6 @@ Configuration
           <nextGlobAddr> 0 </nextGlobAddr>
         </mainStore>
         <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
-        <nextFreshId> 0 </nextFreshId>
       </wasm>
 ```
 
@@ -1256,10 +1255,6 @@ The `data` initializer simply puts these bytes into the specified memory, starti
            <mdata> DATA => #setRange(DATA, OFFSET, Bytes2Int(DSBYTES, LE, Unsigned), lengthBytes(DSBYTES)) </mdata>
            ...
          </memInst>
-
-    syntax Int ::= #lengthDataPages ( DataString ) [function]
- // ---------------------------------------------------------
-    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
 
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------
