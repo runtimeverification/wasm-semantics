@@ -55,60 +55,84 @@ $(K_JAR):
 # Building Definition
 # -------------------
 
-MAIN_MODULE        := WASM-TEST
-MAIN_SYNTAX_MODULE := WASM-TEST-SYNTAX
-MAIN_DEFN_FILE     := test
+SOURCE_FILES       := data         \
+                      kwasm-lemmas \
+                      numeric      \
+                      test         \
+                      wasm         \
+                      wasm-text    \
+                      wrc20
+EXTRA_SOURCE_FILES :=
+ALL_FILES          := $(patsubst %, %.k, $(SOURCE_FILES) $(EXTRA_SOURCE_FILES))
 
-wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k wrc20.k
+defn:  defn-haskell defn-llvm
+build: build-llvm build-haskell
 
-llvm_dir    := $(DEFN_DIR)/llvm
-haskell_dir := $(DEFN_DIR)/haskell
+KOMPILE_OPTS :=
 
-llvm_defn    := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
-haskell_defn := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
+ifneq (,$(RELEASE))
+    KOMPILE_OPTS += -O3
+endif
 
-llvm_kompiled    := $(llvm_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
-haskell_kompiled := $(haskell_dir)/$(MAIN_DEFN_FILE)-kompiled/definition.kore
+LLVM_KOMPILE_OPTS :=
 
-# Tangle definition from *.md files
+ifeq (,$(RELEASE))
+    LLVM_KOMPILE_OPTS += -g
+endif
 
-defn: defn-haskell defn-llvm
-defn-llvm: $(llvm_defn)
-defn-haskell: $(haskell_defn)
+HASKELL_KOMPILE_OPTS :=
+
+KOMPILE_LLVM := kompile --debug --backend llvm            \
+                $(KOMPILE_OPTS)                           \
+                $(addprefix -ccopt ,$(LLVM_KOMPILE_OPTS))
+
+KOMPILE_HASKELL := kompile --debug --backend haskell \
+                   $(KOMPILE_OPTS)                   \
+                   $(HASKELL_KOMPILE_OPTS)
+
+### LLVM
+
+llvm_dir           := $(DEFN_DIR)/llvm
+llvm_files         := $(patsubst %, $(llvm_dir)/%, $(ALL_FILES))
+llvm_main_module   := WASM-TEST
+llvm_syntax_module := $(llvm_main_module)-SYNTAX
+llvm_main_file     := test
+llvm_kompiled      := $(llvm_dir)/$(llvm_main_file)-kompiled/interpreter
+
+defn-llvm:  $(llvm_defn)
+build-llvm: $(llvm_kompiled)
 
 $(llvm_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
+$(llvm_kompiled): $(llvm_files)
+	$(KOMPILE_LLVM) $(llvm_dir)/$(llvm_main_file).k \
+	    --directory $(llvm_dir) -I $(llvm_dir)      \
+	    --main-module $(llvm_main_module)           \
+	    --syntax-module $(llvm_syntax_module)
+
+### Haskell
+
+haskell_dir           := $(DEFN_DIR)/haskell
+haskell_files         := $(patsubst %, $(haskell_dir)/%, $(ALL_FILES))
+haskell_main_module   := WASM-TEST
+haskell_syntax_module := $(haskell_main_module)-SYNTAX
+haskell_main_file     := test
+haskell_kompiled      := $(haskell_dir)/$(haskell_main_file)-kompiled/interpreter
+
+defn-haskell:  $(haskell_defn)
+build-haskell: $(haskell_kompiled)
+
 $(haskell_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-# Build definitions
-
-KOMPILE_OPTIONS :=
-
-ifneq $(,$(RELEASE))
-    KOMPILE_OPTIONS += -O3
-else
-    KOMPILE_OPTIONS += -ccopt -g
-endif
-
-build: build-llvm build-haskell
-build-llvm:    $(llvm_kompiled)
-build-haskell: $(haskell_kompiled)
-
-$(llvm_kompiled): $(llvm_defn)
-	kompile --backend llvm                                                    \
-	    --directory $(llvm_dir) -I $(llvm_dir)                                \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
-	    $(KOMPILE_OPTIONS)
-
-$(haskell_kompiled): $(haskell_defn)
-	kompile --backend haskell                                                 \
-	    --directory $(haskell_dir) -I $(haskell_dir)                          \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
-	    $(KOMPILE_OPTIONS)
+$(haskell_kompiled): $(haskell_files)
+	$(KOMPILE_HASKELL) $(haskell_dir)/$(haskell_main_file).k  \
+	    --directory $(haskell_dir) -I $(haskell_dir)          \
+	    --main-module $(haskell_main_module)                  \
+	    --syntax-module $(haskell_syntax_module)
 
 # Testing
 # -------
@@ -121,7 +145,7 @@ TEST_SYMBOLIC_BACKEND := haskell
 
 KPROVE_MODULE := KWASM-LEMMAS
 
-KPROVE_OPTIONS ?=
+KPROVE_OPTS ?=
 
 tests/proofs/functions-spec.k.prove: KPROVE_MODULE = FUNCTIONS-LEMMAS
 tests/proofs/wrc20-spec.k.prove:     KPROVE_MODULE = WRC20-LEMMAS
@@ -148,7 +172,7 @@ tests/%.parse: tests/%
 
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) \
-	$(KPROVE_OPTIONS)
+	$(KPROVE_OPTS)
 
 tests/%.cannot-prove: tests/%
 	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
