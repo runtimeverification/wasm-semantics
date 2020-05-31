@@ -119,7 +119,7 @@ haskell_files         := $(patsubst %, $(haskell_dir)/%, $(ALL_FILES))
 haskell_main_module   := WASM-TEST
 haskell_syntax_module := $(haskell_main_module)-SYNTAX
 haskell_main_file     := test
-haskell_kompiled      := $(haskell_dir)/$(haskell_main_file)-kompiled/interpreter
+haskell_kompiled      := $(haskell_dir)/$(haskell_main_file)-kompiled/definition.kore
 
 defn-haskell:  $(haskell_defn)
 build-haskell: $(haskell_kompiled)
