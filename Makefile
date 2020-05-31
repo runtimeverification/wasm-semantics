@@ -7,7 +7,7 @@ DEFN_DIR  := $(BUILD_DIR)/defn
 
 K_SUBMODULE := $(DEPS_DIR)/k
 ifneq (,$(wildcard deps/k/k-distribution/target/release/k/bin/*))
-  K_RELEASE ?= $(K_SUBMODULE)/k-distribution/target/release/k
+  K_RELEASE ?= $(abspath $(K_SUBMODULE)/k-distribution/target/release/k)
 else
   K_RELEASE ?= $(dir $(shell which kompile))..
 endif
