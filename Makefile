@@ -37,7 +37,6 @@ all: build
 
 clean:
 	rm -rf $(BUILD_DIR)
-	git submodule update --init --recursive
 
 # Build Dependencies (K Submodule)
 # --------------------------------
@@ -45,12 +44,8 @@ clean:
 deps: $(K_SUBMODULE)/make.timestamp $(TANGLER)
 
 $(K_SUBMODULE)/make.timestamp:
-	git submodule update --init --recursive
 	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
 	touch $(K_SUBMODULE)/make.timestamp
-
-$(TANGLER):
-	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
 
 # Building Definition
 # -------------------
@@ -119,10 +114,6 @@ KPROVE_OPTIONS ?=
 
 tests/proofs/functions-spec.k.prove: KPROVE_MODULE = FUNCTIONS-LEMMAS
 tests/proofs/wrc20-spec.k.prove:     KPROVE_MODULE = WRC20-LEMMAS
-
-tests/%/make.timestamp:
-	git submodule update --init -- tests/$*
-	touch $@
 
 test: test-execution test-prove
 
