@@ -71,7 +71,7 @@ build: build-llvm build-haskell
 KOMPILE_OPTS :=
 
 ifneq (,$(RELEASE))
-    KOMPILE_OPTS += -O3
+    KOMPILE_OPTS += -O2
 endif
 
 LLVM_KOMPILE_OPTS :=
