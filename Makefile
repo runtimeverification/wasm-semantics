@@ -45,11 +45,12 @@ clean:
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(K_SUBMODULE)/make.timestamp $(TANGLER)
+K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAPSHOT.jar
 
-$(K_SUBMODULE)/make.timestamp:
+deps: $(K_JAR) $(TANGLER)
+
+$(K_JAR):
 	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
-	touch $(K_SUBMODULE)/make.timestamp
 
 # Building Definition
 # -------------------
