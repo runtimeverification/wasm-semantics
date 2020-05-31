@@ -15,7 +15,11 @@ K_BIN := $(K_RELEASE)/bin
 K_LIB := $(K_RELEASE)/lib
 export K_RELEASE
 
-K_BUILD_TYPE := Debug
+ifneq ($(RELEASE),)
+    K_BUILD_TYPE := Release
+else
+    K_BUILD_TYPE := Debug
+endif
 
 PATH := $(K_BIN):$(PATH)
 export PATH
@@ -81,7 +85,13 @@ $(haskell_dir)/%.k: %.md $(TANGLER)
 
 # Build definitions
 
-KOMPILE_OPTIONS    :=
+KOMPILE_OPTIONS :=
+
+ifneq $(,$(RELEASE))
+    KOMPILE_OPTIONS += -O3
+else
+    KOMPILE_OPTIONS += -ccopt -g
+endif
 
 build: build-llvm build-haskell
 build-llvm:    $(llvm_kompiled)
