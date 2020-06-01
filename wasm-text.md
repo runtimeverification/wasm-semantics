@@ -465,8 +465,7 @@ Since we do not have polymorphic functions available, we define one function per
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
     rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(structureModules(unfoldStmts(SS))) [owise]
 
-    // TODO: Write code to distribute the #t2aDefns over module.
-    rule #t2aStmt<C>(#module(... funcs: FS => #t2aDefns(FS)))
+    rule #t2aStmt<C>(#module(... funcs: FS => #t2aDefns<C>(FS)))
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
