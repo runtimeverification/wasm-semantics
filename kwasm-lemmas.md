@@ -8,6 +8,7 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
     imports BYTES-KORE
+    imports INT-SYMBOLIC
 ```
 
 Basic logic
@@ -38,11 +39,6 @@ Not however that K defines `X modInt N ==Int X modInt (-N)`.
 These are given in pure modulus form, and in form with `#wrap`, which is modulus with a power of 2 for positive `N`.
 
 ```k
-    rule X modInt N => X
-      requires 0 <=Int X
-       andBool X  <Int N
-      [simplification]
-
     rule #wrap(N, X) => X
       requires 0 <=Int N
        andBool 0 <=Int X
@@ -248,17 +244,6 @@ The argument for the left shift is similar.
 Proof: These follow from the fact that shifting left by `n` bits is simply multiplying by `2^n`, and from previously proven rules of modular arithmetic.
 
 ### Basic Operations
-
-```k
-    rule X  +Int 0 => X [simplification]
-    rule 0  +Int X => X [simplification]
-    rule X <<Int 0 => X [simplification]
-    rule 0 <<Int X => 0 [simplification]
-    rule X >>Int 0 => X [simplification]
-    rule 0 >>Int X => 0 [simplification]
-
-    rule (X +Int N) +Int M => X +Int (N +Int M) [concrete(N, M), symbolic(X), simplification]
-```
 
 When reasoning about `#chop`, it's often the case that the precondition to the proof contains the information needed to indicate no overflow.
 In this case, it's simpler (and safe) to simply discard the `#chop`, instead of evaluating it.
