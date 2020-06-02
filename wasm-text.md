@@ -456,19 +456,22 @@ The program is traversed in full once, context beting gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
 
 ```k
-    syntax Stmt      ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
-    syntax Defn      ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
-    syntax FuncSpec  ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
-    syntax TypeUse   ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
- // -----------------------------------------------------------------------------------
+    syntax Stmt       ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
+    syntax ModuleDecl ::= "#t2aModuleDecl" "<" Context ">" "(" ModuleDecl ")" [function]
+    syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
+    syntax FuncSpec   ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
+    syntax TypeUse    ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl  ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
+ // ------------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
     rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(structureModules(unfoldStmts(SS))) [owise]
 
-    rule #t2aStmt<C>(#module(... funcs: FS => #t2aDefns<C>(FS)))
+    rule #t2aStmt<C>(M:ModuleDecl) => #t2aModuleDecl<C>(M)
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
+
+    rule #t2aModuleDecl<C>(#module(... funcs: FS) #as M) => #updateFuncs(M, #t2aDefns<C>(FS))
 
     rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
     rule #t2aDefn<C>(D:Defn) => D [owise]
@@ -484,6 +487,17 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
     rule #t2aLocalDecl<C>(LD) => LD [owise]
+```
+
+Since we can't update record as we are evaluating a function, we use helper functions for this.
+
+```k
+    syntax ModuleDecl ::= #updateFuncs    ( ModuleDecl, Defns )       [function]
+                        | #updateFuncsAux ( ModuleDecl, Defns, Bool ) [function]
+ // ----------------------------------------------------------------------------
+    rule #updateFuncs(M, FS) => #updateFuncsAux(M, FS, false)
+    rule #updateFuncsAux(#module(... funcs: _ => FS), FS, false => true)
+    rule #updateFuncsAux(M, _ , true) => M
 ```
 
 ### Instructions
