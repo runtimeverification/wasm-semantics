@@ -639,6 +639,18 @@ They distribute the text-to-abstract functions above over lists.
 The following are helper functions for gathering and updating context.
 
 ```k
+    syntax Map ::= #idcFuncs    ( Defns, Defns      ) [function]
+                 | #idcFuncsAux ( Defns, Defns, Int ) [function]
+ // ------------------------------------------------------------
+    rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0)
+
+    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
+    rule #idcFuncsAux(I IS, FS, IDX) => #idcFuncsAux(IS, FS, IDX) [owise]
+
+    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
+    rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
+    rule #idcFuncsAux(.Defns, .Defns, _) => .Map
+
     syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                  | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
  // -------------------------------------------------------------------------
