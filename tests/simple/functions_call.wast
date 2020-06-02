@@ -26,7 +26,7 @@
     (return)
 )
 
-#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
+#assertFunction 1 [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
 #assertNextTypeIdx 1
 
 ;; Remove return statement
@@ -46,7 +46,7 @@
 (i32.const 0)
 (call_indirect (type $a-cool-type))
 #assertTopStack < i32 > 15 "call function 0 no return"
-#assertFunction $0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
+#assertFunction 2 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
 #assertNextTypeIdx 1
 
 ;; More complicated function with locals
@@ -61,7 +61,7 @@
 ( export "export-1" (func $1) )
 
 (assert_return (invoke "export-1" (i64.const 100) (i64.const 43) (i64.const 22)) (i64.const -121))
-#assertFunction $1 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
+#assertFunction 3 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
 #assertType 1 [ i64 i64 i64 ] -> [ i64 ]
 #assertNextTypeIdx 2
 
@@ -79,7 +79,7 @@
    )
 )
 (assert_return (invoke "out-of-order-type-declaration") (i32.const 7))
-#assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
+#assertFunction 0 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 #assertNextTypeIdx 2
 
 ;; Function with empty declarations of types
@@ -102,16 +102,18 @@
 )
 
 (assert_return (invoke "cool") (i64.const 10))
-#assertFunction $1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
+#assertFunction 1 [ i64 i64 ] -> [ i64 ] [ ] "empty type declarations"
 #assertNextTypeIdx 2
 
 ;; Function with just a name
 
-(func $3)
-(export "return-null" (func $3) )
+(module
+  (func $3)
+  (export "return-null" (func $3) )
+)
 (assert_return (invoke "return-null"))
 
-#assertFunction $3 [ ] -> [ ] [ ] "no domain/range or locals"
+#assertFunction 0 [ ] -> [ ] [ ] "no domain/range or locals"
 
 (module
     (func $add (export "add")
@@ -153,9 +155,10 @@
 (assert_return (invoke "sub" (i32.const 12) (i32.const 5)) (i32.const 7))
 (assert_return (invoke "xor" (i32.const 3) (i32.const 5)) (i32.const 6))
 
-#assertFunction $add [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
-#assertFunction $mul [ i32 i32 ] -> [ i32 ] [ ] "mul function typed correctly"
-#assertFunction $xor [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
+#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "add function typed correctly"
+#assertFunction 1 [ i32 i32 ] -> [ i32 ] [ ] "sub function typed correctly"
+#assertFunction 2 [ i32 i32 ] -> [ i32 ] [ ] "mul function typed correctly"
+#assertFunction 3 [ i32 i32 ] -> [ i32 ] [ ] "xor function typed correctly"
 #assertNextTypeIdx 1
 
 (module
@@ -193,8 +196,8 @@
 )
 
 (assert_return (invoke "nested-method-call") (i32.const 14247936))
-#assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
-#assertFunction $f1 [ i32 i32 ] -> [ i32 ] [ i32 ] "inner calling method"
+#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ i32 ] "inner calling method"
+#assertFunction 1 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
 
 (module
     (func $func (param i32 i32) (result i32) (local.get 0))
@@ -219,7 +222,7 @@
 (assert_return (invoke "cool-align-1" (i32.const 7) (i64.const 8) (i64.const 3)) (i32.const 7))
 (assert_return (invoke "cool-align-2" (i32.const 1) (i64.const 5) (i64.const 7)) (i32.const 1))
 
-#assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
+#assertFunction 0 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
 
 (module
   (func (export "foo") (result i32)
