@@ -470,9 +470,6 @@ Since we do not have polymorphic functions available, we define one function per
     syntax ModuleDecl ::= "#t2aModuleDecl" "<" Context ">" "(" ModuleDecl ")" [function]
     syntax ModuleDecl ::= "#t2aModule"     "<" Context ">" "(" ModuleDecl ")" [function]
     syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
-    syntax FuncSpec   ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
-    syntax TypeUse    ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl  ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
  // ------------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
     rule text2abstract(SS)       => #t2aStmts<#freshCtx()>(structureModules(unfoldStmts(SS))) [owise]
@@ -496,10 +493,17 @@ Since we do not have polymorphic functions available, we define one function per
                     , importDefns: IS
                     , exports: ES
                 )
+```
 
+#### Functions
+
+```k
     rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
-    rule #t2aDefn<C>(D:Defn) => D [owise]
 
+    syntax FuncSpec   ::= "#t2aFuncSpec"  "<" Context ">" "(" FuncSpec   ")" [function]
+    syntax TypeUse    ::= "#t2aTypeUse"   "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl  ::= "#t2aLocalDecl" "<" Context ">" "(" LocalDecl  ")" [function]
+ // -----------------------------------------------------------------------------------
     rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs)
       => #t2aTypeUse   <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
          #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
@@ -511,6 +515,12 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
     rule #t2aLocalDecl<C>(LD) => LD [owise]
+```
+
+#### Other Definitions
+
+```k
+    rule #t2aDefn<C>(D:Defn) => D [owise]
 ```
 
 ### Instructions
