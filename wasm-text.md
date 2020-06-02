@@ -529,6 +529,7 @@ Since we do not have polymorphic functions available, we define one function per
 ```k
     rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => ( start {FIDS[ID]}:>Int )
       requires ID in_keys(FIDS)
+    rule #t2aDefn<_>(( start I:Int )) => ( start I )
 ```
 
 #### Element Segments
@@ -549,6 +550,7 @@ Since we do not have polymorphic functions available, we define one function per
 ```k
     rule #t2aDefn<ctx(... funcIds: FIDS)>(( export ENAME ( func ID:Identifier ) )) => ( export ENAME (func {FIDS[ID]}:>Int) )
       requires ID in_keys(FIDS)
+    rule #t2aDefn<_>(( export ENAME ( func I:Int ) )) => ( export ENAME (func I) )
 ```
 
 #### Other Definitions
