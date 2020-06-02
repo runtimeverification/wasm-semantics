@@ -379,6 +379,15 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
+#### Element Segments
+
+```k
+    syntax ElemDefn ::= "(" "elem" Offset ElemSegment ")"
+ // -----------------------------------------------------
+    rule #unfoldDefns(( elem OFFSET:Offset ES ) DS, I)
+      => ( elem 0 OFFSET ES ) #unfoldDefns(DS, I)
+```
+
 ### Structuring Modules
 
 The text format allows definitions to appear in any order in a module.
@@ -520,6 +529,19 @@ Since we do not have polymorphic functions available, we define one function per
 ```k
     rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => ( start {FIDS[ID]}:>Int )
       requires ID in_keys(FIDS)
+```
+
+#### Element Segments
+
+```k
+    rule #t2aDefn<C>(( elem IDX:Index OFFSET ES )) => ( elem IDX OFFSET #t2aElemSegment<C>(ES) )
+
+    syntax ElemSegment ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
+ // ---------------------------------------------------------------------------------------
+    rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Identifier ES) => {FIDS[ID]}:>Int #t2aElemSegment<C>(ES)
+      requires ID in_keys(FIDS)
+    rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
+    rule #t2aElemSegment<C>(.ElemSegment) => .ElemSegment
 ```
 
 #### Other Definitions
