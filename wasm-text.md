@@ -396,7 +396,7 @@ In doing so, the respective ordering of all types of definitions are preserved.
     syntax ModuleDecl ::=  structureModule ( Defns , OptionalId ) [function]
                         | #structureModule ( Defns , ModuleDecl ) [function]
  // ------------------------------------------------------------------------
-    rule structureModule(DEFNS, OID) => #structureModule(#reverse(DEFNS, .Defns), #emptyModule(OID))
+    rule structureModule(DEFNS, OID) => #structureModule(#reverseDefns(DEFNS, .Defns), #emptyModule(OID))
 
     rule #structureModule(.Defns, SORTED_MODULE) => SORTED_MODULE
 
@@ -411,10 +411,10 @@ In doing so, the respective ordering of all types of definitions are preserved.
     rule #structureModule((I:ElemDefn   DS:Defns => DS), #module(... elem:        IS => I IS))
     rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start:       _  => S .Defns))
 
-    syntax Defns ::= #reverse(Defns, Defns) [function]
- // --------------------------------------------------
-    rule #reverse(       .Defns  , ACC) => ACC
-    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
+    syntax Defns ::= #reverseDefns(Defns, Defns) [function]
+ // -------------------------------------------------------
+    rule #reverseDefns(       .Defns  , ACC) => ACC
+    rule #reverseDefns(D:Defn DS:Defns, ACC) => #reverseDefns(DS, D ACC)
 ```
 
 ## Replacing Identifiers and Unfolding Instructions
