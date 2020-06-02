@@ -1323,9 +1323,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcIds> IDS' </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </funcAddrs>
-           <exports>   ... NAME |-> TFIDX                        ... </exports>
+           <funcAddrs> ... IDX |-> ADDR ... </funcAddrs>
+           <exports>   ... NAME |-> IDX ... </exports>
            ...
          </moduleInst>
          <funcDef>

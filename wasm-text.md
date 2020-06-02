@@ -500,7 +500,7 @@ Since we do not have polymorphic functions available, we define one function per
                     , data: DAT
                     , start: #t2aDefns<C>(S)
                     , importDefns: IS
-                    , exports: ES
+                    , exports: #t2aDefns<C>(ES)
                 )
 ```
 
@@ -544,6 +544,13 @@ Since we do not have polymorphic functions available, we define one function per
       requires ID in_keys(FIDS)
     rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
     rule #t2aElemSegment<C>(.ElemSegment) => .ElemSegment
+```
+
+#### Exports
+
+```k
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( export ENAME ( func ID:Identifier ) )) => ( export ENAME (func {FIDS[ID]}:>Int) )
+      requires ID in_keys(FIDS)
 ```
 
 #### Other Definitions
