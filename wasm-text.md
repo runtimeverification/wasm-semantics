@@ -409,7 +409,7 @@ In doing so, the respective ordering of all types of definitions are preserved.
     rule #structureModule((E:ExportDefn DS:Defns => DS), #module(... exports:     ES => E ES))
     rule #structureModule((I:DataDefn   DS:Defns => DS), #module(... data:        IS => I IS))
     rule #structureModule((I:ElemDefn   DS:Defns => DS), #module(... elem:        IS => I IS))
-    rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start:       _  => S .Defns))
+    rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start:   .Defns => S .Defns))
 
     syntax Defns ::= #reverseDefns(Defns, Defns) [function]
  // -------------------------------------------------------
