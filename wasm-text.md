@@ -535,6 +535,7 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aInstr<_>(return)      => return
 
     rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => call {FIDS[ID]}:>Int
+      requires ID in_keys(FIDS)
     rule #t2aInstr<_>                     (call I:Int)         => call I
 
     rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
@@ -551,8 +552,11 @@ Since we do not have polymorphic functions available, we define one function per
 
 ```k
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
 
     rule #t2aInstr<_>(local.get I:Int) => local.get I
     rule #t2aInstr<_>(local.set I:Int) => local.set I
