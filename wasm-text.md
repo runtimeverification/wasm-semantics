@@ -400,16 +400,16 @@ In doing so, the respective ordering of all types of definitions are preserved.
 
     rule #structureModule(.Defns, SORTED_MODULE) => SORTED_MODULE
 
-    rule #structureModule((T:TypeDefn   DS:Defns => DS), #module(... types: (TS => T TS)))
-    rule #structureModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: (IS => I IS)))
-    rule #structureModule((X:FuncDefn   DS:Defns => DS), #module(... funcs: (FS => X FS)))
-    rule #structureModule((X:GlobalDefn DS:Defns => DS), #module(... globals: (GS => X GS)))
-    rule #structureModule((T:TableDefn  DS:Defns => DS), #module(... tables: (TS => T TS)))
-    rule #structureModule((M:MemoryDefn DS:Defns => DS), #module(... mems: (MS => M MS)))
-    rule #structureModule((E:ExportDefn DS:Defns => DS), #module(... exports: (ES => E ES)))
-    rule #structureModule((I:DataDefn   DS:Defns => DS), #module(... data: (IS => I IS)))
-    rule #structureModule((I:ElemDefn   DS:Defns => DS), #module(... elem: (IS => I IS)))
-    rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start: (_ => S .Defns)))
+    rule #structureModule((T:TypeDefn   DS:Defns => DS), #module(... types:       TS => T TS))
+    rule #structureModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: IS => I IS))
+    rule #structureModule((X:FuncDefn   DS:Defns => DS), #module(... funcs:       FS => X FS))
+    rule #structureModule((X:GlobalDefn DS:Defns => DS), #module(... globals:     GS => X GS))
+    rule #structureModule((T:TableDefn  DS:Defns => DS), #module(... tables:      TS => T TS))
+    rule #structureModule((M:MemoryDefn DS:Defns => DS), #module(... mems:        MS => M MS))
+    rule #structureModule((E:ExportDefn DS:Defns => DS), #module(... exports:     ES => E ES))
+    rule #structureModule((I:DataDefn   DS:Defns => DS), #module(... data:        IS => I IS))
+    rule #structureModule((I:ElemDefn   DS:Defns => DS), #module(... elem:        IS => I IS))
+    rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start:       _  => S .Defns))
 
     syntax Defns ::= #reverse(Defns, Defns) [function]
  // --------------------------------------------------
