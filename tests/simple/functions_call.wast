@@ -41,7 +41,7 @@
 (i32.const 8)
 
 (table 1 funcref)
-(elem (i32.const 0) $0)
+(elem 0 (i32.const 0) 2)
 
 (i32.const 0)
 (call_indirect (type $a-cool-type))
