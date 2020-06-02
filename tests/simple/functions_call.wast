@@ -66,24 +66,26 @@
 #assertNextTypeIdx 2
 
 ;; Function with complicated declaration of types
-
-(func $2 result i32 param i32 i64 param i64 local i32
-    (local.get 0)
-    (return)
+(module
+  (func $2 result i32 param i32 i64 param i64 local i32
+      (local.get 0)
+      (return)
+  )
+  (func (export "out-of-order-type-declaration") (result i32)
+    (i32.const 7)
+    (i64.const 8)
+    (i64.const 5)
+    (call $2)
+   )
 )
-
-(i32.const 7)
-(i64.const 8)
-(i64.const 5)
-(call $2)
-#assertTopStack < i32 > 7 "out of order type declaration"
+(assert_return (invoke "out-of-order-type-declaration") (i32.const 7))
 #assertFunction $2 [ i32 i64 i64 ] -> [ i32 ] [ i32 ] "out of order type declarations"
-#assertNextTypeIdx 3
+#assertNextTypeIdx 2
 
 ;; Function with empty declarations of types
 
 (module
-  (func $1 param i64 i64 result result i64 param local
+  (func $0 param i64 i64 result result i64 param local
       (local.get 0)
       (return)
   )
@@ -178,15 +180,19 @@
         (i32.mul)
         (return)
     )
+
+    (func (export "nested-method-call") (result i32)
+        (i32.const 3)
+        (i32.const 5)
+        (call $f1)
+        (i32.const 5)
+        (i32.const 8)
+        (call $f2)
+    )
+
 )
 
-(i32.const 3)
-(i32.const 5)
-(call $f1)
-(i32.const 5)
-(i32.const 8)
-(call $f2)
-#assertTopStack < i32 > 14247936 "nested method call"
+(assert_return (invoke "nested-method-call") (i32.const 14247936))
 #assertFunction $f2 [ i32 i32 i32 ] -> [ i32 ] [ i32 i32 ] "outer calling method"
 #assertFunction $f1 [ i32 i32 ] -> [ i32 ] [ i32 ] "inner calling method"
 
