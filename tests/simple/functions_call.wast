@@ -11,7 +11,7 @@
     (i32.add)
     (return)
 )
-(export "000" (func $0))
+(export "000" (func 0))
 
 #assertNextTypeIdx 1
 (assert_return (invoke "000" (i32.const 7) (i32.const 8)) (i32.const 15))
@@ -58,7 +58,7 @@
     (return)
 )
 
-( export "export-1" (func $1) )
+( export "export-1" (func 3) )
 
 (assert_return (invoke "export-1" (i64.const 100) (i64.const 43) (i64.const 22)) (i64.const -121))
 #assertFunction 3 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
