@@ -1193,32 +1193,28 @@ A table index is optional and will be default to zero.
 ```k
     syntax Defn     ::= ElemDefn
     syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
-                      | "(" "elem"           Offset ElemSegment ")"
                       |     "elem" "{" Index        ElemSegment "}"
-    syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
- // ---------------------------------------------------------------------
-    // Default to table with index 0.
-    rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
+    syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
+ // ----------------------------------------------------------------
     rule <k> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
-    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, FIDS, ELEMSEGMENT ) ... </k>
+    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <moduleInst>
            <modIdx> CUR  </modIdx>
-           <funcIds> FIDS </funcIds>
            <funcAddrs> FADDRS </funcAddrs>
            <tabIds>  TIDS </tabIds>
            <tabAddrs> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabAddrs>
            ...
          </moduleInst>
 
-    rule <k> #initElements (    _,      _,      _,   _, .ElemSegment ) => . ... </k>
-    rule <k> #initElements ( ADDR, OFFSET, FADDRS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, IDS, ES ) ... </k>
+    rule <k> #initElements (    _,      _,      _, .ElemSegment ) => . ... </k>
+    rule <k> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- FADDRS[#ContextLookup(IDS, E)] ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- FADDRS[E] ] </tdata>
            ...
          </tabInst>
 ```
