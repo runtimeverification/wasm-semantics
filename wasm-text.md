@@ -379,7 +379,7 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
-### Sorting Modules
+### Structuring Modules
 
 The text format allows definitions to appear in any order in a module.
 In the abstract format, the module is a record, one for each type of definition.
@@ -450,9 +450,9 @@ Record updates can currently not be done in a function rule which also does othe
     rule #updateLocalIdsAux(C, _, true) => C
 ```
 
-### Traversing Modules
+### Traversing the Full Program
 
-The program is traversed in full once, context beting gathered along the way.
+The program is traversed in full once, context being gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
 
 ```k
