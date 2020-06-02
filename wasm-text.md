@@ -445,12 +445,18 @@ Record updates can currently not be done in a function rule which also does othe
                      | #freshCtx ( )                               [function, functional]
                      | #updateLocalIds    ( Context , Map )        [function, functional]
                      | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
+                     | #updateFuncIds     ( Context , Map )        [function, functional]
+                     | #updateFuncIdsAux  ( Context , Map , Bool ) [function, functional]
  // -------------------------------------------------------------------------------------
     rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map)
 
     rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
     rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
     rule #updateLocalIdsAux(C, _, true) => C
+
+    rule #updateFuncIds(C, M) => #updateFuncIdsAux(C, M, false)
+    rule #updateFuncIdsAux(ctx(... funcIds: (_ => M)), M, false => true)
+    rule #updateFuncIdsAux(C, _, true) => C
 ```
 
 ### Traversing the Full Program
@@ -461,6 +467,7 @@ Since we do not have polymorphic functions available, we define one function per
 ```k
     syntax Stmt       ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
     syntax ModuleDecl ::= "#t2aModuleDecl" "<" Context ">" "(" ModuleDecl ")" [function]
+    syntax ModuleDecl ::= "#t2aModule    " "<" Context ">" "(" Module     ")" [function]
     syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
     syntax FuncSpec   ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
     syntax TypeUse    ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
@@ -474,7 +481,8 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
-    rule #t2aModuleDecl<C>(#module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES))
+    rule #t2aModuleDecl<_>(#module(... funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: Map, funcIds: #idcFuncs(IS, FS))>(M)
+    rule #t2aModule<C>(#module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES))
       => #module(... id: OID,
                      types: TS,
                      funcs: #t2aDefns<C>(FS),
@@ -517,13 +525,16 @@ Since we do not have polymorphic functions available, we define one function per
 #### Basic Instructions
 
 ```k
-    rule #t2aInstr<_>(unreachable)      => unreachable
-    rule #t2aInstr<_>(nop)              => nop
-    rule #t2aInstr<_>(br L)             => br L
-    rule #t2aInstr<_>(br_if L)          => br_if L
-    rule #t2aInstr<_>(br_table ES)      => br_table ES
-    rule #t2aInstr<_>(return)           => return
-    rule #t2aInstr<_>(call F)           => call F
+    rule #t2aInstr<_>(unreachable) => unreachable
+    rule #t2aInstr<_>(nop)         => nop
+    rule #t2aInstr<_>(br L)        => br L
+    rule #t2aInstr<_>(br_if L)     => br_if L
+    rule #t2aInstr<_>(br_table ES) => br_table ES
+    rule #t2aInstr<_>(return)      => return
+
+    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => call {FIDS[ID]}:>Int
+    rule #t2aInstr<_>                     (call I:Int)         => call I
+
     rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
 ```
 
