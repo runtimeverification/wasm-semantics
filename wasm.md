@@ -33,7 +33,6 @@ Configuration
             <typeIds>     .Map </typeIds>
             <types>       .Map </types>
             <nextTypeIdx> 0    </nextTypeIdx>
-            <funcIds>     .Map </funcIds>
             <funcAddrs>   .Map </funcAddrs>
             <nextFuncIdx> 0    </nextFuncIdx>
             <tabIds>      .Map </tabIds>
@@ -685,7 +684,6 @@ The importing and exporting parts of specifications are dealt with in the respec
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, OID, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </funcAddrs>
            ...
@@ -1315,7 +1313,6 @@ The value of a global gets copied when it is imported.
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, OID, NEXT) </funcIds>
            <funcAddrs> FS => FS [NEXT <- ADDR] </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
