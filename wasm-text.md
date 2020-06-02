@@ -441,10 +441,13 @@ The `Context` contains information of how to map text-level identifiers to corre
 Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
 
 ```k
-    syntax Context ::= ctx(localIds: Map)
+    syntax Context ::= ctx(localIds: Map, funcIds: Map)
+                     | #freshCtx ( )                               [function, functional]
                      | #updateLocalIds    ( Context , Map )        [function, functional]
                      | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
  // -------------------------------------------------------------------------------------
+    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map)
+
     rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
     rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
     rule #updateLocalIdsAux(C, _, true) => C
@@ -464,7 +467,7 @@ Since we do not have polymorphic functions available, we define one function per
     syntax LocalDecl  ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
  // ------------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
-    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(structureModules(unfoldStmts(SS))) [owise]
+    rule text2abstract(SS)       => #t2aStmts<#freshCtx()>(structureModules(unfoldStmts(SS))) [owise]
 
     rule #t2aStmt<C>(M:ModuleDecl) => #t2aModuleDecl<C>(M)
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
