@@ -46,7 +46,7 @@
 (assert_return (invoke "baf" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "bag" (i32.const 7)) (i32.const 7))
 
-#assertFunction $far [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased inside module"
+#assertFunction 5 [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased inside module"
 
 #clearConfig
 
@@ -141,10 +141,10 @@
 (assert_return (invoke "baf" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "bag" (i32.const 7)) (i32.const 7))
 
-#assertFunction $far [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased outside module"
+#assertFunction 5 [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased outside module"
 
 (func $fir (local i64) (local $a i32))
 
-#assertFunction $fir [ ] -> [ ] [ i64 i32 ] "identifiers are erased inside module"
+#assertFunction 6 [ ] -> [ ] [ i64 i32 ] "identifiers are erased inside module"
 
 #clearConfig
