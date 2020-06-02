@@ -1269,12 +1269,11 @@ The `start` component of a module declares the function index of a `start functi
     syntax Defn      ::= StartDefn
     syntax StartDefn ::= "(" "start" Index ")"
  // ------------------------------------------
-    rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
+    rule <k> ( start IDX:Int ) => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcIds> IDS </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 ```

@@ -489,7 +489,7 @@ Since we do not have polymorphic functions available, we define one function per
                     , globals: GS
                     , elem: EL
                     , data: DAT
-                    , start: S
+                    , start: #t2aDefns<C>(S)
                     , importDefns: IS
                     , exports: ES
                 )
@@ -515,6 +515,13 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
     rule #t2aLocalDecl<C>(LD) => LD [owise]
+```
+
+#### Start Function
+
+```k
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => ( start {FIDS[ID]}:>Int )
+      requires ID in_keys(FIDS)
 ```
 
 #### Other Definitions
