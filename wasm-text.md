@@ -711,7 +711,8 @@ The following are helper functions for gathering and updating context.
     rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0)
 
     rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
-    rule #idcFuncsAux(I IS, FS, IDX) => #idcFuncsAux(IS, FS, IDX) [owise]
+    rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX +Int 1)
+    rule #idcFuncsAux(I                                   IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
 
     rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
     rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
