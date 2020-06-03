@@ -63,7 +63,7 @@ SOURCE_FILES       := data         \
                       wasm-text    \
                       wrc20
 EXTRA_SOURCE_FILES :=
-ALL_FILES          := $(patsubst %, %.k, $(SOURCE_FILES) $(EXTRA_SOURCE_FILES))
+ALL_SOURCE_FILES   := $(patsubst %, %.k, $(SOURCE_FILES) $(EXTRA_SOURCE_FILES))
 
 defn:  defn-haskell defn-llvm
 build: build-llvm build-haskell
@@ -93,7 +93,7 @@ KOMPILE_HASKELL := kompile --debug --backend haskell \
 ### LLVM
 
 llvm_dir           := $(DEFN_DIR)/llvm
-llvm_files         := $(patsubst %, $(llvm_dir)/%, $(ALL_FILES))
+llvm_files         := $(patsubst %, $(llvm_dir)/%, $(ALL_SOURCE_FILES))
 llvm_main_module   := WASM-TEST
 llvm_syntax_module := $(llvm_main_module)-SYNTAX
 llvm_main_file     := test
@@ -115,7 +115,7 @@ $(llvm_kompiled): $(llvm_files)
 ### Haskell
 
 haskell_dir           := $(DEFN_DIR)/haskell
-haskell_files         := $(patsubst %, $(haskell_dir)/%, $(ALL_FILES))
+haskell_files         := $(patsubst %, $(haskell_dir)/%, $(ALL_SOURCE_FILES))
 haskell_main_module   := WASM-TEST
 haskell_syntax_module := $(haskell_main_module)-SYNTAX
 haskell_main_file     := test
