@@ -55,6 +55,10 @@ $(K_JAR):
 # Building Definition
 # -------------------
 
+KOMPILE_OPTS         :=
+LLVM_KOMPILE_OPTS    :=
+HASKELL_KOMPILE_OPTS :=
+
 SOURCE_FILES       := data         \
                       kwasm-lemmas \
                       numeric      \
@@ -68,19 +72,13 @@ ALL_SOURCE_FILES   := $(patsubst %, %.k, $(SOURCE_FILES) $(EXTRA_SOURCE_FILES))
 defn:  defn-haskell defn-llvm
 build: build-llvm build-haskell
 
-KOMPILE_OPTS :=
-
 ifneq (,$(RELEASE))
     KOMPILE_OPTS += -O2
 endif
 
-LLVM_KOMPILE_OPTS :=
-
 ifeq (,$(RELEASE))
     LLVM_KOMPILE_OPTS += -g
 endif
-
-HASKELL_KOMPILE_OPTS :=
 
 KOMPILE_LLVM := kompile --debug --backend llvm            \
                 $(KOMPILE_OPTS)                           \
@@ -144,8 +142,7 @@ TEST_CONCRETE_BACKEND := llvm
 TEST_SYMBOLIC_BACKEND := haskell
 
 KPROVE_MODULE := KWASM-LEMMAS
-
-KPROVE_OPTS ?=
+KPROVE_OPTS   :=
 
 tests/proofs/functions-spec.k.prove: KPROVE_MODULE = FUNCTIONS-LEMMAS
 tests/proofs/wrc20-spec.k.prove:     KPROVE_MODULE = WRC20-LEMMAS
