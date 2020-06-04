@@ -155,9 +155,8 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax Defns  ::= EmptyStmts
     syntax Stmts  ::= Instrs | Defns
  // --------------------------------
-    rule          <k> .Stmts                => .       ... </k>
-    rule          <k> (S:Stmt .Stmts):KItem => S       ... </k>
-    rule [step] : <k> (S:Stmt SS)           => S ~> SS ... </k> requires SS =/=K .Stmts
+    rule          <k> .Stmts      => .       ... </k>
+    rule [step] : <k> (S:Stmt SS) => S ~> SS ... </k>
 ```
 
 ### Traps
