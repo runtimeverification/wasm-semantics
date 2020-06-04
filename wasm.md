@@ -156,8 +156,9 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax Stmts  ::= Instrs | Defns
  // --------------------------------
     rule               <k> .Stmts              => .       ... </k>
-    rule [stepStmt]  : <k> (S:Stmt  SS)        => S ~> SS ... </k> requires notBool isInstr(S)
+    rule [stepStmt]  : <k> (S:Stmt  SS)        => S ~> SS ... </k> requires notBool (isInstr(S) orBool isDefn(S))
     rule [stepInstr] : <k> (I:Instr IS:Instrs) => I ~> IS ... </k>
+    rule [stepDefn]  : <k> (D:Defn  DS:Defns)  => D ~> DS ... </k>
 ```
 
 ### Traps
