@@ -26,8 +26,8 @@ Here we extend the sort `Stmt` by adding a new subsort called `Auxil`.
 This subsort contains Auxiliary functions that only used in our KWASM semantics but not in the official specification including assertions, initializing a global variable and the invocation of a function by exported name.
 
 ```k
-    syntax Stmt ::= Auxil
- // ---------------------
+    syntax Instr ::= Auxil
+ // ----------------------
 ```
 
 We also add `token` as a value in order to implement some test assertions.
