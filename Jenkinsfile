@@ -14,7 +14,7 @@ pipeline {
     stage('Build and Test') {
       when { changeRequest() }
       stages {
-        stage('Build') { steps { sh 'make build -j4' } }
+        stage('Build') { steps { sh 'make build -j4 RELEASE=true' } }
         stage('Test') {
           options { timeout(time: 25, unit: 'MINUTES') }
           parallel {
