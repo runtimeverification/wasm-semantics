@@ -1444,50 +1444,20 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= sortedModule ( id: OptionalId, types: Defns, importDefns: Defns, funcsGlobals: Defns, memsTables: Defns, exports: Defns, inits: Defns, start: Defns )
- // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    syntax ModuleDecl ::= #module ( id: OptionalId, types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns)
+ // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    syntax ModuleDecl ::=  sortModule ( Defns , OptionalId ) [function]
-                        | #sortModule ( Defns , ModuleDecl ) [function]
- // -------------------------------------------------------------------
-    rule sortModule(DEFNS, OID) => #sortModule(#reverse(DEFNS, .Defns), sortedModule(... id: OID, types: .Defns, importDefns: .Defns, funcsGlobals: .Defns, memsTables: .Defns, exports: .Defns, inits: .Defns, start: .Defns))
-
-    rule #sortModule(.Defns, SORTED_MODULE) => SORTED_MODULE
-
-    rule #sortModule((T:TypeDefn   DS:Defns => DS), sortedModule(... types: (TS => T TS)))
-
-    rule #sortModule((I:ImportDefn DS:Defns => DS), sortedModule(... importDefns: (IS => I IS)))
-
-    rule #sortModule((X:FuncDefn   DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
-    rule #sortModule((X:GlobalDefn DS:Defns => DS), sortedModule(... funcsGlobals: (FGS => X FGS)))
-
-    rule #sortModule((A:TableDefn  DS:Defns => DS), sortedModule(... memsTables: (AS => A AS)))
-    rule #sortModule((A:MemoryDefn DS:Defns => DS), sortedModule(... memsTables: (AS => A AS)))
-
-    rule #sortModule((E:ExportDefn DS:Defns => DS), sortedModule(... exports: (ES => E ES)))
-
-    rule #sortModule((I:DataDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
-    rule #sortModule((I:ElemDefn   DS:Defns => DS), sortedModule(... inits: (IS => I IS)))
-
-    rule #sortModule((S:StartDefn  DS:Defns => DS), sortedModule(... start: (_ => S .Defns)))
-
-    syntax Defns ::= #reverse(Defns, Defns) [function]
- // --------------------------------------------------
-    rule #reverse(       .Defns  , ACC) => ACC
-    rule #reverse(D:Defn DS:Defns, ACC) => #reverse(DS, D ACC)
+    syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
+ // ---------------------------------------------------------------------
+    rule #emptyModule(OID) =>  #module (... id: OID, types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns)
 ```
 
 A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    syntax Stmt       ::= ModuleDecl
-    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
- // -------------------------------------------------------
-    rule <k> ( module OID:OptionalId DEFNS ) => sortModule(DEFNS, OID) ... </k>
-
-    rule <k> sortedModule(... id: OID, types: TS, importDefns: IS, funcsGlobals: FGS, memsTables: AS, exports: ES, inits: INIS, start: S)
-          => TS ~> IS ~> FGS ~> AS ~> ES ~> INIS ~> S
+    rule <k> #module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES)
+          => TS ~> IS ~> FS ~> GS ~> MS ~> TABS ~> ES ~> EL ~> DAT ~> S
          ...
          </k>
          <curModIdx> _ => NEXT </curModIdx>
@@ -1502,14 +1472,6 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
            )
            ...
          </moduleInstances>
-```
-
-It is permissible to define modules without the `module` keyword, by simply stating the definitions at the top level in the file.
-
-```k
-    rule <k> A:Alloc => ( module .Defns ) ~> A ... </k>
-         <curModIdx> .Int </curModIdx>
-      [owise]
 ```
 
 After a module is instantiated, it should be saved somewhere.

@@ -250,6 +250,17 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // --------------------------------------------------------------
 ```
 
+### Modules
+
+Modules are defined as a sequence of definitions, that may come in any order.
+The only requirements are that all imports must precede all other definitions, and that there may be at most one start function.
+
+```k
+    syntax Stmt       ::= ModuleDecl
+    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
+ // -------------------------------------------------------
+```
+
 Desugaring
 ----------
 
@@ -369,7 +380,49 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
+### Structuring Modules
+
+The text format allows definitions to appear in any order in a module.
+In the abstract format, the module is a record, one for each type of definition.
+The following functions convert the text format module, given as a list of definitions, into the abstract format.
+In doing so, the respective ordering of all types of definitions are preserved.
+
+```k
+    syntax Stmts ::= structureModules ( Stmts ) [function]
+ // ------------------------------------------------------
+    rule structureModules((module OID:OptionalId DS) SS) => structureModule(DS, OID) structureModules(SS)
+    rule structureModules(.Stmts) => .Stmts
+    rule structureModules(S SS) => S structureModules(SS) [owise]
+
+    syntax ModuleDecl ::=  structureModule ( Defns , OptionalId ) [function]
+                        | #structureModule ( Defns , ModuleDecl ) [function]
+ // ------------------------------------------------------------------------
+    rule structureModule(DEFNS, OID) => #structureModule(#reverseDefns(DEFNS, .Defns), #emptyModule(OID))
+
+    rule #structureModule(.Defns, SORTED_MODULE) => SORTED_MODULE
+
+    rule #structureModule((T:TypeDefn   DS:Defns => DS), #module(... types:       TS => T TS))
+    rule #structureModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: IS => I IS))
+    rule #structureModule((X:FuncDefn   DS:Defns => DS), #module(... funcs:       FS => X FS))
+    rule #structureModule((X:GlobalDefn DS:Defns => DS), #module(... globals:     GS => X GS))
+    rule #structureModule((T:TableDefn  DS:Defns => DS), #module(... tables:      TS => T TS))
+    rule #structureModule((M:MemoryDefn DS:Defns => DS), #module(... mems:        MS => M MS))
+    rule #structureModule((E:ExportDefn DS:Defns => DS), #module(... exports:     ES => E ES))
+    rule #structureModule((I:DataDefn   DS:Defns => DS), #module(... data:        IS => I IS))
+    rule #structureModule((I:ElemDefn   DS:Defns => DS), #module(... elem:        IS => I IS))
+    rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start:   .Defns => S .Defns))
+
+    syntax Defns ::= #reverseDefns(Defns, Defns) [function]
+ // -------------------------------------------------------
+    rule #reverseDefns(       .Defns  , ACC) => ACC
+    rule #reverseDefns(D:Defn DS:Defns, ACC) => #reverseDefns(DS, D ACC)
+```
+
 ## Replacing Identifiers and Unfolding Instructions
+
+The desugaring is done on the module level.
+First, if the program is just a list of definitions, that's an abbreviation for a single module.
+If not, we distribute the text to abstract transformation out over all the statements in the file.
 
 **TODO:**
 
@@ -398,35 +451,48 @@ Record updates can currently not be done in a function rule which also does othe
     rule #updateLocalIdsAux(C, _, true) => C
 ```
 
-### Traversing the Text Format
+### Traversing the Full Program
 
-The program is traversed in full once, context beting gathered along the way.
+The program is traversed in full once, context being gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
 
 ```k
-    syntax Stmt      ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
-    syntax Defn      ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
-    syntax FuncSpec  ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
-    syntax TypeUse   ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
- // -----------------------------------------------------------------------------------
+    syntax Stmt       ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
+    syntax ModuleDecl ::= "#t2aModuleDecl" "<" Context ">" "(" ModuleDecl ")" [function]
+    syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
+    syntax FuncSpec   ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
+    syntax TypeUse    ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl  ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
+ // ------------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
-    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(unfoldStmts(SS)) [owise]
+    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(structureModules(unfoldStmts(SS))) [owise]
 
-    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
+    rule #t2aStmt<C>(M:ModuleDecl) => #t2aModuleDecl<C>(M)
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
+    rule #t2aModuleDecl<C>(#module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES))
+      => #module( ... id: OID
+                    , types: TS
+                    , funcs: #t2aDefns<C>(FS)
+                    , tables: TABS
+                    , mems: MS
+                    , globals: GS
+                    , elem: EL
+                    , data: DAT
+                    , start: S
+                    , importDefns: IS
+                    , exports: ES
+                )
+
     rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
     rule #t2aDefn<C>(D:Defn) => D [owise]
 
-    rule #t2aFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #t2aFuncSpec<C>(FS)
     rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs)
       => #t2aTypeUse   <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
          #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
          #t2aInstrs    <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
-
 
     rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
     rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
