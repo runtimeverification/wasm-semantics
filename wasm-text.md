@@ -263,6 +263,7 @@ The only requirements are that all imports must precede all other definitions, a
 
 Desugaring
 ----------
+
 The text format is one of the concrete formats of Wasm.
 Every concrete format maps to a common structure, described as an abstract syntax.
 The function `text2abstract` is a partial function which maps valid programs in the text format to the abstract format.
