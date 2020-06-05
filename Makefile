@@ -7,7 +7,7 @@ DEFN_DIR  := $(BUILD_DIR)/defn
 
 K_SUBMODULE := $(DEPS_DIR)/k
 ifneq (,$(wildcard deps/k/k-distribution/target/release/k/bin/*))
-  K_RELEASE ?= $(K_SUBMODULE)/k-distribution/target/release/k
+  K_RELEASE ?= $(abspath $(K_SUBMODULE)/k-distribution/target/release/k)
 else
   K_RELEASE ?= $(dir $(shell which kompile))..
 endif
@@ -15,7 +15,11 @@ K_BIN := $(K_RELEASE)/bin
 K_LIB := $(K_RELEASE)/lib
 export K_RELEASE
 
-K_BUILD_TYPE := Debug
+ifneq ($(RELEASE),)
+    K_BUILD_TYPE := Release
+else
+    K_BUILD_TYPE := Debug
+endif
 
 PATH := $(K_BIN):$(PATH)
 export PATH
@@ -37,72 +41,96 @@ all: build
 
 clean:
 	rm -rf $(BUILD_DIR)
-	git submodule update --init --recursive
 
 # Build Dependencies (K Submodule)
 # --------------------------------
 
-deps: $(K_SUBMODULE)/make.timestamp $(TANGLER)
+K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAPSHOT.jar
 
-$(K_SUBMODULE)/make.timestamp:
-	git submodule update --init --recursive
+deps: $(K_JAR) $(TANGLER)
+
+$(K_JAR):
 	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
-	touch $(K_SUBMODULE)/make.timestamp
-
-$(TANGLER):
-	git submodule update --init -- $(PANDOC_TANGLE_SUBMODULE)
 
 # Building Definition
 # -------------------
 
-MAIN_MODULE        := WASM-TEST
-MAIN_SYNTAX_MODULE := WASM-TEST-SYNTAX
-MAIN_DEFN_FILE     := test
+KOMPILE_OPTS         :=
+LLVM_KOMPILE_OPTS    :=
+HASKELL_KOMPILE_OPTS :=
 
-wasm_files := $(MAIN_DEFN_FILE).k test.k wasm-text.k wasm.k data.k numeric.k kwasm-lemmas.k wrc20.k
+SOURCE_FILES       := data         \
+                      kwasm-lemmas \
+                      numeric      \
+                      test         \
+                      wasm         \
+                      wasm-text    \
+                      wrc20
+EXTRA_SOURCE_FILES :=
+ALL_SOURCE_FILES   := $(patsubst %, %.k, $(SOURCE_FILES) $(EXTRA_SOURCE_FILES))
 
-llvm_dir    := $(DEFN_DIR)/llvm
-haskell_dir := $(DEFN_DIR)/haskell
+defn:  defn-haskell defn-llvm
+build: build-llvm build-haskell
 
-llvm_defn    := $(patsubst %, $(llvm_dir)/%, $(wasm_files))
-haskell_defn := $(patsubst %, $(haskell_dir)/%, $(wasm_files))
+ifneq (,$(RELEASE))
+    KOMPILE_OPTS += -O2
+endif
 
-llvm_kompiled    := $(llvm_dir)/$(MAIN_DEFN_FILE)-kompiled/interpreter
-haskell_kompiled := $(haskell_dir)/$(MAIN_DEFN_FILE)-kompiled/definition.kore
+ifeq (,$(RELEASE))
+    LLVM_KOMPILE_OPTS += -g
+endif
 
-# Tangle definition from *.md files
+KOMPILE_LLVM := kompile --debug --backend llvm            \
+                $(KOMPILE_OPTS)                           \
+                $(addprefix -ccopt ,$(LLVM_KOMPILE_OPTS))
 
-defn: defn-haskell defn-llvm
-defn-llvm: $(llvm_defn)
-defn-haskell: $(haskell_defn)
+KOMPILE_HASKELL := kompile --debug --backend haskell \
+                   $(KOMPILE_OPTS)                   \
+                   $(HASKELL_KOMPILE_OPTS)
+
+### LLVM
+
+llvm_dir           := $(DEFN_DIR)/llvm
+llvm_files         := $(patsubst %, $(llvm_dir)/%, $(ALL_SOURCE_FILES))
+llvm_main_module   := WASM-TEST
+llvm_syntax_module := $(llvm_main_module)-SYNTAX
+llvm_main_file     := test
+llvm_kompiled      := $(llvm_dir)/$(llvm_main_file)-kompiled/interpreter
+
+defn-llvm:  $(llvm_defn)
+build-llvm: $(llvm_kompiled)
 
 $(llvm_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
+$(llvm_kompiled): $(llvm_files)
+	$(KOMPILE_LLVM) $(llvm_dir)/$(llvm_main_file).k \
+	    --directory $(llvm_dir) -I $(llvm_dir)      \
+	    --main-module $(llvm_main_module)           \
+	    --syntax-module $(llvm_syntax_module)
+
+### Haskell
+
+haskell_dir           := $(DEFN_DIR)/haskell
+haskell_files         := $(patsubst %, $(haskell_dir)/%, $(ALL_SOURCE_FILES))
+haskell_main_module   := WASM-TEST
+haskell_syntax_module := $(haskell_main_module)-SYNTAX
+haskell_main_file     := test
+haskell_kompiled      := $(haskell_dir)/$(haskell_main_file)-kompiled/definition.kore
+
+defn-haskell:  $(haskell_defn)
+build-haskell: $(haskell_kompiled)
+
 $(haskell_dir)/%.k: %.md $(TANGLER)
 	@mkdir -p $(dir $@)
 	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
 
-# Build definitions
-
-KOMPILE_OPTIONS    :=
-
-build: build-llvm build-haskell
-build-llvm:    $(llvm_kompiled)
-build-haskell: $(haskell_kompiled)
-
-$(llvm_kompiled): $(llvm_defn)
-	kompile --backend llvm                                                    \
-	    --directory $(llvm_dir) -I $(llvm_dir)                                \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
-	    $(KOMPILE_OPTIONS)
-
-$(haskell_kompiled): $(haskell_defn)
-	kompile --backend haskell                                                 \
-	    --directory $(haskell_dir) -I $(haskell_dir)                          \
-	    --main-module $(MAIN_MODULE) --syntax-module $(MAIN_SYNTAX_MODULE) $< \
-	    $(KOMPILE_OPTIONS)
+$(haskell_kompiled): $(haskell_files)
+	$(KOMPILE_HASKELL) $(haskell_dir)/$(haskell_main_file).k  \
+	    --directory $(haskell_dir) -I $(haskell_dir)          \
+	    --main-module $(haskell_main_module)                  \
+	    --syntax-module $(haskell_syntax_module)
 
 # Testing
 # -------
@@ -114,15 +142,10 @@ TEST_CONCRETE_BACKEND := llvm
 TEST_SYMBOLIC_BACKEND := haskell
 
 KPROVE_MODULE := KWASM-LEMMAS
-
-KPROVE_OPTIONS ?=
+KPROVE_OPTS   :=
 
 tests/proofs/functions-spec.k.prove: KPROVE_MODULE = FUNCTIONS-LEMMAS
 tests/proofs/wrc20-spec.k.prove:     KPROVE_MODULE = WRC20-LEMMAS
-
-tests/%/make.timestamp:
-	git submodule update --init -- tests/$*
-	touch $@
 
 test: test-execution test-prove
 
@@ -146,7 +169,7 @@ tests/%.parse: tests/%
 
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) \
-	$(KPROVE_OPTIONS)
+	$(KPROVE_OPTS)
 
 tests/%.cannot-prove: tests/%
 	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
