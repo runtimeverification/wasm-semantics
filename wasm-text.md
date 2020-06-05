@@ -472,17 +472,18 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aStmt<_>(S) => S [owise]
 
     rule #t2aModuleDecl<C>(#module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES))
-      => #module(... id: OID,
-                     types: TS,
-                     funcs: #t2aDefns<C>(FS),
-                     tables: TABS,
-                     mems: MS,
-                     globals: GS,
-                     elem: EL,
-                     data: DAT,
-                     start: S,
-                     importDefns: IS,
-                     exports: ES)
+      => #module( ... id: OID
+                    , types: TS
+                    , funcs: #t2aDefns<C>(FS)
+                    , tables: TABS
+                    , mems: MS
+                    , globals: GS
+                    , elem: EL
+                    , data: DAT
+                    , start: S
+                    , importDefns: IS
+                    , exports: ES
+                )
 
     rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
     rule #t2aDefn<C>(D:Defn) => D [owise]
