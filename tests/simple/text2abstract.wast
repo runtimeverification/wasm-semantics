@@ -46,7 +46,7 @@
 (assert_return (invoke "baf" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "bag" (i32.const 7)) (i32.const 7))
 
-#assertFunction $far [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased inside module"
+#assertFunction 5 [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased inside module"
 
 #clearConfig
 
@@ -95,21 +95,21 @@
 (func $foo (param $a i32) (result i32)
   local.get $a
 )
-(export "foo" (func $foo))
+(export "foo" (func 0))
 
 (func $bar (param $a i32) (result i32)
   block (result i32)
     local.get $a
   end
 )
- (export "bar" (func $bar))
+ (export "bar" (func 1))
 
 (func $baz (param $a i32) (result i32)
   loop (result i32)
     local.get $a
   end
 )
-(export "baz" (func $baz))
+(export "baz" (func 2))
 
 (func $baf (param $a i32) (result i32)
   i32.const 1
@@ -119,7 +119,7 @@
     local.get $a
   end
 )
-(export "baf" (func $baf))
+(export "baf" (func 3))
 
 (func $bag (param $a i32) (result i32)
   i32.const 0
@@ -129,7 +129,7 @@
     local.get $a
   end
 )
-(export "bag" (func $bag))
+(export "bag" (func 4))
 
 (func $far (param $a i32) (result i32) (local $b i64)
   local.get $a
@@ -141,10 +141,10 @@
 (assert_return (invoke "baf" (i32.const 7)) (i32.const 7))
 (assert_return (invoke "bag" (i32.const 7)) (i32.const 7))
 
-#assertFunction $far [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased outside module"
+#assertFunction 5 [ i32 ] -> [ i32 ] [ i64 ] "identifiers are erased outside module"
 
 (func $fir (local i64) (local $a i32))
 
-#assertFunction $fir [ ] -> [ ] [ i64 i32 ] "identifiers are erased inside module"
+#assertFunction 6 [ ] -> [ ] [ i64 i32 ] "identifiers are erased inside module"
 
 #clearConfig

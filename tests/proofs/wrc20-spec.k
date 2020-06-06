@@ -22,7 +22,6 @@ module WRC20-SPEC
           <memAddrs> 0 |-> MEMADDR </memAddrs>
           <types> TYPES => ?_ </types>
           <nextTypeIdx> NEXTTYPEIDX => NEXTTYPEIDX +Int 1 </nextTypeIdx>
-          <funcIds> _ => ?_ </funcIds>
           <funcAddrs> _ => ?_ </funcAddrs>
           <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>
           ...

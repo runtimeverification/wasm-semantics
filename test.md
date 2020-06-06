@@ -85,9 +85,8 @@ We allow 2 kinds of actions:
     rule <k> invoke MODIDX:Int ENAME:WasmString => ( invoke FADDR ):Instr ... </k>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <exports> ... ENAME |-> TFIDX ... </exports>
-           <funcIds> IDS </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
+           <exports> ... ENAME |-> IDX ... </exports>
+           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 
@@ -346,12 +345,11 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 ```k
     syntax Assertion ::= "#assertFunction" Index FuncType VecType WasmString
  // ------------------------------------------------------------------------
-    rule <k> #assertFunction TFIDX FTYPE LTYPE _ => . ... </k>
+    rule <k> #assertFunction IDX FTYPE LTYPE _ => . ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcIds> IDS </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
          <funcs>
