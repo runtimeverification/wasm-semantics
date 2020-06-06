@@ -19,6 +19,18 @@ module WASM-TEST
     imports WASM-TEXT
 ```
 
+Bare Allocations
+----------------
+
+We allow allocations to appear outside of modules, for example interleaved with assertions in tests.
+This is purely a KWasm feature, which is useful for testing.
+
+```k
+    rule <k> A:Alloc => #emptyModule() ~> A ... </k>
+         <curModIdx> .Int </curModIdx>
+      [owise]
+```
+
 Auxiliary
 ---------
 
@@ -124,22 +136,16 @@ We will reference modules by name in imports.
 
 The conformance test cases contain the syntax of declaring modules in the format of `(module binary <string>*)` and `(module quote <string>*)`.
 They are not defined in the official specification.
-In order to parse the conformance test cases, we handle these declarations here and just reduce them to empty.
-
-**TODO**: Implement `(module binary <string>*)` and put it into `wasm.md`.
+In order to parse the conformance test cases, we handle these declarations here and just reduce them to the empty module.
 
 ```k
     syntax DefnStrings ::= List{WasmString, ""}
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
                         | "(" "module" OptionalId "quote"  DefnStrings ")"
-                        | "module" "binary" Int
-                        | "module" "quote"  String
- // ----------------------------------------------
-    rule <k> ( module OID binary DS ) => module binary Bytes2Int(#DS2Bytes(DS), LE, Unsigned) ... </k>
-    rule <k> module binary I => . ... </k>
+ // ----------------------------------------------------------------------
+    rule ( module OID binary DS ) => ( module OID .Defns ) [macro]
 
-    rule <k> ( module OID quote DS ) => module quote #concatDS(DS) ... </k>
-    rule <k> module quote S => . ... </k>
+    rule ( module OID quote DS ) => ( module OID .Defns ) [macro]
 ```
 
 The conformance tests contain imports of the `"spectest"` module.
@@ -226,7 +232,7 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
     rule <k> (assert_malformed  MOD            DESC) => . ... </k>
     rule <k> (assert_invalid    MOD            DESC) => . ... </k>
     rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
-    rule <k> (assert_trap       MOD:ModuleDecl DESC) => MOD ~> #assertTrap DESC ... </k>
+    rule <k> (assert_trap       MOD:ModuleDecl DESC) => text2abstract(MOD .Stmts) ~> #assertTrap DESC ... </k>
 ```
 
 And we implement some helper assertions to help testing.
