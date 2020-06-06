@@ -9,7 +9,7 @@
     (return)
 )
 
-#assertFunction $oeauth [ i32 i32 ] -> [ i32 ] [ ] "simple function name"
+#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "simple function name"
 
 (func $023eno!thu324
     (param i32 i32)
@@ -20,7 +20,7 @@
     (return)
 )
 
-#assertFunction $023eno!thu324 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 1"
+#assertFunction 1 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 1"
 
 (func $02$3e%no!t&hu324
     (param i32 i32)
@@ -31,7 +31,7 @@
     (return)
 )
 
-#assertFunction $02$3e%no!t&hu324 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 2"
+#assertFunction 2 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 2"
 
 (func $02$3e%no!t&hu3'24*32++2ao-eunth
     (param i32 i32)
@@ -42,7 +42,7 @@
     (return)
 )
 
-#assertFunction $02$3e%no!t&hu3'24*32++2ao-eunth [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
+#assertFunction 3 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
 
 (func $02$3e%no!t&hu3'24*32++2ao-eu//n<t>h?
     (param i32 i32)
@@ -53,7 +53,7 @@
     (return)
 )
 
-#assertFunction $02$3e%no!t&hu3'24*32++2ao-eu//n<t>h? [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
+#assertFunction 4 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
 
 (func $aenuth_ae`st|23~423
     (param i32 i32)
@@ -64,7 +64,7 @@
     (return)
 )
 
-#assertFunction $aenuth_ae`st|23~423 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
+#assertFunction 5 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
 
 (func $bioi::..@@?^
     (param i32 i32)
@@ -75,6 +75,6 @@
     (return)
 )
 
-#assertFunction $bioi::..@@?^ [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
+#assertFunction 6 [ i32 i32 ] -> [ i32 ] [ ] "identifier function name 3"
 
 #clearConfig

@@ -52,8 +52,8 @@
 
 #assertTopStack < i32> 66 "call_indirect_result2"
 
-#assertFunction $const-i32-a [ ] -> [ i32 ] [ ] "call function 1 exists"
-#assertFunction $const-i32-b [ ] -> [ i32 ] [ ] "call function 2 exists"
+#assertFunction 0 [ ] -> [ i32 ] [ ] "call function 1 exists"
+#assertFunction 1 [ ] -> [ i32 ] [ ] "call function 2 exists"
 #assertFunction 2 [ ] -> [ i32 ] [ ] "call function 3 exists"
 #assertFunction 3 [ ] -> [ i32 ] [ ] "call function 4 exists"
 #assertFunction 4 [ ] -> [ i32 ] [ ] "call function 5 exists"

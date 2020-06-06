@@ -380,6 +380,15 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
+#### Element Segments
+
+```k
+    syntax ElemDefn ::= "(" "elem" Offset ElemSegment ")"
+ // -----------------------------------------------------
+    rule #unfoldDefns(( elem OFFSET:Offset ES ) DS, I)
+      => ( elem 0 OFFSET ES ) #unfoldDefns(DS, I)
+```
+
 ### Structuring Modules
 
 The text format allows definitions to appear in any order in a module.
@@ -442,13 +451,22 @@ The `Context` contains information of how to map text-level identifiers to corre
 Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
 
 ```k
-    syntax Context ::= ctx(localIds: Map)
+    syntax Context ::= ctx(localIds: Map, funcIds: Map)
+                     | #freshCtx ( )                               [function, functional]
                      | #updateLocalIds    ( Context , Map )        [function, functional]
                      | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
+                     | #updateFuncIds     ( Context , Map )        [function, functional]
+                     | #updateFuncIdsAux  ( Context , Map , Bool ) [function, functional]
  // -------------------------------------------------------------------------------------
+    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map)
+
     rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
     rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
     rule #updateLocalIdsAux(C, _, true) => C
+
+    rule #updateFuncIds(C, M) => #updateFuncIdsAux(C, M, false)
+    rule #updateFuncIdsAux(ctx(... funcIds: (_ => M)), M, false => true)
+    rule #updateFuncIdsAux(C, _, true) => C
 ```
 
 ### Traversing the Full Program
@@ -459,36 +477,42 @@ Since we do not have polymorphic functions available, we define one function per
 ```k
     syntax Stmt       ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
     syntax ModuleDecl ::= "#t2aModuleDecl" "<" Context ">" "(" ModuleDecl ")" [function]
+    syntax ModuleDecl ::= "#t2aModule"     "<" Context ">" "(" ModuleDecl ")" [function]
     syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
-    syntax FuncSpec   ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
-    syntax TypeUse    ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl  ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
  // ------------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
-    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(structureModules(unfoldStmts(SS))) [owise]
+    rule text2abstract(SS)       => #t2aStmts<#freshCtx()>(structureModules(unfoldStmts(SS))) [owise]
 
     rule #t2aStmt<C>(M:ModuleDecl) => #t2aModuleDecl<C>(M)
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
-    rule #t2aModuleDecl<C>(#module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES))
+    rule #t2aModuleDecl<_>(#module(... funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS))>(M)
+    rule #t2aModule<C>(#module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES))
       => #module( ... id: OID
                     , types: TS
                     , funcs: #t2aDefns<C>(FS)
                     , tables: TABS
                     , mems: MS
                     , globals: GS
-                    , elem: EL
+                    , elem: #t2aDefns<C>(EL)
                     , data: DAT
-                    , start: S
+                    , start: #t2aDefns<C>(S)
                     , importDefns: IS
-                    , exports: ES
+                    , exports: #t2aDefns<C>(ES)
                 )
+```
 
+#### Functions
+
+```k
     rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
-    rule #t2aDefn<C>(D:Defn) => D [owise]
 
+    syntax FuncSpec   ::= "#t2aFuncSpec"  "<" Context ">" "(" FuncSpec   ")" [function]
+    syntax TypeUse    ::= "#t2aTypeUse"   "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl  ::= "#t2aLocalDecl" "<" Context ">" "(" LocalDecl  ")" [function]
+ // -----------------------------------------------------------------------------------
     rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs)
       => #t2aTypeUse   <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
          #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
@@ -500,6 +524,41 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
     rule #t2aLocalDecl<C>(LD) => LD [owise]
+```
+
+#### Start Function
+
+```k
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => ( start {FIDS[ID]}:>Int )
+      requires ID in_keys(FIDS)
+    rule #t2aDefn<_>(( start I:Int )) => ( start I )
+```
+
+#### Element Segments
+
+```k
+    rule #t2aDefn<C>(( elem IDX:Index OFFSET ES )) => ( elem IDX OFFSET #t2aElemSegment<C>(ES) )
+
+    syntax ElemSegment ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
+ // ---------------------------------------------------------------------------------------
+    rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Identifier ES) => {FIDS[ID]}:>Int #t2aElemSegment<C>(ES)
+      requires ID in_keys(FIDS)
+    rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
+    rule #t2aElemSegment<C>(.ElemSegment) => .ElemSegment
+```
+
+#### Exports
+
+```k
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( export ENAME ( func ID:Identifier ) )) => ( export ENAME (func {FIDS[ID]}:>Int) )
+      requires ID in_keys(FIDS)
+    rule #t2aDefn<_>(( export ENAME ( func I:Int ) )) => ( export ENAME (func I) )
+```
+
+#### Other Definitions
+
+```k
+    rule #t2aDefn<C>(D:Defn) => D [owise]
 ```
 
 ### Instructions
@@ -516,13 +575,17 @@ Since we do not have polymorphic functions available, we define one function per
 #### Basic Instructions
 
 ```k
-    rule #t2aInstr<_>(unreachable)      => unreachable
-    rule #t2aInstr<_>(nop)              => nop
-    rule #t2aInstr<_>(br L)             => br L
-    rule #t2aInstr<_>(br_if L)          => br_if L
-    rule #t2aInstr<_>(br_table ES)      => br_table ES
-    rule #t2aInstr<_>(return)           => return
-    rule #t2aInstr<_>(call F)           => call F
+    rule #t2aInstr<_>(unreachable) => unreachable
+    rule #t2aInstr<_>(nop)         => nop
+    rule #t2aInstr<_>(br L)        => br L
+    rule #t2aInstr<_>(br_if L)     => br_if L
+    rule #t2aInstr<_>(br_table ES) => br_table ES
+    rule #t2aInstr<_>(return)      => return
+
+    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => call {FIDS[ID]}:>Int
+      requires ID in_keys(FIDS)
+    rule #t2aInstr<_>                     (call I:Int)         => call I
+
     rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
 ```
 
@@ -537,8 +600,11 @@ Since we do not have polymorphic functions available, we define one function per
 
 ```k
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
 
     rule #t2aInstr<_>(local.get I:Int) => local.get I
     rule #t2aInstr<_>(local.set I:Int) => local.set I
@@ -641,6 +707,19 @@ They distribute the text-to-abstract functions above over lists.
 The following are helper functions for gathering and updating context.
 
 ```k
+    syntax Map ::= #idcFuncs    ( Defns, Defns      ) [function]
+                 | #idcFuncsAux ( Defns, Defns, Int ) [function]
+ // ------------------------------------------------------------
+    rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0)
+
+    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
+    rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX +Int 1)
+    rule #idcFuncsAux(I                                   IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
+
+    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
+    rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
+    rule #idcFuncsAux(.Defns, .Defns, _) => .Map
+
     syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                  | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
  // -------------------------------------------------------------------------

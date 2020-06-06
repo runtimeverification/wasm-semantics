@@ -33,7 +33,6 @@ Configuration
             <typeIds>     .Map </typeIds>
             <types>       .Map </types>
             <nextTypeIdx> 0    </nextTypeIdx>
-            <funcIds>     .Map </funcIds>
             <funcAddrs>   .Map </funcAddrs>
             <nextFuncIdx> 0    </nextFuncIdx>
             <tabIds>      .Map </tabIds>
@@ -685,7 +684,6 @@ The importing and exporting parts of specifications are dealt with in the respec
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, OID, NEXTIDX) </funcIds>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </funcAddrs>
            ...
@@ -764,12 +762,11 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```k
     syntax PlainInstr ::= "call" Index
  // ----------------------------------
-    rule <k> call TFIDX => ( invoke FADDR:Int ) ... </k>
+    rule <k> call IDX:Int => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcIds> IDS </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 ```
@@ -1194,32 +1191,28 @@ A table index is optional and will be default to zero.
 ```k
     syntax Defn     ::= ElemDefn
     syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
-                      | "(" "elem"           Offset ElemSegment ")"
                       |     "elem" "{" Index        ElemSegment "}"
-    syntax Stmt     ::= #initElements ( Int, Int, Map, Map, ElemSegment )
- // ---------------------------------------------------------------------
-    // Default to table with index 0.
-    rule <k> ( elem        OFFSET      ELEMSEGMENT ) =>     ( elem 0 OFFSET ELEMSEGMENT ) ... </k>
+    syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
+ // ----------------------------------------------------------------
     rule <k> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
     rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
-    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, FIDS, ELEMSEGMENT ) ... </k>
+    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </k>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <moduleInst>
            <modIdx> CUR  </modIdx>
-           <funcIds> FIDS </funcIds>
            <funcAddrs> FADDRS </funcAddrs>
            <tabIds>  TIDS </tabIds>
            <tabAddrs> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabAddrs>
            ...
          </moduleInst>
 
-    rule <k> #initElements (    _,      _,      _,   _, .ElemSegment ) => . ... </k>
-    rule <k> #initElements ( ADDR, OFFSET, FADDRS, IDS,  E ES        ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, IDS, ES ) ... </k>
+    rule <k> #initElements (    _,      _,      _, .ElemSegment ) => . ... </k>
+    rule <k> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </k>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- FADDRS[#ContextLookup(IDS, E)] ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- FADDRS[E] ] </tdata>
            ...
          </tabInst>
 ```
@@ -1270,12 +1263,11 @@ The `start` component of a module declares the function index of a `start functi
     syntax Defn      ::= StartDefn
     syntax StartDefn ::= "(" "start" Index ")"
  // ------------------------------------------
-    rule <k> ( start TFIDX ) => ( invoke FADDR ) ... </k>
+    rule <k> ( start IDX:Int ) => ( invoke FADDR ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcIds> IDS </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS , TFIDX) |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
            ...
          </moduleInst>
 ```
@@ -1321,7 +1313,6 @@ The value of a global gets copied when it is imported.
            <modIdx> CUR </modIdx>
            <typeIds> TYPEIDS </typeIds>
            <types>   TYPES   </types>
-           <funcIds> IDS => #saveId(IDS, OID, NEXT) </funcIds>
            <funcAddrs> FS => FS [NEXT <- ADDR] </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
@@ -1329,9 +1320,8 @@ The value of a global gets copied when it is imported.
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcIds> IDS' </funcIds>
-           <funcAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </funcAddrs>
-           <exports>   ... NAME |-> TFIDX                        ... </exports>
+           <funcAddrs> ... IDX |-> ADDR ... </funcAddrs>
+           <exports>   ... NAME |-> IDX ... </exports>
            ...
          </moduleInst>
          <funcDef>
