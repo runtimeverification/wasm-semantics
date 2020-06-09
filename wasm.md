@@ -269,18 +269,18 @@ When a relationship operator is the next instruction, the two arguments are load
 Conversion Operation convert constant elements at the top of the stack to another type.
 
 ```k
-    syntax PlainInstr ::= AValType "." CvtOp
+    syntax PlainInstr ::= ValType "." CvtOp
  // ----------------------------------------
-    rule <k> ATYPE:AValType . CVTOP:Cvti32Op => ATYPE . CVTOP C1  ... </k>
+    rule <k> TYPE:ValType . CVTOP:Cvti32Op => TYPE . CVTOP C1  ... </k>
          <valstack> < i32 > C1 : VALSTACK => VALSTACK </valstack>
 
-    rule <k> ATYPE:AValType . CVTOP:Cvti64Op => ATYPE . CVTOP C1  ... </k>
+    rule <k> TYPE:ValType . CVTOP:Cvti64Op => TYPE . CVTOP C1  ... </k>
          <valstack> < i64 > C1 : VALSTACK => VALSTACK </valstack>
 
-    rule <k> ATYPE:AValType . CVTOP:Cvtf32Op => ATYPE . CVTOP C1  ... </k>
+    rule <k> TYPE:ValType . CVTOP:Cvtf32Op => TYPE . CVTOP C1  ... </k>
          <valstack> < f32 > C1 : VALSTACK => VALSTACK </valstack>
 
-    rule <k> ATYPE:AValType . CVTOP:Cvtf64Op => ATYPE . CVTOP C1  ... </k>
+    rule <k> TYPE:ValType . CVTOP:Cvtf64Op => TYPE . CVTOP C1  ... </k>
          <valstack> < f64 > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -457,14 +457,14 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TextFormatGlobalType ::= AValType | "(" "mut" AValType ")"
- // -----------------------------------------------------------------
+    syntax TextFormatGlobalType ::= ValType | "(" "mut" ValType ")"
+ // ---------------------------------------------------------------
 
-    syntax GlobalType ::= Mut AValType
+    syntax GlobalType ::= Mut ValType
                         | asGMut (TextFormatGlobalType) [function]
  // --------------------------------------------------------------
-    rule asGMut ( (mut T:AValType ) ) => var   T
-    rule asGMut (      T:AValType   ) => const T
+    rule asGMut ( (mut T:ValType ) ) => var   T
+    rule asGMut (      T:ValType   ) => const T
 
     syntax Defn       ::= GlobalDefn
     syntax GlobalSpec ::= TextFormatGlobalType Instr
@@ -473,7 +473,7 @@ The importing and exporting parts of specifications are dealt with in the respec
  // ----------------------------------------------------------
     rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> allocglobal(OID, asGMut(TYP)) ... </k>
 
-    rule <k> allocglobal(OID:OptionalId, MUT:Mut TYP:AValType) => . ... </k>
+    rule <k> allocglobal(OID:OptionalId, MUT:Mut TYP:ValType) => . ... </k>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -547,7 +547,7 @@ The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord
 
     syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
                        | TypeKeyWord ValTypes
-                       | "param" Identifier AValType
+                       | "param" Identifier ValType
     syntax TypeDecls ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
  // ---------------------------------------------------------------
 
@@ -560,8 +560,8 @@ The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord
     rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS:TypeDecls , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
     rule #gatherTypes(TKW , TKW         TYPES':ValTypes TDECLS:TypeDecls , TYPES)
       => #gatherTypes(TKW ,                             TDECLS:TypeDecls , TYPES + TYPES')
-    rule #gatherTypes(result , param ID:Identifier     _:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
-    rule #gatherTypes(param  , param ID:Identifier VTYPE:AValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + { ID VTYPE } .ValTypes)
+    rule #gatherTypes(result , param ID:Identifier     _:ValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
+    rule #gatherTypes(param  , param ID:Identifier VTYPE:ValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + VTYPE .ValTypes)
 ```
 
 ### Type Use
@@ -583,7 +583,7 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
     rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ))          => {TYPES[#ContextLookup(TYPEIDS ,TFIDX)]}:>FuncType
     rule asFuncType(TYPEIDS, TYPES, (type TFIDX ) TDECLS )  => asFuncType(TDECLS)
-      requires TYPES[#ContextLookup(TYPEIDS, TFIDX)] ==K unnameFuncType(asFuncType(TDECLS))
+      requires TYPES[#ContextLookup(TYPEIDS, TFIDX)] ==K asFuncType(TDECLS)
 ```
 
 ### Type Declaration
@@ -605,7 +605,7 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
            <modIdx> CUR </modIdx>
            <typeIds> IDS => #saveId(IDS, ID, NEXTIDX) </typeIds>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-           <types> TYPES => TYPES [NEXTIDX <- unnameFuncType(asFuncType(TDECLS))] </types>
+           <types> TYPES => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
            ...
          </moduleInst>
 ```
@@ -618,7 +618,7 @@ Function Declaration and Invocation
 ```k
     syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
                         | "local"            ValTypes
-                        | "local" Identifier AValType
+                        | "local" Identifier ValType
     syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
  // -------------------------------------------------------------------------
 
@@ -629,7 +629,7 @@ Function Declaration and Invocation
 
     rule #asLocalType(.LocalDecls                                            , VTYPES) => [ VTYPES ]
     rule #asLocalType(local               VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
-    rule #asLocalType(local ID:Identifier VTYPE:AValType   LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + { ID VTYPE } .ValTypes)
+    rule #asLocalType(local ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
 ### Function Implicit Type Declaration
@@ -646,7 +646,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
            <types> TYPES </types>
            ...
          </moduleInst>
-       requires notBool unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
+       requires notBool asFuncType(TDECLS) in values(TYPES)
 
     rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => . ... </k>
          <curModIdx> CUR </curModIdx>
@@ -655,7 +655,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
            <types> TYPES </types>
            ...
          </moduleInst>
-       requires unnameFuncType(asFuncType(TDECLS)) in values(TYPES)
+       requires asFuncType(TDECLS) in values(TYPES)
 
     rule <k> #checkTypeUse ( (type TFIDF) )        => . ... </k>
     rule <k> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </k>
@@ -729,7 +729,7 @@ The `#take` function will return the parameter stack in the reversed order, then
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <k> ( invoke FADDR )
-          => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(unnameValTypes(TLOCALS))
+          => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
           ~> block [TRANGE] INSTRS end
           ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
           ...
@@ -794,7 +794,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fType> FTYPE </fType>
            ...
          </funcDef>
-      requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) ==K unnameFuncType(FTYPE)
+      requires asFuncType(TYPEIDS, TYPES, TUSE) ==K FTYPE
 
     rule <k> call_indirect TUSE:TypeUse => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -816,7 +816,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fType> FTYPE </fType>
            ...
          </funcDef>
-      requires unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE)) =/=K unnameFuncType(FTYPE)
+      requires asFuncType(TYPEIDS, TYPES, TUSE) =/=K FTYPE
 
     rule <k> call_indirect TUSE:TypeUse => trap ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1329,7 +1329,7 @@ The value of a global gets copied when it is imported.
            <fType> FTYPE </fType>
            ...
          </funcDef>
-      requires unnameFuncType(FTYPE) ==K unnameFuncType(asFuncType(TYPEIDS, TYPES, TUSE))
+      requires FTYPE ==K asFuncType(TYPEIDS, TYPES, TUSE)
 
     rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </k>
          <curModIdx> CUR </curModIdx>

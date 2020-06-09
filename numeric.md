@@ -339,8 +339,8 @@ Conversion operators always take a single argument as input and cast it to anoth
 The operators are further broken down into subsorts for their input type, for simpler type-checking.
 
 ```k
-    syntax Val ::= AValType "." CvtOp Number [klabel(numberCvtOp), function]
- // ------------------------------------------------------------------------
+    syntax Val ::= ValType "." CvtOp Number [klabel(numberCvtOp), function]
+ // -----------------------------------------------------------------------
 
     syntax CvtOp ::= Cvti32Op | Cvti64Op | Cvtf32Op | Cvtf64Op
  // ----------------------------------------------------------

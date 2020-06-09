@@ -522,7 +522,7 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
     rule #t2aTypeUse<_>(TU) => TU [owise]
 
-    rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
+    rule #t2aLocalDecl<C>(local ID:Identifier VT:ValType) => local VT .ValTypes
     rule #t2aLocalDecl<C>(LD) => LD [owise]
 ```
 
