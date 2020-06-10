@@ -74,18 +74,20 @@ build: build-llvm build-haskell
 
 ifneq (,$(RELEASE))
     KOMPILE_OPTS += -O2
+else
+    KOMPILE_OPTS += --debug
 endif
 
 ifeq (,$(RELEASE))
     LLVM_KOMPILE_OPTS += -g
 endif
 
-KOMPILE_LLVM := kompile --debug --backend llvm            \
+KOMPILE_LLVM := kompile --backend llvm                    \
                 $(KOMPILE_OPTS)                           \
                 $(addprefix -ccopt ,$(LLVM_KOMPILE_OPTS))
 
-KOMPILE_HASKELL := kompile --debug --backend haskell \
-                   $(KOMPILE_OPTS)                   \
+KOMPILE_HASKELL := kompile --backend haskell \
+                   $(KOMPILE_OPTS)           \
                    $(HASKELL_KOMPILE_OPTS)
 
 ### LLVM
