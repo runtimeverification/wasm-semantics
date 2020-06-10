@@ -709,6 +709,7 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
                <funcMetadata>
                  <funcId> OID </funcId>
                  <localIds> LIDS </localIds>
+                 ...
                </funcMetadata>
              </funcDef>
            )
