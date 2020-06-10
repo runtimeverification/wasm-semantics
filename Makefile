@@ -67,7 +67,7 @@ SOURCE_FILES       := data         \
                       wasm-text    \
                       wrc20
 EXTRA_SOURCE_FILES :=
-ALL_SOURCE_FILES   := $(patsubst %, %.k, $(SOURCE_FILES) $(EXTRA_SOURCE_FILES))
+ALL_SOURCE_FILES   := $(patsubst %, %.k, $(SOURCE_FILES)) $(EXTRA_SOURCE_FILES)
 
 defn:  defn-haskell defn-llvm
 build: build-llvm build-haskell
