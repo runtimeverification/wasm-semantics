@@ -41,7 +41,11 @@ Configuration
             <memAddrs>    .Map </memAddrs>
             <globIds>     .Map </globIds>
             <globalAddrs> .Map </globalAddrs>
-            <nextGlobIdx>   0    </nextGlobIdx>
+            <nextGlobIdx> 0    </nextGlobIdx>
+            <moduleMetadata>
+              <moduleId>     </moduleId>
+              <funcIds> .Map </funcIds>
+            </moduleMetadata>
           </moduleInst>
         </moduleInstances>
         <nextModuleIdx> 0 </nextModuleIdx>
@@ -53,6 +57,10 @@ Configuration
               <fType>    .Type          </fType>
               <fLocal>   .Type          </fLocal>
               <fModInst> 0              </fModInst>
+              <funcMetadata>
+                <funcId> </funcId>
+                <localIds> .Map </localIds>
+              </funcMetadata>
             </funcDef>
           </funcs>
           <nextFuncAddr> 0 </nextFuncAddr>
@@ -670,15 +678,16 @@ A function can either be specified by giving a type, what locals it allocates, a
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
+TODO: Use a type index for type, and vec type for locals (moving `asLocalType` to the text format).
+
 ```k
     syntax Defn     ::= FuncDefn
-    syntax FuncSpec ::= TypeUse LocalDecls Instrs
-    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
-    syntax Alloc    ::= allocfunc (OptionalId, TypeUse, LocalDecls, Instrs)
- // -----------------------------------------------------------------------
-    rule <k> ( func OID TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => allocfunc(OID, TUSE, LDECLS, INSTRS)  ... </k>
+    syntax FuncDefn ::= #func(type: TypeUse, locals: LocalDecls, body: Instrs, metadata: FuncMetadata)
+    syntax Alloc    ::= allocfunc (TypeUse, LocalDecls, Instrs, FuncMetadata)
+ // -------------------------------------------------------------------------
+    rule <k> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META)  ... </k>
 
-    rule <k> allocfunc(OID, TUSE, LDECLS, INSTRS) => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -697,10 +706,18 @@ The importing and exporting parts of specifications are dealt with in the respec
                <fType>    asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
                <fLocal>   asLocalType ( LDECLS )               </fLocal>
                <fModInst> CUR                                  </fModInst>
+               <funcMetadata>
+                 <funcId> OID </funcId>
+                 <localIds> LIDS </localIds>
+                 ...
+               </funcMetadata>
              </funcDef>
            )
            ...
          </funcs>
+
+    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map)
+ // ------------------------------------------------------------
 ```
 
 ### Function Invocation/Return
@@ -745,6 +762,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fType>    [ TDOMAIN ] -> [ TRANGE ] </fType>
            <fLocal>   [ TLOCALS ]               </fLocal>
            <fModInst> MODIDX'                   </fModInst>
+           ...
          </funcDef>
 
     syntax PlainInstr ::= "return"
@@ -1434,19 +1452,23 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= #module ( id: OptionalId, types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns)
- // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata)
+ // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
  // ---------------------------------------------------------------------
-    rule #emptyModule(OID) =>  #module (... id: OID, types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns)
+    rule #emptyModule(OID) =>  #module (... types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns, metadata: #meta(... id: OID, funcIds: .Map))
+
+    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map)
+ // -------------------------------------------------------------
 ```
 
 A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    rule <k> #module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES)
+    rule <k> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
+                         metadata: #meta(... id: OID, funcIds: FIDS))
           => TS ~> IS ~> FS ~> GS ~> MS ~> TABS ~> ES ~> EL ~> DAT ~> S
          ...
          </k>
@@ -1457,6 +1479,11 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
            ( .Bag
           => <moduleInst>
                <modIdx> NEXT </modIdx>
+               <moduleMetadata>
+                 <moduleId> OID </moduleId>
+                 <funcIds> FIDS </funcIds>
+                 ...
+               </moduleMetadata>
                ...
              </moduleInst>
            )
