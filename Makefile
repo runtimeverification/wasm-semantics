@@ -24,13 +24,7 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
-PANDOC_TANGLE_SUBMODULE := $(DEPS_DIR)/pandoc-tangle
-TANGLER                 := $(PANDOC_TANGLE_SUBMODULE)/tangle.lua
-LUA_PATH                := $(PANDOC_TANGLE_SUBMODULE)/?.lua;;
-export LUA_PATH
-
 .PHONY: all clean deps                                                     \
-        defn defn-llvm defn-haskell                                        \
         build build-llvm build-haskell                                     \
         test test-execution test-simple test-prove                         \
         test-prove-good test-prove-bad                                     \
@@ -59,6 +53,8 @@ KOMPILE_OPTS         :=
 LLVM_KOMPILE_OPTS    :=
 HASKELL_KOMPILE_OPTS :=
 
+tangle_selector := k
+
 SOURCE_FILES       := data         \
                       kwasm-lemmas \
                       numeric      \
@@ -67,9 +63,8 @@ SOURCE_FILES       := data         \
                       wasm-text    \
                       wrc20
 EXTRA_SOURCE_FILES :=
-ALL_SOURCE_FILES   := $(patsubst %, %.k, $(SOURCE_FILES)) $(EXTRA_SOURCE_FILES)
+ALL_SOURCE_FILES   := $(patsubst %, %.md, $(SOURCE_FILES)) $(EXTRA_SOURCE_FILES)
 
-defn:  defn-haskell defn-llvm
 build: build-llvm build-haskell
 
 ifneq (,$(RELEASE))
@@ -82,56 +77,46 @@ ifeq (,$(RELEASE))
     LLVM_KOMPILE_OPTS += -g
 endif
 
-KOMPILE_LLVM := kompile --backend llvm                    \
-                $(KOMPILE_OPTS)                           \
+KOMPILE_LLVM := kompile --backend llvm --md-selector "$(tangle_selector)" \
+                $(KOMPILE_OPTS)                                           \
                 $(addprefix -ccopt ,$(LLVM_KOMPILE_OPTS))
 
-KOMPILE_HASKELL := kompile --backend haskell \
-                   $(KOMPILE_OPTS)           \
+KOMPILE_HASKELL := kompile --backend haskell --md-selector "$(tangle_selector)" \
+                   $(KOMPILE_OPTS)                                              \
                    $(HASKELL_KOMPILE_OPTS)
 
 ### LLVM
 
 llvm_dir           := $(DEFN_DIR)/llvm
-llvm_files         := $(patsubst %, $(llvm_dir)/%, $(ALL_SOURCE_FILES))
+llvm_files         := $(ALL_SOURCE_FILES)
 llvm_main_module   := WASM-TEST
 llvm_syntax_module := $(llvm_main_module)-SYNTAX
 llvm_main_file     := test
 llvm_kompiled      := $(llvm_dir)/$(llvm_main_file)-kompiled/interpreter
 
-defn-llvm:  $(llvm_defn)
 build-llvm: $(llvm_kompiled)
 
-$(llvm_dir)/%.k: %.md $(TANGLER)
-	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
-
 $(llvm_kompiled): $(llvm_files)
-	$(KOMPILE_LLVM) $(llvm_dir)/$(llvm_main_file).k \
-	    --directory $(llvm_dir) -I $(llvm_dir)      \
-	    --main-module $(llvm_main_module)           \
+	$(KOMPILE_LLVM) $(llvm_main_file).md      \
+	    --directory $(llvm_dir) -I $(CURDIR)  \
+	    --main-module $(llvm_main_module)     \
 	    --syntax-module $(llvm_syntax_module)
 
 ### Haskell
 
 haskell_dir           := $(DEFN_DIR)/haskell
-haskell_files         := $(patsubst %, $(haskell_dir)/%, $(ALL_SOURCE_FILES))
+haskell_files         := $(ALL_SOURCE_FILES)
 haskell_main_module   := WASM-TEST
 haskell_syntax_module := $(haskell_main_module)-SYNTAX
 haskell_main_file     := test
 haskell_kompiled      := $(haskell_dir)/$(haskell_main_file)-kompiled/definition.kore
 
-defn-haskell:  $(haskell_defn)
 build-haskell: $(haskell_kompiled)
 
-$(haskell_dir)/%.k: %.md $(TANGLER)
-	@mkdir -p $(dir $@)
-	pandoc --from markdown --to $(TANGLER) --metadata=code:.k $< > $@
-
 $(haskell_kompiled): $(haskell_files)
-	$(KOMPILE_HASKELL) $(haskell_dir)/$(haskell_main_file).k  \
-	    --directory $(haskell_dir) -I $(haskell_dir)          \
-	    --main-module $(haskell_main_module)                  \
+	$(KOMPILE_HASKELL) $(haskell_main_file).md   \
+	    --directory $(haskell_dir) -I $(CURDIR)  \
+	    --main-module $(haskell_main_module)     \
 	    --syntax-module $(haskell_syntax_module)
 
 # Testing

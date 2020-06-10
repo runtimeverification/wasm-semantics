@@ -2,8 +2,8 @@ WebAssembly Text Format
 =======================
 
 ```k
-require "wasm.k"
-require "data.k"
+require "wasm.md"
+require "data.md"
 
 module WASM-TEXT-SYNTAX
     imports WASM-TEXT

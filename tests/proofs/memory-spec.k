@@ -1,4 +1,4 @@
-requires "kwasm-lemmas.k"
+requires "kwasm-lemmas.md"
 
 module MEMORY-SPEC
     imports KWASM-LEMMAS

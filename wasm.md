@@ -2,8 +2,8 @@ WebAssembly State and Semantics
 ===============================
 
 ```k
-require "data.k"
-require "numeric.k"
+require "data.md"
+require "numeric.md"
 
 module WASM
     imports WASM-DATA

@@ -6,7 +6,7 @@ In this file we implement the numeric rules specified in section `4.3 Numerics` 
 In the notations of some operators, `sx` is the signedness of the operator and could be either `s` (signed) or `u` (unsigned), which indicates whether the operands should be interpreted as signed integer or unsigned integer.
 
 ```k
-require "data.k"
+require "data.md"
 
 module WASM-NUMERIC
     imports WASM-DATA

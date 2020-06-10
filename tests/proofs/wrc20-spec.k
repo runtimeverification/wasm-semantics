@@ -1,4 +1,4 @@
-requires "wrc20.k"
+requires "wrc20.md"
 
 // This is the "fast transfer" version of the WRC20 spec by pauld.
 
