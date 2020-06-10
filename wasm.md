@@ -43,6 +43,7 @@ Configuration
             <globalAddrs> .Map </globalAddrs>
             <nextGlobIdx> 0    </nextGlobIdx>
             <metadata>
+              <moduleId>     </moduleId>
               <funcIds> .Map </funcIds>
             </metadata>
           </moduleInst>
@@ -1465,6 +1466,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
           => <moduleInst>
                <modIdx> NEXT </modIdx>
                <metadata>
+                 <moduleId> OID </moduleId>
                  <funcIds> FIDS </funcIds>
                  ...
                </metadata>
