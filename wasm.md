@@ -42,10 +42,10 @@ Configuration
             <globIds>     .Map </globIds>
             <globalAddrs> .Map </globalAddrs>
             <nextGlobIdx> 0    </nextGlobIdx>
-            <metadata>
+            <moduleMetadata>
               <moduleId>     </moduleId>
               <funcIds> .Map </funcIds>
-            </metadata>
+            </moduleMetadata>
           </moduleInst>
         </moduleInstances>
         <nextModuleIdx> 0 </nextModuleIdx>
@@ -57,6 +57,10 @@ Configuration
               <fType>    .Type          </fType>
               <fLocal>   .Type          </fLocal>
               <fModInst> 0              </fModInst>
+              <funcMetadata>
+                <funcId> </funcId>
+                <localIds> .Map </localIds>
+              </funcMetadata>
             </funcDef>
           </funcs>
           <nextFuncAddr> 0 </nextFuncAddr>
@@ -679,11 +683,11 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
 ```k
     syntax Defn     ::= FuncDefn
     syntax FuncDefn ::= #func(type: TypeUse, locals: LocalDecls, body: Instrs, metadata: FuncMetadata)
-    syntax Alloc    ::= allocfunc (TypeUse, LocalDecls, Instrs)
- // -----------------------------------------------------------
-    rule <k> #func(... type: TUSE, locals: LDECLS, body: INSTRS) => allocfunc(TUSE, LDECLS, INSTRS)  ... </k>
+    syntax Alloc    ::= allocfunc (TypeUse, LocalDecls, Instrs, FuncMetadata)
+ // -------------------------------------------------------------------------
+    rule <k> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META)  ... </k>
 
-    rule <k> allocfunc(TUSE, LDECLS, INSTRS) => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -702,6 +706,10 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
                <fType>    asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
                <fLocal>   asLocalType ( LDECLS )               </fLocal>
                <fModInst> CUR                                  </fModInst>
+               <funcMetadata>
+                 <funcId> OID </funcId>
+                 <localIds> LIDS </localIds>
+               </funcMetadata>
              </funcDef>
            )
            ...
@@ -753,6 +761,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <fType>    [ TDOMAIN ] -> [ TRANGE ] </fType>
            <fLocal>   [ TLOCALS ]               </fLocal>
            <fModInst> MODIDX'                   </fModInst>
+           ...
          </funcDef>
 
     syntax PlainInstr ::= "return"
@@ -1469,11 +1478,11 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
            ( .Bag
           => <moduleInst>
                <modIdx> NEXT </modIdx>
-               <metadata>
+               <moduleMetadata>
                  <moduleId> OID </moduleId>
                  <funcIds> FIDS </funcIds>
                  ...
-               </metadata>
+               </moduleMetadata>
                ...
              </moduleInst>
            )
