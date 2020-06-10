@@ -41,9 +41,9 @@ Configuration
             <memAddrs>    .Map </memAddrs>
             <globIds>     .Map </globIds>
             <globalAddrs> .Map </globalAddrs>
-            <nextGlobIdx>   0    </nextGlobIdx>
+            <nextGlobIdx> 0    </nextGlobIdx>
             <metadata>
-              <funcIds>  .Map       </funcIds>
+              <funcIds> .Map </funcIds>
             </metadata>
           </moduleInst>
         </moduleInstances>
