@@ -291,8 +291,10 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 #### Functions
 
 ```k
-    syntax FuncSpec   ::= InlineImport TypeUse
- // ------------------------------------------
+    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
+    syntax FuncSpec ::= TypeUse LocalDecls Instrs
+                      | InlineImport TypeUse
+ // ----------------------------------------
     rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I)
       => ( import MOD NAME (func OID TUSE) ) #unfoldDefns(DS, I)
 
@@ -507,17 +509,16 @@ Since we do not have polymorphic functions available, we define one function per
 #### Functions
 
 ```k
-    rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
+    rule #t2aDefn<C>(( func OID:OptionalId T:TypeUse LS:LocalDecls IS:Instrs ))
+      => #func(... type: #t2aTypeUse <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
+                 , locals: #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
+                 , body: #t2aInstrs <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
+                 , metadata: #meta(... id: OID, localIds: #ids2Idxs(T, LS))
+              )
 
-    syntax FuncSpec   ::= "#t2aFuncSpec"  "<" Context ">" "(" FuncSpec   ")" [function]
     syntax TypeUse    ::= "#t2aTypeUse"   "<" Context ">" "(" TypeUse    ")" [function]
     syntax LocalDecl  ::= "#t2aLocalDecl" "<" Context ">" "(" LocalDecl  ")" [function]
  // -----------------------------------------------------------------------------------
-    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs)
-      => #t2aTypeUse   <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
-         #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
-         #t2aInstrs    <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
-
     rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
     rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
     rule #t2aTypeUse<_>(TU) => TU [owise]

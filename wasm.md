@@ -674,15 +674,16 @@ A function can either be specified by giving a type, what locals it allocates, a
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
+TODO: Use a type index for type, and vec type for locals (moving `asLocalType` to the text format).
+
 ```k
     syntax Defn     ::= FuncDefn
-    syntax FuncSpec ::= TypeUse LocalDecls Instrs
-    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
-    syntax Alloc    ::= allocfunc (OptionalId, TypeUse, LocalDecls, Instrs)
- // -----------------------------------------------------------------------
-    rule <k> ( func OID TUSE:TypeUse LDECLS:LocalDecls INSTRS:Instrs ) => allocfunc(OID, TUSE, LDECLS, INSTRS)  ... </k>
+    syntax FuncDefn ::= #func(type: TypeUse, locals: LocalDecls, body: Instrs, metadata: FuncMetadata)
+    syntax Alloc    ::= allocfunc (TypeUse, LocalDecls, Instrs)
+ // -----------------------------------------------------------
+    rule <k> #func(... type: TUSE, locals: LDECLS, body: INSTRS) => allocfunc(TUSE, LDECLS, INSTRS)  ... </k>
 
-    rule <k> allocfunc(OID, TUSE, LDECLS, INSTRS) => #checkTypeUse ( TUSE ) ... </k>
+    rule <k> allocfunc(TUSE, LDECLS, INSTRS) => #checkTypeUse ( TUSE ) ... </k>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -705,6 +706,9 @@ The importing and exporting parts of specifications are dealt with in the respec
            )
            ...
          </funcs>
+
+    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map)
+ // ------------------------------------------------------------
 ```
 
 ### Function Invocation/Return
