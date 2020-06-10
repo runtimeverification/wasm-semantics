@@ -489,9 +489,8 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aStmt<_>(S) => S [owise]
 
     rule #t2aModuleDecl<_>(#module(... funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS))>(M)
-    rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... id: OID, types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES))
-      => #module( ... id: OID
-                    , types: TS
+    rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
+      => #module( ... types: TS
                     , funcs: #t2aDefns<C>(FS)
                     , tables: TABS
                     , mems: MS
@@ -501,7 +500,7 @@ Since we do not have polymorphic functions available, we define one function per
                     , start: #t2aDefns<C>(S)
                     , importDefns: IS
                     , exports: #t2aDefns<C>(ES)
-                    , funcIds: FIDS
+                    , metadata: #meta(... id: OID, funcIds: FIDS)
                 )
 ```
 
