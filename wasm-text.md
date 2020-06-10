@@ -250,6 +250,17 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // --------------------------------------------------------------
 ```
 
+### Modules
+
+Modules are defined as a sequence of definitions, that may come in any order.
+The only requirements are that all imports must precede all other definitions, and that there may be at most one start function.
+
+```k
+    syntax Stmt       ::= ModuleDecl
+    syntax ModuleDecl ::= "(" "module" OptionalId Defns ")"
+ // -------------------------------------------------------
+```
+
 Desugaring
 ----------
 
@@ -280,8 +291,10 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 #### Functions
 
 ```k
-    syntax FuncSpec   ::= InlineImport TypeUse
- // ------------------------------------------
+    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
+    syntax FuncSpec ::= TypeUse LocalDecls Instrs
+                      | InlineImport TypeUse
+ // ----------------------------------------
     rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I)
       => ( import MOD NAME (func OID TUSE) ) #unfoldDefns(DS, I)
 
@@ -369,7 +382,58 @@ Other desugarings are either left for runtime or expressed as macros (for now).
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
 ```
 
+#### Element Segments
+
+```k
+    syntax ElemDefn ::= "(" "elem" Offset ElemSegment ")"
+ // -----------------------------------------------------
+    rule #unfoldDefns(( elem OFFSET:Offset ES ) DS, I)
+      => ( elem 0 OFFSET ES ) #unfoldDefns(DS, I)
+```
+
+### Structuring Modules
+
+The text format allows definitions to appear in any order in a module.
+In the abstract format, the module is a record, one for each type of definition.
+The following functions convert the text format module, given as a list of definitions, into the abstract format.
+In doing so, the respective ordering of all types of definitions are preserved.
+
+```k
+    syntax Stmts ::= structureModules ( Stmts ) [function]
+ // ------------------------------------------------------
+    rule structureModules((module OID:OptionalId DS) SS) => structureModule(DS, OID) structureModules(SS)
+    rule structureModules(.Stmts) => .Stmts
+    rule structureModules(S SS) => S structureModules(SS) [owise]
+
+    syntax ModuleDecl ::=  structureModule ( Defns , OptionalId ) [function]
+                        | #structureModule ( Defns , ModuleDecl ) [function]
+ // ------------------------------------------------------------------------
+    rule structureModule(DEFNS, OID) => #structureModule(#reverseDefns(DEFNS, .Defns), #emptyModule(OID))
+
+    rule #structureModule(.Defns, SORTED_MODULE) => SORTED_MODULE
+
+    rule #structureModule((T:TypeDefn   DS:Defns => DS), #module(... types:       TS => T TS))
+    rule #structureModule((I:ImportDefn DS:Defns => DS), #module(... importDefns: IS => I IS))
+    rule #structureModule((X:FuncDefn   DS:Defns => DS), #module(... funcs:       FS => X FS))
+    rule #structureModule((X:GlobalDefn DS:Defns => DS), #module(... globals:     GS => X GS))
+    rule #structureModule((T:TableDefn  DS:Defns => DS), #module(... tables:      TS => T TS))
+    rule #structureModule((M:MemoryDefn DS:Defns => DS), #module(... mems:        MS => M MS))
+    rule #structureModule((E:ExportDefn DS:Defns => DS), #module(... exports:     ES => E ES))
+    rule #structureModule((I:DataDefn   DS:Defns => DS), #module(... data:        IS => I IS))
+    rule #structureModule((I:ElemDefn   DS:Defns => DS), #module(... elem:        IS => I IS))
+    rule #structureModule((S:StartDefn  DS:Defns => DS), #module(... start:   .Defns => S .Defns))
+
+    syntax Defns ::= #reverseDefns(Defns, Defns) [function]
+ // -------------------------------------------------------
+    rule #reverseDefns(       .Defns  , ACC) => ACC
+    rule #reverseDefns(D:Defn DS:Defns, ACC) => #reverseDefns(DS, D ACC)
+```
+
 ## Replacing Identifiers and Unfolding Instructions
+
+The desugaring is done on the module level.
+First, if the program is just a list of definitions, that's an abbreviation for a single module.
+If not, we distribute the text to abstract transformation out over all the statements in the file.
 
 **TODO:**
 
@@ -389,51 +453,113 @@ The `Context` contains information of how to map text-level identifiers to corre
 Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
 
 ```k
-    syntax Context ::= ctx(localIds: Map)
+    syntax Context ::= ctx(localIds: Map, funcIds: Map)
+                     | #freshCtx ( )                               [function, functional]
                      | #updateLocalIds    ( Context , Map )        [function, functional]
                      | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
+                     | #updateFuncIds     ( Context , Map )        [function, functional]
+                     | #updateFuncIdsAux  ( Context , Map , Bool ) [function, functional]
  // -------------------------------------------------------------------------------------
+    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map)
+
     rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
     rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
     rule #updateLocalIdsAux(C, _, true) => C
+
+    rule #updateFuncIds(C, M) => #updateFuncIdsAux(C, M, false)
+    rule #updateFuncIdsAux(ctx(... funcIds: (_ => M)), M, false => true)
+    rule #updateFuncIdsAux(C, _, true) => C
 ```
 
-### Traversing the Text Format
+### Traversing the Full Program
 
-The program is traversed in full once, context beting gathered along the way.
+The program is traversed in full once, context being gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
 
 ```k
-    syntax Stmt      ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
-    syntax Defn      ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
-    syntax FuncSpec  ::= "#t2aFuncSpec"   "<" Context ">" "(" FuncSpec   ")" [function]
-    syntax TypeUse   ::= "#t2aTypeUse"    "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl ::= "#t2aLocalDecl"  "<" Context ">" "(" LocalDecl  ")" [function]
- // -----------------------------------------------------------------------------------
+    syntax Stmt       ::= "#t2aStmt"       "<" Context ">" "(" Stmt       ")" [function]
+    syntax ModuleDecl ::= "#t2aModuleDecl" "<" Context ">" "(" ModuleDecl ")" [function]
+    syntax ModuleDecl ::= "#t2aModule"     "<" Context ">" "(" ModuleDecl ")" [function]
+    syntax Defn       ::= "#t2aDefn"       "<" Context ">" "(" Defn       ")" [function]
+ // ------------------------------------------------------------------------------------
     rule text2abstract(DS:Defns) => text2abstract(( module DS ) .Stmts)
-    rule text2abstract(SS)       => #t2aStmts<ctx( ... localIds: .Map)>(unfoldStmts(SS)) [owise]
+    rule text2abstract(SS)       => #t2aStmts<#freshCtx()>(structureModules(unfoldStmts(SS))) [owise]
 
-    rule #t2aStmt<C>(( module OID:OptionalId DS )) => ( module OID #t2aDefns<C>(DS) )
+    rule #t2aStmt<C>(M:ModuleDecl) => #t2aModuleDecl<C>(M)
     rule #t2aStmt<C>(D:Defn)  => #t2aDefn<C>(D)
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
-    rule #t2aDefn<C>(( func OID:OptionalId FS:FuncSpec )) => ( func OID #t2aFuncSpec<C>(FS))
-    rule #t2aDefn<C>(D:Defn) => D [owise]
+    rule #t2aModuleDecl<_>(#module(... funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS))>(M)
+    rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
+      => #module( ... types: TS
+                    , funcs: #t2aDefns<C>(FS)
+                    , tables: TABS
+                    , mems: MS
+                    , globals: GS
+                    , elem: #t2aDefns<C>(EL)
+                    , data: DAT
+                    , start: #t2aDefns<C>(S)
+                    , importDefns: IS
+                    , exports: #t2aDefns<C>(ES)
+                    , metadata: #meta(... id: OID, funcIds: FIDS)
+                )
+```
 
-    rule #t2aFuncSpec<C> (( export WS ) FS:FuncSpec ) => ( export WS ) #t2aFuncSpec<C>(FS)
-    rule #t2aFuncSpec<C>(T:TypeUse LS:LocalDecls IS:Instrs)
-      => #t2aTypeUse   <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
-         #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
-         #t2aInstrs    <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
+#### Functions
 
+```k
+    rule #t2aDefn<C>(( func OID:OptionalId T:TypeUse LS:LocalDecls IS:Instrs ))
+      => #func(... type: #t2aTypeUse <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
+                 , locals: #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
+                 , body: #t2aInstrs <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
+                 , metadata: #meta(... id: OID, localIds: #ids2Idxs(T, LS))
+              )
 
+    syntax TypeUse    ::= "#t2aTypeUse"   "<" Context ">" "(" TypeUse    ")" [function]
+    syntax LocalDecl  ::= "#t2aLocalDecl" "<" Context ">" "(" LocalDecl  ")" [function]
+ // -----------------------------------------------------------------------------------
     rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
     rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
     rule #t2aTypeUse<_>(TU) => TU [owise]
 
-    rule #t2aLocalDecl<C>(local ID:Identifier AVT:AValType) => local AVT .ValTypes
+    rule #t2aLocalDecl<C>(local ID:Identifier VT:ValType) => local VT .ValTypes
     rule #t2aLocalDecl<C>(LD) => LD [owise]
+```
+
+#### Start Function
+
+```k
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => ( start {FIDS[ID]}:>Int )
+      requires ID in_keys(FIDS)
+    rule #t2aDefn<_>(( start I:Int )) => ( start I )
+```
+
+#### Element Segments
+
+```k
+    rule #t2aDefn<C>(( elem IDX:Index OFFSET ES )) => ( elem IDX OFFSET #t2aElemSegment<C>(ES) )
+
+    syntax ElemSegment ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
+ // ---------------------------------------------------------------------------------------
+    rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Identifier ES) => {FIDS[ID]}:>Int #t2aElemSegment<C>(ES)
+      requires ID in_keys(FIDS)
+    rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
+    rule #t2aElemSegment<C>(.ElemSegment) => .ElemSegment
+```
+
+#### Exports
+
+```k
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( export ENAME ( func ID:Identifier ) )) => ( export ENAME (func {FIDS[ID]}:>Int) )
+      requires ID in_keys(FIDS)
+    rule #t2aDefn<_>(( export ENAME ( func I:Int ) )) => ( export ENAME (func I) )
+```
+
+#### Other Definitions
+
+```k
+    rule #t2aDefn<C>(D:Defn) => D [owise]
 ```
 
 ### Instructions
@@ -450,13 +576,17 @@ Since we do not have polymorphic functions available, we define one function per
 #### Basic Instructions
 
 ```k
-    rule #t2aInstr<_>(unreachable)      => unreachable
-    rule #t2aInstr<_>(nop)              => nop
-    rule #t2aInstr<_>(br L)             => br L
-    rule #t2aInstr<_>(br_if L)          => br_if L
-    rule #t2aInstr<_>(br_table ES)      => br_table ES
-    rule #t2aInstr<_>(return)           => return
-    rule #t2aInstr<_>(call F)           => call F
+    rule #t2aInstr<_>(unreachable) => unreachable
+    rule #t2aInstr<_>(nop)         => nop
+    rule #t2aInstr<_>(br L)        => br L
+    rule #t2aInstr<_>(br_if L)     => br_if L
+    rule #t2aInstr<_>(br_table ES) => br_table ES
+    rule #t2aInstr<_>(return)      => return
+
+    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => call {FIDS[ID]}:>Int
+      requires ID in_keys(FIDS)
+    rule #t2aInstr<_>                     (call I:Int)         => call I
+
     rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
 ```
 
@@ -471,8 +601,11 @@ Since we do not have polymorphic functions available, we define one function per
 
 ```k
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
     rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+      requires ID in_keys(LIDS)
 
     rule #t2aInstr<_>(local.get I:Int) => local.get I
     rule #t2aInstr<_>(local.set I:Int) => local.set I
@@ -575,6 +708,19 @@ They distribute the text-to-abstract functions above over lists.
 The following are helper functions for gathering and updating context.
 
 ```k
+    syntax Map ::= #idcFuncs    ( Defns, Defns      ) [function]
+                 | #idcFuncsAux ( Defns, Defns, Int ) [function]
+ // ------------------------------------------------------------
+    rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0)
+
+    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
+    rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX +Int 1)
+    rule #idcFuncsAux(I                                   IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
+
+    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
+    rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
+    rule #idcFuncsAux(.Defns, .Defns, _) => .Map
+
     syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                  | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
  // -------------------------------------------------------------------------
