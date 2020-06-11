@@ -108,16 +108,11 @@ WebAssembly Types
 ### Base Types
 
 WebAssembly has four basic types, for 32 and 64 bit integers and floats.
-Here we define `AValType` which stands for `anonymous valtype`, representing values that doesn't have an identifier associated to it.
-Also we define `NValType` which stands for `named valtype`, representing values that has an identifier associated to it.
-`ValType` is the aggregation of `AValType` and `NValType`.
 
 ```k
     syntax IValType ::= "i32" | "i64"
     syntax FValType ::= "f32" | "f64"
-    syntax AValType ::= IValType | FValType
-    syntax NValType ::= "{" Identifier AValType "}"
-    syntax ValType  ::= AValType | NValType
+    syntax ValType  ::= IValType | FValType
  // ---------------------------------------
 ```
 
@@ -137,24 +132,6 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
  // -----------------------------------------------------------------
     rule lengthValTypes(.ValTypes) => 0
     rule lengthValTypes(V VS)      => 1 +Int lengthValTypes(VS)
-```
-
-We need helper functions to remove the identifiers from `FuncType`.
-
-```k
-    syntax FuncType ::= unnameFuncType ( FuncType ) [function, functional]
- // ----------------------------------------------------------------------
-    rule unnameFuncType ( [ V1 ]->[ V2 ] ) => [ unnameValTypes ( V1 ) ]->[ V2 ]
-```
-
-We need helper functions to remove all the identifiers from a `ValTypes`.
-
-```k
-    syntax ValTypes ::= unnameValTypes ( ValTypes ) [function, functional]
- // ----------------------------------------------------------------------
-    rule unnameValTypes ( .ValTypes     ) => .ValTypes
-    rule unnameValTypes ( { ID V }   VS ) => V unnameValTypes ( VS )
-    rule unnameValTypes ( V:AValType VS ) => V unnameValTypes ( VS )
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
@@ -252,7 +229,7 @@ Proper values are numbers annotated with their types.
 ```k
     syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
     syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
-    syntax  Val ::= "<" AValType ">" Number [klabel(<_>_)]
+    syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
                   | IVal | FVal
  // ---------------------------
 ```
@@ -362,7 +339,6 @@ Each call site _must_ ensure that this is desired behavior before using these fu
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0   : #zero(VTYPES)
     rule #zero(FTYPE:FValType VTYPES) => < FTYPE > 0.0 : #zero(VTYPES)
-    rule #zero({ ID VT }      VTYPES) => #zero(VT VTYPES)
 
     rule #take(N, _)         => .ValStack               requires notBool N >Int 0
     rule #take(N, .ValStack) => .ValStack               requires         N >Int 0

@@ -168,7 +168,7 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
     rule <k> (spectest_trap => . ) ~> A:Assertion  ... </k>
 
     rule <k> ( import MOD _ (func OID:OptionalId TUSE:TypeUse) )
-          => ( func OID TUSE .LocalDecls spectest_trap .Instrs)
+          => #func(... type: TUSE, locals: .LocalDecls, body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
           ...
           </k>
       requires MOD ==K #unparseWasmString("\"spectest\"")

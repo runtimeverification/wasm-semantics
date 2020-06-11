@@ -7,7 +7,7 @@ module WRC20-SPEC
 
     // Reverse bytes spec.
 
-    rule <k> #wrc20ReverseBytes // TODO: Have this pre-loaded in the store.
+    rule <k> #t2aDefns<#freshCtx()>(#wrc20ReverseBytes) // TODO: Have this pre-loaded in the store.
           ~> (i32.const ADDR)
              (i32.const ADDR)
              (i64.load)
@@ -35,7 +35,7 @@ module WRC20-SPEC
           ...
         </memInst>
         // TODO: Make function out of this tricky side condition.
-      requires notBool unnameFuncType(asFuncType(#wrc20ReverseBytesTypeDecls)) in values(TYPES)
+      requires notBool asFuncType(#wrc20ReverseBytesTypeDecls) in values(TYPES)
        andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
        andBool #inUnsignedRange(i32, ADDR)
       ensures  #getRange(BM, ADDR +Int 0, 1) ==Int #getRange(?BM', ADDR +Int 7, 1)
