@@ -1,4 +1,4 @@
-requires "kwasm-lemmas.k"
+requires "kwasm-lemmas.md"
 
 module LOOPS-SPEC
     imports KWASM-LEMMAS
