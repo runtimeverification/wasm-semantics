@@ -74,6 +74,7 @@ We allow 2 kinds of actions:
                     |     "get"    Int        WasmString
  // ----------------------------------------------------
     rule <k> ( invoke OID:OptionalId ENAME:WasmString IS:Instrs ) => sequenceInstrs(IS) ~> ( invoke OID ENAME .Instrs ) ... </k>
+      requires IS =/=K .Instrs
 
     rule <k> ( invoke ENAME:WasmString .Instrs ) => invoke CUR ENAME ... </k>
          <curModIdx> CUR </curModIdx>
