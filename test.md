@@ -250,7 +250,7 @@ This asserts that a `trap` was just thrown.
 ```k
     syntax Assertion ::= "#assertTrap" WasmString
  // ---------------------------------------------
-    rule <k> trap ~> #assertTrap _ => . ... </k> [priority(25)]
+    rule <k> trap ~> #assertTrap _ => . ... </k>
 ```
 
 ### ValStack Assertions

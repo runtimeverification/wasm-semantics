@@ -190,7 +190,8 @@ Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") unt
  // -----------------------
     rule <k> trap ~> (L:Label => .) ... </k>
     rule <k> trap ~> (F:Frame => .) ... </k>
-    rule <k> trap ~> (S:Stmt  => .) ... </k>
+    rule <k> trap ~> (I:Instr => .) ... </k>
+    rule <k> trap ~> (D:Defn  => .) ... </k>
 ```
 
 When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<valstack>` cell).
