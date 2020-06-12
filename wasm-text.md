@@ -139,9 +139,9 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
                          | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
  // -----------------------------------------------------------------------------------------------------------
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if OID TDECLS IS          end ... </k>
-    rule <k> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if     TDECLS IS else IS' end ... </k>
-    rule <k> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if  ID TDECLS IS else IS' end ... </k>
+    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => sequenceInstrs(C) ~> if OID TDECLS IS          end ... </k>
+    rule <k> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if     TDECLS IS else IS' end ... </k>
+    rule <k> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if  ID TDECLS IS else IS' end ... </k>
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
  // -----------------------------------------------------------------
