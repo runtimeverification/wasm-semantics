@@ -1,4 +1,4 @@
-requires "kwasm-lemmas.k"
+requires "kwasm-lemmas.md"
 
 module SIMPLE-ARITHMETIC-SPEC
     imports KWASM-LEMMAS
