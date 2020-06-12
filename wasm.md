@@ -410,7 +410,7 @@ Finally, we have the conditional and loop instructions.
 
     syntax Instr ::= "loop" TypeDecls Instrs "end"
  // ----------------------------------------------
-    rule <k> loop TDECLS:TypeDecls IS end => IS ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
+    rule <k> loop TDECLS:TypeDecls IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
