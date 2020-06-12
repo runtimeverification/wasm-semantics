@@ -27,7 +27,6 @@ export PATH
 .PHONY: all clean deps                                                     \
         build build-llvm build-haskell                                     \
         test test-execution test-simple test-prove                         \
-        test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
