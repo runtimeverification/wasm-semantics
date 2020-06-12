@@ -16,7 +16,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> text2abstract($PGM:Stmts) </k>
+        <k> sequenceStmts(text2abstract($PGM:Stmts)) </k>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
@@ -112,8 +112,8 @@ Before execution, the program is translated from the text-format concrete syntax
 It's full definition is found in the `wasm-text.md` file.
 
 ```k
-    syntax Stmts ::= text2abstract(Stmts) [function]
- // ------------------------------------------------
+    syntax Stmts ::= text2abstract ( Stmts ) [function]
+ // ---------------------------------------------------
 ```
 
 Instructions
@@ -162,9 +162,19 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax Defns  ::= EmptyStmts
     syntax Stmts  ::= Instrs | Defns
  // --------------------------------
-    rule          <k> .Stmts                => .       ... </k>
-    rule          <k> (S:Stmt .Stmts):KItem => S       ... </k>
-    rule [step] : <k> (S:Stmt SS)           => S ~> SS ... </k> requires SS =/=K .Stmts
+
+    syntax K ::= sequenceStmts  ( Stmts  ) [function]
+               | sequenceDefns  ( Defns  ) [function]
+               | sequenceInstrs ( Instrs ) [function]
+ // -------------------------------------------------
+    rule sequenceStmts(.Stmts) => .
+    rule sequenceStmts(S SS  ) => S ~> sequenceStmts(SS)
+
+    rule sequenceDefns(.Defns) => .
+    rule sequenceDefns(S SS  ) => S ~> sequenceDefns(SS)
+
+    rule sequenceInstrs(.Instrs) => .
+    rule sequenceInstrs(S SS  ) => S ~> sequenceInstrs(SS)
 ```
 
 ### Traps
@@ -178,14 +188,9 @@ Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") unt
 ```k
     syntax Instr ::= "trap"
  // -----------------------
-    rule <k> trap ~> (L:Label   => .) ... </k>
-    rule <k> trap ~> (F:Frame   => .) ... </k>
-    rule <k> trap ~> (I:Instr   => .) ... </k>
-    rule <k> trap ~> (IS:Instrs => .) ... </k>
-    rule <k> trap ~> (D:Defn    => .) ... </k>
-    rule <k> trap ~> (DS:Defns  => .) ... </k>
-
-    rule <k> trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
+    rule <k> trap ~> (L:Label => .) ... </k>
+    rule <k> trap ~> (F:Frame => .) ... </k>
+    rule <k> trap ~> (S:Stmt  => .) ... </k>
 ```
 
 When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<valstack>` cell).
@@ -352,7 +357,7 @@ We keep track of the number of labels on the stack, incrementing and decrementin
                    | "block" VecType   Instrs "end"
  // -----------------------------------------------
     rule <k> block TDECLS:TypeDecls IS end => block gatherTypes(result, TDECLS) IS end ... </k>
-    rule <k> block VECTYP:VecType   IS end => IS ~> label VECTYP { .Instrs } VALSTACK ... </k>
+    rule <k> block VECTYP:VecType   IS end => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </k>
          <valstack> VALSTACK => .ValStack </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
@@ -365,9 +370,8 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 ```k
     syntax PlainInstr ::= "br" Index
  // --------------------------------
-    rule <k> br IDX   ~> (SS:Stmts => .) ... </k>
-    rule <k> br IDX   ~> ( I:Instr => .) ... </k>
-    rule <k> br 0     ~> label [ TYPES ] { IS } VALSTACK' => IS ... </k>
+    rule <k> br IDX ~> (S:Stmt => .) ... </k>
+    rule <k> br 0   ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </k>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
     rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
@@ -394,12 +398,12 @@ Finally, we have the conditional and loop instructions.
 ```k
     syntax Instr ::= "if" TypeDecls Instrs "else" Instrs "end"
  // ----------------------------------------------------------
-    rule <k> if TDECLS:TypeDecls IS else IS' end => IS  ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> if TDECLS:TypeDecls IS else _ end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL =/=Int 0
 
-    rule <k> if TDECLS:TypeDecls IS else IS' end => IS' ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <k> if TDECLS:TypeDecls _ else IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL ==Int 0
@@ -767,10 +771,9 @@ The `#take` function will return the parameter stack in the reversed order, then
 
     syntax PlainInstr ::= "return"
  // ------------------------------
-    rule <k> return ~> (I:Instr  => .)    ... </k>
-    rule <k> return ~> (SS:Stmts => .)    ... </k>
-    rule <k> return ~> (L:Label  => .)    ... </k>
-    rule <k> (return => .) ~> FR:Frame    ... </k>
+    rule <k> return ~> (S:Stmt  => .)  ... </k>
+    rule <k> return ~> (L:Label => .)  ... </k>
+    rule <k> (return => .) ~> FR:Frame ... </k>
 ```
 
 ### Function Call
@@ -1212,8 +1215,8 @@ A table index is optional and will be default to zero.
                       |     "elem" "{" Index        ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
  // ----------------------------------------------------------------
-    rule <k> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
-    rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => IS ~> elem { TABIDX ELEMSEGMENT } ... </k>
+    rule <k> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </k>
+    rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </k>
 
     rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </k>
          <curModIdx> CUR </curModIdx>
@@ -1247,9 +1250,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
                       |     "data" "{" Index        Bytes      "}"
  // --------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET:Offset STRINGS ) =>     ( data   0     OFFSET    STRINGS  ) ... </k>
-    rule <k> ( data MEMID IS:Instrs     STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
-    rule <k> ( data MEMID (offset IS)   STRINGS ) => IS ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
+    rule <k> ( data       OFFSET:Offset STRINGS ) =>                     ( data   0     OFFSET    STRINGS  ) ... </k>
+    rule <k> ( data MEMID IS:Instrs     STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
+    rule <k> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
 
     // For now, deal only with memory 0.
     rule <k> data { MEMIDX DSBYTES } => . ... </k>
@@ -1469,7 +1472,16 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 ```k
     rule <k> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
                          metadata: #meta(... id: OID, funcIds: FIDS))
-          => TS ~> IS ~> FS ~> GS ~> MS ~> TABS ~> ES ~> EL ~> DAT ~> S
+          => sequenceDefns(TS)
+          ~> sequenceDefns(IS)
+          ~> sequenceDefns(FS)
+          ~> sequenceDefns(GS)
+          ~> sequenceDefns(MS)
+          ~> sequenceDefns(TABS)
+          ~> sequenceDefns(ES)
+          ~> sequenceDefns(EL)
+          ~> sequenceDefns(DAT)
+          ~> sequenceDefns(S)
          ...
          </k>
          <curModIdx> _ => NEXT </curModIdx>

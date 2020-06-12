@@ -124,8 +124,8 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
  // ---------------------------------------------------------
-    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
-    rule <k> ( PI:PlainInstr           ):FoldedInstr =>       PI ... </k>
+    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => sequenceInstrs(IS) ~> PI ... </k>
+    rule <k> ( PI:PlainInstr           ):FoldedInstr =>                       PI ... </k>
 ```
 
 Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.

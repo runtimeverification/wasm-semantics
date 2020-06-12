@@ -73,8 +73,7 @@ We allow 2 kinds of actions:
                     | "(" "get"    OptionalId WasmString        ")"
                     |     "get"    Int        WasmString
  // ----------------------------------------------------
-    rule <k> ( invoke OID:OptionalId ENAME:WasmString IS:Instrs ) => IS ~> ( invoke OID ENAME .Instrs ) ... </k>
-      requires IS =/=K .Instrs
+    rule <k> ( invoke OID:OptionalId ENAME:WasmString IS:Instrs ) => sequenceInstrs(IS) ~> ( invoke OID ENAME .Instrs ) ... </k>
 
     rule <k> ( invoke ENAME:WasmString .Instrs ) => invoke CUR ENAME ... </k>
          <curModIdx> CUR </curModIdx>
@@ -156,16 +155,13 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
 ```k
     syntax Instr ::= "spectest_trap"
  // --------------------------------
-    rule <k> spectest_trap ~> (L:Label   => .) ... </k>
-    rule <k> spectest_trap ~> (F:Frame   => .) ... </k>
-    rule <k> spectest_trap ~> (I:Instr   => .) ... </k>
-    rule <k> spectest_trap ~> (IS:Instrs => .) ... </k>
-    rule <k> spectest_trap ~> (D:Defn    => .) ... </k>
-    rule <k> spectest_trap ~> (DS:Defns  => .) ... </k>
-    rule <k> spectest_trap ~> (S:Stmt SS:Stmts => S ~> SS) ... </k>
+    rule <k> spectest_trap ~> (L:Label => .) ... </k>
+    rule <k> spectest_trap ~> (F:Frame => .) ... </k>
+    rule <k> spectest_trap ~> (I:Instr => .) ... </k>
+    rule <k> spectest_trap ~> (D:Defn  => .) ... </k>
 
-    rule <k> (spectest_trap => . ) ~> M:ModuleDecl ... </k>
-    rule <k> (spectest_trap => . ) ~> A:Assertion  ... </k>
+    rule <k> (spectest_trap => .) ~> M:ModuleDecl ... </k>
+    rule <k> (spectest_trap => .) ~> A:Assertion  ... </k>
 
     rule <k> ( import MOD _ (func OID:OptionalId TUSE:TypeUse) )
           => #func(... type: TUSE, locals: .LocalDecls, body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
@@ -231,7 +227,7 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
     rule <k> (assert_malformed  MOD            DESC) => . ... </k>
     rule <k> (assert_invalid    MOD            DESC) => . ... </k>
     rule <k> (assert_unlinkable MOD            DESC) => . ... </k>
-    rule <k> (assert_trap       MOD:ModuleDecl DESC) => text2abstract(MOD .Stmts) ~> #assertTrap DESC ... </k>
+    rule <k> (assert_trap       MOD:ModuleDecl DESC) => sequenceStmts(text2abstract(MOD .Stmts)) ~> #assertTrap DESC ... </k>
 ```
 
 And we implement some helper assertions to help testing.
