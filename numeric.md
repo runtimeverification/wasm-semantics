@@ -311,7 +311,7 @@ There are 6 relationship operators for integers: `eq`, `ne`, `lt_sx`, `gt_sx`, `
 There are 6 relationship operators for floats: `eq`, `ne`, `lt`, `gt`, `le` and `ge`.
 
 - `eq` returns 1 if the 2 given floats are equal, 0 otherwise.
-- `eq` returns 1 if the 2 given floats are not equal, 0 otherwise.
+- `ne` returns 1 if the 2 given floats are not equal, 0 otherwise.
 - `lt` returns 1 if the first oprand is less than the second opeand, 0 otherwise.
 - `gt` returns 1 if the first oprand is greater than the second opeand, 0 otherwise.
 - `le` returns 1 if the first oprand is less than or equal to the second opeand, 0 otherwise.
