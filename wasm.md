@@ -171,10 +171,10 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     rule sequenceStmts(S SS  ) => S ~> sequenceStmts(SS)
 
     rule sequenceDefns(.Defns) => .
-    rule sequenceDefns(S SS  ) => S ~> sequenceDefns(SS)
+    rule sequenceDefns(D DS  ) => D ~> sequenceDefns(DS)
 
     rule sequenceInstrs(.Instrs) => .
-    rule sequenceInstrs(S SS  ) => S ~> sequenceInstrs(SS)
+    rule sequenceInstrs(I IS   ) => I ~> sequenceInstrs(IS)
 ```
 
 ### Traps
