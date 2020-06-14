@@ -25,7 +25,7 @@ PATH := $(K_BIN):$(PATH)
 export PATH
 
 .PHONY: all clean deps                                                     \
-        build build-llvm build-haskell                                     \
+        build build-%                                                      \
         test test-execution test-simple test-prove                         \
         test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
