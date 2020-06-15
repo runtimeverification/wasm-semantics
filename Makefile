@@ -27,7 +27,6 @@ export PATH
 .PHONY: all clean deps                                                     \
         build build-llvm build-haskell                                     \
         test test-execution test-simple test-prove                         \
-        test-prove-good test-prove-bad                                     \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
@@ -138,31 +137,25 @@ test: test-execution test-prove
 
 # Generic Test Harnesses
 
-tests/%.run: tests/%
+tests/%.run: tests/% $(llvm_kompiled)
 	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/success-$(TEST_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 
-tests/%.run-term: tests/%
+tests/%.run-term: tests/% $(llvm_kompiled)
 	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	grep --after-context=2 "<k>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out-term tests/success-k.out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 
-tests/%.parse: tests/%
+tests/%.parse: tests/% $(llvm_kompiled)
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
 	rm -rf $@-out
 
-tests/%.prove: tests/%
+tests/%.prove: tests/% $(haskell_kompiled)
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) \
 	$(KPROVE_OPTS)
-
-tests/%.cannot-prove: tests/%
-	-$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) --boundary-cells k > $<.out 2> $<.err-log
-	$(CHECK) $<.out $<.expected
-	rm -rf $<.err-log
-	rm -rf $<.out
 
 ### Execution Tests
 
@@ -190,14 +183,8 @@ test-conformance: test-conformance-parse test-conformance-supported
 ### Proof Tests
 
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
-bad_proof_tests:=$(wildcard tests/bad-proofs/*-spec.k)
-slow_proof_tests:=tests/proofs/loops-spec.k tests/proofs/wrc20-spec.k
-quick_proof_tests:=$(filter-out $(slow_proof_tests), $(proof_tests))
 
-test-prove-good: $(proof_tests:=.prove)
-test-prove-bad:  $(bad_proof_tests:=.cannot-prove)
-
-test-prove: test-prove-good test-prove-bad
+test-prove: $(proof_tests:=.prove)
 
 # Presentation
 # ------------

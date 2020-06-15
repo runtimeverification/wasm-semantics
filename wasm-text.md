@@ -124,8 +124,8 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
  // ---------------------------------------------------------
-    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => IS ~> PI ... </k>
-    rule <k> ( PI:PlainInstr           ):FoldedInstr =>       PI ... </k>
+    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => sequenceInstrs(IS) ~> PI ... </k>
+    rule <k> ( PI:PlainInstr           ):FoldedInstr =>                       PI ... </k>
 ```
 
 Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
@@ -139,9 +139,9 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
     syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
                          | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
  // -----------------------------------------------------------------------------------------------------------
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => C ~> if OID TDECLS IS          end ... </k>
-    rule <k> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if     TDECLS IS else IS' end ... </k>
-    rule <k> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => C ~> if  ID TDECLS IS else IS' end ... </k>
+    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => sequenceInstrs(C) ~> if OID TDECLS IS          end ... </k>
+    rule <k> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if     TDECLS IS else IS' end ... </k>
+    rule <k> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if  ID TDECLS IS else IS' end ... </k>
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
  // -----------------------------------------------------------------
