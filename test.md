@@ -19,6 +19,25 @@ module WASM-TEST
     imports WASM-TEXT
 ```
 
+Configuration
+-------------
+
+```k
+    configuration
+      <k> $PGM:Stmts </k>
+      <wasm/>
+```
+
+Passing Control
+---------------
+
+The test embedder passes control to the execution cell in Wasm.
+
+```k
+    rule <k> PGM => . </k>
+         <wasmK> .K => sequenceStmts(text2abstract(PGM)) </wasmK>
+```
+
 Bare Allocations
 ----------------
 

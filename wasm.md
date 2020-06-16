@@ -16,7 +16,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <wasmK> sequenceStmts(text2abstract($PGM:Stmts)) </wasmK>
+        <wasmK> .K </wasmK>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
