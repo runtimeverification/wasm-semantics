@@ -3,9 +3,9 @@
     .
   </k>
   <wasm>
-    <wasmK>
+    <instrs>
       .
-    </wasmK>
+    </instrs>
     <valstack>
       .ValStack
     </valstack>
@@ -64,5 +64,5 @@
     <deterministicMemoryGrowth>
       true
     </deterministicMemoryGrowth>
-  </wasm >
+  </wasm>
 </wasm-test>

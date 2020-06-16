@@ -3,7 +3,7 @@ requires "kwasm-lemmas.md"
 module LOCALS-SPEC
     imports KWASM-LEMMAS
 
-    rule <wasmK> (local.get X:Int) ~> (local.set X:Int) => . ... </wasmK>
+    rule <instrs> (local.get X:Int) ~> (local.set X:Int) => . ... </instrs>
          <locals>
            X |-> < ITYPE > (VAL => VAL)
          </locals>
