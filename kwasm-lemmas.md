@@ -6,7 +6,7 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k
 module KWASM-LEMMAS [symbolic]
-    imports WASM-TEXT
+    imports WASM-TEST
     imports BYTES-KORE
     imports INT-SYMBOLIC
 ```
