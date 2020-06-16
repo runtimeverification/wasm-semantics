@@ -16,7 +16,7 @@ Configuration
 ```k
     configuration
       <wasm>
-        <k> sequenceStmts(text2abstract($PGM:Stmts)) </k>
+        <wasmK> sequenceStmts(text2abstract($PGM:Stmts)) </wasmK>
         <valstack> .ValStack </valstack>
         <curFrame>
           <locals>    .Map </locals>
@@ -181,25 +181,25 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
 
 `trap` is the error mechanism of Wasm.
 Traps cause all execution to halt, and can not be caught from within Wasm.
-We emulate this by consuming everything in the `<k>` cell that is not a `Stmt`.
+We emulate this by consuming everything in the `<wasmK>` cell that is not a `Stmt`.
 Statements are not part of Wasm semantics, but rather of the embedder, and is where traps can be caught.
 Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") until it reaches a statement which is not an `Instr` or `Def`.
 
 ```k
     syntax Instr ::= "trap"
  // -----------------------
-    rule <k> trap ~> (L:Label => .) ... </k>
-    rule <k> trap ~> (F:Frame => .) ... </k>
-    rule <k> trap ~> (I:Instr => .) ... </k>
-    rule <k> trap ~> (D:Defn  => .) ... </k>
+    rule <wasmK> trap ~> (L:Label => .) ... </wasmK>
+    rule <wasmK> trap ~> (F:Frame => .) ... </wasmK>
+    rule <wasmK> trap ~> (I:Instr => .) ... </wasmK>
+    rule <wasmK> trap ~> (D:Defn  => .) ... </wasmK>
 ```
 
-When a single value ends up on the instruction stack (the `<k>` cell), it is moved over to the value stack (the `<valstack>` cell).
+When a single value ends up on the instruction stack (the `<wasmK>` cell), it is moved over to the value stack (the `<valstack>` cell).
 If the value is the special `undefined`, then `trap` is generated instead.
 
 ```k
-    rule <k> undefined => trap ... </k>
-    rule <k>        V:Val    => .        ... </k>
+    rule <wasmK> undefined => trap ... </wasmK>
+    rule <wasmK>        V:Val    => .        ... </wasmK>
          <valstack> VALSTACK => V : VALSTACK </valstack>
       requires V =/=K undefined
 ```
@@ -220,8 +220,8 @@ Function `#unsigned` is called on integers to allow programs to use negative num
     syntax PlainInstr ::= IValType "." "const" WasmInt
                         | FValType "." "const" Number
  // -------------------------------------------------
-    rule <k> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </k>
-    rule <k> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </k>
+    rule <wasmK> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </wasmK>
+    rule <wasmK> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </wasmK>
 ```
 
 ### Unary Operations
@@ -233,9 +233,9 @@ An `*UnOp` operator always produces a result of the same type as its operand.
     syntax PlainInstr ::= IValType "." IUnOp
                         | FValType "." FUnOp
  // ----------------------------------------
-    rule <k> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </k>
+    rule <wasmK> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </wasmK>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
-    rule <k> FTYPE . UOP:FUnOp => FTYPE . UOP C1 ... </k>
+    rule <wasmK> FTYPE . UOP:FUnOp => FTYPE . UOP C1 ... </wasmK>
          <valstack> < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -247,9 +247,9 @@ When a binary operator is the next instruction, the two arguments are loaded fro
     syntax PlainInstr ::= IValType "." IBinOp
                         | FValType "." FBinOp
  // -----------------------------------------
-    rule <k> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </k>
+    rule <wasmK> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </wasmK>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
-    rule <k> FTYPE . BOP:FBinOp => FTYPE . BOP C1 C2 ... </k>
+    rule <wasmK> FTYPE . BOP:FBinOp => FTYPE . BOP C1 C2 ... </wasmK>
          <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -260,7 +260,7 @@ When a test operator is the next instruction, the single argument is loaded from
 ```k
     syntax PlainInstr ::= IValType "." TestOp
  // -----------------------------------------
-    rule <k> TYPE . TOP:TestOp => TYPE . TOP C1 ... </k>
+    rule <wasmK> TYPE . TOP:TestOp => TYPE . TOP C1 ... </wasmK>
          <valstack> < TYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -272,9 +272,9 @@ When a relationship operator is the next instruction, the two arguments are load
     syntax PlainInstr ::= IValType "." IRelOp
                         | FValType "." FRelOp
  // -----------------------------------------
-    rule <k> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </k>
+    rule <wasmK> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </wasmK>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
-    rule <k> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </k>
+    rule <wasmK> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </wasmK>
          <valstack> < FTYPE > C2 : < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -285,16 +285,16 @@ Conversion Operation convert constant elements at the top of the stack to anothe
 ```k
     syntax PlainInstr ::= ValType "." CvtOp
  // ----------------------------------------
-    rule <k> TYPE:ValType . CVTOP:Cvti32Op => TYPE . CVTOP C1  ... </k>
+    rule <wasmK> TYPE:ValType . CVTOP:Cvti32Op => TYPE . CVTOP C1  ... </wasmK>
          <valstack> < i32 > C1 : VALSTACK => VALSTACK </valstack>
 
-    rule <k> TYPE:ValType . CVTOP:Cvti64Op => TYPE . CVTOP C1  ... </k>
+    rule <wasmK> TYPE:ValType . CVTOP:Cvti64Op => TYPE . CVTOP C1  ... </wasmK>
          <valstack> < i64 > C1 : VALSTACK => VALSTACK </valstack>
 
-    rule <k> TYPE:ValType . CVTOP:Cvtf32Op => TYPE . CVTOP C1  ... </k>
+    rule <wasmK> TYPE:ValType . CVTOP:Cvtf32Op => TYPE . CVTOP C1  ... </wasmK>
          <valstack> < f32 > C1 : VALSTACK => VALSTACK </valstack>
 
-    rule <k> TYPE:ValType . CVTOP:Cvtf64Op => TYPE . CVTOP C1  ... </k>
+    rule <wasmK> TYPE:ValType . CVTOP:Cvtf64Op => TYPE . CVTOP C1  ... </wasmK>
          <valstack> < f64 > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -307,12 +307,12 @@ The `select` operator picks one of the second or third stack values based on the
 ```k
     syntax PlainInstr ::= "drop"
  // ----------------------------
-    rule <k> drop => . ... </k>
+    rule <wasmK> drop => . ... </wasmK>
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     syntax PlainInstr ::= "select"
  // ------------------------------
-    rule <k> select => . ... </k>
+    rule <wasmK> select => . ... </wasmK>
          <valstack>
            < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
       =>   < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
@@ -327,7 +327,7 @@ Structured Control Flow
 ```k
     syntax PlainInstr ::= "nop"
  // ---------------------------
-    rule <k> nop => . ... </k>
+    rule <wasmK> nop => . ... </wasmK>
 ```
 
 `unreachable` causes an immediate `trap`.
@@ -335,7 +335,7 @@ Structured Control Flow
 ```k
     syntax PlainInstr ::= "unreachable"
  // -----------------------------------
-    rule <k> unreachable => trap ... </k>
+    rule <wasmK> unreachable => trap ... </wasmK>
 ```
 
 Labels are administrative instructions used to mark the targets of break instructions.
@@ -350,20 +350,20 @@ We keep track of the number of labels on the stack, incrementing and decrementin
 ```k
     syntax Label ::= "label" VecType "{" Instrs "}" ValStack
  // --------------------------------------------------------
-    rule <k> label [ TYPES ] { _ } VALSTACK' => . ... </k>
+    rule <wasmK> label [ TYPES ] { _ } VALSTACK' => . ... </wasmK>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
                    | "block" VecType   Instrs "end"
  // -----------------------------------------------
-    rule <k> block TDECLS:TypeDecls IS end => block gatherTypes(result, TDECLS) IS end ... </k>
-    rule <k> block VECTYP:VecType   IS end => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </k>
+    rule <wasmK> block TDECLS:TypeDecls IS end => block gatherTypes(result, TDECLS) IS end ... </wasmK>
+    rule <wasmK> block VECTYP:VecType   IS end => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </wasmK>
          <valstack> VALSTACK => .ValStack </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
 
-The `br*` instructions search through the instruction stack (the `<k>` cell) for the correct label index.
+The `br*` instructions search through the instruction stack (the `<wasmK>` cell) for the correct label index.
 Upon reaching it, the label itself is executed.
 
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
@@ -371,26 +371,26 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 ```k
     syntax PlainInstr ::= "br" Index
  // --------------------------------
-    rule <k> br IDX ~> (S:Stmt => .) ... </k>
-    rule <k> br 0   ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </k>
+    rule <wasmK> br IDX ~> (S:Stmt => .) ... </wasmK>
+    rule <wasmK> br 0   ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </wasmK>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
-    rule <k> br N:Int ~> L:Label => br N -Int 1 ... </k>
+    rule <wasmK> br N:Int ~> L:Label => br N -Int 1 ... </wasmK>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
       requires N >Int 0
 
     syntax PlainInstr ::= "br_if" Index
  // -----------------------------------
-    rule <k> br_if IDX => br IDX ... </k>
+    rule <wasmK> br_if IDX => br IDX ... </wasmK>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <k> br_if IDX => .    ... </k>
+    rule <wasmK> br_if IDX => .    ... </wasmK>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
     syntax PlainInstr ::= "br_table" ElemSegment
  // --------------------------------------------
-    rule <k> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </k>
+    rule <wasmK> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </wasmK>
          <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -399,19 +399,19 @@ Finally, we have the conditional and loop instructions.
 ```k
     syntax Instr ::= "if" TypeDecls Instrs "else" Instrs "end"
  // ----------------------------------------------------------
-    rule <k> if TDECLS:TypeDecls IS else _ end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <wasmK> if TDECLS:TypeDecls IS else _ end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </wasmK>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL =/=Int 0
 
-    rule <k> if TDECLS:TypeDecls _ else IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </k>
+    rule <wasmK> if TDECLS:TypeDecls _ else IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </wasmK>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL ==Int 0
 
     syntax Instr ::= "loop" TypeDecls Instrs "end"
  // ----------------------------------------------
-    rule <k> loop TDECLS:TypeDecls IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </k>
+    rule <wasmK> loop TDECLS:TypeDecls IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </wasmK>
          <valstack> VALSTACK => .ValStack </valstack>
          <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
@@ -428,17 +428,17 @@ The various `init_local` variants assist in setting up the `locals` cell.
                    |  "init_locals"     ValStack
                    | "#init_locals" Int ValStack
  // --------------------------------------------
-    rule <k> init_local INDEX VALUE => . ... </k>
+    rule <wasmK> init_local INDEX VALUE => . ... </wasmK>
          <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
 
-    rule <k> init_locals VALUES => #init_locals 0 VALUES ... </k>
+    rule <wasmK> init_locals VALUES => #init_locals 0 VALUES ... </wasmK>
 
-    rule <k> #init_locals _ .ValStack => . ... </k>
-    rule <k> #init_locals N (VALUE : VALSTACK)
+    rule <wasmK> #init_locals _ .ValStack => . ... </wasmK>
+    rule <wasmK> #init_locals N (VALUE : VALSTACK)
           => init_local N VALUE
           ~> #init_locals (N +Int 1) VALSTACK
           ...
-          </k>
+          </wasmK>
 ```
 
 The `*_local` instructions are defined here.
@@ -448,15 +448,15 @@ The `*_local` instructions are defined here.
                         | "local.set" Index
                         | "local.tee" Index
  //----------------------------------------
-    rule <k> local.get I:Int => . ... </k>
+    rule <wasmK> local.get I:Int => . ... </wasmK>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... I |-> VALUE ... </locals>
 
-    rule <k> local.set I:Int => . ... </k>
+    rule <wasmK> local.set I:Int => . ... </wasmK>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> ... I |-> (_ => VALUE) ... </locals>
 
-    rule <k> local.tee I:Int => . ... </k>
+    rule <wasmK> local.tee I:Int => . ... </wasmK>
          <valstack> VALUE : VALSTACK </valstack>
          <locals> ... I |-> (_ => VALUE) ... </locals>
 ```
@@ -484,9 +484,9 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
     syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
  // ----------------------------------------------------------
-    rule <k> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> allocglobal(OID, asGMut(TYP)) ... </k>
+    rule <wasmK> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> allocglobal(OID, asGMut(TYP)) ... </wasmK>
 
-    rule <k> allocglobal(OID:OptionalId, MUT:Mut TYP:ValType) => . ... </k>
+    rule <wasmK> allocglobal(OID:OptionalId, MUT:Mut TYP:ValType) => . ... </wasmK>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -515,7 +515,7 @@ The `get` and `set` instructions read and write globals.
     syntax PlainInstr ::= "global.get" Index
                         | "global.set" Index
  // ----------------------------------------
-    rule <k> global.get TFIDX => . ... </k>
+    rule <wasmK> global.get TFIDX => . ... </wasmK>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -530,7 +530,7 @@ The `get` and `set` instructions read and write globals.
            ...
          </globalInst>
 
-    rule <k> global.set TFIDX => . ... </k>
+    rule <wasmK> global.set TFIDX => . ... </wasmK>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -610,9 +610,9 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
     syntax TypeDefn ::=    "(type" OptionalId "(" "func" TypeDecls ")" ")"
     syntax Alloc    ::= alloctype (OptionalId,           TypeDecls)
  // ---------------------------------------------------------------
-    rule <k> (type ID (func TDECLS:TypeDecls)) => alloctype(ID, TDECLS) ... </k>
+    rule <wasmK> (type ID (func TDECLS:TypeDecls)) => alloctype(ID, TDECLS) ... </wasmK>
 
-    rule <k> alloctype(ID, TDECLS) => . ... </k>
+    rule <wasmK> alloctype(ID, TDECLS) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -652,7 +652,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
-    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </k>
+    rule <wasmK> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -661,7 +661,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
          </moduleInst>
        requires notBool asFuncType(TDECLS) in values(TYPES)
 
-    rule <k> #checkTypeUse ( TDECLS:TypeDecls ) => . ... </k>
+    rule <wasmK> #checkTypeUse ( TDECLS:TypeDecls ) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -670,8 +670,8 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
          </moduleInst>
        requires asFuncType(TDECLS) in values(TYPES)
 
-    rule <k> #checkTypeUse ( (type TFIDF) )        => . ... </k>
-    rule <k> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </k>
+    rule <wasmK> #checkTypeUse ( (type TFIDF) )        => . ... </wasmK>
+    rule <wasmK> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </wasmK>
 ```
 
 ### Function Declaration
@@ -690,9 +690,9 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
     syntax FuncDefn ::= #func(type: TypeUse, locals: LocalDecls, body: Instrs, metadata: FuncMetadata)
     syntax Alloc    ::= allocfunc (TypeUse, LocalDecls, Instrs, FuncMetadata)
  // -------------------------------------------------------------------------
-    rule <k> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META)  ... </k>
+    rule <wasmK> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META)  ... </wasmK>
 
-    rule <k> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => #checkTypeUse ( TUSE ) ... </k>
+    rule <wasmK> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => #checkTypeUse ( TUSE ) ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -728,13 +728,13 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
 ### Function Invocation/Return
 
 Frames are used to store function return points.
-Similar to labels, they sit on the instruction stack (the `<k>` cell), and `return` consumes things following it until hitting it.
+Similar to labels, they sit on the instruction stack (the `<wasmK>` cell), and `return` consumes things following it until hitting it.
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
     syntax Frame ::= "frame" Int ValTypes ValStack Map Int Map
  // ----------------------------------------------------------
-    rule <k> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELDEPTH LABELIDS => . ... </k>
+    rule <wasmK> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELDEPTH LABELIDS => . ... </wasmK>
          <valstack> VALSTACK => #take(lengthValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
@@ -750,12 +750,12 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```k
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
-    rule <k> ( invoke FADDR )
+    rule <wasmK> ( invoke FADDR )
           => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
           ~> block [TRANGE] INSTRS end
           ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
           ...
-          </k>
+          </wasmK>
          <valstack>  VALSTACK => .ValStack </valstack>
          <locals> LOCAL => .Map </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
@@ -772,9 +772,9 @@ The `#take` function will return the parameter stack in the reversed order, then
 
     syntax PlainInstr ::= "return"
  // ------------------------------
-    rule <k> return ~> (S:Stmt  => .)  ... </k>
-    rule <k> return ~> (L:Label => .)  ... </k>
-    rule <k> (return => .) ~> FR:Frame ... </k>
+    rule <wasmK> return ~> (S:Stmt  => .)  ... </wasmK>
+    rule <wasmK> return ~> (L:Label => .)  ... </wasmK>
+    rule <wasmK> (return => .) ~> FR:Frame ... </wasmK>
 ```
 
 ### Function Call
@@ -784,7 +784,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```k
     syntax PlainInstr ::= "call" Index
  // ----------------------------------
-    rule <k> call IDX:Int => ( invoke FADDR ) ... </k>
+    rule <wasmK> call IDX:Int => ( invoke FADDR ) ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -796,7 +796,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```k
     syntax PlainInstr ::= "call_indirect" TypeUse
  // ---------------------------------------------
-    rule <k> call_indirect TUSE:TypeUse => ( invoke FADDR ) ... </k>
+    rule <wasmK> call_indirect TUSE:TypeUse => ( invoke FADDR ) ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
          <moduleInst>
@@ -818,7 +818,7 @@ The `#take` function will return the parameter stack in the reversed order, then
          </funcDef>
       requires asFuncType(TYPEIDS, TYPES, TUSE) ==K FTYPE
 
-    rule <k> call_indirect TUSE:TypeUse => trap ... </k>
+    rule <wasmK> call_indirect TUSE:TypeUse => trap ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
          <moduleInst>
@@ -840,7 +840,7 @@ The `#take` function will return the parameter stack in the reversed order, then
          </funcDef>
       requires asFuncType(TYPEIDS, TYPES, TUSE) =/=K FTYPE
 
-    rule <k> call_indirect TUSE:TypeUse => trap ... </k>
+    rule <wasmK> call_indirect TUSE:TypeUse => trap ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
          <moduleInst>
@@ -883,13 +883,13 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
     syntax Alloc     ::= alloctable (OptionalId, Int, OptionalInt)
  // --------------------------------------------------------------
-    rule <k> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable(OID, MIN, .Int) ... </k>
+    rule <wasmK> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable(OID, MIN, .Int) ... </wasmK>
       requires MIN <=Int #maxTableSize()
-    rule <k> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable(OID, MIN,  MAX) ... </k>
+    rule <wasmK> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable(OID, MIN,  MAX) ... </wasmK>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
-    rule <k> alloctable(ID, MIN, MAX) => . ... </k>
+    rule <wasmK> alloctable(ID, MIN, MAX) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -929,13 +929,13 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
     syntax Alloc      ::= allocmemory (OptionalId, Int, OptionalInt)
  // ----------------------------------------------------------------
-    rule <k> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory(OID, MIN, .Int) ... </k>
+    rule <wasmK> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory(OID, MIN, .Int) ... </wasmK>
       requires MIN <=Int #maxMemorySize()
-    rule <k> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </k>
+    rule <wasmK> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </wasmK>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
-    rule <k> allocmemory(ID, MIN, MAX) => . ... </k>
+    rule <wasmK> allocmemory(ID, MIN, MAX) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -973,12 +973,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
 
     syntax StoreOpM ::= StoreOp | StoreOp MemArg
  // --------------------------------------------
-    rule <k> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </k>
+    rule <wasmK> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </wasmK>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
-    rule <k> ITYPE . SOP:StoreOp MEMARG:MemArg => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </k>
+    rule <wasmK> ITYPE . SOP:StoreOp MEMARG:MemArg => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </wasmK>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <k> store { WIDTH EA VAL } => . ... </k>
+    rule <wasmK> store { WIDTH EA VAL } => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -993,7 +993,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          </memInst>
          requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
-    rule <k> store { WIDTH  EA  _ } => trap ... </k>
+    rule <wasmK> store { WIDTH  EA  _ } => trap ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1009,10 +1009,10 @@ The value is encoded as bytes and stored at the "effective address", which is th
 
     syntax StoreOp ::= "store" | "store8" | "store16" | "store32"
  // -------------------------------------------------------------
-    rule <k> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL           } ... </k>
-    rule <k> _     . store8  EA VAL => store { 1                EA #wrap(1, VAL) } ... </k>
-    rule <k> _     . store16 EA VAL => store { 2                EA #wrap(2, VAL) } ... </k>
-    rule <k> i64   . store32 EA VAL => store { 4                EA #wrap(4, VAL) } ... </k>
+    rule <wasmK> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL           } ... </wasmK>
+    rule <wasmK> _     . store8  EA VAL => store { 1                EA #wrap(1, VAL) } ... </wasmK>
+    rule <wasmK> _     . store16 EA VAL => store { 2                EA #wrap(2, VAL) } ... </wasmK>
+    rule <wasmK> i64   . store32 EA VAL => store { 4                EA #wrap(4, VAL) } ... </wasmK>
 ```
 
 The assorted load operations take an address of type `i32`.
@@ -1031,18 +1031,18 @@ Sort `Signedness` is defined in module `BYTES`.
 
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
  // -----------------------------------------
-    rule <k> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </k>
+    rule <wasmK> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </wasmK>
          <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
-    rule <k> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </k>
+    rule <wasmK> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </wasmK>
          <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
 
-    rule <k> load { ITYPE WIDTH EA SIGN }
+    rule <wasmK> load { ITYPE WIDTH EA SIGN }
           => < ITYPE > #if SIGN ==K Signed
                            #then #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))
                            #else #getRange(DATA, EA, WIDTH)
                        #fi
          ...
-         </k>
+         </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1057,7 +1057,7 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
-    rule <k> load { _ WIDTH EA _ } => trap ... </k>
+    rule <wasmK> load { _ WIDTH EA _ } => trap ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1075,13 +1075,13 @@ Sort `Signedness` is defined in module `BYTES`.
                     | "load8_u" | "load16_u" | "load32_u"
                     | "load8_s" | "load16_s" | "load32_s"
  // -----------------------------------------------------
-    rule <k> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </k>
-    rule <k> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </k>
-    rule <k> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </k>
-    rule <k> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </k>
-    rule <k> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </k>
-    rule <k> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </k>
-    rule <k> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </k>
+    rule <wasmK> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </wasmK>
+    rule <wasmK> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </wasmK>
+    rule <wasmK> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </wasmK>
+    rule <wasmK> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </wasmK>
+    rule <wasmK> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </wasmK>
+    rule <wasmK> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </wasmK>
+    rule <wasmK> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </wasmK>
 ```
 
 `MemArg`s can optionally be passed to `load` and `store` operations.
@@ -1108,7 +1108,7 @@ The `size` operation returns the size of the memory, measured in pages.
 ```k
     syntax PlainInstr ::= "memory.size"
  // -----------------------------------
-    rule <k> memory.size => < i32 > SIZE ... </k>
+    rule <wasmK> memory.size => < i32 > SIZE ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1134,10 +1134,10 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 
     syntax PlainInstr ::= "memory.grow"
  // -----------------------------------
-    rule <k> memory.grow => grow N ... </k>
+    rule <wasmK> memory.grow => grow N ... </wasmK>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
-    rule <k> grow N => < i32 > SIZE ... </k>
+    rule <wasmK> grow N => < i32 > SIZE ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1152,7 +1152,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          </memInst>
       requires #growthAllowed(SIZE +Int N, MAX)
 
-    rule <k> grow N => < i32 > #unsigned(i32, -1) ... </k>
+    rule <wasmK> grow N => < i32 > #unsigned(i32, -1) ... </wasmK>
          <deterministicMemoryGrowth> DET:Bool </deterministicMemoryGrowth>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1216,10 +1216,10 @@ A table index is optional and will be default to zero.
                       |     "elem" "{" Index        ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
  // ----------------------------------------------------------------
-    rule <k> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </k>
-    rule <k> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </k>
+    rule <wasmK> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </wasmK>
+    rule <wasmK> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </wasmK>
 
-    rule <k> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </k>
+    rule <wasmK> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <moduleInst>
@@ -1230,8 +1230,8 @@ A table index is optional and will be default to zero.
            ...
          </moduleInst>
 
-    rule <k> #initElements (    _,      _,      _, .ElemSegment ) => . ... </k>
-    rule <k> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </k>
+    rule <wasmK> #initElements (    _,      _,      _, .ElemSegment ) => . ... </wasmK>
+    rule <wasmK> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </wasmK>
          <tabInst>
            <tAddr> ADDR </tAddr>
            <tdata> DATA => DATA [ OFFSET <- FADDRS[E] ] </tdata>
@@ -1251,12 +1251,12 @@ The `data` initializer simply puts these bytes into the specified memory, starti
                       |     "data" "{" Index        Bytes      "}"
  // --------------------------------------------------------------
     // Default to memory 0.
-    rule <k> ( data       OFFSET:Offset STRINGS ) =>                     ( data   0     OFFSET    STRINGS  ) ... </k>
-    rule <k> ( data MEMID IS:Instrs     STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
-    rule <k> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </k>
+    rule <wasmK> ( data       OFFSET:Offset STRINGS ) =>                     ( data   0     OFFSET    STRINGS  ) ... </wasmK>
+    rule <wasmK> ( data MEMID IS:Instrs     STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </wasmK>
+    rule <wasmK> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </wasmK>
 
     // For now, deal only with memory 0.
-    rule <k> data { MEMIDX DSBYTES } => . ... </k>
+    rule <wasmK> data { MEMIDX DSBYTES } => . ... </wasmK>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1285,7 +1285,7 @@ The `start` component of a module declares the function index of a `start functi
     syntax Defn      ::= StartDefn
     syntax StartDefn ::= "(" "start" Index ")"
  // ------------------------------------------
-    rule <k> ( start IDX:Int ) => ( invoke FADDR ) ... </k>
+    rule <wasmK> ( start IDX:Int ) => ( invoke FADDR ) ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1304,7 +1304,7 @@ Exports make functions, tables, memories and globals available for importing int
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
     syntax Alloc      ::= ExportDefn
  // --------------------------------
-    rule <k> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </k>
+    rule <wasmK> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1329,7 +1329,7 @@ The value of a global gets copied when it is imported.
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
-    rule <k> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </k>
+    rule <wasmK> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1353,7 +1353,7 @@ The value of a global gets copied when it is imported.
          </funcDef>
       requires FTYPE ==K asFuncType(TYPEIDS, TYPES, TUSE)
 
-    rule <k> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </k>
+    rule <wasmK> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1377,7 +1377,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </k>
+    rule <wasmK> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1401,7 +1401,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <k> ( import MOD NAME (global OID:OptionalId TGTYP:TextFormatGlobalType) ) => . ... </k>
+    rule <wasmK> ( import MOD NAME (global OID:OptionalId TGTYP:TextFormatGlobalType) ) => . ... </wasmK>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1471,7 +1471,7 @@ A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    rule <k> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
+    rule <wasmK> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
                          metadata: #meta(... id: OID, funcIds: FIDS))
           => sequenceDefns(TS)
           ~> sequenceDefns(IS)
@@ -1484,7 +1484,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
           ~> sequenceDefns(DAT)
           ~> sequenceDefns(S)
          ...
-         </k>
+         </wasmK>
          <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
          <moduleIds> IDS => #saveId(IDS, OID, NEXT) </moduleIds>

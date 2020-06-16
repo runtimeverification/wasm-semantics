@@ -124,8 +124,8 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
  // ---------------------------------------------------------
-    rule <k> ( PI:PlainInstr IS:Instrs ):FoldedInstr => sequenceInstrs(IS) ~> PI ... </k>
-    rule <k> ( PI:PlainInstr           ):FoldedInstr =>                       PI ... </k>
+    rule <wasmK> ( PI:PlainInstr IS:Instrs ):FoldedInstr => sequenceInstrs(IS) ~> PI ... </wasmK>
+    rule <wasmK> ( PI:PlainInstr           ):FoldedInstr =>                       PI ... </wasmK>
 ```
 
 Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
@@ -133,20 +133,20 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
 ```k
     syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
  // ------------------------------------------------------------------
-    rule <k> ( block               TDECLS:TypeDecls INSTRS:Instrs ) => block    TDECLS INSTRS end ... </k>
-    rule <k> ( block ID:Identifier TDECLS:TypeDecls INSTRS:Instrs ) => block ID TDECLS INSTRS end ... </k>
+    rule <wasmK> ( block               TDECLS:TypeDecls INSTRS:Instrs ) => block    TDECLS INSTRS end ... </wasmK>
+    rule <wasmK> ( block ID:Identifier TDECLS:TypeDecls INSTRS:Instrs ) => block ID TDECLS INSTRS end ... </wasmK>
 
     syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
                          | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
  // -----------------------------------------------------------------------------------------------------------
-    rule <k> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => sequenceInstrs(C) ~> if OID TDECLS IS          end ... </k>
-    rule <k> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if     TDECLS IS else IS' end ... </k>
-    rule <k> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if  ID TDECLS IS else IS' end ... </k>
+    rule <wasmK> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => sequenceInstrs(C) ~> if OID TDECLS IS          end ... </wasmK>
+    rule <wasmK> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if     TDECLS IS else IS' end ... </wasmK>
+    rule <wasmK> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if  ID TDECLS IS else IS' end ... </wasmK>
 
     syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
  // -----------------------------------------------------------------
-    rule <k> ( loop               TDECLS:TypeDecls IS ) => loop    TDECLS IS end ... </k>
-    rule <k> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </k>
+    rule <wasmK> ( loop               TDECLS:TypeDecls IS ) => loop    TDECLS IS end ... </wasmK>
+    rule <wasmK> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </wasmK>
 ```
 
 ### Identifiers
@@ -180,7 +180,7 @@ Branching with an identifier is the same as branching to the label with that ide
 The correct label index is calculated by looking at whih depth the index occured and what depth execution is currently at.
 
 ```k
-    rule <k> br ID:Identifier => br DEPTH -Int DEPTH' -Int 1 ... </k>
+    rule <wasmK> br ID:Identifier => br DEPTH -Int DEPTH' -Int 1 ... </wasmK>
          <labelDepth> DEPTH </labelDepth>
          <labelIds> ... ID |-> DEPTH' ... </labelIds>
 ```
@@ -195,7 +195,7 @@ If identifiers are used, one must occur after the initial keyword (`block`, `if`
 
     syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
  // --------------------------------------------------------------------------
-    rule <k> block ID:Identifier TDECLS IS end OID':OptionalId => block TDECLS IS end ... </k>
+    rule <wasmK> block ID:Identifier TDECLS IS end OID':OptionalId => block TDECLS IS end ... </wasmK>
          <labelDepth> DEPTH </labelDepth>
          <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
       requires ID ==K OID'
@@ -203,7 +203,7 @@ If identifiers are used, one must occur after the initial keyword (`block`, `if`
 
     syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
  // -------------------------------------------------------------------------
-    rule <k> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => loop TDECLS IS end ... </k>
+    rule <wasmK> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => loop TDECLS IS end ... </wasmK>
          <labelDepth> DEPTH </labelDepth>
          <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
       requires ID ==K OID'
@@ -216,13 +216,13 @@ In the text format, it is also allowed to have a conditional without the `else` 
     syntax BlockInstr ::= "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
  // ------------------------------------------------------------------------------------------------
-    rule <k> if TDECLS:TypeDecls IS end => if TDECLS IS else .Instrs end ... </k>
+    rule <wasmK> if TDECLS:TypeDecls IS end => if TDECLS IS else .Instrs end ... </wasmK>
 
-    rule <k> if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </k>
+    rule <wasmK> if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </wasmK>
       requires ID ==K OID''
         orBool notBool isIdentifier(OID'')
 
-    rule <k> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => if TDECLS:TypeDecls IS else IS' end ... </k>
+    rule <wasmK> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => if TDECLS:TypeDecls IS else IS' end ... </wasmK>
          <labelDepth> DEPTH </labelDepth>
          <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
       requires ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
