@@ -24,8 +24,10 @@ Configuration
 
 ```k
     configuration
-      <k> $PGM:Stmts </k>
-      <wasm/>
+      <wasm-test>
+        <k> $PGM:Stmts </k>
+        <wasm/>
+      </wasm-test>
 ```
 
 Passing Control

@@ -1,4 +1,4 @@
-<generatedTop>
+<wasm-test>
   <k>
     .
   </k>
@@ -65,4 +65,4 @@
       true
     </deterministicMemoryGrowth>
   </wasm >
-</generatedTop>
+</wasm-test>
