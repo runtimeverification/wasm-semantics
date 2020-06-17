@@ -4,28 +4,28 @@ module LOOPS-SPEC
     imports KWASM-LEMMAS
 
     // Lemma
-    rule <k> br 0
-             ~> label // Loop label.
-                  [ .ValTypes ]
-                  { loop .TypeDecls
-                      (local.get 0)
-                      (local.get 1)
-                      (ITYPE.add)
-                      (local.set 1)
-                      (local.get 0)
-                      (ITYPE.const 1)
-                      (ITYPE.sub)
-                      (local.tee 0)
-                      (ITYPE.eqz)
-                      (br_if 1)
-                      (br 0)
-                    end
-                 }
-                 .ValStack
-             ~> label [ .ValTypes ] {.Instrs } STACK // Block label. 
-           => .
-              ...
-         </k>
+    rule <instrs> br 0
+               ~> label // Loop label.
+                    [ .ValTypes ]
+                    { loop .TypeDecls
+                        (local.get 0)
+                        (local.get 1)
+                        (ITYPE.add)
+                        (local.set 1)
+                        (local.get 0)
+                        (ITYPE.const 1)
+                        (ITYPE.sub)
+                        (local.tee 0)
+                        (ITYPE.eqz)
+                        (br_if 1)
+                        (br 0)
+                      end
+                   }
+                   .ValStack
+               ~> label [ .ValTypes ] {.Instrs } STACK // Block label.
+               => .
+               ...
+         </instrs>
          <valstack> _ => STACK </valstack>
          <labelDepth> D => D -Int 2 </labelDepth>
          <locals>
@@ -38,7 +38,7 @@ module LOOPS-SPEC
        andBool #inUnsignedRange(ITYPE, X +Int ((I *Int (I +Int 1)) /Int 2))
 
     // Main claim.
-    rule <k>
+    rule <instrs>
               block .TypeDecls
                  ( loop .TypeDecls
                      (local.get 0)
@@ -56,7 +56,7 @@ module LOOPS-SPEC
              end
           => .
           ...
-         </k>
+         </instrs>
          <locals>
            0 |-> < ITYPE > (N => 0)
            1 |-> < ITYPE > (0 => (N *Int (N +Int 1)) /Int 2)
