@@ -7,35 +7,35 @@ module WRC20-SPEC
 
     // Reverse bytes spec.
 
-    rule <k> sequenceDefns(#t2aDefns<#freshCtx()>(#wrc20ReverseBytes)) // TODO: Have this pre-loaded in the store.
-          ~> sequenceInstrs( (i32.const ADDR)
-                             (i32.const ADDR)
-                             (i64.load)
-                             ( invoke NEXTADDR ) // TODO: Use `call`.
-                             (i64.store)
-                           )
-          => .
-             ...
-        </k>
-        <curModIdx> CUR </curModIdx>
-        <moduleInst>
-          <modIdx> CUR </modIdx>
-          <memAddrs> 0 |-> MEMADDR </memAddrs>
-          <types> TYPES => ?_ </types>
-          <nextTypeIdx> NEXTTYPEIDX => NEXTTYPEIDX +Int 1 </nextTypeIdx>
-          <funcAddrs> _ => ?_ </funcAddrs>
-          <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>
-          ...
-        </moduleInst>
-        <funcs> .Bag => ?_ </funcs>
-        <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
-        <memInst>
-          <mAddr> MEMADDR  </mAddr>
-          <msize> SIZE     </msize>
-          <mdata> BM => ?BM' </mdata>
-          ...
-        </memInst>
-        // TODO: Make function out of this tricky side condition.
+    rule <instrs> sequenceDefns(#t2aDefns<#freshCtx()>(#wrc20ReverseBytes)) // TODO: Have this pre-loaded in the store.
+               ~> sequenceInstrs( (i32.const ADDR)
+                                  (i32.const ADDR)
+                                  (i64.load)
+                                  ( invoke NEXTADDR ) // TODO: Use `call`.
+                                  (i64.store)
+                                )
+               => .
+                  ...
+         </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> MEMADDR </memAddrs>
+           <types> TYPES => ?_ </types>
+           <nextTypeIdx> NEXTTYPEIDX => NEXTTYPEIDX +Int 1 </nextTypeIdx>
+           <funcAddrs> _ => ?_ </funcAddrs>
+           <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>
+           ...
+         </moduleInst>
+         <funcs> .Bag => ?_ </funcs>
+         <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
+         <memInst>
+           <mAddr> MEMADDR  </mAddr>
+           <msize> SIZE     </msize>
+           <mdata> BM => ?BM' </mdata>
+           ...
+         </memInst>
+         // TODO: Make function out of this tricky side condition.
       requires notBool asFuncType(#wrc20ReverseBytesTypeDecls) in values(TYPES)
        andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
        andBool #inUnsignedRange(i32, ADDR)
