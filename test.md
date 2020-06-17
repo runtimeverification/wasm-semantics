@@ -258,9 +258,9 @@ And we implement some helper assertions to help testing.
     syntax Assertion ::= "#assertAndRemoveEqual"
                        | "#assertAndRemoveToken"
  // --------------------------------------------
-    rule <instrs> #assertAndRemoveEqual   => #assertTopStack V .WasmString ~> ( drop ) ... </instrs>
-         <valstack> V : VALSTACK     => VALSTACK </valstack>
-    rule <instrs> #assertAndRemoveToken   => . ... </instrs>
+    rule <instrs> #assertAndRemoveEqual => #assertTopStack V .WasmString ~> ( drop ) ... </instrs>
+         <valstack> V : VALSTACK => VALSTACK </valstack>
+    rule <instrs> #assertAndRemoveToken => . ... </instrs>
          <valstack> token : VALSTACK => VALSTACK </valstack>
 ```
 
@@ -497,25 +497,25 @@ The modules are cleaned all together after the test file is executed.
 ```k
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
-    rule <instrs>    #clearConfig => . ...     </instrs>
-         <curModIdx>       _ => .Int      </curModIdx>
-         <valstack>        _ => .ValStack </valstack>
-         <locals>          _ => .Map      </locals>
-         <labelDepth>      _ => 0         </labelDepth>
-         <labelIds>        _ => .Map      </labelIds>
-         <moduleInstances> _ => .Bag      </moduleInstances>
-         <moduleIds>       _ => .Map      </moduleIds>
-         <nextModuleIdx>   _ => 0         </nextModuleIdx>
-         <moduleRegistry>  _ => .Map      </moduleRegistry>
+    rule <instrs> #clearConfig => . ...     </instrs>
+         <curModIdx>         _ => .Int      </curModIdx>
+         <valstack>          _ => .ValStack </valstack>
+         <locals>            _ => .Map      </locals>
+         <labelDepth>        _ => 0         </labelDepth>
+         <labelIds>          _ => .Map      </labelIds>
+         <moduleInstances>   _ => .Bag      </moduleInstances>
+         <moduleIds>         _ => .Map      </moduleIds>
+         <nextModuleIdx>     _ => 0         </nextModuleIdx>
+         <moduleRegistry>    _ => .Map      </moduleRegistry>
          <mainStore>
-           <nextFuncAddr>  _ => 0         </nextFuncAddr>
-           <funcs>         _ => .Bag      </funcs>
-           <nextTabAddr>   _ => 0         </nextTabAddr>
-           <tabs>          _ => .Bag      </tabs>
-           <nextMemAddr>   _ => 0         </nextMemAddr>
-           <mems>          _ => .Bag      </mems>
-           <nextGlobAddr>  _ => 0         </nextGlobAddr>
-           <globals>       _ => .Bag      </globals>
+           <nextFuncAddr>    _ => 0         </nextFuncAddr>
+           <funcs>           _ => .Bag      </funcs>
+           <nextTabAddr>     _ => 0         </nextTabAddr>
+           <tabs>            _ => .Bag      </tabs>
+           <nextMemAddr>     _ => 0         </nextMemAddr>
+           <mems>            _ => .Bag      </mems>
+           <nextGlobAddr>    _ => 0         </nextGlobAddr>
+           <globals>         _ => .Bag      </globals>
          </mainStore>
 ```
 

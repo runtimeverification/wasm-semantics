@@ -199,7 +199,7 @@ If the value is the special `undefined`, then `trap` is generated instead.
 
 ```k
     rule <instrs> undefined => trap ... </instrs>
-    rule <instrs>        V:Val    => .        ... </instrs>
+    rule <instrs>   V:Val    => .        ... </instrs>
          <valstack> VALSTACK => V : VALSTACK </valstack>
       requires V =/=K undefined
 ```
@@ -435,9 +435,9 @@ The various `init_local` variants assist in setting up the `locals` cell.
 
     rule <instrs> #init_locals _ .ValStack => . ... </instrs>
     rule <instrs> #init_locals N (VALUE : VALSTACK)
-          => init_local N VALUE
-          ~> #init_locals (N +Int 1) VALSTACK
-          ...
+               => init_local N VALUE
+               ~> #init_locals (N +Int 1) VALSTACK
+               ...
           </instrs>
 ```
 
@@ -690,7 +690,7 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
     syntax FuncDefn ::= #func(type: TypeUse, locals: LocalDecls, body: Instrs, metadata: FuncMetadata)
     syntax Alloc    ::= allocfunc (TypeUse, LocalDecls, Instrs, FuncMetadata)
  // -------------------------------------------------------------------------
-    rule <instrs> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META)  ... </instrs>
+    rule <instrs> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META) ... </instrs>
 
     rule <instrs> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => #checkTypeUse ( TUSE ) ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -751,11 +751,11 @@ The `#take` function will return the parameter stack in the reversed order, then
     syntax Instr ::= "(" "invoke" Int ")"
  // -------------------------------------
     rule <instrs> ( invoke FADDR )
-          => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
-          ~> block [TRANGE] INSTRS end
-          ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
-          ...
-          </instrs>
+               => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
+               ~> block [TRANGE] INSTRS end
+               ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
+               ...
+         </instrs>
          <valstack>  VALSTACK => .ValStack </valstack>
          <locals> LOCAL => .Map </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
@@ -1032,16 +1032,16 @@ Sort `Signedness` is defined in module `BYTES`.
     syntax LoadOpM ::= LoadOp | LoadOp MemArg
  // -----------------------------------------
     rule <instrs> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </instrs>
-         <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
+         <valstack> < i32 > IDX : VALSTACK         => VALSTACK </valstack>
     rule <instrs> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </instrs>
-         <valstack> < i32 > IDX : VALSTACK    => VALSTACK </valstack>
+         <valstack> < i32 > IDX : VALSTACK         => VALSTACK </valstack>
 
     rule <instrs> load { ITYPE WIDTH EA SIGN }
-          => < ITYPE > #if SIGN ==K Signed
-                           #then #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))
-                           #else #getRange(DATA, EA, WIDTH)
-                       #fi
-         ...
+               => < ITYPE > #if SIGN ==K Signed
+                                #then #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))
+                                #else #getRange(DATA, EA, WIDTH)
+                            #fi
+              ...
          </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1473,17 +1473,17 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 ```k
     rule <instrs> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
                          metadata: #meta(... id: OID, funcIds: FIDS))
-          => sequenceDefns(TS)
-          ~> sequenceDefns(IS)
-          ~> sequenceDefns(FS)
-          ~> sequenceDefns(GS)
-          ~> sequenceDefns(MS)
-          ~> sequenceDefns(TABS)
-          ~> sequenceDefns(ES)
-          ~> sequenceDefns(EL)
-          ~> sequenceDefns(DAT)
-          ~> sequenceDefns(S)
-         ...
+               => sequenceDefns(TS)
+               ~> sequenceDefns(IS)
+               ~> sequenceDefns(FS)
+               ~> sequenceDefns(GS)
+               ~> sequenceDefns(MS)
+               ~> sequenceDefns(TABS)
+               ~> sequenceDefns(ES)
+               ~> sequenceDefns(EL)
+               ~> sequenceDefns(DAT)
+               ~> sequenceDefns(S)
+               ...
          </instrs>
          <curModIdx> _ => NEXT </curModIdx>
          <nextModuleIdx> NEXT => NEXT +Int 1 </nextModuleIdx>
