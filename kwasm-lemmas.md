@@ -315,9 +315,9 @@ Arithmetic over `#getRange`:
 `#getRange` over `#setRange`:
 
 ```k
-    rule #getRange(#setRange(BM, ADDR, _VAL,_ WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
-    rule #getRange(#setRange(BM, ADDR, _VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
-    rule #getRange(#setRange(_BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => VAL
+    rule #getRange(#setRange(BM, ADDR, _VAL, _WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
+    rule #getRange(#setRange(BM, ADDR, _VAL,  WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
+    rule #getRange(#setRange(_BM, ADDR, VAL,  WIDTH), ADDR', WIDTH') => VAL
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
        andBool 0 <=Int VAL andBool VAL <Int 2 ^Int (8 *Int WIDTH)
