@@ -45,7 +45,7 @@ These are given in pure modulus form, and in form with `#wrap`, which is modulus
        andBool X  <Int (1 <<Int (N *Int 8))
       [simplification]
 
-    rule X modInt 1 => 0
+    rule _X modInt 1 => 0
       [simplification]
 ```
 
@@ -95,24 +95,24 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
 #### Modulus Over Addition
 
 ```k
-    rule (X *Int M +Int Y) modInt N => Y modInt N
+    rule (_X *Int M +Int Y) modInt N => Y modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
 
-    rule (Y +Int X *Int M) modInt N => Y modInt N
+    rule (Y +Int _X *Int M) modInt N => Y modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
 
-    rule #wrap(N, (X <<Int M) +Int Y) => #wrap(N, Y)
+    rule #wrap(N, (_X <<Int M) +Int Y) => #wrap(N, Y)
       requires 0 <=Int M
        andBool (N *Int 8) <=Int M
       [simplification]
 
-    rule #wrap(N, Y +Int (X <<Int M)) => #wrap(N, Y)
+    rule #wrap(N, Y +Int (_X <<Int M)) => #wrap(N, Y)
       requires 0 <=Int M
        andBool (N *Int 8) <=Int M
       [simplification]
@@ -165,16 +165,16 @@ x mod m + y = r + y
 We want K to understand what a bit-shift is.
 
 ```k
-    rule (X <<Int N) modInt M => 0
+    rule (_X <<Int N) modInt M => 0
       requires (2 ^Int N) modInt M ==Int 0
       [simplification]
 
-    rule #wrap(M, X <<Int N) => 0
+    rule #wrap(M, _X <<Int N) => 0
       requires (M *Int 8) <=Int N
       [simplification]
 
     rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
-    rule (X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
+    rule (_X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
 
     rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
     rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
@@ -268,7 +268,7 @@ Lookups
 -------
 
 ```k
-    rule (MAP:Map [KEY <- VAL])[KEY] => VAL
+    rule (_MAP:Map [KEY <- VAL])[KEY] => VAL
 ```
 
 Memory
@@ -315,9 +315,9 @@ Arithmetic over `#getRange`:
 `#getRange` over `#setRange`:
 
 ```k
-    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
-    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
-    rule #getRange(#setRange(BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => VAL
+    rule #getRange(#setRange(BM, ADDR, _VAL,_ WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR' +Int WIDTH' <=Int ADDR  [simplification]
+    rule #getRange(#setRange(BM, ADDR, _VAL, WIDTH), ADDR', WIDTH') => #getRange(BM, ADDR', WIDTH') requires ADDR  +Int WIDTH  <=Int ADDR' [simplification]
+    rule #getRange(#setRange(_BM, ADDR, VAL, WIDTH), ADDR', WIDTH') => VAL
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
        andBool 0 <=Int VAL andBool VAL <Int 2 ^Int (8 *Int WIDTH)
