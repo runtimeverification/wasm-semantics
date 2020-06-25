@@ -228,13 +228,13 @@ Therefore, we may as well shift first and then take the modulus, only we need to
 The argument for the left shift is similar.
 
 ```k
-    rule (X +Int (Y <<Int N)) modInt POW => X modInt POW
+    rule (X +Int (_Y <<Int N)) modInt POW => X modInt POW
       requires N  >=Int 0
        andBool POW >Int 0
        andBool (2 ^Int N) modInt POW ==Int 0
       [simplification]
 
-    rule ((Y <<Int N) +Int X) modInt POW => X modInt POW
+    rule ((_Y <<Int N) +Int X) modInt POW => X modInt POW
       requires N  >=Int 0
        andBool POW >Int 0
        andBool (2 ^Int N) modInt POW ==Int 0
