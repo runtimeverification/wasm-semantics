@@ -418,17 +418,17 @@ The implementation is not correct for now because the UTF-8 encoding is not impl
     rule #idxCloseBracket ( S, I ) => I                                requires substrString(S, I, I +Int 1)  ==String "}"
     rule #idxCloseBracket ( S, I ) => #idxCloseBracket ( S, I +Int 1 ) requires substrString(S, I, I +Int 1) =/=String "}"
 
-    syntax Bytes ::= #encodeUTF8 ( Int, Endianness ) [function]
- // -----------------------------------------------------------
-    rule #encodeUTF8 (I, _E) => Int2Bytes(I, BE, Unsigned) requires I <=Int 127
-    rule #encodeUTF8 (I, _E) => Int2Bytes(((((I &Int 1984) >>Int 6) +Int 192) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+    syntax Bytes ::= #encodeUTF8 ( Int ) [function]
+ // -----------------------------------------------
+    rule #encodeUTF8 (I) => Int2Bytes(I, BE, Unsigned) requires I <=Int 127
+    rule #encodeUTF8 (I) => Int2Bytes(((((I &Int 1984) >>Int 6) +Int 192) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
       requires I >=Int 128   andBool I <=Int 2047
-    rule #encodeUTF8 (I, _E) => Int2Bytes(((((I &Int 61440) >>Int 12) +Int 224) <<Int 16) +Int ((((I &Int 4032) >>Int 6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+    rule #encodeUTF8 (I) => Int2Bytes(((((I &Int 61440) >>Int 12) +Int 224) <<Int 16) +Int ((((I &Int 4032) >>Int 6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
       requires I >=Int 2048  andBool I <=Int 65535
-    rule #encodeUTF8 (I, _E) => Int2Bytes(((((I &Int 1835008) >>Int 18) +Int 240) <<Int 24) +Int ((((I &Int 258048) >>Int 12) +Int 128) <<Int 16) +Int ((((I &Int 4032) >>Int6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+    rule #encodeUTF8 (I) => Int2Bytes(((((I &Int 1835008) >>Int 18) +Int 240) <<Int 24) +Int ((((I &Int 258048) >>Int 12) +Int 128) <<Int 16) +Int ((((I &Int 4032) >>Int6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
       requires I >=Int 65536 andBool I <=Int 1114111
 
-    rule unescape(S, IDX, SB) => unescape(S, #idxCloseBracket(S, IDX) +Int 1, SB +String Bytes2String(#encodeUTF8(String2Base(substrString(S, IDX +Int 3, #idxCloseBracket(S, IDX +Int 3)), 16), BE)))
+    rule unescape(S, IDX, SB) => unescape(S, #idxCloseBracket(S, IDX) +Int 1, SB +String Bytes2String(#encodeUTF8(String2Base(substrString(S, IDX +Int 3, #idxCloseBracket(S, IDX +Int 3)), 16))))
       requires substrString(S, IDX, IDX +Int 1) ==K "\\"
        andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "u"
 ```
