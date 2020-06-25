@@ -18,7 +18,7 @@ module FUNCTIONS-SPEC
 
     rule <instrs> run ( #setRange(BM, ADDR, #wrap(2, #getRange(BM, ADDR, 4)), 2) ) => done ( BM ) ... </instrs> requires 0 <=Int ADDR
 
-    rule <instrs> run ( #getRange(_BM, _ADDR, 0)                            => done ( 0                             ) ... </instrs>
+    rule <instrs> run ( #getRange(_BM, _ADDR, 0)                          ) => done ( 0                             ) ... </instrs>
     rule <instrs> run ( #getRange(_BM, ADDR, _WIDTH)                      ) => done ( 0                             ) ... </instrs> requires ADDR <Int 0
     rule <instrs> run ( #getRange(BM, ADDR, 1) modInt 256                 ) => done ( #getRange(BM, ADDR       , 1) ) ... </instrs>
     rule <instrs> run ( #getRange(BM, ADDR, 3) modInt 256                 ) => done ( #getRange(BM, ADDR       , 1) ) ... </instrs>
