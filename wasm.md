@@ -188,10 +188,10 @@ Thus, a `trap` "bubbles up" (more correctly, to "consumes the continuation") unt
 ```k
     syntax Instr ::= "trap"
  // -----------------------
-    rule <instrs> trap ~> (L:Label => .) ... </instrs>
-    rule <instrs> trap ~> (F:Frame => .) ... </instrs>
-    rule <instrs> trap ~> (I:Instr => .) ... </instrs>
-    rule <instrs> trap ~> (D:Defn  => .) ... </instrs>
+    rule <instrs> trap ~> (_L:Label => .) ... </instrs>
+    rule <instrs> trap ~> (_F:Frame => .) ... </instrs>
+    rule <instrs> trap ~> (_I:Instr => .) ... </instrs>
+    rule <instrs> trap ~> (_D:Defn  => .) ... </instrs>
 ```
 
 When a single value ends up on the instruction stack (the `<instrs>` cell), it is moved over to the value stack (the `<valstack>` cell).
@@ -371,27 +371,27 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 ```k
     syntax PlainInstr ::= "br" Index
  // --------------------------------
-    rule <instrs> br IDX ~> (S:Stmt => .) ... </instrs>
+    rule <instrs> br _IDX ~> (_S:Stmt => .) ... </instrs>
     rule <instrs> br 0   ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
-    rule <instrs> br N:Int ~> L:Label => br N -Int 1 ... </instrs>
+    rule <instrs> br N:Int ~> _L:Label => br N -Int 1 ... </instrs>
          <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
       requires N >Int 0
 
     syntax PlainInstr ::= "br_if" Index
  // -----------------------------------
     rule <instrs> br_if IDX => br IDX ... </instrs>
-         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <instrs> br_if IDX => .    ... </instrs>
-         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+    rule <instrs> br_if _IDX => .    ... </instrs>
+         <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
     syntax PlainInstr ::= "br_table" ElemSegment
  // --------------------------------------------
     rule <instrs> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </instrs>
-         <valstack> < TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -457,7 +457,7 @@ The `*_local` instructions are defined here.
          <locals> ... I |-> (_ => VALUE) ... </locals>
 
     rule <instrs> local.tee I:Int => . ... </instrs>
-         <valstack> VALUE : VALSTACK </valstack>
+         <valstack> VALUE : _VALSTACK </valstack>
          <locals> ... I |-> (_ => VALUE) ... </locals>
 ```
 
@@ -573,8 +573,8 @@ The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord
     rule #gatherTypes(TKW , TKW':TypeKeyWord _:ValTypes TDECLS:TypeDecls , TYPES) => #gatherTypes(TKW, TDECLS, TYPES) requires TKW =/=K TKW'
     rule #gatherTypes(TKW , TKW         TYPES':ValTypes TDECLS:TypeDecls , TYPES)
       => #gatherTypes(TKW ,                             TDECLS:TypeDecls , TYPES + TYPES')
-    rule #gatherTypes(result , param ID:Identifier     _:ValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
-    rule #gatherTypes(param  , param ID:Identifier VTYPE:ValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + VTYPE .ValTypes)
+    rule #gatherTypes(result , param _ID:Identifier     _:ValType TDECLS:TypeDecls , TYPES) => #gatherTypes(result , TDECLS , TYPES)
+    rule #gatherTypes(param  , param _ID:Identifier VTYPE:ValType TDECLS:TypeDecls , TYPES) => #gatherTypes(param  , TDECLS , TYPES + VTYPE .ValTypes)
 ```
 
 ### Type Use
@@ -642,7 +642,7 @@ Function Declaration and Invocation
 
     rule #asLocalType(.LocalDecls                                            , VTYPES) => [ VTYPES ]
     rule #asLocalType(local               VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
-    rule #asLocalType(local ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPE .ValTypes)
+    rule #asLocalType(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
 ### Function Implicit Type Declaration
@@ -670,8 +670,8 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
          </moduleInst>
        requires asFuncType(TDECLS) in values(TYPES)
 
-    rule <instrs> #checkTypeUse ( (type TFIDF) )        => . ... </instrs>
-    rule <instrs> #checkTypeUse ( (type TFIDF) TDECLS ) => . ... </instrs>
+    rule <instrs> #checkTypeUse ( (type _TFIDF) )        => . ... </instrs>
+    rule <instrs> #checkTypeUse ( (type _TFIDF) _TDECLS ) => . ... </instrs>
 ```
 
 ### Function Declaration
@@ -772,9 +772,9 @@ The `#take` function will return the parameter stack in the reversed order, then
 
     syntax PlainInstr ::= "return"
  // ------------------------------
-    rule <instrs> return ~> (S:Stmt  => .)  ... </instrs>
-    rule <instrs> return ~> (L:Label => .)  ... </instrs>
-    rule <instrs> (return => .) ~> FR:Frame ... </instrs>
+    rule <instrs> return ~> (_S:Stmt  => .)  ... </instrs>
+    rule <instrs> return ~> (_L:Label => .)  ... </instrs>
+    rule <instrs> (return => .) ~> _FR:Frame ... </instrs>
 ```
 
 ### Function Call
@@ -840,7 +840,7 @@ The `#take` function will return the parameter stack in the reversed order, then
          </funcDef>
       requires asFuncType(TYPEIDS, TYPES, TUSE) =/=K FTYPE
 
-    rule <instrs> call_indirect TUSE:TypeUse => trap ... </instrs>
+    rule <instrs> call_indirect _TUSE:TypeUse => trap ... </instrs>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
          <moduleInst>
@@ -1329,7 +1329,7 @@ The value of a global gets copied when it is imported.
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
-    rule <instrs> ( import MOD NAME (func OID:OptionalId TUSE:TypeUse) ) => . ... </instrs>
+    rule <instrs> ( import MOD NAME (func _OID:OptionalId TUSE:TypeUse) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>

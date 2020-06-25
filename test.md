@@ -163,9 +163,9 @@ In order to parse the conformance test cases, we handle these declarations here 
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
                         | "(" "module" OptionalId "quote"  DefnStrings ")"
  // ----------------------------------------------------------------------
-    rule ( module OID binary DS ) => ( module OID .Defns ) [macro]
+    rule ( module OID binary _DS ) => ( module OID .Defns ) [macro]
 
-    rule ( module OID quote DS ) => ( module OID .Defns ) [macro]
+    rule ( module OID quote _DS ) => ( module OID .Defns ) [macro]
 ```
 
 The conformance tests contain imports of the `"spectest"` module.
@@ -177,13 +177,13 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
 ```k
     syntax Instr ::= "spectest_trap"
  // --------------------------------
-    rule <instrs> spectest_trap ~> (L:Label => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (F:Frame => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (I:Instr => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (D:Defn  => .) ... </instrs>
+    rule <instrs> spectest_trap ~> (_L:Label => .) ... </instrs>
+    rule <instrs> spectest_trap ~> (_F:Frame => .) ... </instrs>
+    rule <instrs> spectest_trap ~> (_I:Instr => .) ... </instrs>
+    rule <instrs> spectest_trap ~> (_D:Defn  => .) ... </instrs>
 
-    rule <instrs> (spectest_trap => .) ~> M:ModuleDecl ... </instrs>
-    rule <instrs> (spectest_trap => .) ~> A:Assertion  ... </instrs>
+    rule <instrs> (spectest_trap => .) ~> _M:ModuleDecl ... </instrs>
+    rule <instrs> (spectest_trap => .) ~> _A:Assertion  ... </instrs>
 
     rule <instrs> ( import MOD _ (func OID:OptionalId TUSE:TypeUse) )
           => #func(... type: TUSE, locals: .LocalDecls, body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
@@ -242,13 +242,13 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
          <valstack> VALSTACK => token : VALSTACK </valstack>
     rule <instrs> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </instrs>
          <valstack> VALSTACK => token : VALSTACK </valstack>
-    rule <instrs> (assert_return_canonical_nan  ACT)      => . ... </instrs>
-    rule <instrs> (assert_return_arithmetic_nan ACT)      => . ... </instrs>
+    rule <instrs> (assert_return_canonical_nan  _ACT)      => . ... </instrs>
+    rule <instrs> (assert_return_arithmetic_nan _ACT)      => . ... </instrs>
     rule <instrs> (assert_trap       ACT:Action     DESC) => ACT ~> #assertTrap DESC ... </instrs>
-    rule <instrs> (assert_exhaustion ACT:Action     DESC) => . ... </instrs>
-    rule <instrs> (assert_malformed  MOD            DESC) => . ... </instrs>
-    rule <instrs> (assert_invalid    MOD            DESC) => . ... </instrs>
-    rule <instrs> (assert_unlinkable MOD            DESC) => . ... </instrs>
+    rule <instrs> (assert_exhaustion _ACT:Action     _DESC) => . ... </instrs>
+    rule <instrs> (assert_malformed  _MOD            _DESC) => . ... </instrs>
+    rule <instrs> (assert_invalid    _MOD            _DESC) => . ... </instrs>
+    rule <instrs> (assert_unlinkable _MOD            _DESC) => . ... </instrs>
     rule <instrs> (assert_trap       MOD:ModuleDecl DESC) => sequenceStmts(text2abstract(MOD .Stmts)) ~> #assertTrap DESC ... </instrs>
 ```
 
@@ -284,13 +284,13 @@ These functions make assertions about the state of the `<valstack>` cell.
                        | "#assertStack"           ValStack WasmString
                        | "#assertStackAux"        ValStack ValStack
  // ---------------------------------------------------------------
-    rule <instrs> #assertTopStack S                      _ => . ... </instrs> <valstack> S              : VALSTACK </valstack>
-    rule <instrs> #assertTopStack < ITYPE:IValType > VAL _ => . ... </instrs> <valstack> < ITYPE > VAL' : VALSTACK </valstack>
+    rule <instrs> #assertTopStack S                      _ => . ... </instrs> <valstack> S              : _VALSTACK </valstack>
+    rule <instrs> #assertTopStack < ITYPE:IValType > VAL _ => . ... </instrs> <valstack> < ITYPE > VAL' : _VALSTACK </valstack>
       requires #unsigned(ITYPE, VAL) ==Int VAL'
-    rule <instrs> #assertTopStack < FTYPE:FValType > VAL _ => . ... </instrs> <valstack> < FTYPE > VAL' : VALSTACK </valstack>
+    rule <instrs> #assertTopStack < FTYPE:FValType > VAL _ => . ... </instrs> <valstack> < FTYPE > VAL' : _VALSTACK </valstack>
       requires signFloat(VAL) ==Bool signFloat(VAL') andBool VAL ==Float VAL'
 
-    rule <instrs> #assertTopStackExactly A               _ => . ... </instrs> <valstack> A              : VALSTACK </valstack>
+    rule <instrs> #assertTopStackExactly A               _ => . ... </instrs> <valstack> A              : _VALSTACK </valstack>
 
     rule <instrs> #assertStack S1 _ => #assertStackAux S1 S2  ... </instrs>
          <valstack> S2 </valstack>
@@ -388,7 +388,7 @@ This asserts related operation about tables.
 ```k
     syntax Assertion ::= "#assertTable" Index Int OptionalInt WasmString
  // --------------------------------------------------------------------
-    rule <instrs> #assertTable TFIDX SIZE MAX MSG => . ... </instrs>
+    rule <instrs> #assertTable TFIDX SIZE MAX _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -408,7 +408,7 @@ This asserts related operation about tables.
 
     syntax Assertion ::= "#assertTableElem" "(" Int "," Int ")" WasmString
  // ----------------------------------------------------------------------
-    rule <instrs> #assertTableElem (KEY , VAL) MSG => . ... </instrs>
+    rule <instrs> #assertTableElem (KEY , VAL) _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -432,7 +432,7 @@ This checks that the last allocated memory has the given size and max value.
 ```k
     syntax Assertion ::= "#assertMemory" Index Int OptionalInt WasmString
  // ---------------------------------------------------------------------
-    rule <instrs> #assertMemory TFIDX SIZE MAX MSG => . ... </instrs>
+    rule <instrs> #assertMemory TFIDX SIZE MAX _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -456,7 +456,7 @@ This checks that the last allocated memory has the given size and max value.
     rule <instrs> #assertMemoryData (KEY , VAL) MSG => #assertMemoryData CUR (KEY, VAL) MSG ... </instrs>
          <curModIdx> CUR </curModIdx>
 
-    rule <instrs> #assertMemoryData MODIDX (KEY , VAL) MSG => . ... </instrs>
+    rule <instrs> #assertMemoryData MODIDX (KEY , VAL) _MSG => . ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memAddrs> 0 |-> ADDR </memAddrs>
@@ -481,7 +481,7 @@ These assertions act on the last module defined.
 ```k
     syntax Assertion ::= "#assertNamedModule" Identifier WasmString
  // ---------------------------------------------------------------
-    rule <instrs> #assertNamedModule NAME S => . ... </instrs>
+    rule <instrs> #assertNamedModule NAME _S => . ... </instrs>
          <moduleIds> ... NAME |-> IDX ... </moduleIds>
          <moduleInstances>
            <moduleInst>
@@ -532,7 +532,7 @@ We also want to be able to test that the embedder's registration function is wor
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
 
-    rule <instrs> #assertRegistrationNamed REGNAME NAME _ => . ... </instrs>
+    rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
 ```

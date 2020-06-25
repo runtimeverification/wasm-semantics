@@ -519,12 +519,12 @@ Since we do not have polymorphic functions available, we define one function per
     syntax TypeUse    ::= "#t2aTypeUse"   "<" Context ">" "(" TypeUse    ")" [function]
     syntax LocalDecl  ::= "#t2aLocalDecl" "<" Context ">" "(" LocalDecl  ")" [function]
  // -----------------------------------------------------------------------------------
-    rule #t2aTypeUse<_>((type TYP) TDS:TypeDecls      ) => (type TYP)
-    rule #t2aTypeUse<C>((param ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
+    rule #t2aTypeUse<_>((type TYP) _TDS:TypeDecls      ) => (type TYP)
+    rule #t2aTypeUse<C>((param _ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
     rule #t2aTypeUse<_>(TU) => TU [owise]
 
-    rule #t2aLocalDecl<C>(local ID:Identifier VT:ValType) => local VT .ValTypes
-    rule #t2aLocalDecl<C>(LD) => LD [owise]
+    rule #t2aLocalDecl<_C>(local _ID:Identifier VT:ValType) => local VT .ValTypes
+    rule #t2aLocalDecl<_C>(LD) => LD [owise]
 ```
 
 #### Start Function
@@ -545,7 +545,7 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Identifier ES) => {FIDS[ID]}:>Int #t2aElemSegment<C>(ES)
       requires ID in_keys(FIDS)
     rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
-    rule #t2aElemSegment<C>(.ElemSegment) => .ElemSegment
+    rule #t2aElemSegment<_C>(.ElemSegment) => .ElemSegment
 ```
 
 #### Exports
@@ -559,7 +559,7 @@ Since we do not have polymorphic functions available, we define one function per
 #### Other Definitions
 
 ```k
-    rule #t2aDefn<C>(D:Defn) => D [owise]
+    rule #t2aDefn<_C>(D:Defn) => D [owise]
 ```
 
 ### Instructions
@@ -671,7 +671,7 @@ The following instructions are not part of the official Wasm text format.
 They are currently supported in KWasm text files, but may be deprecated.
 
 ```k
-    rule #t2aInstr<C>(trap) => trap
+    rule #t2aInstr<_C>(trap) => trap
 
     rule #t2aInstr<C>(block VT:VecType IS:Instrs end) => block VT #t2aInstrs<C>(IS) end
 
@@ -715,7 +715,7 @@ The following are helper functions for gathering and updating context.
 
     rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
     rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX +Int 1)
-    rule #idcFuncsAux(I                                   IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
+    rule #idcFuncsAux(_I                                   IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
 
     rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
     rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
@@ -733,11 +733,11 @@ The following are helper functions for gathering and updating context.
     rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
       => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
     rule #ids2Idxs(N, (param _)   TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS)
-    rule #ids2Idxs(N, TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
+    rule #ids2Idxs(N, _TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
 
     rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
       => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
-    rule #ids2Idxs(N, .TypeDecls, LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
+    rule #ids2Idxs(N, .TypeDecls, _LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
 ```
 
 ```k
