@@ -88,7 +88,7 @@ It is used when initializing a WebAssembly table, or used as the parameter of th
     syntax Index ::= #getElemSegment (ElemSegment, Int) [function]
  // --------------------------------------------------------------
     rule #lenElemSegment(.ElemSegment) => 0
-    rule #lenElemSegment(_TFIDX     ES) => 1 +Int #lenElemSegment(ES)
+    rule #lenElemSegment(_TFIDX    ES) => 1 +Int #lenElemSegment(ES)
 
     rule #getElemSegment(E _ES, 0) => E
     rule #getElemSegment(_E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
@@ -131,7 +131,7 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
     syntax Int ::= lengthValTypes ( ValTypes ) [function, functional]
  // -----------------------------------------------------------------
     rule lengthValTypes(.ValTypes) => 0
-    rule lengthValTypes(_V VS)      => 1 +Int lengthValTypes(VS)
+    rule lengthValTypes(_V VS)     => 1 +Int lengthValTypes(VS)
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
@@ -253,7 +253,7 @@ The `#wrap` function wraps an integer to a given byte width.
 
     syntax Int ::= #wrap ( Int , Int ) [function, functional]
  // ---------------------------------------------------------
-    rule #wrap(WIDTH, N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH [concrete]
+    rule #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH [concrete]
     rule #wrap(WIDTH, _N) => 0                                        requires notBool 0 <Int WIDTH
 ```
 
@@ -285,7 +285,7 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
     rule #signed(ITYPE, N) => N                  requires 0            <=Int N andBool N <Int #pow1(ITYPE)
     rule #signed(ITYPE, N) => N -Int #pow(ITYPE) requires #pow1(ITYPE) <=Int N andBool N <Int #pow (ITYPE)
 
-    rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
+    rule #unsigned( ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
     rule #unsigned(_ITYPE, N) => N                  requires 0 <=Int N
 
     rule #signedWidth(1, N) => N            requires 0     <=Int N andBool N <Int 128

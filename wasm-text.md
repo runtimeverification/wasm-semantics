@@ -715,7 +715,7 @@ The following are helper functions for gathering and updating context.
 
     rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
     rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX +Int 1)
-    rule #idcFuncsAux(_I                                   IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
+    rule #idcFuncsAux(_I                                  IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
 
     rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
     rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
@@ -732,7 +732,7 @@ The following are helper functions for gathering and updating context.
 
     rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
       => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
-    rule #ids2Idxs(N, (param _)   TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N,  (param _)   TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS)
     rule #ids2Idxs(N, _TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
 
     rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)

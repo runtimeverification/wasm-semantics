@@ -134,10 +134,10 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 ```k
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule ITYPE . div_u I1 I2 => < ITYPE > I1 /Int I2 requires I2 =/=Int 0
+    rule  ITYPE . div_u  I1 I2 => < ITYPE > I1 /Int I2 requires I2 =/=Int 0
     rule _ITYPE . div_u _I1 I2 => undefined            requires I2  ==Int 0
 
-    rule ITYPE . rem_u I1 I2 => < ITYPE > I1 %Int I2 requires I2 =/=Int 0
+    rule  ITYPE . rem_u  I1 I2 => < ITYPE > I1 %Int I2 requires I2 =/=Int 0
     rule _ITYPE . rem_u _I1 I2 => undefined            requires I2  ==Int 0
 
     syntax IBinOp ::= "div_s" | "rem_s"

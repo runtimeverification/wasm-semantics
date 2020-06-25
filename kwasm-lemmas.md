@@ -173,7 +173,7 @@ We want K to understand what a bit-shift is.
       requires (M *Int 8) <=Int N
       [simplification]
 
-    rule (X >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
+    rule (X  >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
     rule (_X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
 
     rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]

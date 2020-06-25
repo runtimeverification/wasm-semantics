@@ -640,8 +640,8 @@ Function Declaration and Invocation
  // -------------------------------------------------------------------
     rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
 
-    rule #asLocalType(.LocalDecls                                            , VTYPES) => [ VTYPES ]
-    rule #asLocalType(local               VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
+    rule #asLocalType(.LocalDecls                                             , VTYPES) => [ VTYPES ]
+    rule #asLocalType(local                VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
     rule #asLocalType(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
@@ -670,7 +670,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
          </moduleInst>
        requires asFuncType(TDECLS) in values(TYPES)
 
-    rule <instrs> #checkTypeUse ( (type _TFIDF) )        => . ... </instrs>
+    rule <instrs> #checkTypeUse ( (type _TFIDF) )         => . ... </instrs>
     rule <instrs> #checkTypeUse ( (type _TFIDF) _TDECLS ) => . ... </instrs>
 ```
 

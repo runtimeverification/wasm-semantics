@@ -242,13 +242,13 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
          <valstack> VALSTACK => token : VALSTACK </valstack>
     rule <instrs> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </instrs>
          <valstack> VALSTACK => token : VALSTACK </valstack>
-    rule <instrs> (assert_return_canonical_nan  _ACT)      => . ... </instrs>
-    rule <instrs> (assert_return_arithmetic_nan _ACT)      => . ... </instrs>
-    rule <instrs> (assert_trap       ACT:Action     DESC) => ACT ~> #assertTrap DESC ... </instrs>
-    rule <instrs> (assert_exhaustion _ACT:Action     _DESC) => . ... </instrs>
-    rule <instrs> (assert_malformed  _MOD            _DESC) => . ... </instrs>
-    rule <instrs> (assert_invalid    _MOD            _DESC) => . ... </instrs>
-    rule <instrs> (assert_unlinkable _MOD            _DESC) => . ... </instrs>
+    rule <instrs> (assert_return_canonical_nan  _ACT)     => . ... </instrs>
+    rule <instrs> (assert_return_arithmetic_nan _ACT)     => . ... </instrs>
+    rule <instrs> (assert_trap        ACT:Action    DESC) => ACT ~> #assertTrap DESC ... </instrs>
+    rule <instrs> (assert_exhaustion _ACT:Action   _DESC) => . ... </instrs>
+    rule <instrs> (assert_malformed  _MOD          _DESC) => . ... </instrs>
+    rule <instrs> (assert_invalid    _MOD          _DESC) => . ... </instrs>
+    rule <instrs> (assert_unlinkable _MOD          _DESC) => . ... </instrs>
     rule <instrs> (assert_trap       MOD:ModuleDecl DESC) => sequenceStmts(text2abstract(MOD .Stmts)) ~> #assertTrap DESC ... </instrs>
 ```
 
