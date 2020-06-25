@@ -105,7 +105,7 @@ $(llvm_kompiled): $(llvm_files)
 
 haskell_dir           := $(DEFN_DIR)/haskell
 haskell_files         := $(ALL_SOURCE_FILES)
-haskell_main_module   := WASM-TEST
+haskell_main_module   := WASM-TEXT
 haskell_syntax_module := $(haskell_main_module)-SYNTAX
 haskell_main_file     := test
 haskell_kompiled      := $(haskell_dir)/$(haskell_main_file)-kompiled/definition.kore
