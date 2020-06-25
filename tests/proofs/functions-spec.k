@@ -18,8 +18,8 @@ module FUNCTIONS-SPEC
 
     rule <instrs> run ( #setRange(BM, ADDR, #wrap(2, #getRange(BM, ADDR, 4)), 2) ) => done ( BM ) ... </instrs> requires 0 <=Int ADDR
 
-    rule <instrs> run ( #getRange(BM, ADDR, 0)                            ) => done ( 0                             ) ... </instrs>
-    rule <instrs> run ( #getRange(BM, ADDR, WIDTH)                        ) => done ( 0                             ) ... </instrs> requires ADDR <Int 0
+    rule <instrs> run ( #getRange(_BM, _ADDR, 0)                            => done ( 0                             ) ... </instrs>
+    rule <instrs> run ( #getRange(_BM, ADDR, _WIDTH)                      ) => done ( 0                             ) ... </instrs> requires ADDR <Int 0
     rule <instrs> run ( #getRange(BM, ADDR, 1) modInt 256                 ) => done ( #getRange(BM, ADDR       , 1) ) ... </instrs>
     rule <instrs> run ( #getRange(BM, ADDR, 3) modInt 256                 ) => done ( #getRange(BM, ADDR       , 1) ) ... </instrs>
     rule <instrs> run ( #getRange(BM, ADDR, 3) modInt (2 ^Int (8 *Int 3)) ) => done ( #getRange(BM, ADDR       , 3) ) ... </instrs>
@@ -52,9 +52,9 @@ module FUNCTIONS-SPEC
               ...
          </instrs>
 
-    rule <instrs> run ( #getRange ( #setRange ( BM , ADDR +Int 7 , VAL , 1 ) , ADDR +Int 3 , 1 ) ) => done ( #getRange ( BM , ADDR +Int 3 , 1 ) ) ... </instrs>
+    rule <instrs> run ( #getRange ( #setRange (  BM , ADDR +Int 7 , _VAL , 1 ) , ADDR +Int 3 , 1 ) ) => done ( #getRange ( BM , ADDR +Int 3 , 1 ) ) ... </instrs>
 
-    rule <instrs> run ( #getRange ( #setRange ( BM , ADDR +Int 7 , VAL , 1 ) , ADDR +Int 7 , 1 ) ) => done ( VAL ) ... </instrs> requires 0 <=Int ADDR andBool 0 <=Int VAL andBool VAL <Int 256
+    rule <instrs> run ( #getRange ( #setRange ( _BM , ADDR +Int 7 ,  VAL , 1 ) , ADDR +Int 7 , 1 ) ) => done ( VAL ) ... </instrs> requires 0 <=Int ADDR andBool 0 <=Int VAL andBool VAL <Int 256
 
     rule <instrs> run  ( #getRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( #setRange ( BM , ADDR , #getRange ( BM , ADDR +Int 7 , 1 ) , 1 ) , ADDR +Int 1 , #getRange ( BM , ADDR +Int 6 , 1 ) , 1 ) , ADDR +Int 2 , #getRange ( BM , ADDR +Int 5 , 1 ) , 1 ) , ADDR +Int 3 , #getRange ( BM , ADDR +Int 4 , 1 ) , 1 ) , ADDR +Int 4 , #getRange ( BM , ADDR +Int 3 , 1 ) , 1 ) , ADDR +Int 5 , #getRange ( BM , ADDR +Int 2 , 1 ) , 1 ) , ADDR +Int 6 , #getRange ( BM , ADDR +Int 1 , 1 ) , 1 ) , ADDR +Int 7 , #getRange ( BM , ADDR , 1 ) , 1 ) , ADDR +Int 3 , 1 ) )
                => done ( #getRange ( BM , ADDR +Int 4 , 1 ) )

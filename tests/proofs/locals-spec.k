@@ -5,6 +5,6 @@ module LOCALS-SPEC
 
     rule <instrs> (local.get X:Int) ~> (local.set X:Int) => . ... </instrs>
          <locals>
-           X |-> < ITYPE > (VAL => VAL)
+           X |-> < _ITYPE > (VAL => VAL)
          </locals>
 endmodule
