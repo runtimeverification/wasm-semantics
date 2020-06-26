@@ -18,7 +18,7 @@ Configuration
       <wasm>
         <instrs> .K </instrs>
         <valstack> .ValStack </valstack>
-        <curFrame unused="">
+        <curFrame>
           <locals>    .Map </locals>
           <curModIdx> .Int </curModIdx>
           <labelDepth> 0   </labelDepth>
