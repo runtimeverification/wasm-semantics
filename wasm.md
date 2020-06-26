@@ -15,7 +15,7 @@ Configuration
 
 ```k
     configuration
-      <wasm unused="">
+      <wasm>
         <instrs> .K </instrs>
         <valstack> .ValStack </valstack>
         <curFrame unused="">

@@ -24,7 +24,7 @@ Configuration
 
 ```k
     configuration
-      <wasm-test unused="">
+      <wasm-test>
         <k> $PGM:Stmts </k>
         <wasm/>
       </wasm-test>
