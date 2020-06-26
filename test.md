@@ -159,7 +159,7 @@ They are not defined in the official specification.
 In order to parse the conformance test cases, we handle these declarations here and just reduce them to the empty module.
 
 ```k
-    syntax DefnStrings ::= List{WasmString, ""} [unused]
+    syntax DefnStrings ::= List{WasmString, ""}
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
                         | "(" "module" OptionalId "quote"  DefnStrings ")"
  // ----------------------------------------------------------------------

@@ -154,7 +154,7 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
 When we want to specify an identifier, we can do so with the following helper function.
 
 ```k
-    syntax IdentifierToken ::= String2Identifier(String) [function, functional, hook(STRING.string2token), unused]
+    syntax IdentifierToken ::= String2Identifier(String) [function, functional, hook(STRING.string2token)]
 ```
 
 ### Looking up Indices

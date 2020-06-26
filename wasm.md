@@ -147,16 +147,16 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax EmptyStmt
  // ----------------
 
-    syntax Instr ::= EmptyStmt [unused]
-    syntax Defn  ::= EmptyStmt [unused]
+    syntax Instr ::= EmptyStmt
+    syntax Defn  ::= EmptyStmt
     syntax Stmt  ::= Instr | Defn
  // -----------------------------
 
-    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt), unused]
-    syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt), unused]
-    syntax Defns      ::= List{Defn      , ""} [klabel(listStmt), unused]
-    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt), unused]
- // ---------------------------------------------------------------------
+    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
+    syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
+    syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
+    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
+ // -------------------------------------------------------------
 
     syntax Instrs ::= EmptyStmts
     syntax Defns  ::= EmptyStmts
@@ -1093,8 +1093,8 @@ The `align` parameter is for optimization only and is not allowed to influence t
  // -----------------------------------------------------------
 
     syntax OffsetArg ::= "offset=" WasmInt
-    syntax AlignArg  ::= "align="  WasmInt [unused]
- // -----------------------------------------------
+    syntax AlignArg  ::= "align="  WasmInt
+ // --------------------------------------
 
     syntax Int ::= #getOffset ( MemArg ) [function, functional]
  // -----------------------------------------------------------
