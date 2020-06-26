@@ -13,7 +13,7 @@ module MEMORY-SPEC
          <memInst>
            <mAddr> MEMADDR </mAddr>
            <msize> SIZE    </msize>
-           <mdata> BM      </mdata>
+           <mdata> _BM      </mdata>
            ...
          </memInst>
        requires
@@ -30,7 +30,7 @@ module MEMORY-SPEC
          <memInst>
            <mAddr> MEMADDR </mAddr>
            <msize> SIZE    </msize>
-           <mdata> BM      </mdata>
+           <mdata> _BM      </mdata>
            ...
          </memInst>
        requires #chop(<i32> ADDR) ==K <i32> ?EA

@@ -134,11 +134,11 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 ```k
     syntax IBinOp ::= "div_u" | "rem_u"
  // -----------------------------------
-    rule ITYPE . div_u I1 I2 => < ITYPE > I1 /Int I2 requires I2 =/=Int 0
-    rule ITYPE . div_u I1 I2 => undefined            requires I2  ==Int 0
+    rule  ITYPE . div_u  I1 I2 => < ITYPE > I1 /Int I2 requires I2 =/=Int 0
+    rule _ITYPE . div_u _I1 I2 => undefined            requires I2  ==Int 0
 
-    rule ITYPE . rem_u I1 I2 => < ITYPE > I1 %Int I2 requires I2 =/=Int 0
-    rule ITYPE . rem_u I1 I2 => undefined            requires I2  ==Int 0
+    rule  ITYPE . rem_u  I1 I2 => < ITYPE > I1 %Int I2 requires I2 =/=Int 0
+    rule _ITYPE . rem_u _I1 I2 => undefined            requires I2  ==Int 0
 
     syntax IBinOp ::= "div_s" | "rem_s"
  // -----------------------------------
@@ -146,7 +146,7 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
       requires I2 =/=Int 0
        andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
 
-    rule ITYPE . div_s I1 I2 => undefined
+    rule _ITYPE . div_s _I1 I2 => undefined
       requires I2 ==Int 0
 
     rule ITYPE . div_s I1 I2 => undefined
@@ -156,7 +156,7 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
     rule ITYPE . rem_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
       requires I2 =/=Int 0
 
-    rule ITYPE . rem_s I1 I2 => undefined
+    rule _ITYPE . rem_s _I1 I2 => undefined
       requires I2 ==Int 0
 ```
 

@@ -72,7 +72,7 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 ```k
     syntax Int ::= #ContextLookup ( Map , Index ) [function]
  // --------------------------------------------------------
-    rule #ContextLookup(IDS:Map, I:Int) => I
+    rule #ContextLookup(_IDS:Map, I:Int) => I
 ```
 
 ### ElemSegment
@@ -88,10 +88,10 @@ It is used when initializing a WebAssembly table, or used as the parameter of th
     syntax Index ::= #getElemSegment (ElemSegment, Int) [function]
  // --------------------------------------------------------------
     rule #lenElemSegment(.ElemSegment) => 0
-    rule #lenElemSegment(TFIDX     ES) => 1 +Int #lenElemSegment(ES)
+    rule #lenElemSegment(_TFIDX    ES) => 1 +Int #lenElemSegment(ES)
 
-    rule #getElemSegment(E ES, 0) => E
-    rule #getElemSegment(E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
+    rule #getElemSegment(E _ES, 0) => E
+    rule #getElemSegment(_E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
 ```
 
 In some cases, an integer is optional, such as when either giving or omitting the max bound when defining a table or memory.
@@ -131,7 +131,7 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
     syntax Int ::= lengthValTypes ( ValTypes ) [function, functional]
  // -----------------------------------------------------------------
     rule lengthValTypes(.ValTypes) => 0
-    rule lengthValTypes(V VS)      => 1 +Int lengthValTypes(VS)
+    rule lengthValTypes(_V VS)     => 1 +Int lengthValTypes(VS)
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
@@ -253,8 +253,8 @@ The `#wrap` function wraps an integer to a given byte width.
 
     syntax Int ::= #wrap ( Int , Int ) [function, functional]
  // ---------------------------------------------------------
-    rule #wrap(WIDTH, N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH [concrete]
-    rule #wrap(WIDTH, N) => 0                                        requires notBool 0 <Int WIDTH
+    rule #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH [concrete]
+    rule #wrap(WIDTH, _N) => 0                                        requires notBool 0 <Int WIDTH
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
@@ -285,8 +285,8 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
     rule #signed(ITYPE, N) => N                  requires 0            <=Int N andBool N <Int #pow1(ITYPE)
     rule #signed(ITYPE, N) => N -Int #pow(ITYPE) requires #pow1(ITYPE) <=Int N andBool N <Int #pow (ITYPE)
 
-    rule #unsigned(ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
-    rule #unsigned(ITYPE, N) => N                  requires 0 <=Int N
+    rule #unsigned( ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
+    rule #unsigned(_ITYPE, N) => N                  requires 0 <=Int N
 
     rule #signedWidth(1, N) => N            requires 0     <=Int N andBool N <Int 128
     rule #signedWidth(1, N) => N -Int 256   requires 128   <=Int N andBool N <Int 256
@@ -418,17 +418,17 @@ The implementation is not correct for now because the UTF-8 encoding is not impl
     rule #idxCloseBracket ( S, I ) => I                                requires substrString(S, I, I +Int 1)  ==String "}"
     rule #idxCloseBracket ( S, I ) => #idxCloseBracket ( S, I +Int 1 ) requires substrString(S, I, I +Int 1) =/=String "}"
 
-    syntax Bytes ::= #encodeUTF8 ( Int, Endianness ) [function]
- // -----------------------------------------------------------
-    rule #encodeUTF8 (I, E) => Int2Bytes(I, BE, Unsigned) requires I <=Int 127
-    rule #encodeUTF8 (I, E) => Int2Bytes(((((I &Int 1984) >>Int 6) +Int 192) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+    syntax Bytes ::= #encodeUTF8 ( Int ) [function]
+ // -----------------------------------------------
+    rule #encodeUTF8 (I) => Int2Bytes(I, BE, Unsigned) requires I <=Int 127
+    rule #encodeUTF8 (I) => Int2Bytes(((((I &Int 1984) >>Int 6) +Int 192) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
       requires I >=Int 128   andBool I <=Int 2047
-    rule #encodeUTF8 (I, E) => Int2Bytes(((((I &Int 61440) >>Int 12) +Int 224) <<Int 16) +Int ((((I &Int 4032) >>Int 6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+    rule #encodeUTF8 (I) => Int2Bytes(((((I &Int 61440) >>Int 12) +Int 224) <<Int 16) +Int ((((I &Int 4032) >>Int 6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
       requires I >=Int 2048  andBool I <=Int 65535
-    rule #encodeUTF8 (I, E) => Int2Bytes(((((I &Int 1835008) >>Int 18) +Int 240) <<Int 24) +Int ((((I &Int 258048) >>Int 12) +Int 128) <<Int 16) +Int ((((I &Int 4032) >>Int6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
+    rule #encodeUTF8 (I) => Int2Bytes(((((I &Int 1835008) >>Int 18) +Int 240) <<Int 24) +Int ((((I &Int 258048) >>Int 12) +Int 128) <<Int 16) +Int ((((I &Int 4032) >>Int6) +Int 128) <<Int 8) +Int ((I &Int 63) +Int 128), BE, Unsigned)
       requires I >=Int 65536 andBool I <=Int 1114111
 
-    rule unescape(S, IDX, SB) => unescape(S, #idxCloseBracket(S, IDX) +Int 1, SB +String Bytes2String(#encodeUTF8(String2Base(substrString(S, IDX +Int 3, #idxCloseBracket(S, IDX +Int 3)), 16), BE)))
+    rule unescape(S, IDX, SB) => unescape(S, #idxCloseBracket(S, IDX) +Int 1, SB +String Bytes2String(#encodeUTF8(String2Base(substrString(S, IDX +Int 3, #idxCloseBracket(S, IDX +Int 3)), 16))))
       requires substrString(S, IDX, IDX +Int 1) ==K "\\"
        andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "u"
 ```
