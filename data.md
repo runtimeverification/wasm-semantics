@@ -15,7 +15,7 @@ module WASM-DATA
     imports LIST
     imports MAP
     imports FLOAT
-    imports BYTES
+    imports BYTES-IN-K
 ```
 
 ### WASM Token Sorts
