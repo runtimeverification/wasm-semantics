@@ -609,11 +609,8 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
 ```k
     syntax Defn     ::= TypeDefn
     syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId)
-                      | "(type" OptionalId "(" "func" TypeDecls ")" ")"
     syntax Alloc    ::= alloctype (OptionalId, FuncType)
- // -----------------------------------------------------
-    // TODO: Move this to desugaring phase
-    rule <instrs> (type OID (func TDECLS:TypeDecls)) => #type(... type: asFuncType(TDECLS), metadata: OID) ... </instrs>
+ // ----------------------------------------------------
     rule <instrs> #type(... type: TYPE, metadata: OID) => alloctype(OID, TYPE) ... </instrs>
 
     rule <instrs> alloctype(OID, TYPE) => . ... </instrs>

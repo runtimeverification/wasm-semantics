@@ -229,6 +229,15 @@ In the text format, it is also allowed to have a conditional without the `else` 
        andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
 ```
 
+### Types
+
+```k
+    syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
+ // -------------------------------------------------------------------
+
+    rule <instrs> (type OID (func TDECLS:TypeDecls)) => #type(... type: asFuncType(TDECLS), metadata: OID) ... </instrs>
+```
+
 ### Exports
 
 Exports can be declared like regular functions, memories, etc., by giving an inline export declaration.
@@ -289,6 +298,8 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ```
 
 #### Functions
+
+TODO: Unfold type-use into type declarations.
 
 ```k
     syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
