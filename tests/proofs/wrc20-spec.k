@@ -7,7 +7,7 @@ module WRC20-SPEC
 
     // Reverse bytes spec.
 
-    rule <instrs> sequenceDefns(#t2aDefns<#freshCtx()>(unfoldDefns(#wrc20ReverseBytes))) // TODO: Have this pre-loaded in the store.
+    rule <instrs> sequenceDefns(#t2aDefns<#freshCtx()>(#wrc20ReverseBytes)) // TODO: Have this pre-loaded in the store.
                ~> sequenceInstrs( (i32.const ADDR)
                                   (i32.const ADDR)
                                   (i64.load)
@@ -21,8 +21,6 @@ module WRC20-SPEC
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memAddrs> 0 |-> MEMADDR </memAddrs>
-           <types> TYPES => ?_ </types>
-           <nextTypeIdx> NEXTTYPEIDX => NEXTTYPEIDX +Int 1 </nextTypeIdx>
            <funcAddrs> _ => ?_ </funcAddrs>
            <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>
            ...
@@ -36,8 +34,7 @@ module WRC20-SPEC
            ...
          </memInst>
          // TODO: Make function out of this tricky side condition.
-      requires notBool asFuncType(#wrc20ReverseBytesTypeDecls) in values(TYPES)
-       andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
+      requires ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
        andBool #inUnsignedRange(i32, ADDR)
       ensures  #getRange(BM, ADDR +Int 0, 1) ==Int #getRange(?BM', ADDR +Int 7, 1)
        andBool #getRange(BM, ADDR +Int 1, 1) ==Int #getRange(?BM', ADDR +Int 6, 1)
