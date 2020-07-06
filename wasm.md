@@ -646,35 +646,6 @@ Function Declaration and Invocation
     rule #asLocalType(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
-### Function Implicit Type Declaration
-
-It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
-
-```k
-    syntax Instr ::= #checkTypeUse ( TypeUse )
- // ------------------------------------------
-    rule <instrs> #checkTypeUse ( TDECLS:TypeDecls ) => #type(... type: asFuncType(TDECLS), metadata: ) ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <types> TYPES </types>
-           ...
-         </moduleInst>
-       requires notBool asFuncType(TDECLS) in values(TYPES)
-
-    rule <instrs> #checkTypeUse ( TDECLS:TypeDecls ) => . ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <types> TYPES </types>
-           ...
-         </moduleInst>
-       requires asFuncType(TDECLS) in values(TYPES)
-
-    rule <instrs> #checkTypeUse ( (type _TFIDF) )         => . ... </instrs>
-    rule <instrs> #checkTypeUse ( (type _TFIDF) _TDECLS ) => . ... </instrs>
-```
-
 ### Function Declaration
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
@@ -693,7 +664,7 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
  // -------------------------------------------------------------------------
     rule <instrs> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META) ... </instrs>
 
-    rule <instrs> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => #checkTypeUse ( TUSE ) ... </instrs>
+    rule <instrs> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>

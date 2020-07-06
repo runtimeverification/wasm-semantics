@@ -297,9 +297,25 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     rule #unfoldDefns(D:Defn DS, I, M) => D #unfoldDefns(DS, I, M) [owise]
 ```
 
-#### Functions
+#### Types
 
-TODO: Unfold type-use into type declarations.
+A type can be be declared implicitly when a `TypeUse` is a `TypeDecls`.
+In this case it will allocate a type when the type is not in the current module instance.
+
+```k
+    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, M)
+      => (func OID (type {M [asFuncType(TDECLS)]}:>Identifier) TDECLS LOCALS BODY)
+         #unfoldDefns(DS, I, M)
+      requires         asFuncType(TDECLS) in_keys(M)
+
+    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, M)
+      => (type #freshId(I) (func TDECLS))
+         (func OID (type #freshId(I)) TDECLS LOCALS BODY)
+         #unfoldDefns(DS, I +Int 1, M [asFuncType(TDECLS) <- #freshId(I)])
+      requires notBool asFuncType(TDECLS) in_keys(M)
+```
+
+#### Functions
 
 ```k
     syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
