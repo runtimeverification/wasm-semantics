@@ -583,6 +583,7 @@ A type use is a reference to a type definition.
 It may optionally be augmented by explicit inlined parameter and result declarations.
 A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
 
+# TODO: move to wasm-text
 ```k
     syntax TypeUse ::= TypeDecls
                      | "(type" Index ")"           [prefer]
@@ -607,18 +608,21 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
 
 ```k
     syntax Defn     ::= TypeDefn
-    syntax TypeDefn ::=    "(type" OptionalId "(" "func" TypeDecls ")" ")"
-    syntax Alloc    ::= alloctype (OptionalId,           TypeDecls)
- // ---------------------------------------------------------------
-    rule <instrs> (type ID (func TDECLS:TypeDecls)) => alloctype(ID, TDECLS) ... </instrs>
+    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId)
+                      | "(type" OptionalId "(" "func" TypeDecls ")" ")"
+    syntax Alloc    ::= alloctype (OptionalId, FuncType)
+ // -----------------------------------------------------
+    // TODO: Move this to desugaring phase
+    rule <instrs> (type OID (func TDECLS:TypeDecls)) => #type(... type: asFuncType(TDECLS), metadata: OID) ... </instrs>
+    rule <instrs> #type(... type: TYPE, metadata: OID) => alloctype(OID, TYPE) ... </instrs>
 
-    rule <instrs> alloctype(ID, TDECLS) => . ... </instrs>
+    rule <instrs> alloctype(OID, TYPE) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <typeIds> IDS => #saveId(IDS, ID, NEXTIDX) </typeIds>
+           <typeIds> IDS => #saveId(IDS, OID, NEXTIDX) </typeIds>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-           <types> TYPES => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
+           <types> TYPES => TYPES [NEXTIDX <- TYPE] </types>
            ...
          </moduleInst>
 ```
@@ -652,7 +656,7 @@ It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this 
 ```k
     syntax Instr ::= #checkTypeUse ( TypeUse )
  // ------------------------------------------
-    rule <instrs> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </instrs>
+    rule <instrs> #checkTypeUse ( TDECLS:TypeDecls ) => #type(... type: asFuncType(TDECLS), metadata: ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -792,6 +796,8 @@ The `#take` function will return the parameter stack in the reversed order, then
            ...
          </moduleInst>
 ```
+
+TODO: Desugar to use a type-index.
 
 ```k
     syntax PlainInstr ::= "call_indirect" TypeUse
