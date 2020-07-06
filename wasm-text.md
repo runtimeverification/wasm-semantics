@@ -303,6 +303,18 @@ A type can be be declared implicitly when a `TypeUse` is a `TypeDecls`.
 In this case it will allocate a type when the type is not in the current module instance.
 
 ```k
+    rule #unfoldDefns((type ID:Identifier (func TDECLS)) DS, I, M)
+      => (type ID (func TDECLS)) #unfoldDefns(DS, I, M [ asFuncType(TDECLS) <- ID])
+      requires notBool asFuncType(TDECLS) in_keys(M)
+
+    rule #unfoldDefns((type               (func TDECLS)) DS, I, M)
+      => (type #freshId(I) (func TDECLS)) #unfoldDefns(DS, I +Int 1, M [ asFuncType(TDECLS) <- #freshId(I)])
+      requires notBool asFuncType(TDECLS) in_keys(M)
+
+    rule #unfoldDefns((type OID (func TDECLS)) DS, I, M)
+      => (type OID (func TDECLS)) #unfoldDefns(DS, I, M)
+      requires         asFuncType(TDECLS) in_keys(M)
+
     rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, M)
       => (func OID (type {M [asFuncType(TDECLS)]}:>Identifier) TDECLS LOCALS BODY)
          #unfoldDefns(DS, I, M)
