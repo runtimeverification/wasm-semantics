@@ -284,50 +284,58 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ### Unfolding Abbreviations
 
 ```k
-    syntax Stmts ::= unfoldStmts  ( Stmts )            [function]
-    syntax Defns ::= unfoldDefns  ( Defns )            [function]
-                   | #unfoldDefns ( Defns , Int, Map ) [function]
- // -------------------------------------------------------------
+    syntax Stmts ::= unfoldStmts  ( Stmts )                  [function]
+    syntax Defns ::= unfoldDefns  ( Defns )                  [function]
+                   | #unfoldDefns ( Defns , Int, TypesInfo ) [function]
+ // -------------------------------------------------------------------
     rule unfoldStmts(( module OID:OptionalId DS) SS) => ( module OID unfoldDefns(DS) ) unfoldStmts(SS)
     rule unfoldStmts(.Stmts) => .Stmts
     rule unfoldStmts(S SS) => S unfoldStmts(SS) [owise]
 
     rule unfoldDefns(DS) => #unfoldDefns(DS, 0, types2indices(DS))
     rule #unfoldDefns(.Defns, _, _) => .Defns
-    rule #unfoldDefns(D:Defn DS, I, M) => D #unfoldDefns(DS, I, M) [owise]
+    rule #unfoldDefns(D:Defn DS, I, TI) => D #unfoldDefns(DS, I, TI) [owise]
+
+    syntax Defns ::= Defns "appendDefn" Defn [function]
+ // ---------------------------------------------------
+    rule (D DS) appendDefn D' => D (DS appendDefn D')
+    rule .Defns appendDefn D' => D' .Defns
 ```
 
 #### Types
 
-A type can be be declared implicitly when a `TypeUse` is a `TypeDecls`.
-In this case it will allocate a type when the type is not in the current module instance.
+The text format allows declaring a function without referencing a module-level type for that function.
+If there is a module-level type matching the function type, the function is automatically assigned to that type.
+The `TypeDecl` of the type is kept, since it may contain parameter identifiers.
+If there is no matching module-level type, a new such type is inserted *at the end of the module*.
+Since the inserted type is module-level, any subsequent functions declaring the same type will not implicitly generate a new type.
 
 ```k
-    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, M)
-      => (func OID (type {M [asFuncType(TDECLS)]}:>Index) TDECLS LOCALS BODY)
-         #unfoldDefns(DS, I, M)
+    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, #ti(... t2i: M) #as TI)
+      => (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS LOCALS BODY)
+         #unfoldDefns(DS, I, TI)
       requires         asFuncType(TDECLS) in_keys(M)
 
-    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, M)
-      => (type #freshId(I) (func TDECLS))
-         (func OID (type #freshId(I)) TDECLS LOCALS BODY)
-         #unfoldDefns(DS, I +Int 1, M [asFuncType(TDECLS) <- #freshId(I)])
+    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, #ti(... t2i: M, count: N))
+      => (func OID (type N) TDECLS LOCALS BODY)
+         #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
 
-    syntax Map ::=  types2indices( Defns           ) [function]
-                 | #types2indices( Defns, Int, Map ) [function]
- // -----------------------------------------------------------
-    rule types2indices(DS) => #types2indices(DS, 0, .Map)
+    syntax TypesInfo ::= #ti( t2i: Map, count: Int )
+    syntax TypesInfo ::=  types2indices( Defns            ) [function]
+                       | #types2indices( Defns, TypesInfo ) [function]
+ // ------------------------------------------------------------------
+    rule types2indices(DS) => #types2indices(DS, #ti(... t2i: .Map, count: 0))
 
-    rule #types2indices(.Defns, _, M) => M
+    rule #types2indices(.Defns, TI) => TI
 
-    rule #types2indices((type OID (func TDECLS)) DS, N, M) => #types2indices(DS, N +Int 1, M [ asFuncType(TDECLS) <- N ])
+    rule #types2indices((type OID (func TDECLS)) DS, #ti(... t2i: M, count: N)) => #types2indices(DS, #ti(... t2i: M [ asFuncType(TDECLS) <- N ], count: N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
 
-    rule #types2indices((type OID (func TDECLS)) DS, N, M) => #types2indices(DS, N +Int 1, M                            )
+    rule #types2indices((type OID (func TDECLS)) DS, #ti(... t2i: M, count: N)) => #types2indices(DS, #ti(... t2i: M                            , count: N +Int 1))
       requires         asFuncType(TDECLS) in_keys(M)
 
-    rule #types2indices(D DS, N, M) => #types2indices(DS, N, M) [owise]
+    rule #types2indices(D DS, M) => #types2indices(DS, M) [owise]
 ```
 
 #### Functions
