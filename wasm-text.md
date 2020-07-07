@@ -234,7 +234,6 @@ In the text format, it is also allowed to have a conditional without the `else` 
 ```k
     syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
-
     rule <instrs> (type OID (func TDECLS:TypeDecls)) => #type(... type: asFuncType(TDECLS), metadata: OID) ... </instrs>
 ```
 
