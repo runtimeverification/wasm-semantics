@@ -635,15 +635,6 @@ Function Declaration and Invocation
                         | "local" Identifier ValType
     syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
  // -------------------------------------------------------------------------
-
-    syntax VecType ::=  asLocalType ( LocalDecls            ) [function]
-                     | #asLocalType ( LocalDecls , ValTypes ) [function]
- // -------------------------------------------------------------------
-    rule  asLocalType(LDECLS) => #asLocalType(LDECLS, .ValTypes)
-
-    rule #asLocalType(.LocalDecls                                             , VTYPES) => [ VTYPES ]
-    rule #asLocalType(local                VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPES')
-    rule #asLocalType(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
 ### Function Declaration
@@ -655,21 +646,18 @@ A function can either be specified by giving a type, what locals it allocates, a
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
-TODO: Use a type index for type, and vec type for locals (moving `asLocalType` to the text format).
-
 ```k
     syntax Defn     ::= FuncDefn
-    syntax FuncDefn ::= #func(type: TypeUse, locals: LocalDecls, body: Instrs, metadata: FuncMetadata)
-    syntax Alloc    ::= allocfunc (TypeUse, LocalDecls, Instrs, FuncMetadata)
- // -------------------------------------------------------------------------
-    rule <instrs> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META) ... </instrs>
+    syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata)
+    syntax Alloc    ::= allocfunc (Int, VecType, Instrs, FuncMetadata)
+ // ---------------------------------------------------------------------
+    rule <instrs> #func(... type: TYPIDX, locals: LOCALS, body: INSTRS, metadata: META) => allocfunc(TYPIDX, LOCALS, INSTRS, META) ... </instrs>
 
-    rule <instrs> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => . ... </instrs>
+    rule <instrs> allocfunc(TYPIDX, LOCALS, INSTRS, #meta(... id: OID, localIds: LIDS)) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <typeIds> TYPEIDS </typeIds>
-           <types>   TYPES   </types>
+           <types>  ... TYPIDX |-> TYPE ... </types>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
            <funcAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </funcAddrs>
            ...
@@ -678,11 +666,11 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>    NEXTADDR                             </fAddr>
-               <fCode>    INSTRS                               </fCode>
-               <fType>    asFuncType  ( TYPEIDS, TYPES, TUSE ) </fType>
-               <fLocal>   asLocalType ( LDECLS )               </fLocal>
-               <fModInst> CUR                                  </fModInst>
+               <fAddr>    NEXTADDR </fAddr>
+               <fCode>    INSTRS   </fCode>
+               <fType>    TYPE     </fType>
+               <fLocal>   LOCALS   </fLocal>
+               <fModInst> CUR      </fModInst>
                <funcMetadata>
                  <funcId> OID </funcId>
                  <localIds> LIDS </localIds>

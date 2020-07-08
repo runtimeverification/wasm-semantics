@@ -554,23 +554,31 @@ Since we do not have polymorphic functions available, we define one function per
 
 #### Functions
 
+After unfolding, each type use in a function starts with an explicit reference to a module-level function.
+
 ```k
-    rule #t2aDefn<C>(( func OID:OptionalId T:TypeUse LS:LocalDecls IS:Instrs ))
-      => #func(... type: #t2aTypeUse <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
-                 , locals: #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
+    rule #t2aDefn<ctx(... typeIds: TIDS) #as C>(( func OID:OptionalId T:TypeUse LS:LocalDecls IS:Instrs ))
+      => #func(... type: typeUse2typeIdx(T, TIDS)
+                 , locals: locals2vectype(LS)
                  , body: #t2aInstrs <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
                  , metadata: #meta(... id: OID, localIds: #ids2Idxs(T, LS))
               )
 
-    syntax TypeUse    ::= "#t2aTypeUse"   "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl  ::= "#t2aLocalDecl" "<" Context ">" "(" LocalDecl  ")" [function]
- // -----------------------------------------------------------------------------------
-    rule #t2aTypeUse<_>((type TYP) _TDS:TypeDecls      ) => (type TYP)
-    rule #t2aTypeUse<C>((param _ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
-    rule #t2aTypeUse<_>(TU) => TU [owise]
+    syntax Int ::= typeUse2typeIdx( TypeUse, Map) [function]
+ // --------------------------------------------------------
+    rule typeUse2typeIdx( (type ID:Identifier )  ,  TIDS ) => {TIDS [ ID ]}:>Int
+    rule typeUse2typeIdx( (type ID:Identifier ) _,  TIDS ) => {TIDS [ ID ]}:>Int
+    rule typeUse2typeIdx( (type IDX:Int       )  , _TIDS ) => IDX
+    rule typeUse2typeIdx( (type IDX:Int       ) _, _TIDS ) => IDX
 
-    rule #t2aLocalDecl<_C>(local _ID:Identifier VT:ValType) => local VT .ValTypes
-    rule #t2aLocalDecl<_C>(LD) => LD [owise]
+    syntax VecType ::=  locals2vectype ( LocalDecls            ) [function]
+                     | #locals2vectype ( LocalDecls , ValTypes ) [function]
+ // -------------------------------------------------------------------
+    rule  locals2vectype(LDECLS) => #locals2vectype(LDECLS, .ValTypes)
+
+    rule #locals2vectype(.LocalDecls                                             , VTYPES) => [ VTYPES ]
+    rule #locals2vectype(local                VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #locals2vectype(LDECLS , VTYPES + VTYPES')
+    rule #locals2vectype(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #locals2vectype(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
 #### Start Function
@@ -734,7 +742,6 @@ They distribute the text-to-abstract functions above over lists.
     syntax Stmts      ::= "#t2aStmts"      "<" Context ">" "(" Stmts      ")" [function]
     syntax Defns      ::= "#t2aDefns"      "<" Context ">" "(" Defns      ")" [function]
     syntax Instrs     ::= "#t2aInstrs"     "<" Context ">" "(" Instrs     ")" [function]
-    syntax LocalDecls ::= "#t2aLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
  // ------------------------------------------------------------------------------------
     rule #t2aStmts<C>(S:Stmt SS:Stmts) => #t2aStmt<C>(S) #t2aStmts<C>(SS)
     rule #t2aStmts<_>(.Stmts) => .Stmts
@@ -744,9 +751,6 @@ They distribute the text-to-abstract functions above over lists.
 
     rule #t2aInstrs<C>(I:Instr IS:Instrs) => #t2aInstr<C>(I) #t2aInstrs<C>(IS)
     rule #t2aInstrs<_>(.Instrs) => .Instrs
-
-    rule #t2aLocalDecls<C>(LD:LocalDecl LDS:LocalDecls) => #t2aLocalDecl<C>(LD) #t2aLocalDecls<C>(LDS)
-    rule #t2aLocalDecls<_>(.LocalDecls) => .LocalDecls
 ```
 
 ### Functions for Gathering Context
