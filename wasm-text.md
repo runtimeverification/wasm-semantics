@@ -573,7 +573,7 @@ After unfolding, each type use in a function starts with an explicit reference t
 
     syntax VecType ::=  locals2vectype ( LocalDecls            ) [function]
                      | #locals2vectype ( LocalDecls , ValTypes ) [function]
- // -------------------------------------------------------------------
+ // -----------------------------------------------------------------------
     rule  locals2vectype(LDECLS) => #locals2vectype(LDECLS, .ValTypes)
 
     rule #locals2vectype(.LocalDecls                                             , VTYPES) => [ VTYPES ]
