@@ -499,14 +499,14 @@ The `Context` contains information of how to map text-level identifiers to corre
 Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
 
 ```k
-    syntax Context ::= ctx(localIds: Map, funcIds: Map)
+    syntax Context ::= ctx(localIds: Map, funcIds: Map, typeIds: Map)
                      | #freshCtx ( )                               [function, functional]
                      | #updateLocalIds    ( Context , Map )        [function, functional]
                      | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
                      | #updateFuncIds     ( Context , Map )        [function, functional]
                      | #updateFuncIdsAux  ( Context , Map , Bool ) [function, functional]
  // -------------------------------------------------------------------------------------
-    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map)
+    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map, typeIds: .Map)
 
     rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
     rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
@@ -536,7 +536,7 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
-    rule #t2aModuleDecl<_>(#module(... funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS))>(M)
+    rule #t2aModuleDecl<_>(#module(... types: TS, funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS), typeIds: #idcTypes(TS))>(M)
     rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
       => #module( ... types: TS
                     , funcs: #t2aDefns<C>(FS)
@@ -754,6 +754,15 @@ They distribute the text-to-abstract functions above over lists.
 The following are helper functions for gathering and updating context.
 
 ```k
+    syntax Map ::= #idcTypes    ( Defns      ) [function]
+                 | #idcTypesAux ( Defns, Int ) [function]
+ // -----------------------------------------------------
+    rule #idcTypes(DEFNS) => #idcTypesAux(DEFNS, 0)
+
+    rule #idcTypesAux((type ID:Identifier (func _)) TS, IDX) => (ID |-> IDX) #idcTypesAux(TS, IDX +Int 1)
+    rule #idcTypesAux((type               (func _)) TS, IDX) =>              #idcTypesAux(TS, IDX +Int 1)
+    rule #idcTypesAux(.Defns, _) => .Map
+
     syntax Map ::= #idcFuncs    ( Defns, Defns      ) [function]
                  | #idcFuncsAux ( Defns, Defns, Int ) [function]
  // ------------------------------------------------------------
