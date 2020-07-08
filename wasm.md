@@ -583,6 +583,7 @@ A type use is a reference to a type definition.
 It may optionally be augmented by explicit inlined parameter and result declarations.
 A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
 
+# TODO: move to wasm-text
 ```k
     syntax TypeUse ::= TypeDecls
                      | "(type" Index ")"           [prefer]
@@ -607,18 +608,18 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
 
 ```k
     syntax Defn     ::= TypeDefn
-    syntax TypeDefn ::=    "(type" OptionalId "(" "func" TypeDecls ")" ")"
-    syntax Alloc    ::= alloctype (OptionalId,           TypeDecls)
- // ---------------------------------------------------------------
-    rule <instrs> (type ID (func TDECLS:TypeDecls)) => alloctype(ID, TDECLS) ... </instrs>
+    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId)
+    syntax Alloc    ::= alloctype (OptionalId, FuncType)
+ // ----------------------------------------------------
+    rule <instrs> #type(... type: TYPE, metadata: OID) => alloctype(OID, TYPE) ... </instrs>
 
-    rule <instrs> alloctype(ID, TDECLS) => . ... </instrs>
+    rule <instrs> alloctype(OID, TYPE) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <typeIds> IDS => #saveId(IDS, ID, NEXTIDX) </typeIds>
+           <typeIds> IDS => #saveId(IDS, OID, NEXTIDX) </typeIds>
            <nextTypeIdx> NEXTIDX => NEXTIDX +Int 1 </nextTypeIdx>
-           <types> TYPES => TYPES [NEXTIDX <- asFuncType(TDECLS)] </types>
+           <types> TYPES => TYPES [NEXTIDX <- TYPE] </types>
            ...
          </moduleInst>
 ```
@@ -645,35 +646,6 @@ Function Declaration and Invocation
     rule #asLocalType(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #asLocalType(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
-### Function Implicit Type Declaration
-
-It could also be declared implicitly when a `TypeUse` is a `TypeDecls`, in this case it will allocate a type when the type is not in the current module instance.
-
-```k
-    syntax Instr ::= #checkTypeUse ( TypeUse )
- // ------------------------------------------
-    rule <instrs> #checkTypeUse ( TDECLS:TypeDecls ) => (type (func TDECLS)) ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <types> TYPES </types>
-           ...
-         </moduleInst>
-       requires notBool asFuncType(TDECLS) in values(TYPES)
-
-    rule <instrs> #checkTypeUse ( TDECLS:TypeDecls ) => . ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <types> TYPES </types>
-           ...
-         </moduleInst>
-       requires asFuncType(TDECLS) in values(TYPES)
-
-    rule <instrs> #checkTypeUse ( (type _TFIDF) )         => . ... </instrs>
-    rule <instrs> #checkTypeUse ( (type _TFIDF) _TDECLS ) => . ... </instrs>
-```
-
 ### Function Declaration
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
@@ -692,7 +664,7 @@ TODO: Use a type index for type, and vec type for locals (moving `asLocalType` t
  // -------------------------------------------------------------------------
     rule <instrs> #func(... type: TUSE, locals: LDECLS, body: INSTRS, metadata: META) => allocfunc(TUSE, LDECLS, INSTRS, META) ... </instrs>
 
-    rule <instrs> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => #checkTypeUse ( TUSE ) ... </instrs>
+    rule <instrs> allocfunc(TUSE, LDECLS, INSTRS, #meta(... id: OID, localIds: LIDS)) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -792,6 +764,8 @@ The `#take` function will return the parameter stack in the reversed order, then
            ...
          </moduleInst>
 ```
+
+TODO: Desugar to use a type-index.
 
 ```k
     syntax PlainInstr ::= "call_indirect" TypeUse

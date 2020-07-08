@@ -62,8 +62,6 @@
 
 (assert_return (invoke "export-1" (i64.const 100) (i64.const 43) (i64.const 22)) (i64.const -121))
 #assertFunction 3 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
-#assertType 1 [ i64 i64 i64 ] -> [ i64 ]
-#assertNextTypeIdx 2
 
 ;; Function with complicated declaration of types
 (module
@@ -243,5 +241,31 @@
 )
 
 (assert_return (invoke "foo") (i32.const 1))
+
+;; Check type is correctly desugared.
+
+(module
+  (func $1 param i64 i64 i64 result i64 local i64
+      (i64.sub (local.get 2) (i64.add (local.get 0) (local.get 1)))
+      (local.set 3)
+      (local.get 3)
+      (return)
+  )
+
+  ( export "export-1" (func $1) )
+
+  (func $2 param i64 i64 i64 result i64 local i64
+      (i64.sub (local.get 2) (i64.add (local.get 0) (local.get 1)))
+      (local.set 3)
+      (local.get 3)
+      (return)
+  )
+)
+
+(assert_return (invoke "export-1" (i64.const 100) (i64.const 43) (i64.const 22)) (i64.const -121))
+#assertFunction 0 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
+#assertType 0 [ i64 i64 i64 ] -> [ i64 ]
+;; Check type was only added once.
+#assertNextTypeIdx 1
 
 #clearConfig

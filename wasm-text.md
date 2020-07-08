@@ -229,6 +229,14 @@ In the text format, it is also allowed to have a conditional without the `else` 
        andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
 ```
 
+### Types
+
+```k
+    syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
+ // -------------------------------------------------------------------
+    rule <instrs> (type OID (func TDECLS:TypeDecls)) => #type(... type: asFuncType(TDECLS), metadata: OID) ... </instrs>
+```
+
 ### Exports
 
 Exports can be declared like regular functions, memories, etc., by giving an inline export declaration.
@@ -275,17 +283,55 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ### Unfolding Abbreviations
 
 ```k
-    syntax Stmts ::= unfoldStmts  ( Stmts )       [function]
-    syntax Defns ::= unfoldDefns  ( Defns )       [function]
-                   | #unfoldDefns ( Defns , Int ) [function]
- // --------------------------------------------------------
+    syntax Stmts ::= unfoldStmts  ( Stmts )                  [function]
+    syntax Defns ::= unfoldDefns  ( Defns )                  [function]
+                   | #unfoldDefns ( Defns , Int, TypesInfo ) [function]
+ // -------------------------------------------------------------------
     rule unfoldStmts(( module OID:OptionalId DS) SS) => ( module OID unfoldDefns(DS) ) unfoldStmts(SS)
     rule unfoldStmts(.Stmts) => .Stmts
     rule unfoldStmts(S SS) => S unfoldStmts(SS) [owise]
 
-    rule unfoldDefns(DS) => #unfoldDefns(DS, 0)
-    rule #unfoldDefns(.Defns, _) => .Defns
-    rule #unfoldDefns(D:Defn DS, I) => D #unfoldDefns(DS, I) [owise]
+    rule unfoldDefns(DS) => #unfoldDefns(DS, 0, types2indices(DS))
+    rule #unfoldDefns(.Defns, _, _) => .Defns
+    rule #unfoldDefns(D:Defn DS, I, TI) => D #unfoldDefns(DS, I, TI) [owise]
+
+    syntax Defns ::= Defns "appendDefn" Defn [function]
+ // ---------------------------------------------------
+    rule (D DS) appendDefn D' => D (DS appendDefn D')
+    rule .Defns appendDefn D' => D' .Defns
+```
+
+#### Types
+
+The text format allows declaring a function without referencing a module-level type for that function.
+If there is a module-level type matching the function type, the function is automatically assigned to that type.
+The `TypeDecl` of the type is kept, since it may contain parameter identifiers.
+If there is no matching module-level type, a new such type is inserted *at the end of the module*.
+Since the inserted type is module-level, any subsequent functions declaring the same type will not implicitly generate a new type.
+
+```k
+    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, #ti(... t2i: M) #as TI)
+      => (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS LOCALS BODY)
+         #unfoldDefns(DS, I, TI)
+      requires         asFuncType(TDECLS) in_keys(M)
+
+    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, #ti(... t2i: M, count: N))
+      => (func OID (type N) TDECLS LOCALS BODY)
+         #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
+      requires notBool asFuncType(TDECLS) in_keys(M)
+
+    syntax TypesInfo ::= #ti( t2i: Map, count: Int )
+    syntax TypesInfo ::=  types2indices( Defns            ) [function]
+                       | #types2indices( Defns, TypesInfo ) [function]
+ // ------------------------------------------------------------------
+    rule types2indices(DS) => #types2indices(DS, #ti(... t2i: .Map, count: 0))
+
+    rule #types2indices(.Defns, TI) => TI
+
+    rule #types2indices((type OID (func TDECLS)) DS, #ti(... t2i: M, count: N))
+      => #types2indices(DS, #ti(... t2i: M [ asFuncType(TDECLS) <- (M [ asFuncType(TDECLS) ] orDefault N) ], count: N +Int 1))
+
+    rule #types2indices(D DS, M) => #types2indices(DS, M) [owise]
 ```
 
 #### Functions
@@ -295,16 +341,16 @@ Other desugarings are either left for runtime or expressed as macros (for now).
     syntax FuncSpec ::= TypeUse LocalDecls Instrs
                       | InlineImport TypeUse
  // ----------------------------------------
-    rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I)
-      => ( import MOD NAME (func OID TUSE) ) #unfoldDefns(DS, I)
+    rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I, M)
+      => ( import MOD NAME (func OID TUSE) ) #unfoldDefns(DS, I, M)
 
     syntax FuncSpec   ::= InlineExport FuncSpec
  // -------------------------------------------
-    rule #unfoldDefns(( func EXPO:InlineExport SPEC:FuncSpec ) DS, I)
-      => #unfoldDefns(( func #freshId(I) EXPO  SPEC) DS, I +Int 1)
+    rule #unfoldDefns(( func EXPO:InlineExport SPEC:FuncSpec ) DS, I, M)
+      => #unfoldDefns(( func #freshId(I) EXPO  SPEC) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( func ID:Identifier ( export ENAME ) SPEC:FuncSpec ) DS, I)
-      => ( export ENAME ( func ID ) ) #unfoldDefns(( func ID SPEC ) DS, I)
+    rule #unfoldDefns(( func ID:Identifier ( export ENAME ) SPEC:FuncSpec ) DS, I, M)
+      => ( export ENAME ( func ID ) ) #unfoldDefns(( func ID SPEC ) DS, I, M)
 ```
 
 #### Tables
@@ -312,26 +358,26 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ```k
     syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
  // -------------------------------------------------------------
-    rule #unfoldDefns(( table funcref ( elem ELEM ) ) DS, I)
-      => #unfoldDefns(( table #freshId(I) funcref ( elem ELEM ) ) DS, I +Int 1)
+    rule #unfoldDefns(( table funcref ( elem ELEM ) ) DS, I, M)
+      => #unfoldDefns(( table #freshId(I) funcref ( elem ELEM ) ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( table ID:Identifier funcref ( elem ELEM ) ) DS, I)
+    rule #unfoldDefns(( table ID:Identifier funcref ( elem ELEM ) ) DS, I, M)
       => ( table ID #lenElemSegment(ELEM) #lenElemSegment(ELEM) funcref ):TableDefn
          ( elem  ID (offset (i32.const 0) .Instrs) ELEM )
-         #unfoldDefns(DS, I)
+         #unfoldDefns(DS, I, M)
 
     syntax TableSpec  ::= InlineImport TableType
  // --------------------------------------------
-    rule #unfoldDefns(( table OID:OptionalId (import MOD NAME) TT:TableType ) DS, I)
-      => ( import MOD NAME (table OID TT) ) #unfoldDefns(DS, I)
+    rule #unfoldDefns(( table OID:OptionalId (import MOD NAME) TT:TableType ) DS, I, M)
+      => ( import MOD NAME (table OID TT) ) #unfoldDefns(DS, I, M)
 
     syntax TableSpec  ::= InlineExport TableSpec
  // --------------------------------------------
-    rule #unfoldDefns(( table EXPO:InlineExport SPEC:TableSpec ) DS, I)
-      => #unfoldDefns(( table #freshId(I) EXPO SPEC ) DS, I +Int 1)
+    rule #unfoldDefns(( table EXPO:InlineExport SPEC:TableSpec ) DS, I, M)
+      => #unfoldDefns(( table #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( table ID:Identifier ( export ENAME ) SPEC:TableSpec ) DS, I)
-      => ( export ENAME ( table ID ) ) #unfoldDefns(( table ID SPEC ) DS, I)
+    rule #unfoldDefns(( table ID:Identifier ( export ENAME ) SPEC:TableSpec ) DS, I, M)
+      => ( export ENAME ( table ID ) ) #unfoldDefns(( table ID SPEC ) DS, I, M)
 ```
 
 #### Memories
@@ -339,13 +385,13 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ```k
     syntax MemorySpec ::= "(" "data" DataString ")"
  // -----------------------------------------------
-    rule #unfoldDefns(( memory ( data DATA ) ) DS, I)
-      => #unfoldDefns(( memory #freshId(I) ( data DATA ) ) DS, I +Int 1)
+    rule #unfoldDefns(( memory ( data DATA ) ) DS, I, M)
+      => #unfoldDefns(( memory #freshId(I) ( data DATA ) ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( memory ID:Identifier ( data DATA ) ) DS, I)
+    rule #unfoldDefns(( memory ID:Identifier ( data DATA ) ) DS, I, M)
       => ( memory ID #lengthDataPages(DATA) #lengthDataPages(DATA) ):MemoryDefn
          ( data   ID (offset (i32.const 0) .Instrs) DATA )
-         #unfoldDefns(DS, I)
+         #unfoldDefns(DS, I, M)
 
     syntax Int ::= #lengthDataPages ( DataString ) [function]
  // ---------------------------------------------------------
@@ -353,16 +399,16 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 
     syntax MemorySpec ::= InlineImport MemType
  // ------------------------------------------
-    rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I)
-      => ( import MOD NAME (memory OID MT  ) ) #unfoldDefns(DS, I)
+    rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I, M)
+      => ( import MOD NAME (memory OID MT  ) ) #unfoldDefns(DS, I, M)
 
     syntax MemorySpec ::= InlineExport MemorySpec
  // ---------------------------------------------
-    rule #unfoldDefns(( memory EXPO:InlineExport SPEC:MemorySpec ) DS, I)
-      => #unfoldDefns(( memory #freshId(I:Int) EXPO SPEC ) DS, I +Int 1)
+    rule #unfoldDefns(( memory EXPO:InlineExport SPEC:MemorySpec ) DS, I, M)
+      => #unfoldDefns(( memory #freshId(I:Int) EXPO SPEC ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I)
-      => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I)
+    rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I, M)
+      => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I, M)
 ```
 
 #### Globals
@@ -370,16 +416,16 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ```k
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------
-    rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I)
-      => ( import MOD NAME (global OID TYP ) ) #unfoldDefns(DS, I) 
+    rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
+      => ( import MOD NAME (global OID TYP ) ) #unfoldDefns(DS, I, M)
 
     syntax GlobalSpec ::= InlineExport GlobalSpec
  // ---------------------------------------------
-    rule #unfoldDefns(( global EXPO:InlineExport SPEC:GlobalSpec ) DS, I)
-      => #unfoldDefns(( global #freshId(I) EXPO SPEC ) DS, I +Int 1)
+    rule #unfoldDefns(( global EXPO:InlineExport SPEC:GlobalSpec ) DS, I, M)
+      => #unfoldDefns(( global #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec ) DS, I)
-      => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I)
+    rule #unfoldDefns(( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec ) DS, I, M)
+      => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I, M)
 ```
 
 #### Element Segments
@@ -387,8 +433,8 @@ Other desugarings are either left for runtime or expressed as macros (for now).
 ```k
     syntax ElemDefn ::= "(" "elem" Offset ElemSegment ")"
  // -----------------------------------------------------
-    rule #unfoldDefns(( elem OFFSET:Offset ES ) DS, I)
-      => ( elem 0 OFFSET ES ) #unfoldDefns(DS, I)
+    rule #unfoldDefns(( elem OFFSET:Offset ES ) DS, I, M)
+      => ( elem 0 OFFSET ES ) #unfoldDefns(DS, I, M)
 ```
 
 ### Structuring Modules
