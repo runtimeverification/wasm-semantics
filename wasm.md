@@ -591,6 +591,11 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
                      | "(type" Index ")" TypeDecls
  // ----------------------------------------------
 
+    syntax Index ::= #unsafeExtractIndex ( TypeUse ) [function]
+ // -----------------------------------------------------------
+    rule #unsafeExtractIndex((type X)            ) => X
+    rule #unsafeExtractIndex((type X) _:TypeDecls) => X
+
     syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                       | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
  // --------------------------------------------------------------------------------------------
@@ -1296,8 +1301,7 @@ The value of a global gets copied when it is imported.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <typeIds> TYPEIDS </typeIds>
-           <types>   TYPES   </types>
+           <types> TYPES </types>
            <funcAddrs> FS => FS [NEXT <- ADDR] </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
@@ -1314,7 +1318,7 @@ The value of a global gets copied when it is imported.
            <fType> FTYPE </fType>
            ...
          </funcDef>
-      requires FTYPE ==K asFuncType(TYPEIDS, TYPES, TUSE)
+      requires FTYPE ==K TYPES[#unsafeExtractIndex(TUSE)]
 
     rule <instrs> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
