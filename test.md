@@ -337,15 +337,14 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 `#assertNextTypeIdx` checks whether the number of types are allocated correctly.
 
 ```k
-    syntax Assertion ::= "#assertType" Index FuncType
+    syntax Assertion ::= "#assertType" Int FuncType
                        | "#assertNextTypeIdx" Int
  // ---------------------------------------------
-    rule <instrs> #assertType TFIDX FTYPE => . ... </instrs>
+    rule <instrs> #assertType IDX FTYPE => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <typeIds> IDS </typeIds>
-           <types> ... #ContextLookup(IDS , TFIDX) |-> FTYPE ... </types>
+           <types> ... IDX |-> FTYPE ... </types>
            ...
          </moduleInst>
 
