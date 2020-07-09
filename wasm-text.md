@@ -341,7 +341,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
                       | InlineImport TypeUse
  // ----------------------------------------
     rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I, M)
-      => ( import MOD NAME (func OID TUSE) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (func OID TUSE) ) DS, I, M)
 
     syntax FuncSpec   ::= InlineExport FuncSpec
  // -------------------------------------------
@@ -368,7 +368,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     syntax TableSpec  ::= InlineImport TableType
  // --------------------------------------------
     rule #unfoldDefns(( table OID:OptionalId (import MOD NAME) TT:TableType ) DS, I, M)
-      => ( import MOD NAME (table OID TT) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (table OID TT) ) DS, I, M)
 
     syntax TableSpec  ::= InlineExport TableSpec
  // --------------------------------------------
@@ -399,7 +399,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     syntax MemorySpec ::= InlineImport MemType
  // ------------------------------------------
     rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I, M)
-      => ( import MOD NAME (memory OID MT  ) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (memory OID MT  ) ) DS, I, M)
 
     syntax MemorySpec ::= InlineExport MemorySpec
  // ---------------------------------------------
@@ -416,7 +416,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
-      => ( import MOD NAME (global OID TYP ) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (global OID TYP ) ) DS, I, M)
 
     syntax GlobalSpec ::= InlineExport GlobalSpec
  // ---------------------------------------------
