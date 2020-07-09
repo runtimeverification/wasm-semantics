@@ -555,7 +555,7 @@ Since we do not have polymorphic functions available, we define one function per
                     , elem: #t2aDefns<C>(EL)
                     , data: DAT
                     , start: #t2aDefns<C>(S)
-                    , importDefns: IS
+                    , importDefns: #t2aDefns<C>(IS)
                     , exports: #t2aDefns<C>(ES)
                     , metadata: #meta(... id: OID, funcIds: FIDS)
                 )
@@ -566,6 +566,14 @@ Since we do not have polymorphic functions available, we define one function per
 
 ```k
     rule #t2aDefn<_>((type OID (func TDECLS))) => #type(... type: asFuncType(TDECLS), metadata: OID)
+```
+
+#### Imports
+
+TODO
+```k
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier)            ))) => ( import MOD NAME (func OID:OptionalId (type {TIDS[ID]}:>Int)))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME (func OID:OptionalId (type {TIDS[ID]}:>Int)))
 ```
 
 #### Functions
