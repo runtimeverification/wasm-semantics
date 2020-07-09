@@ -583,7 +583,8 @@ A type use is a reference to a type definition.
 It may optionally be augmented by explicit inlined parameter and result declarations.
 A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
 
-# TODO: move to wasm-text
+# TODO: Remove the middle case (single `(type X)` without declaration), and move to wasm-text.
+
 ```k
     syntax TypeUse ::= TypeDecls
                      | "(type" Index ")"           [prefer]
