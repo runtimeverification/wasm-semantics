@@ -30,7 +30,6 @@ Configuration
           <moduleInst multiplicity="*" type="Map">
             <modIdx>      0    </modIdx>
             <exports>     .Map </exports>
-            <typeIds>     .Map </typeIds>
             <types>       .Map </types>
             <nextTypeIdx> 0    </nextTypeIdx>
             <funcAddrs>   .Map </funcAddrs>
@@ -45,6 +44,7 @@ Configuration
             <moduleMetadata>
               <moduleId>     </moduleId>
               <funcIds> .Map </funcIds>
+              <typeIds>     .Map </typeIds>
             </moduleMetadata>
           </moduleInst>
         </moduleInstances>
