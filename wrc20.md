@@ -78,8 +78,9 @@ A module of shorthand commands for the WRC20 module.
     syntax Defns      ::= "#wrc20Imports"
     syntax Defns      ::= "#wrc20Functions_fastBalance"
     syntax Defns      ::= "#wrc20ReverseBytes"
-    syntax TypeDecls  ::= "#wrc20ReverseBytesTypeDecls"
- // ---------------------------------------------------
+    syntax Int        ::= "#wrc20ReverseBytesTypeIdx"
+    syntax FuncTypex  ::= "#wrc20ReverseBytesType"
+ // ----------------------------------------------
     rule #wrc20 => ( module #wrc20Body ) [macro]
 
     rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions_fastBalance [macro]
@@ -252,10 +253,11 @@ A module of shorthand commands for the WRC20 module.
       #wrc20ReverseBytes
       [macro]
 
-    rule #wrc20ReverseBytesTypeDecls => param i64 .ValTypes result i64 .ValTypes .TypeDecls [macro]
+    rule #wrc20ReverseBytesTypeIdx => 1 [macro]
+    rule #wrc20ReverseBytesType    => [ i64 ] -> [ i64 ] [macro]
 
     rule #wrc20ReverseBytes =>
-      (func String2Identifier("$i64.reverse_bytes") #wrc20ReverseBytesTypeDecls local i64 i64 .ValTypes .LocalDecls
+      (func String2Identifier("$i64.reverse_bytes") (type #wrc20ReverseBytesTypeIdx) local i64 i64 .ValTypes .LocalDecls
         block .TypeDecls
           loop .TypeDecls
             local.get 1
