@@ -580,8 +580,8 @@ After unfolding, each type use in a function starts with an explicit reference t
                  , metadata: #meta(... id: OID, localIds: #ids2Idxs(T, LS))
               )
 
-    syntax Int ::= typeUse2typeIdx( TypeUse, Map) [function]
- // --------------------------------------------------------
+    syntax Int ::= typeUse2typeIdx ( TypeUse , Map ) [function]
+ // -----------------------------------------------------------
     rule typeUse2typeIdx( (type ID:Identifier )  ,  TIDS ) => {TIDS [ ID ]}:>Int
     rule typeUse2typeIdx( (type ID:Identifier ) _,  TIDS ) => {TIDS [ ID ]}:>Int
     rule typeUse2typeIdx( (type IDX:Int       )  , _TIDS ) => IDX
