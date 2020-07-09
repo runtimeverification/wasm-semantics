@@ -327,10 +327,10 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 
     rule #types2indices(.Defns, TI) => TI
 
-    rule #types2indices((type OID (func TDECLS)) DS, #ti(... t2i: M, count: N))
+    rule #types2indices((type _OID (func TDECLS)) DS, #ti(... t2i: M, count: N))
       => #types2indices(DS, #ti(... t2i: M [ asFuncType(TDECLS) <- (M [ asFuncType(TDECLS) ] orDefault N) ], count: N +Int 1))
 
-    rule #types2indices(D DS, M) => #types2indices(DS, M) [owise]
+    rule #types2indices(_D DS, M) => #types2indices(DS, M) [owise]
 ```
 
 #### Functions
