@@ -234,7 +234,6 @@ In the text format, it is also allowed to have a conditional without the `else` 
 ```k
     syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
-    rule <instrs> (type OID (func TDECLS:TypeDecls)) => #type(... type: asFuncType(TDECLS), metadata: OID) ... </instrs>
 ```
 
 ### Exports
@@ -538,7 +537,7 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aModuleDecl<_>(#module(... types: TS, funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS), typeIds: #idcTypes(TS))>(M)
     rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
-      => #module( ... types: TS
+      => #module( ... types: #t2aDefns<C>(TS)
                     , funcs: #t2aDefns<C>(FS)
                     , tables: TABS
                     , mems: MS
@@ -550,6 +549,13 @@ Since we do not have polymorphic functions available, we define one function per
                     , exports: #t2aDefns<C>(ES)
                     , metadata: #meta(... id: OID, funcIds: FIDS)
                 )
+```
+
+
+#### Types
+
+```k
+    rule #t2aDefn<_>((type OID (func TDECLS))) => #type(... type: asFuncType(TDECLS), metadata: OID)
 ```
 
 #### Functions
