@@ -319,6 +319,16 @@ Since the inserted type is module-level, any subsequent functions declaring the 
          #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
 
+    rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
+      => (import MOD NAME (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS ))
+         #unfoldDefns(DS, I, TI)
+      requires         asFuncType(TDECLS) in_keys(M)
+
+    rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls)) DS, I, #ti(... t2i: M, count: N))
+      => (import MOD NAME (func OID (type N) TDECLS))
+         #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
+      requires notBool asFuncType(TDECLS) in_keys(M)
+
     syntax TypesInfo ::= #ti( t2i: Map, count: Int )
     syntax TypesInfo ::=  types2indices( Defns            ) [function]
                        | #types2indices( Defns, TypesInfo ) [function]
