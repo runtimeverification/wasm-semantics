@@ -649,8 +649,8 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax Defn     ::= FuncDefn
     syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata)
-    syntax Alloc    ::= allocfunc (Int, VecType, Instrs, FuncMetadata)
- // ---------------------------------------------------------------------
+    syntax Alloc    ::= allocfunc ( Int , VecType , Instrs , FuncMetadata )
+ // -----------------------------------------------------------------------
     rule <instrs> #func(... type: TYPIDX, locals: LOCALS, body: INSTRS, metadata: META) => allocfunc(TYPIDX, LOCALS, INSTRS, META) ... </instrs>
 
     rule <instrs> allocfunc(TYPIDX, LOCALS, INSTRS, #meta(... id: OID, localIds: LIDS)) => . ... </instrs>
