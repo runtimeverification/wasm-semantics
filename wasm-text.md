@@ -326,9 +326,10 @@ Since the inserted type is module-level, any subsequent functions declaring the 
                    , #ti(... t2i: M => M [ asFuncType(TDECLS) <- N ], count: N => N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
 
-    rule #unfoldDefns     (( func OID:OptionalId TUSE:TypeUse LOCALS:LocalDecls    BODY)   DS, I, TI)
+    rule #unfoldDefns(( func OID:OptionalId TUSE:TypeUse LOCALS:LocalDecls    BODY)   DS, I, TI)
       => (( func OID            TUSE         LOCALS unfoldInstrs(BODY)))
-         #unfoldDefns(DS, I, TI) requires notBool isTypeDecls(TUSE)
+         #unfoldDefns(DS, I, TI)
+      requires notBool isTypeDecls(TUSE)
 
     rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
       => (import MOD NAME (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS ))
