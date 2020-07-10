@@ -470,12 +470,30 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS', DEPTH, M) => IS appendInstrs (PI #unfoldInstrs(IS', DEPTH, M))
     rule #unfoldInstrs(( PI:PlainInstr            ):FoldedInstr IS', DEPTH, M) =>                  PI #unfoldInstrs(IS', DEPTH, M)
 
-    rule #unfoldInstrs(((block ID:Identifier TDS:TypeDecls IS)          => block ID TDS IS end) _IS', _DEPTH, _M)
-    rule #unfoldInstrs(((block               TDS:TypeDecls IS)          => block    TDS IS end) _IS', _DEPTH, _M)
-    rule #unfoldInstrs( (block ID:Identifier TDS:TypeDecls IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs(((block ID:Identifier TDS IS)          => block ID TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs(((block               TDS IS)          => block    TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs( (block ID:Identifier TDS IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
     rule #unfoldInstrs(block TDS:TypeDecls IS end IS', DEPTH, M) => block TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
-    syntax Instrs ::= Instrs "appendInstrs" Instr       [function]
+    rule #unfoldInstrs(((loop ID:Identifier TDS IS)          => loop ID TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs(((loop               TDS IS)          => loop    TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs( (loop ID:Identifier TDS IS end _OID' => loop    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs(loop TDS:TypeDecls IS end IS', DEPTH, M) => loop TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
+
+    rule #unfoldInstrs(((if OID:OptionalId TDS COND (then IS)) => (if OID TDS COND (then IS) (else .Instrs))) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs(((if ID:Identifier  TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if ID TDS IS else IS' end IS''), _DEPTH, _M)
+    rule #unfoldInstrs(((if                TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if    TDS IS else IS' end IS''), _DEPTH, _M)
+    rule #unfoldInstrs( (if ID:Identifier  TDS      IS                                   end _OID'' => if  ID TDS IS else .Instrs end) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs( (if                TDS      IS                                   end _OID'' => if     TDS IS else .Instrs end) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs( (if ID:Identifier  TDS      IS         else _OID':OptionalId IS' end _OID'' => if     TDS IS else IS'     end) _IS'',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs(if TDS IS else IS' end IS'', DEPTH, M) => if TDS #unfoldInstrs(IS, DEPTH +Int 1, M) else #unfoldInstrs(IS', DEPTH +Int 1, M) end #unfoldInstrs(IS'', DEPTH, M)
+
+    rule #unfoldInstrs((br    ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1) _IS, DEPTH, M)
+    rule #unfoldInstrs((br_if ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1) _IS, DEPTH, M)
+
+    rule #unfoldInstrs(_I IS => IS, _DEPTH, _M) [owise]
+
+    syntax Instrs ::= Instrs "appendInstrs" Instrs      [function]
                     | #appendInstrs  ( Instrs, Instrs ) [function]
                     | #reverseInstrs ( Instrs, Instrs ) [function]
  // --------------------------------------------------------------
