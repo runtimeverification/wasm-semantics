@@ -171,7 +171,7 @@ We also enable context lookups with identifiers.
 ```
 
 ### Block Instructions
-
+TOD: Remove the rules in this section
 In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
 The `<labelIds>` cell maps labels to the depth at which they occur.
 To ensure the bookkeeping mapping in `<labelIds>` is properly updated when branching, we don't make a new `Label` production, but instead a different one: `IdLabel`.
@@ -327,7 +327,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
       requires notBool asFuncType(TDECLS) in_keys(M)
 
     rule #unfoldDefns     (( func OID:OptionalId TUSE:TypeUse LOCALS:LocalDecls    BODY)   DS, I, TI)
-      => (( func OID            TUSE         LOCALS #unfoldInstrs(BODY)))
+      => (( func OID            TUSE         LOCALS unfoldInstrs(BODY)))
          #unfoldDefns(DS, I, TI) requires notBool isTypeDecls(TUSE)
 
     rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
@@ -460,12 +460,20 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Instructions
 
 ```k
-    syntax Instrs ::= #unfoldInstrs ( Instrs ) [function]
- // -----------------------------------------------------
-    rule #unfoldInstrs(.Instrs) => .Instrs
+    syntax Instrs ::=  unfoldInstrs ( Instrs           ) [function]
+                    | #unfoldInstrs ( Instrs, Int, Map ) [function]
+ // ---------------------------------------------------------------
+    rule  unfoldInstrs(IS) => #unfoldInstrs(IS, 0, .Map)
 
-    rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS') => IS appendInstrs (PI #unfoldInstrs(IS'))
-    rule #unfoldInstrs(( PI:PlainInstr            ):FoldedInstr IS') => PI #unfoldInstrs(IS')
+    rule #unfoldInstrs(.Instrs, _, _) => .Instrs
+
+    rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS', DEPTH, M) => IS appendInstrs (PI #unfoldInstrs(IS', DEPTH, M))
+    rule #unfoldInstrs(( PI:PlainInstr            ):FoldedInstr IS', DEPTH, M) =>                  PI #unfoldInstrs(IS', DEPTH, M)
+
+    rule #unfoldInstrs(((block ID:Identifier TDS:TypeDecls IS)          => block ID TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs(((block               TDS:TypeDecls IS)          => block    TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs( (block ID:Identifier TDS:TypeDecls IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs(block TDS:TypeDecls IS end IS', DEPTH, M) => block TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
     syntax Instrs ::= Instrs "appendInstrs" Instr       [function]
                     | #appendInstrs  ( Instrs, Instrs ) [function]
