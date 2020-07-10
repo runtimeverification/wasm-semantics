@@ -316,14 +316,14 @@ If there is no matching module-level type, a new such type is inserted *at the e
 Since the inserted type is module-level, any subsequent functions declaring the same type will not implicitly generate a new type.
 
 ```k
-    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, #ti(... t2i: M) #as TI)
-      => (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS LOCALS BODY)
-         #unfoldDefns(DS, I, TI)
+    rule #unfoldDefns(( func OID:OptionalId (TDECLS:TypeDecls => (type {M [asFuncType(TDECLS)]}:>Int) TDECLS) _LOCALS:LocalDecls _BODY:Instrs ) _DS
+                    , _I
+                    , #ti(... t2i: M))
       requires         asFuncType(TDECLS) in_keys(M)
 
-    rule #unfoldDefns(( func OID:OptionalId TDECLS:TypeDecls LOCALS:LocalDecls BODY:Instrs ) DS, I, #ti(... t2i: M, count: N))
-      => (func OID (type N) TDECLS LOCALS BODY)
-         #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
+    rule #unfoldDefns(( func OID:OptionalId (TDECLS:TypeDecls => (type N) TDECLS) _LOCALS:LocalDecls _BODY:Instrs ) (DS => DS appendDefn  (type (func TDECLS)))
+                   , _I
+                   , #ti(... t2i: M => M [ asFuncType(TDECLS) <- N ], count: N => N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
 
     rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
