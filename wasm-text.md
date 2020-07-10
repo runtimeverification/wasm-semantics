@@ -688,6 +688,8 @@ After unfolding, each type use in a function starts with an explicit reference t
 ```k
     syntax Instr ::= "#t2aInstr" "<" Context ">" "(" Instr ")" [function]
  // ---------------------------------------------------------------------
+    rule #t2aInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#t2aInstr<C>(PI)}:>PlainInstr #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #t2aInstr<C>(PI)
 ```
 
 #### Basic Instructions
