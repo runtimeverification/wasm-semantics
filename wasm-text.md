@@ -316,15 +316,19 @@ If there is no matching module-level type, a new such type is inserted *at the e
 Since the inserted type is module-level, any subsequent functions declaring the same type will not implicitly generate a new type.
 
 ```k
-    rule #unfoldDefns(( func OID:OptionalId (TDECLS:TypeDecls => (type {M [asFuncType(TDECLS)]}:>Int) TDECLS) _LOCALS:LocalDecls _BODY:Instrs ) _DS
+    rule #unfoldDefns(( func _OID:OptionalId (TDECLS:TypeDecls => (type {M [asFuncType(TDECLS)]}:>Int) TDECLS) _LOCALS:LocalDecls _BODY:Instrs ) _DS
                     , _I
                     , #ti(... t2i: M))
       requires         asFuncType(TDECLS) in_keys(M)
 
-    rule #unfoldDefns(( func OID:OptionalId (TDECLS:TypeDecls => (type N) TDECLS) _LOCALS:LocalDecls _BODY:Instrs ) (DS => DS appendDefn  (type (func TDECLS)))
+    rule #unfoldDefns(( func _OID:OptionalId (TDECLS:TypeDecls => (type N) TDECLS) _LOCALS:LocalDecls _BODY:Instrs ) (DS => DS appendDefn  (type (func TDECLS)))
                    , _I
                    , #ti(... t2i: M => M [ asFuncType(TDECLS) <- N ], count: N => N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
+
+    rule #unfoldDefns     (( func OID:OptionalId TUSE:TypeUse LOCALS:LocalDecls    BODY)   DS, I, TI)
+      => (( func OID            TUSE         LOCALS #unfoldInstrs(BODY)))
+         #unfoldDefns(DS, I, TI) requires notBool isTypeDecls(TUSE)
 
     rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
       => (import MOD NAME (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS ))
@@ -451,6 +455,29 @@ Since the inserted type is module-level, any subsequent functions declaring the 
  // -----------------------------------------------------
     rule #unfoldDefns(( elem OFFSET:Offset ES ) DS, I, M)
       => ( elem 0 OFFSET ES ) #unfoldDefns(DS, I, M)
+```
+
+#### Instructions
+
+```k
+    syntax Instrs ::= #unfoldInstrs ( Instrs ) [function]
+ // -----------------------------------------------------
+    rule #unfoldInstrs(.Instrs) => .Instrs
+
+    rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS') => IS appendInstrs (PI #unfoldInstrs(IS'))
+    rule #unfoldInstrs(( PI:PlainInstr            ):FoldedInstr IS') => PI #unfoldInstrs(IS')
+
+    syntax Instrs ::= Instrs "appendInstrs" Instr       [function]
+                    | #appendInstrs  ( Instrs, Instrs ) [function]
+                    | #reverseInstrs ( Instrs, Instrs ) [function]
+ // --------------------------------------------------------------
+    rule IS appendInstrs IS' => #appendInstrs(#reverseInstrs(IS, .Instrs), IS')
+
+    rule #appendInstrs(I IS => IS, IS' => I IS')
+    rule #appendInstrs(.Instrs   , IS') => IS'
+
+    rule #reverseInstrs(.Instrs, ACC) => ACC
+    rule #reverseInstrs(I IS => IS, ACC => I ACC)
 ```
 
 ### Structuring Modules
@@ -650,13 +677,9 @@ After unfolding, each type use in a function starts with an explicit reference t
 
 ### Instructions
 
-**TODO:** Desugar folded instructions.
-
 ```k
     syntax Instr ::= "#t2aInstr" "<" Context ">" "(" Instr ")" [function]
  // ---------------------------------------------------------------------
-    rule #t2aInstr<C>(( PI:PlainInstr  IS:Instrs ):FoldedInstr) => ({#t2aInstr<C>(PI)}:>PlainInstr #t2aInstrs<C>(IS))
-    rule #t2aInstr<C>(( PI:PlainInstr            ):FoldedInstr) =>  #t2aInstr<C>(PI)
 ```
 
 #### Basic Instructions
