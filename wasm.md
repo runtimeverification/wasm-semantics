@@ -44,7 +44,7 @@ Configuration
             <moduleMetadata>
               <moduleId>     </moduleId>
               <funcIds> .Map </funcIds>
-              <typeIds>     .Map </typeIds>
+              <typeIds> .Map </typeIds>
             </moduleMetadata>
           </moduleInst>
         </moduleInstances>
