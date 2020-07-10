@@ -185,14 +185,11 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
     rule <instrs> (spectest_trap => .) ~> _M:ModuleDecl ... </instrs>
     rule <instrs> (spectest_trap => .) ~> _A:Assertion  ... </instrs>
 
-    rule <instrs> ( import MOD _ (func OID:OptionalId (type TIDX)) )
-               => #func(... type: TIDX, locals: [ .ValTypes ], body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
-               ...
-         </instrs>
+    rule <instrs> ( import MOD NAME (func OID:OptionalId (type TIDX) _:TypeDecls) ) => ( import MOD NAME (func OID:OptionalId (type TIDX)              )) ... </instrs>
       requires MOD ==K #unparseWasmString("\"spectest\"")
         orBool MOD ==K #unparseWasmString("\"test\"")
 
-    rule <instrs> ( import MOD _ (func OID:OptionalId (type TIDX) _:TypeDecls) )
+    rule <instrs> ( import MOD _ (func OID:OptionalId (type TIDX)) )
                => #func(... type: TIDX, locals: [ .ValTypes ], body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
                ...
          </instrs>
