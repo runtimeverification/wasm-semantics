@@ -590,10 +590,10 @@ After unfolding, each type use in a function starts with an explicit reference t
 
     syntax Int ::= typeUse2typeIdx ( TypeUse , Map ) [function]
  // -----------------------------------------------------------
+    rule typeUse2typeIdx( (type IDX ) _:TypeDecls => (type IDX), _TIDS )
+
     rule typeUse2typeIdx( (type ID:Identifier )  ,  TIDS ) => {TIDS [ ID ]}:>Int
-    rule typeUse2typeIdx( (type ID:Identifier ) _,  TIDS ) => {TIDS [ ID ]}:>Int
     rule typeUse2typeIdx( (type IDX:Int       )  , _TIDS ) => IDX
-    rule typeUse2typeIdx( (type IDX:Int       ) _, _TIDS ) => IDX
 
     syntax VecType ::=  locals2vectype ( LocalDecls            ) [function]
                      | #locals2vectype ( LocalDecls , ValTypes ) [function]
