@@ -782,27 +782,27 @@ They distribute the text-to-abstract functions above over lists.
 The following are helper functions for gathering and updating context.
 
 ```k
-    syntax Map ::= #idcTypes    ( Defns      ) [function]
-                 | #idcTypesAux ( Defns, Int ) [function]
- // -----------------------------------------------------
-    rule #idcTypes(DEFNS) => #idcTypesAux(DEFNS, 0)
+    syntax Map ::= #idcTypes    ( Defns           ) [function]
+                 | #idcTypesAux ( Defns, Int, Map ) [function]
+ // ----------------------------------------------------------
+    rule #idcTypes(DEFNS) => #idcTypesAux(DEFNS, 0, .Map)
 
-    rule #idcTypesAux((type ID:Identifier (func _)) TS, IDX) => (ID |-> IDX) #idcTypesAux(TS, IDX +Int 1)
-    rule #idcTypesAux((type               (func _)) TS, IDX) =>              #idcTypesAux(TS, IDX +Int 1)
-    rule #idcTypesAux(.Defns, _) => .Map
+    rule #idcTypesAux((type ID:Identifier (func _)) TS, IDX, ACC) => #idcTypesAux(TS, IDX +Int 1, ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcTypesAux((type               (func _)) TS, IDX, ACC) => #idcTypesAux(TS, IDX +Int 1, ACC)
+    rule #idcTypesAux(.Defns, _, ACC) => ACC
 
-    syntax Map ::= #idcFuncs    ( Defns, Defns      ) [function]
-                 | #idcFuncsAux ( Defns, Defns, Int ) [function]
- // ------------------------------------------------------------
-    rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0)
+    syntax Map ::= #idcFuncs    ( Defns, Defns           ) [function]
+                 | #idcFuncsAux ( Defns, Defns, Int, Map ) [function]
+ // -----------------------------------------------------------------
+    rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0, .Map)
 
-    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
-    rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX +Int 1)
-    rule #idcFuncsAux(_I                                  IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
+    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX, ACC) => #idcFuncsAux(IS, FS, IDX +Int 1, ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX, ACC) => #idcFuncsAux(IS, FS, IDX +Int 1, ACC)
+    rule #idcFuncsAux(_I                                  IS, FS, IDX, ACC) => #idcFuncsAux(IS, FS, IDX       , ACC) [owise]
 
-    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
-    rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
-    rule #idcFuncsAux(.Defns, .Defns, _) => .Map
+    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX, ACC) => #idcFuncsAux(.Defns, FS, IDX +Int 1, ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX, ACC) => #idcFuncsAux(.Defns, FS, IDX +Int 1, ACC)
+    rule #idcFuncsAux(.Defns, .Defns, _, ACC) => ACC
 
     syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                  | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
