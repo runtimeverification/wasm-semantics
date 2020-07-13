@@ -368,11 +368,71 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule  unfoldInstrs(IS) => #unfoldInstrs(IS, 0, .Map)
     rule #unfoldInstrs(.Instrs, _, _) => .Instrs
     rule #unfoldInstrs(I IS, DEPTH, M) => I #unfoldInstrs(IS, DEPTH, M) [owise]
+
+    syntax Instrs ::= Instrs "appendInstrs" Instrs      [function]
+                    | #appendInstrs  ( Instrs, Instrs ) [function]
+                    | #reverseInstrs ( Instrs, Instrs ) [function]
+ // --------------------------------------------------------------
+    rule IS appendInstrs IS' => #appendInstrs(#reverseInstrs(IS, .Instrs), IS')
+
+    rule #appendInstrs(I IS => IS, IS' => I IS')
+    rule #appendInstrs(.Instrs   , IS') => IS'
+
+    rule #reverseInstrs(.Instrs, ACC) => ACC
+    rule #reverseInstrs(I IS => IS, ACC => I ACC)
+```
+
+##### Block Instructions
+
+In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
+Branching with an identifier is the same as branching to the label with that identifier.
+The correct label index is calculated by looking at whih depth the index occured and what depth execution is currently at.
+
+Conceptually, `br ID => br CURRENT_EXECUTION_DEPTH -Int IDENTIFIER_LABEL_DEPTH -Int 1`.
+
+```k
+syntax Instr ::= "testy" Identifier Int Map Int
+    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br       DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if    DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => br_table elemSegment2Indices(ES, DEPTH, M) #unfoldInstrs(IS, DEPTH, M)
+
+    syntax ElemSegment ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
+ // ------------------------------------------------------------------------------
+    rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .ElemSegment
+    rule elemSegment2Indices(ID:Identifier ES,  DEPTH,  M) => DEPTH -Int {M [ ID ]}:>Int -Int 1 elemSegment2Indices(ES, DEPTH, M)
+    rule elemSegment2Indices(E             ES,  DEPTH,  M) => E                                 elemSegment2Indices(ES, DEPTH, M) [owise]
+```
+
+There are several syntactic sugars for block instructions, some of which may have identifiers.
+The same identifier can optionally be repeated at the end of the block instruction (to mark which block is ending) and on the branches in an `if`.
+`if` blocks may omit the `else`-branch, as long as the type declaration is empty.
+
+```k
+    syntax Instr ::= BlockInstr
+ // ---------------------------
+
+    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
+ // --------------------------------------------------------------------------
+    rule #unfoldInstrs( (block ID:Identifier TDS IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs(block TDS:TypeDecls IS end IS', DEPTH, M) => block TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
+
+    syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
+ // -------------------------------------------------------------------------
+    rule #unfoldInstrs( (loop ID:Identifier TDS IS end _OID' => loop    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs(loop TDS:TypeDecls IS end IS', DEPTH, M) => loop TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
+
+   // TODO: Only unfold empty else-branch if the type declaration is empty.
+    syntax BlockInstr ::= "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // ------------------------------------------------------------------------------------------------
+    rule #unfoldInstrs( (if ID:Identifier  TDS      IS                                   end _OID'' => if  ID TDS IS else .Instrs end) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs( (if                TDS      IS                                   end _OID'' => if     TDS IS else .Instrs end) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs( (if ID:Identifier  TDS      IS         else _OID':OptionalId IS' end _OID'' => if     TDS IS else IS'     end) _IS'',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs(if TDS IS else IS' end IS'', DEPTH, M) => if TDS #unfoldInstrs(IS, DEPTH +Int 1, M) else #unfoldInstrs(IS', DEPTH +Int 1, M) end #unfoldInstrs(IS'', DEPTH, M)
 ```
 
 ##### Folded Instructions
 
-TODO: Remove rules
 Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
 
 ```k
@@ -386,32 +446,6 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
     syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
                          | "(" PlainInstr        ")" [prefer]
  // ---------------------------------------------------------
-    rule <instrs> ( PI:PlainInstr IS:Instrs ):FoldedInstr => sequenceInstrs(IS) ~> PI ... </instrs>
-    rule <instrs> ( PI:PlainInstr           ):FoldedInstr =>                       PI ... </instrs>
-```
-
-Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
-
-```k
-    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
- // ------------------------------------------------------------------
-    rule <instrs> ( block               TDECLS:TypeDecls INSTRS:Instrs ) => block    TDECLS INSTRS end ... </instrs>
-    rule <instrs> ( block ID:Identifier TDECLS:TypeDecls INSTRS:Instrs ) => block ID TDECLS INSTRS end ... </instrs>
-
-    syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
- // -----------------------------------------------------------------------------------------------------------
-    rule <instrs> ( if OID:OptionalId TDECLS:TypeDecls C:Instrs ( then IS ) )              => sequenceInstrs(C) ~> if OID TDECLS IS          end ... </instrs>
-    rule <instrs> ( if                TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if     TDECLS IS else IS' end ... </instrs>
-    rule <instrs> ( if  ID:Identifier TDECLS:TypeDecls C:Instrs ( then IS ) ( else IS' ) ) => sequenceInstrs(C) ~> if  ID TDECLS IS else IS' end ... </instrs>
-
-    syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
- // -----------------------------------------------------------------
-    rule <instrs> ( loop               TDECLS:TypeDecls IS ) => loop    TDECLS IS end ... </instrs>
-    rule <instrs> ( loop ID:Identifier TDECLS:TypeDecls IS ) => loop ID TDECLS IS end ... </instrs>
-```
-
-```k
     rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS', DEPTH, M)
       =>             (#unfoldInstrs(IS        , DEPTH, M)
          appendInstrs #unfoldInstrs(PI .Instrs, DEPTH, M))
@@ -421,102 +455,25 @@ Another type of folded instruction is control flow blocks wrapped in parentheses
          appendInstrs #unfoldInstrs(IS'       , DEPTH, M)
 ```
 
-##### Block Instructions
-
-In the text format, block instructions can have identifiers attached to them, and branch instructions can refer to these identifiers.
-Branching with an identifier is the same as branching to the label with that identifier.
-The correct label index is calculated by looking at whih depth the index occured and what depth execution is currently at.
-
-Conceptually, `br ID => br CURRENT_EXECUTION_DEPTH -Int IDENTIFIER_LABEL_DEPTH -Int 1`.
-
-There are several syntactic sugars for block instructions, some of which may have identifiers.
-The same identifier can optionally be repeated at the end of the block instruction (to mark which block is ending) and on the branches in an `if`.
-
-TODO: Remove rules.
-```k
-    syntax Instr ::= BlockInstr
- // ---------------------------
-
-    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
- // --------------------------------------------------------------------------
-    rule <instrs> block ID:Identifier TDECLS IS end OID':OptionalId => block TDECLS IS end ... </instrs>
-         <labelDepth> DEPTH </labelDepth>
-         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
-      requires ID ==K OID'
-        orBool notBool isIdentifier(OID')
-
-    syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
- // -------------------------------------------------------------------------
-    rule <instrs> loop ID:Identifier TDECLS:TypeDecls IS end OID':OptionalId => loop TDECLS IS end ... </instrs>
-         <labelDepth> DEPTH </labelDepth>
-         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
-      requires ID ==K OID'
-        orBool notBool isIdentifier(OID')
-```
-
-In the text format, it is also allowed to have a conditional without the `else` branch.
+Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
 
 ```k
-    syntax BlockInstr ::= "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
-                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
- // ------------------------------------------------------------------------------------------------
-    rule <instrs> if TDECLS:TypeDecls IS end => if TDECLS IS else .Instrs end ... </instrs>
-
-    rule <instrs> if ID:Identifier TDECLS:TypeDecls IS end OID'':OptionalId => if ID TDECLS IS else ID .Instrs end ID ... </instrs>
-      requires ID ==K OID''
-        orBool notBool isIdentifier(OID'')
-
-    rule <instrs> if ID:Identifier TDECLS:TypeDecls IS else OID':OptionalId IS' end OID'':OptionalId => if TDECLS:TypeDecls IS else IS' end ... </instrs>
-         <labelDepth> DEPTH </labelDepth>
-         <labelIds> IDS => IDS[ID <- DEPTH] </labelIds>
-      requires ( ID ==K OID'  orBool notBool isIdentifier(OID')  )
-       andBool ( ID ==K OID'' orBool notBool isIdentifier(OID'') )
-```
-
-```k
+    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
+ // ------------------------------------------------------------------
     rule #unfoldInstrs(((block ID:Identifier TDS IS)          => block ID TDS IS end) _IS', _DEPTH, _M)
     rule #unfoldInstrs(((block               TDS IS)          => block    TDS IS end) _IS', _DEPTH, _M)
-    rule #unfoldInstrs( (block ID:Identifier TDS IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
-    rule #unfoldInstrs(block TDS:TypeDecls IS end IS', DEPTH, M) => block TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
+    syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
+ // -----------------------------------------------------------------
     rule #unfoldInstrs(((loop ID:Identifier TDS IS)          => loop ID TDS IS end) _IS', _DEPTH, _M)
     rule #unfoldInstrs(((loop               TDS IS)          => loop    TDS IS end) _IS', _DEPTH, _M)
-    rule #unfoldInstrs( (loop ID:Identifier TDS IS end _OID' => loop    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
-    rule #unfoldInstrs(loop TDS:TypeDecls IS end IS', DEPTH, M) => loop TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
+    syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+ // -----------------------------------------------------------------------------------------------------------
     rule #unfoldInstrs(((if OID:OptionalId TDS COND (then IS)) => (if OID TDS COND (then IS) (else .Instrs))) _IS'', _DEPTH, _M)
     rule #unfoldInstrs(((if ID:Identifier  TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if ID TDS IS else IS' end IS''), _DEPTH, _M)
     rule #unfoldInstrs(((if                TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if    TDS IS else IS' end IS''), _DEPTH, _M)
-    rule #unfoldInstrs( (if ID:Identifier  TDS      IS                                   end _OID'' => if  ID TDS IS else .Instrs end) _IS'', _DEPTH, _M)
-    rule #unfoldInstrs( (if                TDS      IS                                   end _OID'' => if     TDS IS else .Instrs end) _IS'', _DEPTH, _M)
-    rule #unfoldInstrs( (if ID:Identifier  TDS      IS         else _OID':OptionalId IS' end _OID'' => if     TDS IS else IS'     end) _IS'',  DEPTH,  M => M [ ID <- DEPTH ])
-    rule #unfoldInstrs(if TDS IS else IS' end IS'', DEPTH, M) => if TDS #unfoldInstrs(IS, DEPTH +Int 1, M) else #unfoldInstrs(IS', DEPTH +Int 1, M) end #unfoldInstrs(IS'', DEPTH, M)
-
-syntax Instr ::= "testy" Identifier Int Map Int
-    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br       DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if    DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => br_table elemSegment2Indices(ES, DEPTH, M) #unfoldInstrs(IS, DEPTH, M)
-
-
-    syntax ElemSegment ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
- // ------------------------------------------------------------------------------
-    rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .ElemSegment
-    rule elemSegment2Indices(ID:Identifier ES,  DEPTH,  M) => DEPTH -Int {M [ ID ]}:>Int -Int 1 elemSegment2Indices(ES, DEPTH, M)
-    rule elemSegment2Indices(E             ES,  DEPTH,  M) => E                                 elemSegment2Indices(ES, DEPTH, M) [owise]
-```
-
-```k
-    syntax Instrs ::= Instrs "appendInstrs" Instrs      [function]
-                    | #appendInstrs  ( Instrs, Instrs ) [function]
-                    | #reverseInstrs ( Instrs, Instrs ) [function]
- // --------------------------------------------------------------
-    rule IS appendInstrs IS' => #appendInstrs(#reverseInstrs(IS, .Instrs), IS')
-
-    rule #appendInstrs(I IS => IS, IS' => I IS')
-    rule #appendInstrs(.Instrs   , IS') => IS'
-
-    rule #reverseInstrs(.Instrs, ACC) => ACC
-    rule #reverseInstrs(I IS => IS, ACC => I ACC)
 ```
 
 ### Structuring Modules
