@@ -257,6 +257,13 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
  // --------------------------------------------------------------
 ```
 
+The following is the text format representation of an import specification.
+
+```k
+    syntax ImportDesc ::= "(" "func" OptionalId TypeUse ")" [klabel(funcImportDesc)]
+ // -------------------------------------------------------
+```
+
 ### Modules
 
 Modules are defined as a sequence of definitions, that may come in any order.
