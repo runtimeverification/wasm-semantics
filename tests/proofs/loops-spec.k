@@ -8,17 +8,17 @@ module LOOPS-SPEC
                ~> label // Loop label.
                     [ .ValTypes ]
                     { loop .TypeDecls
-                        (local.get 0)
-                        (local.get 1)
-                        (ITYPE.add)
-                        (local.set 1)
-                        (local.get 0)
-                        (ITYPE.const 1)
-                        (ITYPE.sub)
-                        (local.tee 0)
-                        (ITYPE.eqz)
-                        (br_if 1)
-                        (br 0)
+                        local.get 0
+                        local.get 1
+                        ITYPE.add
+                        local.set 1
+                        local.get 0
+                        ITYPE.const 1
+                        ITYPE.sub
+                        local.tee 0
+                        ITYPE.eqz
+                        br_if 1
+                        br 0
                       end
                    }
                    .ValStack
@@ -40,19 +40,19 @@ module LOOPS-SPEC
     // Main claim.
     rule <instrs>
               block .TypeDecls
-                 ( loop .TypeDecls
-                     (local.get 0)
-                     (local.get 1)
-                     (ITYPE.add)
-                     (local.set 1)
-                     (local.get 0)
-                     (ITYPE.const 1)
-                     (ITYPE.sub)
-                     (local.tee 0)
-                     (ITYPE.eqz)
-                     (br_if 1)
-                     (br 0)
-                 )
+                 loop .TypeDecls
+                     local.get 0
+                     local.get 1
+                     ITYPE.add
+                     local.set 1
+                     local.get 0
+                     ITYPE.const 1
+                     ITYPE.sub
+                     local.tee 0
+                     ITYPE.eqz
+                     br_if 1
+                     br 0
+                end
              end
           => .
           ...
