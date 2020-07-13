@@ -494,8 +494,9 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldInstrs( (if ID:Identifier  TDS      IS         else _OID':OptionalId IS' end _OID'' => if     TDS IS else IS'     end) _IS'',  DEPTH,  M => M [ ID <- DEPTH ])
     rule #unfoldInstrs(if TDS IS else IS' end IS'', DEPTH, M) => if TDS #unfoldInstrs(IS, DEPTH +Int 1, M) else #unfoldInstrs(IS', DEPTH +Int 1, M) end #unfoldInstrs(IS'', DEPTH, M)
 
-    rule #unfoldInstrs((br    ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1) _IS, DEPTH, M)
-    rule #unfoldInstrs((br_if ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1) _IS, DEPTH, M)
+syntax Instr ::= "testy" Identifier Int Map Int
+    rule #unfoldInstrs((br    ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1):PlainInstr _IS, DEPTH, M)
+    rule #unfoldInstrs((br_if ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1):PlainInstr _IS, DEPTH, M)
 
     rule #unfoldInstrs(I IS, DEPTH, M) => I #unfoldInstrs(IS, DEPTH, M) [owise]
 
