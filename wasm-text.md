@@ -261,7 +261,7 @@ The following is the text format representation of an import specification.
 
 ```k
     syntax ImportDesc ::= "(" "func" OptionalId TypeUse ")" [klabel(funcImportDesc)]
- // -------------------------------------------------------
+ // --------------------------------------------------------------------------------
 ```
 
 ### Modules
