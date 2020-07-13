@@ -58,8 +58,7 @@ Instruction sugar
 We allow writing instructions at the top level in the test embedder.
 
 ```k
-    rule <instrs> ( PI:PlainInstr IS:Instrs ):FoldedInstr => sequenceInstrs(IS) ~> PI ... </instrs>
-    rule <instrs> ( PI:PlainInstr           ):FoldedInstr =>                       PI ... </instrs>
+    rule <instrs> FI:FoldedInstr => sequenceInstrs(unfoldInstrs(FI .Instrs)) ... </instrs>
 ```
 
 Auxiliary
