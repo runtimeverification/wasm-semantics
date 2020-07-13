@@ -52,6 +52,16 @@ This is purely a KWasm feature, which is useful for testing.
       [owise]
 ```
 
+Instruction sugar
+-----------------
+
+We allow writing instructions at the top level in the test embedder.
+
+```k
+    rule <instrs> ( PI:PlainInstr IS:Instrs ):FoldedInstr => sequenceInstrs(IS) ~> PI ... </instrs>
+    rule <instrs> ( PI:PlainInstr           ):FoldedInstr =>                       PI ... </instrs>
+```
+
 Auxiliary
 ---------
 
