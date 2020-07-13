@@ -468,8 +468,13 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 
     rule #unfoldInstrs(.Instrs, _, _) => .Instrs
 
-    rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS', DEPTH, M) => IS appendInstrs PI #unfoldInstrs(IS', DEPTH, M)
-    rule #unfoldInstrs(( PI:PlainInstr            ):FoldedInstr IS', DEPTH, M) =>                 PI #unfoldInstrs(IS', DEPTH, M)
+    rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS', DEPTH, M)
+      =>             (#unfoldInstrs(IS        , DEPTH, M)
+         appendInstrs #unfoldInstrs(PI .Instrs, DEPTH, M))
+         appendInstrs #unfoldInstrs(IS'       , DEPTH, M)
+    rule #unfoldInstrs(( PI:PlainInstr            ):FoldedInstr IS', DEPTH, M)
+      =>              #unfoldInstrs(PI .Instrs, DEPTH, M)
+         appendInstrs #unfoldInstrs(IS'       , DEPTH, M)
 
     rule #unfoldInstrs(((block ID:Identifier TDS IS)          => block ID TDS IS end) _IS', _DEPTH, _M)
     rule #unfoldInstrs(((block               TDS IS)          => block    TDS IS end) _IS', _DEPTH, _M)
