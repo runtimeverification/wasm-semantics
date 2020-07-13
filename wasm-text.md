@@ -492,7 +492,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldInstrs((br    ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1) _IS, DEPTH, M)
     rule #unfoldInstrs((br_if ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1) _IS, DEPTH, M)
 
-    rule #unfoldInstrs(_I IS => IS, _DEPTH, _M) [owise]
+    rule #unfoldInstrs(I IS, DEPTH, M) => I #unfoldInstrs(IS, DEPTH, M) [owise]
 
     syntax Instrs ::= Instrs "appendInstrs" Instrs      [function]
                     | #appendInstrs  ( Instrs, Instrs ) [function]
