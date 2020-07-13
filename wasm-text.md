@@ -495,10 +495,17 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldInstrs(if TDS IS else IS' end IS'', DEPTH, M) => if TDS #unfoldInstrs(IS, DEPTH +Int 1, M) else #unfoldInstrs(IS', DEPTH +Int 1, M) end #unfoldInstrs(IS'', DEPTH, M)
 
 syntax Instr ::= "testy" Identifier Int Map Int
-    rule #unfoldInstrs((br    ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1):PlainInstr _IS, DEPTH, M)
-    rule #unfoldInstrs((br_if ID:Identifier => br DEPTH -Int {M [ ID ]}:>Int -Int 1):PlainInstr _IS, DEPTH, M)
+    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br       DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if    DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => br_table elemSegment2Indices(ES, DEPTH, M) #unfoldInstrs(IS, DEPTH, M)
 
     rule #unfoldInstrs(I IS, DEPTH, M) => I #unfoldInstrs(IS, DEPTH, M) [owise]
+
+    syntax ElemSegment ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
+ // ------------------------------------------------------------------------------
+    rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .ElemSegment
+    rule elemSegment2Indices(ID:Identifier ES,  DEPTH,  M) => DEPTH -Int {M [ ID ]}:>Int -Int 1 elemSegment2Indices(ES, DEPTH, M)
+    rule elemSegment2Indices(E             ES,  DEPTH,  M) => E                                 elemSegment2Indices(ES, DEPTH, M) [owise]
 
     syntax Instrs ::= Instrs "appendInstrs" Instrs      [function]
                     | #appendInstrs  ( Instrs, Instrs ) [function]
