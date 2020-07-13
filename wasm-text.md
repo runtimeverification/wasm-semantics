@@ -570,10 +570,9 @@ Since we do not have polymorphic functions available, we define one function per
 
 #### Imports
 
-TODO
 ```k
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier)            ))) => ( import MOD NAME (func OID:OptionalId (type {TIDS[ID]}:>Int)))
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME (func OID:OptionalId (type {TIDS[ID]}:>Int)))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier)            ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: (type {TIDS[ID]}:>Int)))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: (type {TIDS[ID]}:>Int)))
 ```
 
 #### Functions

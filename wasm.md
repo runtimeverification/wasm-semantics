@@ -591,11 +591,6 @@ A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of i
                      | "(type" Index ")" TypeDecls
  // ----------------------------------------------
 
-    syntax Index ::= #unsafeExtractIndex ( TypeUse ) [function]
- // -----------------------------------------------------------
-    rule #unsafeExtractIndex((type X)            ) => X
-    rule #unsafeExtractIndex((type X) _:TypeDecls) => X
-
     syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                       | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
  // --------------------------------------------------------------------------------------------
@@ -1291,13 +1286,13 @@ The value of a global gets copied when it is imported.
 ```k
     syntax Defn       ::= ImportDefn
     syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
-    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
+    syntax ImportDesc ::= #funcDesc(id: OptionalId, type: Int)
                         | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
-    rule <instrs> ( import MOD NAME (func _OID:OptionalId TUSE:TypeUse) ) => . ... </instrs>
+    rule <instrs> ( import MOD NAME #funcDesc(... type: TIDX) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1318,7 +1313,7 @@ The value of a global gets copied when it is imported.
            <fType> FTYPE </fType>
            ...
          </funcDef>
-      requires FTYPE ==K TYPES[#unsafeExtractIndex(TUSE)]
+      requires FTYPE ==K TYPES[TIDX]
 
     rule <instrs> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
