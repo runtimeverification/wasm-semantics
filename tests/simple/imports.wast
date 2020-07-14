@@ -9,6 +9,7 @@
 (register "m")
 
 (module
+ (import "m" "gunc" (func (type $t)))
  (memory (import "m" "mem") 1)
  (export "x" (global $x))
  (type $t (func (param i64) (param i32) (result i32)))

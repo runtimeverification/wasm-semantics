@@ -1,67 +1,73 @@
 ;; Simple add function
 
-(type $a-cool-type (func (param i32) (param $b i32) ( result i32 )))
-#assertType $a-cool-type [ i32 i32 ] -> [ i32 ] ;; The identifier declared for parameters in type will be ignored.
+(module
+  (type $a-cool-type (func (param i32) (param $b i32) ( result i32 )))
+)
+
 #assertType 0 [ i32 i32 ] -> [ i32 ]
 #assertNextTypeIdx 1
 
-(func $0 (type $a-cool-type)
-    (local.get 0)
-    (local.get 1)
-    (i32.add)
-    (return)
-)
-(export "000" (func 0))
-
-#assertNextTypeIdx 1
-(assert_return (invoke "000" (i32.const 7) (i32.const 8)) (i32.const 15))
-#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists"
+(module
+  (type $a-cool-type (func (param i32) (param $b i32) ( result i32 )))
+  (func $x (type $a-cool-type)
+      (local.get 0)
+      (local.get 1)
+      (i32.add)
+      (return)
+  )
+  (export "000" (func 0))
 
 ;; String-named add function
 
-(func $add (type $a-cool-type) (param $a i32) (param i32) ( result i32 )
-    (local.get $a)
-    (local.get 1)
-    (i32.add)
-    (return)
+  (func $add (type $a-cool-type) (param $a i32) (param i32) ( result i32 )
+      (local.get $a)
+      (local.get 1)
+      (i32.add)
+      (return)
+  )
+
+  ;; Remove return statement, don't use explicit type name
+
+  (func $0 (param $a i32) (param $b i32) result i32
+      (local.get $a)
+      (local.get $b)
+      (i32.add)
+  )
+
+
+  (table 1 funcref)
+  (elem 0 (i32.const 0) 2)
+
+  ;; More complicated function with locals
+
+  (func $1 param i64 i64 i64 result i64 local i64
+      (i64.sub (local.get 2) (i64.add (local.get 0) (local.get 1)))
+      (local.set 3)
+      (local.get 3)
+      (return)
+  )
+
+  ( export "export-1" (func 3) )
 )
+
+(assert_return (invoke "000" (i32.const 7) (i32.const 8)) (i32.const 15))
+#assertFunction 0 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists"
 
 #assertFunction 1 [ i32 i32 ] -> [ i32 ] [ ] "function string-named add"
-#assertNextTypeIdx 1
-
-;; Remove return statement
-
-(func $0 (param $a i32) (param $b i32) result i32
-    (local.get $a)
-    (local.get $b)
-    (i32.add)
-)
-
-(i32.const 7)
-(i32.const 8)
-
-(table 1 funcref)
-(elem 0 (i32.const 0) 2)
-
-(i32.const 0)
-(call_indirect (type $a-cool-type))
-#assertTopStack < i32 > 15 "call function 0 no return"
-#assertFunction 2 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
-#assertNextTypeIdx 1
-
-;; More complicated function with locals
-
-(func $1 param i64 i64 i64 result i64 local i64
-    (i64.sub (local.get 2) (i64.add (local.get 0) (local.get 1)))
-    (local.set 3)
-    (local.get 3)
-    (return)
-)
-
-( export "export-1" (func 3) )
+#assertNextTypeIdx 2
 
 (assert_return (invoke "export-1" (i64.const 100) (i64.const 43) (i64.const 22)) (i64.const -121))
 #assertFunction 3 [ i64 i64 i64 ] -> [ i64 ] [ i64 ] "call function 1 exists"
+
+
+(i32.const 7)
+(i32.const 8)
+(i32.const 0)
+(call_indirect (type $a-cool-type))
+
+#assertTopStack < i32 > 15 "call function 0 no return"
+(drop)
+#assertFunction 2 [ i32 i32 ] -> [ i32 ] [ ] "call function 0 exists no return"
 
 ;; Function with complicated declaration of types
 (module

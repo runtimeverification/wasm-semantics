@@ -20,6 +20,7 @@ module WRC20-SPEC
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
+           <types> #wrc20ReverseBytesTypeIdx |-> #wrc20ReverseBytesType </types>
            <memAddrs> 0 |-> MEMADDR </memAddrs>
            <funcAddrs> _ => ?_ </funcAddrs>
            <nextFuncIdx> NEXTFUNCIDX => NEXTFUNCIDX +Int 1 </nextFuncIdx>
