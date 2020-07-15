@@ -16,9 +16,6 @@
       <curModIdx>
         .Int
       </curModIdx>
-      <labelIds>
-        .Map
-      </labelIds>
     </curFrame>
     <moduleRegistry>
       .Map

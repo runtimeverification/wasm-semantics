@@ -21,7 +21,6 @@ Configuration
         <curFrame>
           <locals>    .Map </locals>
           <curModIdx> .Int </curModIdx>
-          <labelIds>  .Map </labelIds>
         </curFrame>
         <moduleRegistry> .Map </moduleRegistry>
         <moduleIds> .Map </moduleIds>
@@ -683,13 +682,12 @@ Similar to labels, they sit on the instruction stack (the `<instrs>` cell), and 
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" Int ValTypes ValStack Map Map
- // ------------------------------------------------------
-    rule <instrs> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELIDS => . ... </instrs>
+    syntax Frame ::= "frame" Int ValTypes ValStack Map
+ // --------------------------------------------------
+    rule <instrs> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
-         <labelIds> _ => LABELIDS </labelIds>
 ```
 
 When we invoke a function, the element on the top of the stack will become the last parameter of the function.
@@ -703,13 +701,12 @@ The `#take` function will return the parameter stack in the reversed order, then
     rule <instrs> ( invoke FADDR )
                => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
                ~> block [TRANGE] INSTRS end
-               ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL IDS
+               ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL
                ...
          </instrs>
          <valstack>  VALSTACK => .ValStack </valstack>
          <locals> LOCAL => .Map </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
-         <labelIds> IDS => .Map </labelIds>
          <funcDef>
            <fAddr>    FADDR                     </fAddr>
            <fCode>    INSTRS                    </fCode>
