@@ -27,7 +27,6 @@ module LOOPS-SPEC
                ...
          </instrs>
          <valstack> _ => STACK </valstack>
-         <labelDepth> D => D -Int 2 </labelDepth>
          <locals>
            0 |-> < ITYPE > (I => 0)
            1 |-> < ITYPE > (X => X +Int ((I *Int (I +Int 1)) /Int 2))

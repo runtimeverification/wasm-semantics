@@ -21,7 +21,6 @@ Configuration
         <curFrame>
           <locals>    .Map </locals>
           <curModIdx> .Int </curModIdx>
-          <labelDepth> 0   </labelDepth>
           <labelIds>  .Map </labelIds>
         </curFrame>
         <moduleRegistry> .Map </moduleRegistry>
@@ -345,14 +344,11 @@ The supplied type represents the values that should taken from the current stack
 A block is the simplest way to create targets for break instructions (ie. jump destinations).
 It simply executes the block then records a label with an empty continuation.
 
-We keep track of the number of labels on the stack, incrementing and decrementing the `<labelDepth>` counter when one is introduced or removed.
-
 ```k
     syntax Label ::= "label" VecType "{" Instrs "}" ValStack
  // --------------------------------------------------------
     rule <instrs> label [ TYPES ] { _ } VALSTACK' => . ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
-         <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
                    | "block" VecType   Instrs "end"
@@ -360,7 +356,6 @@ We keep track of the number of labels on the stack, incrementing and decrementin
     rule <instrs> block TDECLS:TypeDecls IS end => block gatherTypes(result, TDECLS) IS end ... </instrs>
     rule <instrs> block VECTYP:VecType   IS end => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
-         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
 
 The `br*` instructions search through the instruction stack (the `<instrs>` cell) for the correct label index.
@@ -374,9 +369,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <instrs> br _IDX ~> (_S:Stmt => .) ... </instrs>
     rule <instrs> br 0   ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
-         <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
     rule <instrs> br N:Int ~> _L:Label => br N -Int 1 ... </instrs>
-         <labelDepth> DEPTH => DEPTH -Int 1 </labelDepth>
       requires N >Int 0
 
     syntax PlainInstr ::= "br_if" Index
@@ -401,19 +394,16 @@ Finally, we have the conditional and loop instructions.
  // ----------------------------------------------------------
     rule <instrs> if TDECLS:TypeDecls IS else _ end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL =/=Int 0
 
     rule <instrs> if TDECLS:TypeDecls _ else IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
-         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
       requires VAL ==Int 0
 
     syntax Instr ::= "loop" TypeDecls Instrs "end"
  // ----------------------------------------------
     rule <instrs> loop TDECLS:TypeDecls IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
-         <labelDepth> DEPTH => DEPTH +Int 1 </labelDepth>
 ```
 
 Variable Operators
@@ -693,13 +683,12 @@ Similar to labels, they sit on the instruction stack (the `<instrs>` cell), and 
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" Int ValTypes ValStack Map Int Map
- // ----------------------------------------------------------
-    rule <instrs> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELDEPTH LABELIDS => . ... </instrs>
+    syntax Frame ::= "frame" Int ValTypes ValStack Map Map
+ // ------------------------------------------------------
+    rule <instrs> frame MODIDX' TRANGE VALSTACK' LOCAL' LABELIDS => . ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
          <curModIdx> _ => MODIDX' </curModIdx>
-         <labelDepth> _ => LABELDEPTH </labelDepth>
          <labelIds> _ => LABELIDS </labelIds>
 ```
 
@@ -714,13 +703,12 @@ The `#take` function will return the parameter stack in the reversed order, then
     rule <instrs> ( invoke FADDR )
                => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
                ~> block [TRANGE] INSTRS end
-               ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL DEPTH IDS
+               ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL IDS
                ...
          </instrs>
          <valstack>  VALSTACK => .ValStack </valstack>
          <locals> LOCAL => .Map </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
-         <labelDepth> DEPTH => 0 </labelDepth>
          <labelIds> IDS => .Map </labelIds>
          <funcDef>
            <fAddr>    FADDR                     </fAddr>
