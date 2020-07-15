@@ -750,11 +750,6 @@ After unfolding, each type use in a function starts with an explicit reference t
 
 There are several formats of block instructions, and the text-to-abstract transformation must be distributed over them.
 
-**TODO:**
-
--   Desugar BlockInstr here, by adding labelDepth and labelIds to context.
--   Then desugar the folded versions of the block instructions here as well.
-
 ```k
     rule #t2aInstr<C>( block                TDS:TypeDecls IS end)     =>  block     TDS #t2aInstrs<C>(IS) end
     rule #t2aInstr<C>( block  ID:Identifier TDS           IS end OID) =>  block  ID TDS #t2aInstrs<C>(IS) end OID
