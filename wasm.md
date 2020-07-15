@@ -639,11 +639,9 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax Defn     ::= FuncDefn
     syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata)
-    syntax Alloc    ::= allocfunc ( Int , VecType , Instrs , FuncMetadata )
- // -----------------------------------------------------------------------
-    rule <instrs> #func(... type: TYPIDX, locals: LOCALS, body: INSTRS, metadata: META) => allocfunc(TYPIDX, LOCALS, INSTRS, META) ... </instrs>
-
-    rule <instrs> allocfunc(TYPIDX, LOCALS, INSTRS, #meta(... id: OID, localIds: LIDS)) => . ... </instrs>
+    syntax Alloc    ::= allocfunc ( Int , Int , FuncType , VecType , Instrs , FuncMetadata )
+ // ----------------------------------------------------------------------------------------
+    rule <instrs> #func(... type: TYPIDX, locals: LOCALS, body: INSTRS, metadata: META) => allocfunc(CUR, NEXTADDR, TYPE, LOCALS, INSTRS, META) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -653,14 +651,16 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
+
+    rule <instrs> allocfunc(MOD, ADDR, TYPE, LOCALS, INSTRS, #meta(... id: OID, localIds: LIDS)) => . ... </instrs>
          <funcs>
            ( .Bag
           => <funcDef>
-               <fAddr>    NEXTADDR </fAddr>
+               <fAddr>    ADDR </fAddr>
                <fCode>    INSTRS   </fCode>
                <fType>    TYPE     </fType>
                <fLocal>   LOCALS   </fLocal>
-               <fModInst> CUR      </fModInst>
+               <fModInst> MOD      </fModInst>
                <funcMetadata>
                  <funcId> OID </funcId>
                  <localIds> LIDS </localIds>
