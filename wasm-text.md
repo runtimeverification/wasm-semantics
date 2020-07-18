@@ -234,7 +234,6 @@ In the text format, it is also allowed to have a conditional without the `else` 
 ```k
     syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
-    rule <instrs> (type OID (func TDECLS:TypeDecls)) => #type(... type: asFuncType(TDECLS), metadata: OID) ... </instrs>
 ```
 
 ### Exports
@@ -256,6 +255,13 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 ```k
     syntax InlineImport ::= "(" "import" WasmString WasmString ")"
  // --------------------------------------------------------------
+```
+
+The following is the text format representation of an import specification.
+
+```k
+    syntax ImportDesc ::= "(" "func" OptionalId TypeUse ")" [klabel(funcImportDesc)]
+ // --------------------------------------------------------------------------------
 ```
 
 ### Modules
@@ -320,6 +326,16 @@ Since the inserted type is module-level, any subsequent functions declaring the 
          #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
 
+    rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
+      => (import MOD NAME (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS ))
+         #unfoldDefns(DS, I, TI)
+      requires         asFuncType(TDECLS) in_keys(M)
+
+    rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls)) DS, I, #ti(... t2i: M, count: N))
+      => (import MOD NAME (func OID (type N) TDECLS))
+         #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
+      requires notBool asFuncType(TDECLS) in_keys(M)
+
     syntax TypesInfo ::= #ti( t2i: Map, count: Int )
     syntax TypesInfo ::=  types2indices( Defns            ) [function]
                        | #types2indices( Defns, TypesInfo ) [function]
@@ -328,10 +344,10 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 
     rule #types2indices(.Defns, TI) => TI
 
-    rule #types2indices((type OID (func TDECLS)) DS, #ti(... t2i: M, count: N))
+    rule #types2indices((type _OID (func TDECLS)) DS, #ti(... t2i: M, count: N))
       => #types2indices(DS, #ti(... t2i: M [ asFuncType(TDECLS) <- (M [ asFuncType(TDECLS) ] orDefault N) ], count: N +Int 1))
 
-    rule #types2indices(D DS, M) => #types2indices(DS, M) [owise]
+    rule #types2indices(_D DS, M) => #types2indices(DS, M) [owise]
 ```
 
 #### Functions
@@ -342,7 +358,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
                       | InlineImport TypeUse
  // ----------------------------------------
     rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I, M)
-      => ( import MOD NAME (func OID TUSE) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (func OID TUSE) ) DS, I, M)
 
     syntax FuncSpec   ::= InlineExport FuncSpec
  // -------------------------------------------
@@ -369,7 +385,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     syntax TableSpec  ::= InlineImport TableType
  // --------------------------------------------
     rule #unfoldDefns(( table OID:OptionalId (import MOD NAME) TT:TableType ) DS, I, M)
-      => ( import MOD NAME (table OID TT) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (table OID TT) ) DS, I, M)
 
     syntax TableSpec  ::= InlineExport TableSpec
  // --------------------------------------------
@@ -400,7 +416,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     syntax MemorySpec ::= InlineImport MemType
  // ------------------------------------------
     rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I, M)
-      => ( import MOD NAME (memory OID MT  ) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (memory OID MT  ) ) DS, I, M)
 
     syntax MemorySpec ::= InlineExport MemorySpec
  // ---------------------------------------------
@@ -417,7 +433,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
-      => ( import MOD NAME (global OID TYP ) ) #unfoldDefns(DS, I, M)
+      => #unfoldDefns(( import MOD NAME (global OID TYP ) ) DS, I, M)
 
     syntax GlobalSpec ::= InlineExport GlobalSpec
  // ---------------------------------------------
@@ -499,14 +515,14 @@ The `Context` contains information of how to map text-level identifiers to corre
 Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
 
 ```k
-    syntax Context ::= ctx(localIds: Map, funcIds: Map)
+    syntax Context ::= ctx(localIds: Map, funcIds: Map, typeIds: Map)
                      | #freshCtx ( )                               [function, functional]
                      | #updateLocalIds    ( Context , Map )        [function, functional]
                      | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
                      | #updateFuncIds     ( Context , Map )        [function, functional]
                      | #updateFuncIdsAux  ( Context , Map , Bool ) [function, functional]
  // -------------------------------------------------------------------------------------
-    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map)
+    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map, typeIds: .Map)
 
     rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
     rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
@@ -536,9 +552,9 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
-    rule #t2aModuleDecl<_>(#module(... funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS))>(M)
+    rule #t2aModuleDecl<_>(#module(... types: TS, funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS), typeIds: #idcTypes(TS))>(M)
     rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
-      => #module( ... types: TS
+      => #module( ... types: #t2aDefns<C>(TS)
                     , funcs: #t2aDefns<C>(FS)
                     , tables: TABS
                     , mems: MS
@@ -546,31 +562,55 @@ Since we do not have polymorphic functions available, we define one function per
                     , elem: #t2aDefns<C>(EL)
                     , data: DAT
                     , start: #t2aDefns<C>(S)
-                    , importDefns: IS
+                    , importDefns: #t2aDefns<C>(IS)
                     , exports: #t2aDefns<C>(ES)
                     , metadata: #meta(... id: OID, funcIds: FIDS)
                 )
 ```
 
-#### Functions
+
+#### Types
 
 ```k
-    rule #t2aDefn<C>(( func OID:OptionalId T:TypeUse LS:LocalDecls IS:Instrs ))
-      => #func(... type: #t2aTypeUse <#updateLocalIds(C, #ids2Idxs(T, LS))>(T)
-                 , locals: #t2aLocalDecls<#updateLocalIds(C, #ids2Idxs(T, LS))>(LS)
+    rule #t2aDefn<_>((type OID (func TDECLS))) => #type(... type: asFuncType(TDECLS), metadata: OID)
+```
+
+#### Imports
+
+```k
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier)            ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
+    rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int)                  ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
+    rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
+```
+
+#### Functions
+
+After unfolding, each type use in a function starts with an explicit reference to a module-level function.
+
+```k
+    rule #t2aDefn<ctx(... typeIds: TIDS) #as C>(( func OID:OptionalId T:TypeUse LS:LocalDecls IS:Instrs ))
+      => #func(... type: typeUse2typeIdx(T, TIDS)
+                 , locals: locals2vectype(LS)
                  , body: #t2aInstrs <#updateLocalIds(C, #ids2Idxs(T, LS))>(IS)
                  , metadata: #meta(... id: OID, localIds: #ids2Idxs(T, LS))
               )
 
-    syntax TypeUse    ::= "#t2aTypeUse"   "<" Context ">" "(" TypeUse    ")" [function]
-    syntax LocalDecl  ::= "#t2aLocalDecl" "<" Context ">" "(" LocalDecl  ")" [function]
- // -----------------------------------------------------------------------------------
-    rule #t2aTypeUse<_>((type TYP) _TDS:TypeDecls      ) => (type TYP)
-    rule #t2aTypeUse<C>((param _ID:Identifier AVT) TDS ) => (param AVT) {#t2aTypeUse<C>(TDS)}:>TypeDecls
-    rule #t2aTypeUse<_>(TU) => TU [owise]
+    syntax Int ::= typeUse2typeIdx ( TypeUse , Map ) [function]
+ // -----------------------------------------------------------
+    rule typeUse2typeIdx( (type IDX ) _:TypeDecls => (type IDX), _TIDS )
 
-    rule #t2aLocalDecl<_C>(local _ID:Identifier VT:ValType) => local VT .ValTypes
-    rule #t2aLocalDecl<_C>(LD) => LD [owise]
+    rule typeUse2typeIdx( (type ID:Identifier )  ,  TIDS ) => {TIDS [ ID ]}:>Int
+    rule typeUse2typeIdx( (type IDX:Int       )  , _TIDS ) => IDX
+
+    syntax VecType ::=  locals2vectype ( LocalDecls            ) [function]
+                     | #locals2vectype ( LocalDecls , ValTypes ) [function]
+ // -----------------------------------------------------------------------
+    rule  locals2vectype(LDECLS) => #locals2vectype(LDECLS, .ValTypes)
+
+    rule #locals2vectype(.LocalDecls                                             , VTYPES) => [ VTYPES ]
+    rule #locals2vectype(local                VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #locals2vectype(LDECLS , VTYPES + VTYPES')
+    rule #locals2vectype(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #locals2vectype(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
 #### Start Function
@@ -734,7 +774,6 @@ They distribute the text-to-abstract functions above over lists.
     syntax Stmts      ::= "#t2aStmts"      "<" Context ">" "(" Stmts      ")" [function]
     syntax Defns      ::= "#t2aDefns"      "<" Context ">" "(" Defns      ")" [function]
     syntax Instrs     ::= "#t2aInstrs"     "<" Context ">" "(" Instrs     ")" [function]
-    syntax LocalDecls ::= "#t2aLocalDecls" "<" Context ">" "(" LocalDecls ")" [function]
  // ------------------------------------------------------------------------------------
     rule #t2aStmts<C>(S:Stmt SS:Stmts) => #t2aStmt<C>(S) #t2aStmts<C>(SS)
     rule #t2aStmts<_>(.Stmts) => .Stmts
@@ -744,9 +783,6 @@ They distribute the text-to-abstract functions above over lists.
 
     rule #t2aInstrs<C>(I:Instr IS:Instrs) => #t2aInstr<C>(I) #t2aInstrs<C>(IS)
     rule #t2aInstrs<_>(.Instrs) => .Instrs
-
-    rule #t2aLocalDecls<C>(LD:LocalDecl LDS:LocalDecls) => #t2aLocalDecl<C>(LD) #t2aLocalDecls<C>(LDS)
-    rule #t2aLocalDecls<_>(.LocalDecls) => .LocalDecls
 ```
 
 ### Functions for Gathering Context
@@ -754,18 +790,27 @@ They distribute the text-to-abstract functions above over lists.
 The following are helper functions for gathering and updating context.
 
 ```k
-    syntax Map ::= #idcFuncs    ( Defns, Defns      ) [function]
-                 | #idcFuncsAux ( Defns, Defns, Int ) [function]
- // ------------------------------------------------------------
-    rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0)
+    syntax Map ::= #idcTypes    ( Defns           ) [function]
+                 | #idcTypesAux ( Defns, Int, Map ) [function]
+ // ----------------------------------------------------------
+    rule #idcTypes(DEFNS) => #idcTypesAux(DEFNS, 0, .Map)
 
-    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS, FS, IDX) => (ID |-> IDX) #idcFuncsAux(IS, FS, IDX +Int 1)
-    rule #idcFuncsAux((import _ _ (func               _)) IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX +Int 1)
-    rule #idcFuncsAux(_I                                  IS, FS, IDX) =>              #idcFuncsAux(IS, FS, IDX) [owise]
+    rule #idcTypesAux((type ID:Identifier (func _)) TS => TS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcTypesAux((type               (func _)) TS => TS, IDX => IDX +Int 1, _ACC)
+    rule #idcTypesAux(.Defns, _, ACC) => ACC
 
-    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS, IDX) => (ID |-> IDX) #idcFuncsAux(.Defns, FS, IDX +Int 1)
-    rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS, IDX) =>              #idcFuncsAux(.Defns, FS, IDX +Int 1)
-    rule #idcFuncsAux(.Defns, .Defns, _) => .Map
+    syntax Map ::= #idcFuncs    ( Defns, Defns           ) [function]
+                 | #idcFuncsAux ( Defns, Defns, Int, Map ) [function]
+ // -----------------------------------------------------------------
+    rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0, .Map)
+
+    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS => IS, _FS,  IDX => IDX +Int 1,  ACC => ACC [ ID <-IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcFuncsAux((import _ _ (func               _)) IS => IS, _FS,  IDX => IDX +Int 1, _ACC)
+    rule #idcFuncsAux(_I                                  IS => IS, _FS, _IDX              , _ACC) [owise]
+
+    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS => FS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS => FS, IDX => IDX +Int 1, _ACC)
+    rule #idcFuncsAux(.Defns, .Defns, _, ACC) => ACC
 
     syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                  | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
