@@ -358,6 +358,20 @@ Since the inserted type is module-level, any subsequent functions declaring the 
  // -----------------------------------------------------------
     rule #unfoldDefns(((elem OFFSET func ES) => (elem OFFSET ES)) _DS, _I, _M)
     rule #unfoldDefns(((elem OFFSET:Offset ES ) => ( elem 0 OFFSET ES )) _DS, _I, _M)
+    rule #unfoldDefns(((elem IDX OFFSET:Instrs ES ) => ( elem IDX ( offset OFFSET ) ES )) _DS, _I, _M)
+
+    rule #unfoldDefns((elem IDX (offset IS) ES) DS, I, M) => (elem IDX (offset unfoldInstrs(IS)) ES) #unfoldDefns(DS, I, M)
+```
+
+#### Data Segments
+
+```k
+    syntax DataDefn ::= "(" "data" Offset DataString ")"
+ // ----------------------------------------------------
+    rule #unfoldDefns(((data OFFSET:Offset DATA ) => ( data 0 OFFSET DATA )) _DS, _I, _M)
+    rule #unfoldDefns(((data IDX OFFSET:Instrs DATA ) => ( data IDX ( offset OFFSET ) DATA )) _DS, _I, _M)
+
+    rule #unfoldDefns((data IDX (offset IS) DATA) DS, I, M) => (data IDX (offset unfoldInstrs(IS)) DATA) #unfoldDefns(DS, I, M)
 ```
 
 #### Instructions

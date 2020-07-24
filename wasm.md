@@ -1195,11 +1195,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 ```k
     syntax Defn     ::= DataDefn
     syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
-                      | "(" "data"           Offset DataString ")"
                       |     "data" "{" Index        Bytes      "}"
  // --------------------------------------------------------------
     // Default to memory 0.
-    rule <instrs> ( data       OFFSET:Offset STRINGS ) =>                     ( data   0     OFFSET    STRINGS  ) ... </instrs>
     rule <instrs> ( data MEMID IS:Instrs     STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
     rule <instrs> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
 
