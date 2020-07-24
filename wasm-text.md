@@ -161,8 +161,9 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 The following is the text format representation of an import specification.
 
 ```k
-    syntax ImportDesc ::= "(" "func" OptionalId TypeUse ")" [klabel(funcImportDesc)]
- // --------------------------------------------------------------------------------
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
+                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+ // -----------------------------------------------------------------------------------------------
 ```
 
 ### Modules
@@ -336,6 +337,19 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Globals
 
 ```k
+    syntax TextFormatGlobalType ::= ValType | "(" "mut" ValType ")"
+ // ---------------------------------------------------------------
+
+    syntax GlobalType ::= asGMut (TextFormatGlobalType) [function]
+ // --------------------------------------------------------------
+    rule asGMut ( (mut T:ValType ) ) => var   T
+    rule asGMut (      T:ValType   ) => const T
+
+    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
+    syntax GlobalSpec ::= TextFormatGlobalType Instr
+ // ------------------------------------------------
+    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... id: OID, type: asGMut(TYP), init: unfoldInstrs(IS .Instrs))) _DS, _I, _M)
+
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
@@ -619,6 +633,9 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
     rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int)                  ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
     rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
+
+    rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType))) => ( import MOD NAME #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)) )
+
 ```
 
 #### Functions
