@@ -1,10 +1,6 @@
 WebAssembly Data
 ================
 
-```k
-require "domains.k"
-```
-
 `WASM-DATA` module
 
 ```k
