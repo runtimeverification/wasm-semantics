@@ -52,6 +52,15 @@ This is purely a KWasm feature, which is useful for testing.
       [owise]
 ```
 
+Instruction sugar
+-----------------
+
+We allow writing instructions at the top level in the test embedder.
+
+```k
+    rule <instrs> FI:FoldedInstr => sequenceInstrs(unfoldInstrs(FI .Instrs)) ... </instrs>
+```
+
 Auxiliary
 ---------
 
@@ -500,8 +509,6 @@ The modules are cleaned all together after the test file is executed.
          <curModIdx>         _ => .Int      </curModIdx>
          <valstack>          _ => .ValStack </valstack>
          <locals>            _ => .Map      </locals>
-         <labelDepth>        _ => 0         </labelDepth>
-         <labelIds>          _ => .Map      </labelIds>
          <moduleInstances>   _ => .Bag      </moduleInstances>
          <moduleIds>         _ => .Map      </moduleIds>
          <nextModuleIdx>     _ => 0         </nextModuleIdx>

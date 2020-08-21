@@ -8,17 +8,17 @@ module LOOPS-SPEC
                ~> label // Loop label.
                     [ .ValTypes ]
                     { loop .TypeDecls
-                        (local.get 0)
-                        (local.get 1)
-                        (ITYPE.add)
-                        (local.set 1)
-                        (local.get 0)
-                        (ITYPE.const 1)
-                        (ITYPE.sub)
-                        (local.tee 0)
-                        (ITYPE.eqz)
-                        (br_if 1)
-                        (br 0)
+                        local.get 0
+                        local.get 1
+                        ITYPE.add
+                        local.set 1
+                        local.get 0
+                        ITYPE.const 1
+                        ITYPE.sub
+                        local.tee 0
+                        ITYPE.eqz
+                        br_if 1
+                        br 0
                       end
                    }
                    .ValStack
@@ -27,7 +27,6 @@ module LOOPS-SPEC
                ...
          </instrs>
          <valstack> _ => STACK </valstack>
-         <labelDepth> D => D -Int 2 </labelDepth>
          <locals>
            0 |-> < ITYPE > (I => 0)
            1 |-> < ITYPE > (X => X +Int ((I *Int (I +Int 1)) /Int 2))
@@ -40,19 +39,19 @@ module LOOPS-SPEC
     // Main claim.
     rule <instrs>
               block .TypeDecls
-                 ( loop .TypeDecls
-                     (local.get 0)
-                     (local.get 1)
-                     (ITYPE.add)
-                     (local.set 1)
-                     (local.get 0)
-                     (ITYPE.const 1)
-                     (ITYPE.sub)
-                     (local.tee 0)
-                     (ITYPE.eqz)
-                     (br_if 1)
-                     (br 0)
-                 )
+                 loop .TypeDecls
+                     local.get 0
+                     local.get 1
+                     ITYPE.add
+                     local.set 1
+                     local.get 0
+                     ITYPE.const 1
+                     ITYPE.sub
+                     local.tee 0
+                     ITYPE.eqz
+                     br_if 1
+                     br 0
+                end
              end
           => .
           ...
