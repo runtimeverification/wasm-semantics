@@ -16,6 +16,7 @@ module WASM-TEST-SYNTAX
 endmodule
 
 module WASM-TEST
+    imports WASM-AUXIL
     imports WASM-TEXT
 ```
 
@@ -502,7 +503,37 @@ These assertions act on the last module defined.
 
 The modules are cleaned all together after the test file is executed.
 
+Registry Assertations
+---------------------
+
+We also want to be able to test that the embedder's registration function is working.
+
 ```k
+    syntax Assertion ::= "#assertRegistrationUnnamed" WasmString            WasmString
+                       | "#assertRegistrationNamed"   WasmString Identifier WasmString
+ // ----------------------------------------------------------------------------------
+    rule <instrs> #assertRegistrationUnnamed REGNAME _ => . ... </instrs>
+         <modIdx> IDX </modIdx>
+         <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
+
+    rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
+         <modIdx> IDX </modIdx>
+         <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
+```
+
+```k
+endmodule
+```
+
+```k
+module WASM-AUXIL
+```
+
+Generally useful commands that are not part of the actual Wasm semantics.
+
+```k
+    imports WASM
+
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
     rule <instrs> #clearConfig => . ...     </instrs>
@@ -523,24 +554,6 @@ The modules are cleaned all together after the test file is executed.
            <nextGlobAddr>    _ => 0         </nextGlobAddr>
            <globals>         _ => .Bag      </globals>
          </mainStore>
-```
-
-Registry Assertations
----------------------
-
-We also want to be able to test that the embedder's registration function is working.
-
-```k
-    syntax Assertion ::= "#assertRegistrationUnnamed" WasmString            WasmString
-                       | "#assertRegistrationNamed"   WasmString Identifier WasmString
- // ----------------------------------------------------------------------------------
-    rule <instrs> #assertRegistrationUnnamed REGNAME _ => . ... </instrs>
-         <modIdx> IDX </modIdx>
-         <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
-
-    rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
-         <modIdx> IDX </modIdx>
-         <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
 ```
 
 ```k
