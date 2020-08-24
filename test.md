@@ -65,15 +65,7 @@ We allow writing instructions at the top level in the test embedder.
 Auxiliary
 ---------
 
-Here we extend the sort `Stmt` by adding a new subsort called `Auxil`.
-This subsort contains Auxiliary functions that only used in our KWASM semantics but not in the official specification including assertions, initializing a global variable and the invocation of a function by exported name.
-
-```k
-    syntax Stmt ::= Auxil
- // ---------------------
-```
-
-We also add `token` as a value in order to implement some test assertions.
+We add `token` as a value in order to implement some test assertions.
 
 ```k
     syntax Val ::= "token"
@@ -527,12 +519,14 @@ endmodule
 
 ```k
 module WASM-AUXIL
+    imports WASM
 ```
 
 Generally useful commands that are not part of the actual Wasm semantics.
 
 ```k
-    imports WASM
+    syntax Stmt ::= Auxil
+ // ---------------------
 
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
