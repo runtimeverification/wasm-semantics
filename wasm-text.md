@@ -369,7 +369,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 ```k
     syntax ElemDefn ::= "(" "elem" Offset        ElemSegment ")"
                       | "(" "elem" Offset "func" ElemSegment ")"
- // -----------------------------------------------------------
+ // ------------------------------------------------------------
     rule #unfoldDefns(((elem OFFSET func ES) => (elem OFFSET ES)) _DS, _I, _M)
     rule #unfoldDefns(((elem OFFSET:Offset ES ) => ( elem 0 OFFSET ES )) _DS, _I, _M)
     rule #unfoldDefns(((elem IDX OFFSET:Instrs ES ) => ( elem IDX ( offset OFFSET ) ES )) _DS, _I, _M)
