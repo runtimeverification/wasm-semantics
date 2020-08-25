@@ -1137,12 +1137,10 @@ Initializers
 
 The `elem` and `data` initializers take an offset, which is an instruction.
 This is not optional.
-The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
 
 ```k
     syntax Offset ::= "(" "offset" Instrs ")"
-                    | Instrs
- // ------------------------
+ // -----------------------------------------
 ```
 
 ### Table initialization
@@ -1157,7 +1155,6 @@ A table index is optional and will be default to zero.
                       |     "elem" "{" Index        ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
  // ----------------------------------------------------------------
-    rule <instrs> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
     rule <instrs> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
     rule <instrs> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </instrs>
@@ -1191,7 +1188,6 @@ The `data` initializer simply puts these bytes into the specified memory, starti
                       |     "data" "{" Index        Bytes      "}"
  // --------------------------------------------------------------
     // Default to memory 0.
-    rule <instrs> ( data MEMID IS:Instrs     STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
     rule <instrs> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
 
     // For now, deal only with memory 0.

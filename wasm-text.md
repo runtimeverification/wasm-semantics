@@ -364,6 +364,15 @@ Since the inserted type is module-level, any subsequent functions declaring the 
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I, M)
 ```
 
+#### Offset
+
+The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
+
+```k
+    syntax Offset ::= Instrs
+ // ------------------------
+```
+
 #### Element Segments
 
 ```k
