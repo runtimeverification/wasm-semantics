@@ -27,6 +27,16 @@
 #assertTable 0 4 .Int "table two with elements"
 
 (module
+  ( elem (i32.const 1) func $f $g)
+  ( table 4 funcref)
+  (func $f) (func $g)
+)
+
+#assertTableElem (1, 5) "table elem 1"
+#assertTableElem (2, 6) "table elem 2"
+#assertTable 0 4 .Int "table two with elements"
+
+(module
   (type $out-i32 (func (result i32)))
   (table $tab 10 funcref)
   (elem (i32.const 8) $const-i32-a)
@@ -57,8 +67,8 @@
 #assertFunction 2 [ ] -> [ i32 ] [ ] "call function 3 exists"
 #assertFunction 3 [ ] -> [ i32 ] [ ] "call function 4 exists"
 #assertFunction 4 [ ] -> [ i32 ] [ ] "call function 5 exists"
-#assertTableElem (8, 5) "table elem 8"
-#assertTableElem (9, 6) "table elem 9"
+#assertTableElem (8, 7) "table elem 8"
+#assertTableElem (9, 8) "table elem 9"
 #assertTable $tab 10 .Int "table three with elements"
 
 #clearConfig

@@ -353,10 +353,11 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Element Segments
 
 ```k
-    syntax ElemDefn ::= "(" "elem" Offset ElemSegment ")"
- // -----------------------------------------------------
-    rule #unfoldDefns(( elem OFFSET:Offset ES ) DS, I, M)
-      => ( elem 0 OFFSET ES ) #unfoldDefns(DS, I, M)
+    syntax ElemDefn ::= "(" "elem" Offset        ElemSegment ")"
+                      | "(" "elem" Offset "func" ElemSegment ")"
+ // -----------------------------------------------------------
+    rule #unfoldDefns(((elem OFFSET func ES) => (elem OFFSET ES)) _DS, _I, _M)
+    rule #unfoldDefns(((elem OFFSET:Offset ES ) => ( elem 0 OFFSET ES )) _DS, _I, _M)
 ```
 
 #### Instructions
