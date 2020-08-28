@@ -135,12 +135,13 @@ args=()
 while [[ $# -gt 0 ]]; do
     arg="$1"
     case $arg in
-        --backend)    args+=("$arg" "$2") ; backend="$2"    ; shift 2 ;;
-        --repl)       args+=("$arg")      ; repl=true       ; shift   ;;
-        --bug-report) args+=("$arg")      ; bug_report=true ; shift   ;;
-        *)            break                                           ;;
+        --backend)    backend="$2"    ; shift 2 ;;
+        --repl)       repl=true       ; shift   ;;
+        --bug-report) bug_report=true ; shift   ;;
+        *)            args+=("$1")    ; shift   ;;
     esac
 done
+set -- "${args[@]}"
 bug_report_name="kwasm-bug-$(basename "$run_file")"
 
 ! $repl       || [[ "$backend" == "haskell" ]] || fatal "--repl option only available for Haskell backend."
