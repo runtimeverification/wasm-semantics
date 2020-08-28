@@ -161,8 +161,9 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 The following is the text format representation of an import specification.
 
 ```k
-    syntax ImportDesc ::= "(" "func" OptionalId TypeUse ")" [klabel(funcImportDesc)]
- // --------------------------------------------------------------------------------
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
+                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+ // -----------------------------------------------------------------------------------------------
 ```
 
 ### Modules
@@ -336,6 +337,19 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Globals
 
 ```k
+    syntax TextFormatGlobalType ::= ValType | "(" "mut" ValType ")"
+ // ---------------------------------------------------------------
+
+    syntax GlobalType ::= asGMut (TextFormatGlobalType) [function]
+ // --------------------------------------------------------------
+    rule asGMut ( (mut T:ValType ) ) => var   T
+    rule asGMut (      T:ValType   ) => const T
+
+    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
+    syntax GlobalSpec ::= TextFormatGlobalType Instr
+ // ------------------------------------------------
+    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... id: OID, type: asGMut(TYP), init: unfoldInstrs(IS .Instrs))) _DS, _I, _M)
+
     syntax GlobalSpec ::= InlineImport TextFormatGlobalType
  // -------------------------------------------------------
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
@@ -350,14 +364,37 @@ Since the inserted type is module-level, any subsequent functions declaring the 
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I, M)
 ```
 
+#### Offset
+
+The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
+
+```k
+    syntax Offset ::= Instrs
+ // ------------------------
+```
+
 #### Element Segments
 
 ```k
     syntax ElemDefn ::= "(" "elem" Offset        ElemSegment ")"
                       | "(" "elem" Offset "func" ElemSegment ")"
- // -----------------------------------------------------------
+ // ------------------------------------------------------------
     rule #unfoldDefns(((elem OFFSET func ES) => (elem OFFSET ES)) _DS, _I, _M)
     rule #unfoldDefns(((elem OFFSET:Offset ES ) => ( elem 0 OFFSET ES )) _DS, _I, _M)
+    rule #unfoldDefns(((elem IDX OFFSET:Instrs ES ) => ( elem IDX ( offset OFFSET ) ES )) _DS, _I, _M)
+
+    rule #unfoldDefns((elem IDX (offset IS) ES) DS, I, M) => (elem IDX (offset unfoldInstrs(IS)) ES) #unfoldDefns(DS, I, M)
+```
+
+#### Data Segments
+
+```k
+    syntax DataDefn ::= "(" "data" Offset DataString ")"
+ // ----------------------------------------------------
+    rule #unfoldDefns(((data OFFSET:Offset DATA ) => ( data 0 OFFSET DATA )) _DS, _I, _M)
+    rule #unfoldDefns(((data IDX OFFSET:Instrs DATA ) => ( data IDX ( offset OFFSET ) DATA )) _DS, _I, _M)
+
+    rule #unfoldDefns((data IDX (offset IS) DATA) DS, I, M) => (data IDX (offset unfoldInstrs(IS)) DATA) #unfoldDefns(DS, I, M)
 ```
 
 #### Instructions
@@ -605,6 +642,9 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
     rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int)                  ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
     rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
+
+    rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType))) => ( import MOD NAME #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)) )
+
 ```
 
 #### Functions

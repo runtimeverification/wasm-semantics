@@ -54,4 +54,38 @@
 #assertMemoryData (5, 39) "text to ascii special"
 #assertMemoryData (6, 34) "text to ascii special"
 
+(module
+  (memory $m 1 1)
+  (data (offset (i32.const 0)) "\00")
+  (data (offset (nop) (i32.const 1)) "\01")
+  (data (offset (i32.const 2) (nop)) "\02")
+  (data $m (offset (i32.const 3)) "\03")
+  (data $m (offset (nop) (i32.const 4)) "\04")
+  (data $m (offset (i32.const 5) (nop)) "\05")
+
+  (data  (offset (i32.const 6 (nop))) "\06")
+  (data $m (offset (i32.const 7 (nop))) "\07")
+
+  (global $g i32 (i32.const 8))
+  (global $h i32 (i32.const 9))
+
+  (data (offset (global.get $g)) "\08")
+  (data $m (offset (global.get $h)) "\09")
+
+  (func $main (local i32)
+    (local.set 0 (i32.const 9))
+    loop
+      (i32.load8_u (local.get 0))
+      (local.get 0)
+      (if (i32.ne) (then (unreachable)))
+      (i32.sub (local.get 0) (i32.const 1))
+      (local.tee 0)
+      (i32.eqz)
+      (br_if 1)
+      (br 0)
+    end
+    )
+
+    (start $main)
+)
 #clearConfig
