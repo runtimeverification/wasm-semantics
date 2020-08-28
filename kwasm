@@ -79,9 +79,9 @@ run_prove() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (llvm|haskell)]      <pgm>  <K args>*
-           $0 kast       [--backend (llvm|haskell)]      <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell)] [--repl]  <spec> <K args>* -m <def_module>
+    usage: $0 run        [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
+           $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
+           $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <def_module> <K args>*
 
            $0 [help|--help|version|--version]
 
