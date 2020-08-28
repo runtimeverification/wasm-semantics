@@ -19,11 +19,17 @@ init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .ValStack
 
 ;; Test globals
 
-(global (mut i32) (i32.const 0))
-(global $someglobal (mut i32) (i32.const 0))
+(module
+    (global (mut i32) (i32.const 0))
+    (global $someglobal (mut i32) (i32.const 0))
 
-(i32.const 43)
-(global.set 0)
+    (func
+        (i32.const 43)
+        (global.set 0)
+    )
+
+    (start 0)
+)
 #assertGlobal 0 < i32 > 43 "set_global"
 
 (i32.const 55)
@@ -36,10 +42,17 @@ init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .ValStack
 
 #clearConfig
 
-(global (mut i32) (i32.const 0))
-(global.set 0 (i32.const 77))
-(global (mut i32) (i32.const 0))
-(global.set 1 (i32.const 99))
+(module
+    (global (mut i32) (i32.const 0))
+    (global (mut i32) (i32.const 0))
+
+    (func
+        (global.set 1 (i32.const 99))
+        (global.set 0 (i32.const 77))
+    )
+
+    (start 0)
+)
 
 #assertGlobal 1 < i32 > 99 "set_global folded"
 #assertGlobal 0 < i32 > 77 "set_global folded 2"

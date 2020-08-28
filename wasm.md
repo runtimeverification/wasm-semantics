@@ -459,21 +459,14 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TextFormatGlobalType ::= ValType | "(" "mut" ValType ")"
- // ---------------------------------------------------------------
-
     syntax GlobalType ::= Mut ValType
-                        | asGMut (TextFormatGlobalType) [function]
- // --------------------------------------------------------------
-    rule asGMut ( (mut T:ValType ) ) => var   T
-    rule asGMut (      T:ValType   ) => const T
+// ----------------------------------
 
     syntax Defn       ::= GlobalDefn
-    syntax GlobalSpec ::= TextFormatGlobalType Instr
-    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
+    syntax GlobalDefn ::= #global( id: OptionalId, type: GlobalType, init: Instrs)
     syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
  // ----------------------------------------------------------
-    rule <instrs> ( global OID:OptionalId TYP:TextFormatGlobalType IS:Instr ) => IS ~> allocglobal(OID, asGMut(TYP)) ... </instrs>
+    rule <instrs> #global(... id: OID, type: TYP, init: IS ) => sequenceInstrs(IS) ~> allocglobal(OID, TYP) ... </instrs>
 
     rule <instrs> allocglobal(OID:OptionalId, MUT:Mut TYP:ValType) => . ... </instrs>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
@@ -1144,12 +1137,10 @@ Initializers
 
 The `elem` and `data` initializers take an offset, which is an instruction.
 This is not optional.
-The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
 
 ```k
     syntax Offset ::= "(" "offset" Instrs ")"
-                    | Instrs
- // ------------------------
+ // -----------------------------------------
 ```
 
 ### Table initialization
@@ -1164,7 +1155,6 @@ A table index is optional and will be default to zero.
                       |     "elem" "{" Index        ElemSegment "}"
     syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
  // ----------------------------------------------------------------
-    rule <instrs> ( elem TABIDX IS:Instrs   ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
     rule <instrs> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
     rule <instrs> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </instrs>
@@ -1195,12 +1185,9 @@ The `data` initializer simply puts these bytes into the specified memory, starti
 ```k
     syntax Defn     ::= DataDefn
     syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
-                      | "(" "data"           Offset DataString ")"
                       |     "data" "{" Index        Bytes      "}"
  // --------------------------------------------------------------
     // Default to memory 0.
-    rule <instrs> ( data       OFFSET:Offset STRINGS ) =>                     ( data   0     OFFSET    STRINGS  ) ... </instrs>
-    rule <instrs> ( data MEMID IS:Instrs     STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
     rule <instrs> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
 
     // For now, deal only with memory 0.
@@ -1274,7 +1261,7 @@ The value of a global gets copied when it is imported.
     syntax ImportDesc ::= #funcDesc(id: OptionalId, type: Int)
                         | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
                         | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
-                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+                        | #globalDesc(id: OptionalId, type: GlobalType)
     syntax Alloc      ::= ImportDefn
  // --------------------------------
     rule <instrs> ( import MOD NAME #funcDesc(... type: TIDX) ) => . ... </instrs>
@@ -1348,7 +1335,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <instrs> ( import MOD NAME (global OID:OptionalId TGTYP:TextFormatGlobalType) ) => . ... </instrs>
+    rule <instrs> ( import MOD NAME #globalDesc(... id: OID, type: MUT TYP) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1370,7 +1357,6 @@ The value of a global gets copied when it is imported.
            <gValue> <TYP> _ </gValue>
            <gMut>   MUT     </gMut>
          </globalInst>
-       requires asGMut(TGTYP) ==K MUT TYP
 ```
 
 Tables and memories have proper subtyping, unlike globals and functions where a type is only a subtype of itself.
