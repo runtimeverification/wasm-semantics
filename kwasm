@@ -68,7 +68,7 @@ run_prove() {
     def_module="$1" ; shift
 
     additional_proof_args=()
-    ! $repl       || additional_proof_args+=(--debugger --debug-script kast.kscript)
+    ! $repl       || additional_proof_args+=(--debugger)
     ! $bug_report || additional_proof_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
 
     kprove --directory "$backend_dir" "$run_file" --def-module "$def_module" "${additional_proof_args[@]}" "$@"
