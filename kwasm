@@ -26,7 +26,7 @@ test_logs="$build_dir/logs"
 mkdir -p "$test_logs"
 test_log="$test_logs/tests.log"
 
-export K_OPTS="${K_OPTS:--Xmx16G}"
+export K_OPTS="${K_OPTS:--Xmx16G -Xss512m}"
 
 # Utilities
 # ---------
@@ -45,9 +45,13 @@ preprocess() {
 # -------
 
 run_krun() {
+    local additional_run_args
+
+    additional_run_args=()
+    ! $bug_report || additional_run_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
+
     preprocess
-    export K_OPTS="$K_OPTS -Xss500m"
-    krun --directory "$backend_dir" "$run_file" "$@"
+    krun --directory "$backend_dir" "$run_file" "${additional_run_args[@]}" "$@"
 }
 
 run_kast() {
@@ -59,12 +63,15 @@ run_kast() {
 }
 
 run_prove() {
-    export K_OPTS=-Xmx8G
-    haskell_backend_command="$k_release_dir/bin/kore-exec"
-    if $repl; then
-        haskell_backend_command="$k_release_dir/bin/kore-repl --repl-script $kwasm_dir/kast.kscript"
-    fi
-    kprove --directory "$backend_dir" "$run_file" "$@" --haskell-backend-command "$haskell_backend_command"
+    local additional_proof_args
+
+    def_module="$1" ; shift
+
+    additional_proof_args=()
+    ! $repl       || additional_proof_args+=(--debugger)
+    ! $bug_report || additional_proof_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
+
+    kprove --directory "$backend_dir" "$run_file" --def-module "$def_module" "${additional_proof_args[@]}" "$@"
 }
 
 # Main
@@ -72,9 +79,9 @@ run_prove() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (llvm|haskell)]      <pgm>  <K args>*
-           $0 kast       [--backend (llvm|haskell)]      <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell)] [--repl]  <spec> <K args>* -m <def_module>
+    usage: $0 run        [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
+           $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
+           $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <def_module> <K args>*
 
            $0 [help|--help|version|--version]
 
@@ -122,18 +129,22 @@ run_command="$1"; shift
 
 backend="llvm"
 repl=false
+bug_report=false
 [[ ! "$run_command" == 'prove' ]] || backend='haskell'
 args=()
 while [[ $# -gt 0 ]]; do
     arg="$1"
     case $arg in
-        --backend)    args+=("$arg" "$2") ; backend="$2" ; shift 2 ;;
-        --repl)       args+=("$arg")      ; repl=true    ; shift   ;;
-        *)            break                                        ;;
+        --backend)    backend="$2"    ; shift 2 ;;
+        --repl)       repl=true       ; shift   ;;
+        --bug-report) bug_report=true ; shift   ;;
+        *)            args+=("$1")    ; shift   ;;
     esac
 done
+set -- "${args[@]}"
 
-! $repl || [[ "$backend" == "haskell" ]] || fatal "--repl option only available for Haskell backend."
+! $repl       || [[ "$backend" == "haskell" ]] || fatal "--repl option only available for Haskell backend."
+! $bug_report || [[ "$backend" == "haskell" ]] || fatal "--bug-report option only available for Haskell backend."
 
 backend_dir="$defn_dir/$backend"
 
@@ -147,6 +158,7 @@ if [[ "$run_file" == '-' ]]; then
     run_file="$tmp_input"
 fi
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
+bug_report_name="kwasm-bug-$(basename "$run_file")"
 
 case "$run_command-$backend" in
     run-@(llvm|haskell)  ) run_krun  "$@" ;;
