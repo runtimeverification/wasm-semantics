@@ -249,8 +249,8 @@ The `#wrap` function wraps an integer to a given byte width.
 
     syntax Int ::= #wrap ( Int , Int ) [function, functional]
  // ---------------------------------------------------------
-    rule #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH [concrete]
-    rule #wrap(WIDTH, _N) => 0                                        requires notBool 0 <Int WIDTH
+    rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH
+    rule                   #wrap(WIDTH, _N) => 0                                        requires notBool 0 <Int WIDTH
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
@@ -475,9 +475,8 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 ```k
     syntax Bytes ::= #setRange(Bytes, Int, Int, Int) [function, functional, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------
-    rule #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
-    rule #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
-      [concrete]
+    rule                       #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
+    rule [setRange-Positive] : #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
 ```
 
 `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
@@ -486,9 +485,8 @@ The function interprets the range of bytes as little-endian.
 ```k
     syntax Int ::= #getRange(Bytes, Int, Int) [function, functional, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
-    rule #getRange( _, ADDR, WIDTH) => 0                                                                       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
-    rule #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) +Int (#getRange(BM, ADDR +Int 1, WIDTH -Int 1) *Int 256) requires          0 <Int WIDTH andBool 0 <=Int ADDR
-      [concrete]
+    rule                       #getRange( _, ADDR, WIDTH) => 0                                                                       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
+    rule [getRange-Positive] : #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) +Int (#getRange(BM, ADDR +Int 1, WIDTH -Int 1) *Int 256) requires          0 <Int WIDTH andBool 0 <=Int ADDR
 ```
 
 `#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
@@ -499,13 +497,13 @@ The function interprets the range of bytes as little-endian.
     syntax Int   ::= #get (Bytes, Int     ) [function, functional, smtlib(bytesGet)]
     syntax Bytes ::= #set (Bytes, Int, Int) [function, functional, smtlib(bytesSet)]
  // --------------------------------------------------------------------------------
-    rule #get(BM, KEY) => BM [KEY] requires         KEY inBytes BM [concrete]
-    rule #get(BM, KEY) => 0        requires notBool KEY inBytes BM
+    rule [get-Existing] : #get(BM, KEY) => BM [KEY] requires         KEY inBytes BM
+    rule                  #get(BM, KEY) => 0        requires notBool KEY inBytes BM
 
-    rule #set(BM, KEY, VAL) => BM                                               requires notBool (isByte(VAL) andBool 0 <=Int KEY)
-    rule #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                requires          isByte(VAL) andBool KEY inBytes BM
-    rule #set(BM, KEY, VAL) => BM                                               requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool         VAL ==Int 0
-    rule #set(BM, KEY, VAL) => #set(padRightBytes(BM, KEY +Int 1, 0), KEY, VAL) requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool notBool VAL ==Int 0 [concrete]
+    rule                #set(BM, KEY, VAL) => BM                                               requires notBool (isByte(VAL) andBool 0 <=Int KEY)
+    rule                #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                requires          isByte(VAL) andBool KEY inBytes BM
+    rule                #set(BM, KEY, VAL) => BM                                               requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool         VAL ==Int 0
+    rule [set-Extend] : #set(BM, KEY, VAL) => #set(padRightBytes(BM, KEY +Int 1, 0), KEY, VAL) requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool notBool VAL ==Int 0
 
     syntax Bool ::= isByte ( Int )      [function, functional, smtlib(isByte)]
                   | Int "inBytes" Bytes [function, functional, smtlib(inBytes)]
