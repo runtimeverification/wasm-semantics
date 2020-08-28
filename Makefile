@@ -154,7 +154,7 @@ tests/%.parse: tests/% $(llvm_kompiled)
 	rm -rf $@-out
 
 tests/%.prove: tests/% $(haskell_kompiled)
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< --format-failures --def-module $(KPROVE_MODULE) \
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< $(KPROVE_MODULE) --format-failures \
 	$(KPROVE_OPTS)
 
 ### Execution Tests
