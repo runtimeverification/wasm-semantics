@@ -142,7 +142,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 set -- "${args[@]}"
-bug_report_name="kwasm-bug-$(basename "$run_file")"
 
 ! $repl       || [[ "$backend" == "haskell" ]] || fatal "--repl option only available for Haskell backend."
 ! $bug_report || [[ "$backend" == "haskell" ]] || fatal "--bug-report option only available for Haskell backend."
@@ -159,6 +158,7 @@ if [[ "$run_file" == '-' ]]; then
     run_file="$tmp_input"
 fi
 [[ -f "$run_file" ]] || fatal "File does not exist: $run_file"
+bug_report_name="kwasm-bug-$(basename "$run_file")"
 
 case "$run_command-$backend" in
     run-@(llvm|haskell)  ) run_krun  "$@" ;;
