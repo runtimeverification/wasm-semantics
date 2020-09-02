@@ -12,7 +12,7 @@ module SIMPLE-ARITHMETIC-SPEC
       requires (#minSigned(ITYPE) <=Int X) andBool (X <Int 0)
 
 */
-    rule <instrs> sequenceInstrs(ITYPE:IValType . const X:Int  ITYPE . const Y:Int ) => . ... </instrs>
+    rule <instrs> ITYPE:IValType . const X:Int ~>  ITYPE . const Y:Int => . ... </instrs>
          <valstack> S:ValStack => < ITYPE > Y : < ITYPE > X : S </valstack>
       requires #inUnsignedRange(ITYPE, X)
        andBool #inUnsignedRange(ITYPE, Y)
