@@ -268,7 +268,7 @@ Lookups
 -------
 
 ```k
-    rule (_MAP:Map [KEY <- VAL])[KEY] => VAL
+    rule (_MAP:Map [KEY <- VAL])[KEY] => VAL [simplification]
 ```
 
 Memory
@@ -288,6 +288,7 @@ Bounds on `#getRange`:
     syntax Bool ::= #distinctBits ( Int , Int ) [function]
  // ------------------------------------------------------
     rule #distinctBits(#getRange(_, _, WIDTH), #getRange(_, _, _) <<Int SHIFT) => true requires WIDTH *Int 8 <=Int SHIFT
+      [simplification]
 ```
 
 `#wrap` over `#getRange`:
