@@ -1,6 +1,17 @@
 WebAssembly Data
 ================
 
+```k
+module WASM-DATA-SYNTAX
+    imports WASM-DATA-COMMON-SYNTAX
+endmodule
+
+module WASM-DATA-COMMON-SYNTAX
+    imports INT-SYNTAX
+    imports FLOAT-SYNTAX
+endmodule
+```
+
 `WASM-DATA` module
 
 ```k
