@@ -8,11 +8,7 @@ require "data.md"
 module WASM-TEXT-SYNTAX
     imports WASM-TEXT
     imports WASM-SYNTAX
-endmodule
-
-module WASM-SYNTAX
     imports WASM-TOKEN-SYNTAX
-    imports WASM-DATA
 endmodule
 ```
 

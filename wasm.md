@@ -5,7 +5,16 @@ WebAssembly State and Semantics
 require "data.md"
 require "numeric.md"
 
+module WASM-SYNTAX
+    imports WASM-DATA-SYNTAX
+    imports WASM-COMMON-SYNTAX
+endmodule
+
+module WASM-COMMON-SYNTAX
+endmodule
+
 module WASM
+
     imports WASM-DATA
     imports WASM-NUMERIC
 ```
