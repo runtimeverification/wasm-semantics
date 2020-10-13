@@ -5,6 +5,7 @@ For testing, we augment the semantics with some helpers.
 
 ```k
 require "wasm-text.md"
+require "auxil.md"
 ```
 
 Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consists of the definitions both for parsing and execution.
@@ -511,43 +512,6 @@ We also want to be able to test that the embedder's registration function is wor
     rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
-```
-
-```k
-endmodule
-```
-
-```k
-module WASM-AUXIL
-    imports WASM
-```
-
-Generally useful commands that are not part of the actual Wasm semantics.
-
-```k
-    syntax Stmt ::= Auxil
- // ---------------------
-
-    syntax Auxil ::= "#clearConfig"
- // -------------------------------
-    rule <instrs> #clearConfig => . ...     </instrs>
-         <curModIdx>         _ => .Int      </curModIdx>
-         <valstack>          _ => .ValStack </valstack>
-         <locals>            _ => .Map      </locals>
-         <moduleInstances>   _ => .Bag      </moduleInstances>
-         <moduleIds>         _ => .Map      </moduleIds>
-         <nextModuleIdx>     _ => 0         </nextModuleIdx>
-         <moduleRegistry>    _ => .Map      </moduleRegistry>
-         <mainStore>
-           <nextFuncAddr>    _ => 0         </nextFuncAddr>
-           <funcs>           _ => .Bag      </funcs>
-           <nextTabAddr>     _ => 0         </nextTabAddr>
-           <tabs>            _ => .Bag      </tabs>
-           <nextMemAddr>     _ => 0         </nextMemAddr>
-           <mems>            _ => .Bag      </mems>
-           <nextGlobAddr>    _ => 0         </nextGlobAddr>
-           <globals>         _ => .Bag      </globals>
-         </mainStore>
 ```
 
 ```k
