@@ -43,6 +43,9 @@ module WASM-NUMERIC-SYNTAX
                     | "ne" [klabel(floatNe), symbol]
  // ------------------------------------------------
 
+    syntax CvtOp ::= Cvti32Op | Cvti64Op | Cvtf32Op | Cvtf64Op
+ // ----------------------------------------------------------
+
     syntax Cvti32Op ::= "extend_i32_u" | "extend_i32_s"
                       | "convert_i32_s" | "convert_i32_u"
  // -----------------------------------------------------
@@ -356,9 +359,6 @@ The operators are further broken down into subsorts for their input type, for si
 ```k
     syntax Val ::= ValType "." CvtOp Number [klabel(numberCvtOp), function]
  // -----------------------------------------------------------------------
-
-    syntax CvtOp ::= Cvti32Op | Cvti64Op | Cvtf32Op | Cvtf64Op
- // ----------------------------------------------------------
 ```
 
 There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote` ,`promote` and `reinterpret`.
