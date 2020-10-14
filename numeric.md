@@ -8,7 +8,61 @@ In the notations of some operators, `sx` is the signedness of the operator and c
 ```k
 require "data.md"
 
+module WASM-NUMERIC-SYNTAX
+
+    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
+ // -----------------------------------------
+
+    syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
+ // --------------------------------------------------------------------------------
+
+    syntax IBinOp ::= "add" | "sub" | "mul"
+                    | "div_u" | "rem_u"
+                    | "div_s" | "rem_s"
+                    | "and" | "or" | "xor"
+                    | "shl" | "shr_u" | "shr_s"
+                    | "rotl" | "rotr"
+ // ---------------------------------
+
+    syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
+                    | "sub" [klabel(floatSub), symbol]
+                    | "mul" [klabel(floatMul), symbol]
+                    | "div" | "min" | "max" | "copysign"
+ // ----------------------------------------------------
+
+    syntax TestOp ::= "eqz"
+ // -----------------------
+
+    syntax IRelOp ::= "eq" | "ne"
+                    | "lt_u" | "gt_u" | "lt_s" | "gt_s"
+                    | "le_u" | "ge_u" | "le_s" | "ge_s"
+ // ---------------------------------------------------
+
+    syntax FRelOp ::= "lt" | "gt" | "le" | "ge"
+                    | "eq" [klabel(floatEq), symbol]
+                    | "ne" [klabel(floatNe), symbol]
+ // ------------------------------------------------
+
+    syntax Cvti32Op ::= "extend_i32_u" | "extend_i32_s"
+                      | "convert_i32_s" | "convert_i32_u"
+ // -----------------------------------------------------
+
+    syntax Cvti64Op ::= "wrap_i64"
+                      | "convert_i64_s" | "convert_i64_u"
+ // -----------------------------------------------------
+
+    syntax Cvtf32Op ::= "promote_f32"
+                      | "trunc_f32_s" | "trunc_f32_u"
+ // -------------------------------------------------
+
+    syntax Cvtf64Op ::= "demote_f64"
+                      | "trunc_f64_s" | "trunc_f64_u"
+ // -------------------------------------------------
+
+endmodule
+
 module WASM-NUMERIC
+    imports WASM-NUMERIC-SYNTAX
     imports WASM-DATA
 
 ```
@@ -34,8 +88,6 @@ There three unary operators for integers: `clz`, `ctz` and `popcnt`.
 Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits, whereas the `#ctz` helper function considers it to have *no* zero-bits, in order for it to be width-agnostic.
 
 ```k
-    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
- // -----------------------------------------
     rule ITYPE . clz    I1 => < ITYPE > #width(ITYPE) -Int #minWidth(I1)
     rule ITYPE . ctz    I1 => < ITYPE > #if I1 ==Int 0 #then #width(ITYPE) #else #ctz(I1) #fi
     rule ITYPE . popcnt I1 => < ITYPE > #popcnt(I1)
@@ -83,8 +135,6 @@ There are 7 unary operators for floats: `abs`, `neg`, `sqrt`, `floor`, `ceil`, `
 - `nearest` returns the integral value that is nearest to the given float number; if two values are equally near, returns the even one.
 
 ```k
-    syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
- // --------------------------------------------------------------------------------
     rule FTYPE . abs     F => < FTYPE >   absFloat (F)
     rule FTYPE . neg     F => < FTYPE >    --Float  F
     rule FTYPE . sqrt    F => < FTYPE >  sqrtFloat (F)
@@ -119,8 +169,6 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 `add`, `sub`, and `mul` are given semantics by lifting the correct K operators through the `#chop` function.
 
 ```k
-    syntax IBinOp ::= "add" | "sub" | "mul"
- // ---------------------------------------
     rule ITYPE:IValType . add I1 I2 => #chop(< ITYPE > I1 +Int I2)
     rule ITYPE:IValType . sub I1 I2 => #chop(< ITYPE > I1 -Int I2)
     rule ITYPE:IValType . mul I1 I2 => #chop(< ITYPE > I1 *Int I2)
@@ -132,16 +180,12 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 `div_sx` and `rem_sx` have extra side-conditions about when they are defined or not.
 
 ```k
-    syntax IBinOp ::= "div_u" | "rem_u"
- // -----------------------------------
     rule  ITYPE . div_u  I1 I2 => < ITYPE > I1 /Int I2 requires I2 =/=Int 0
     rule _ITYPE . div_u _I1 I2 => undefined            requires I2  ==Int 0
 
     rule  ITYPE . rem_u  I1 I2 => < ITYPE > I1 %Int I2 requires I2 =/=Int 0
     rule _ITYPE . rem_u _I1 I2 => undefined            requires I2  ==Int 0
 
-    syntax IBinOp ::= "div_s" | "rem_s"
- // -----------------------------------
     rule ITYPE . div_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
       requires I2 =/=Int 0
        andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
@@ -168,8 +212,6 @@ Of the bitwise operators, `and` will not overflow, but `or` and `xor` could.
 These simply are the lifted K operators.
 
 ```k
-    syntax IBinOp ::= "and" | "or" | "xor"
- // --------------------------------------
     rule ITYPE . and I1 I2 =>       < ITYPE > I1 &Int   I2
     rule ITYPE . or  I1 I2 => #chop(< ITYPE > I1 |Int   I2)
     rule ITYPE . xor I1 I2 => #chop(< ITYPE > I1 xorInt I2)
@@ -183,8 +225,6 @@ Similarly, K bitwise shift operators are lifted for `shl` and `shr_u`.
 Careful attention is made for the signed version `shr_s`.
 
 ```k
-    syntax IBinOp ::= "shl" | "shr_u" | "shr_s"
- // -------------------------------------------
     rule ITYPE . shl   I1 I2 => #chop(< ITYPE > I1 <<Int (I2 %Int #width(ITYPE)))
     rule ITYPE . shr_u I1 I2 =>       < ITYPE > I1 >>Int (I2 %Int #width(ITYPE))
 
@@ -197,8 +237,6 @@ Careful attention is made for the signed version `shr_s`.
 The rotation operators `rotl` and `rotr` do not have appropriate K builtins, and so are built with a series of shifts.
 
 ```k
-    syntax IBinOp ::= "rotl" | "rotr"
- // ---------------------------------
     rule ITYPE . rotl I1 I2 => #chop(< ITYPE > (I1 <<Int (I2 %Int #width(ITYPE))) +Int (I1 >>Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE)))))
     rule ITYPE . rotr I1 I2 => #chop(< ITYPE > (I1 >>Int (I2 %Int #width(ITYPE))) +Int (I1 <<Int (#width(ITYPE) -Int (I2 %Int #width(ITYPE)))))
 ```
@@ -218,14 +256,6 @@ There are 7 binary operators for integers: `add`, `sub`, `mul`, `div`, `min`, `m
 Note: For operators that defined under both sorts `IXXOp` and `FXXOp`, we need to give it a `klabel` and define it as a `symbol` to prevent parsing issue.
 
 ```k
-    syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
-                    | "sub" [klabel(floatSub), symbol]
-                    | "mul" [klabel(floatMul), symbol]
-                    | "div"
-                    | "min"
-                    | "max"
-                    | "copysign"
- // ----------------------------
     rule FTYPE:FValType . add      F1 F2 => < FTYPE > F1 +Float F2
     rule FTYPE:FValType . sub      F1 F2 => < FTYPE > F1 -Float F2
     rule FTYPE:FValType . mul      F1 F2 => < FTYPE > F1 *Float F2
@@ -251,8 +281,6 @@ There is no test operation for float numbers.
 - `eqz` checks wether its operand is 0.
 
 ```k
-    syntax TestOp ::= "eqz"
- // -----------------------
     rule _ . eqz I => < i32 > #bool(I ==Int 0)
 ```
 
@@ -274,8 +302,6 @@ There are 6 relationship operators for integers: `eq`, `ne`, `lt_sx`, `gt_sx`, `
 - `eq` returns 1 if the 2 given integers are not equal, 0 otherwise.
 
 ```k
-    syntax IRelOp ::= "eq" | "ne"
- // -----------------------------
     rule _:IValType . eq I1 I2 => < i32 > #bool(I1 ==Int  I2)
     rule _:IValType . ne I1 I2 => < i32 > #bool(I1 =/=Int I2)
 ```
@@ -284,8 +310,6 @@ There are 6 relationship operators for integers: `eq`, `ne`, `lt_sx`, `gt_sx`, `
 - `gt_sx` returns 1 if the first oprand is greater than the second opeand, 0 otherwise.
 
 ```k
-    syntax IRelOp ::= "lt_u" | "gt_u" | "lt_s" | "gt_s"
- // ---------------------------------------------------
     rule _     . lt_u I1 I2 => < i32 > #bool(I1 <Int I2)
     rule _     . gt_u I1 I2 => < i32 > #bool(I1 >Int I2)
 
@@ -297,8 +321,6 @@ There are 6 relationship operators for integers: `eq`, `ne`, `lt_sx`, `gt_sx`, `
 - `ge_sx` returns 1 if the first oprand is greater than or equal to the second opeand, 0 otherwise.
 
 ```k
-    syntax IRelOp ::= "le_u" | "ge_u" | "le_s" | "ge_s"
- // ---------------------------------------------------
     rule _     . le_u I1 I2 => < i32 > #bool(I1 <=Int I2)
     rule _     . ge_u I1 I2 => < i32 > #bool(I1 >=Int I2)
 
@@ -318,13 +340,6 @@ There are 6 relationship operators for floats: `eq`, `ne`, `lt`, `gt`, `le` and 
 - `ge` returns 1 if the first oprand is greater than or equal to the second opeand, 0 otherwise.
 
 ```k
-    syntax FRelOp ::= "lt"
-                    | "gt"
-                    | "le"
-                    | "ge"
-                    | "eq" [klabel(floatEq), symbol]
-                    | "ne" [klabel(floatNe), symbol]
- // ------------------------------------------------
     rule _          . lt F1 F2 => < i32 > #bool(F1 <Float   F2)
     rule _          . gt F1 F2 => < i32 > #bool(F1 >Float   F2)
     rule _          . le F1 F2 => < i32 > #bool(F1 <=Float  F2)
@@ -351,16 +366,12 @@ There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote`
 - `wrap` takes an `i64` value, cuts of the 32 most significant bits and returns an `i32` value.
 
 ```k
-    syntax Cvti64Op ::= "wrap_i64"
- // ------------------------------
     rule i32 . wrap_i64 I => #chop(< i32 > I)
 ```
 
 - `extend` takes an `i32` type value, converts its type into the `i64` and returns the result.
 
 ```k
-    syntax Cvti32Op ::= "extend_i32_u" | "extend_i32_s"
- // ---------------------------------------------------
     rule i64 . extend_i32_u I:Int => < i64 > I
     rule i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I))
 ```
@@ -368,13 +379,9 @@ There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote`
 - `convert` takes an `int` type value and convert it to the nearest `float` type value.
 
 ```k
-    syntax Cvti32Op ::= "convert_i32_s" | "convert_i32_u"
- // -----------------------------------------------------
     rule FTYPE . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) )
     rule FTYPE . convert_i32_u I:Int => #round( FTYPE , I )
 
-    syntax Cvti64Op ::= "convert_i64_s" | "convert_i64_u"
- // -----------------------------------------------------
     rule FTYPE . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) )
     rule FTYPE . convert_i64_u I:Int => #round( FTYPE , I )
 ```
@@ -383,20 +390,14 @@ There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote`
 - `promote` turns an `f32` type value to the nearest `f64` type value:
 
 ```k
-    syntax Cvtf32Op ::= "promote_f32"
- // ---------------------------------
     rule f64 . promote_f32 F => #round( f64 , F )
 
-    syntax Cvtf64Op ::= "demote_f64"
- // --------------------------------
     rule f32 . demote_f64  F => #round( f32 , F )
 ```
 
 - `trunc` first truncates a float value, then convert the result to the nearest ineger value.
 
 ```k
-    syntax Cvtf32Op ::= "trunc_f32_s" | "trunc_f32_u"
- // -------------------------------------------------
     rule ITYPE . trunc_f32_s F => undefined
       requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
     rule ITYPE . trunc_f32_u F => undefined
@@ -407,8 +408,6 @@ There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote`
     rule ITYPE . trunc_f32_u F => <ITYPE> Float2Int(truncFloat(F))
       requires notBool (#isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow (ITYPE)) orBool (Float2Int(truncFloat(F)) <Int 0))
 
-    syntax Cvtf64Op ::= "trunc_f64_s" | "trunc_f64_u"
- // -------------------------------------------------
     rule ITYPE . trunc_f64_s F => undefined
       requires #isInfinityOrNaN (F) orBool (Float2Int(truncFloat(F)) >=Int #pow1(ITYPE)) orBool (0 -Int Float2Int(truncFloat(F)) >Int #pow1 (ITYPE))
     rule ITYPE . trunc_f64_u F => undefined
