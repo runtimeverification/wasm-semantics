@@ -9,18 +9,135 @@ module WASM-SYNTAX
     imports WASM-DATA-SYNTAX
     imports WASM-COMMON-SYNTAX
 endmodule
+```
 
+Common Syntax
+-------------
+
+```k
 module WASM-COMMON-SYNTAX
+    imports WASM-DATA-COMMON-SYNTAX
+    imports WASM-NUMERIC
+```
+
+### Text Format
+
+WebAssmebly code consists of instruction sequences.
+The basic abstract syntax contains only the `instr` syntax production.
+The text format also specifies the `plaininstr`, which corresponds almost exactly to the the `instr` production.
+
+Most instructions are plain instructions.
+
+```k
+    syntax Instr ::= PlainInstr
+ // ---------------------------
+```
+
+### Sequencing
+
+WebAssembly code consists of sequences of statements (`Stmts`).
+In this file we define 3 types of statements:
+
+-   Instruction (`Instr`): Administrative or computational instructions.
+-   Definitions (`Defn`) : The declarations of `type`, `func`, `table`, `mem` etc.
+-   The Declaration of a module.
+
+The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list of `Stmt`, `Instr`, or `Defn` has a unique least sort.
+
+```k
+    syntax EmptyStmt
+ // ----------------
+
+    syntax Instr ::= EmptyStmt
+    syntax Defn  ::= EmptyStmt
+    syntax Stmt  ::= Instr | Defn
+ // -----------------------------
+
+    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
+    syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
+    syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
+    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
+ // -------------------------------------------------------------
+
+    syntax Instrs ::= EmptyStmts
+    syntax Defns  ::= EmptyStmts
+    syntax Stmts  ::= Instrs | Defns
+ // --------------------------------
+```
+
+**TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
+
+```k
+    syntax PlainInstr ::= IValType "." "const" WasmInt
+                        | FValType "." "const" Number
+                        | IValType "." IUnOp
+                        | FValType "." FUnOp
+                        | IValType "." IBinOp
+                        | FValType "." FBinOp
+                        | IValType "." TestOp
+                        | IValType "." IRelOp
+                        | FValType "." FRelOp
+                        | ValType "." CvtOp
+                        | "drop"
+                        | "select"
+                        | "nop"
+                        | "unreachable"
+                        | "br" Index
+                        | "br_if" Index
+                        | "br_table" ElemSegment
+                        | "local.get" Index
+                        | "global.get" Index
+                        | "global.set" Index
+                        | "local.set" Index
+                        | "local.tee" Index
+                        | "return"
+                        | "memory.size"
+                        | "memory.grow"
+ // -----------------------------------
+
+    syntax PlainInstr  ::= "call" Index
+                         | "call_indirect" TypeUse
+    syntax TypeUse     ::= TypeDecls
+                         | "(type" Index ")"           [prefer] // TODO: Remove and move to wasm-text.
+                         | "(type" Index ")" TypeDecls
+    syntax TypeKeyWord ::= "param" | "result"
+    syntax TypeDecl    ::= "(" TypeDecl ")"     [bracket]
+                         | TypeKeyWord ValTypes
+                         | "param" Identifier ValType
+    syntax TypeDecls   ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
+ // -----------------------------------------------------------------
+
+    syntax PlainInstr ::= IValType  "." StoreOpM
+                        | FValType  "." StoreOpM
+                        | IValType "." LoadOpM
+                        | FValType "." LoadOpM
+    syntax StoreOpM   ::= StoreOp | StoreOp MemArg
+    syntax StoreOp    ::= "store" | "store8" | "store16" | "store32"
+    syntax LoadOpM    ::= LoadOp | LoadOp MemArg
+    syntax LoadOp     ::= "load"
+                        | "load8_u" | "load16_u" | "load32_u"
+                        | "load8_s" | "load16_s" | "load32_s"
+    syntax MemArg     ::= OffsetArg | AlignArg | OffsetArg AlignArg
+    syntax OffsetArg  ::= "offset=" WasmInt
+    syntax AlignArg   ::= "align="  WasmInt
+ // ---------------------------------------
+```
+
+```k
 endmodule
+```
 
+Semantics
+---------
+
+```k
 module WASM
-
+    imports WASM-COMMON-SYNTAX
     imports WASM-DATA
     imports WASM-NUMERIC
 ```
 
-Configuration
--------------
+### Configuration
 
 ```k
     configuration
@@ -126,50 +243,9 @@ It's full definition is found in the `wasm-text.md` file.
 Instructions
 ------------
 
-### Text Format
-
-WebAssmebly code consists of instruction sequences.
-The basic abstract syntax contains only the `instr` syntax production.
-The text format also specifies the `plaininstr`, which corresponds almost exactly to the the `instr` production.
-
-Most instructions are plain instructions.
-
-```k
-    syntax Instr ::= PlainInstr
- // ---------------------------
-```
-
 ### Sequencing
 
-WebAssembly code consists of sequences of statements (`Stmts`).
-In this file we define 3 types of statements:
-
--   Instruction (`Instr`): Administrative or computational instructions.
--   Definitions (`Defn`) : The declarations of `type`, `func`, `table`, `mem` etc.
--   The Declaration of a module.
-
-The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list of `Stmt`, `Instr`, or `Defn` has a unique least sort.
-
 ```k
-    syntax EmptyStmt
- // ----------------
-
-    syntax Instr ::= EmptyStmt
-    syntax Defn  ::= EmptyStmt
-    syntax Stmt  ::= Instr | Defn
- // -----------------------------
-
-    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
-    syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
-    syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
-    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
- // -------------------------------------------------------------
-
-    syntax Instrs ::= EmptyStmts
-    syntax Defns  ::= EmptyStmts
-    syntax Stmts  ::= Instrs | Defns
- // --------------------------------
-
     syntax K ::= sequenceStmts  ( Stmts  ) [function]
                | sequenceDefns  ( Defns  ) [function]
                | sequenceInstrs ( Instrs ) [function]
@@ -221,12 +297,8 @@ This allows us to give purely functional semantics to many of the opcodes.
 
 Constants are moved directly to the value stack.
 Function `#unsigned` is called on integers to allow programs to use negative numbers directly.
-**TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
-    syntax PlainInstr ::= IValType "." "const" WasmInt
-                        | FValType "." "const" Number
- // -------------------------------------------------
     rule <instrs> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </instrs>
     rule <instrs> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </instrs>
 ```
@@ -237,9 +309,6 @@ When a unary operator is the next instruction, the single argument is loaded fro
 An `*UnOp` operator always produces a result of the same type as its operand.
 
 ```k
-    syntax PlainInstr ::= IValType "." IUnOp
-                        | FValType "." FUnOp
- // ----------------------------------------
     rule <instrs> ITYPE . UOP:IUnOp => ITYPE . UOP C1 ... </instrs>
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <instrs> FTYPE . UOP:FUnOp => FTYPE . UOP C1 ... </instrs>
@@ -251,9 +320,6 @@ An `*UnOp` operator always produces a result of the same type as its operand.
 When a binary operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 
 ```k
-    syntax PlainInstr ::= IValType "." IBinOp
-                        | FValType "." FBinOp
- // -----------------------------------------
     rule <instrs> ITYPE . BOP:IBinOp => ITYPE . BOP C1 C2 ... </instrs>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <instrs> FTYPE . BOP:FBinOp => FTYPE . BOP C1 C2 ... </instrs>
@@ -265,8 +331,6 @@ When a binary operator is the next instruction, the two arguments are loaded fro
 When a test operator is the next instruction, the single argument is loaded from the `<valstack>` automatically.
 
 ```k
-    syntax PlainInstr ::= IValType "." TestOp
- // -----------------------------------------
     rule <instrs> TYPE . TOP:TestOp => TYPE . TOP C1 ... </instrs>
          <valstack> < TYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
@@ -276,9 +340,6 @@ When a test operator is the next instruction, the single argument is loaded from
 When a relationship operator is the next instruction, the two arguments are loaded from the `<valstack>` automatically.
 
 ```k
-    syntax PlainInstr ::= IValType "." IRelOp
-                        | FValType "." FRelOp
- // -----------------------------------------
     rule <instrs> ITYPE . ROP:IRelOp => ITYPE . ROP C1 C2 ... </instrs>
          <valstack> < ITYPE > C2 : < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <instrs> FTYPE . ROP:FRelOp => FTYPE . ROP C1 C2 ... </instrs>
@@ -290,8 +351,6 @@ When a relationship operator is the next instruction, the two arguments are load
 Conversion Operation convert constant elements at the top of the stack to another type.
 
 ```k
-    syntax PlainInstr ::= ValType "." CvtOp
- // ----------------------------------------
     rule <instrs> TYPE:ValType . CVTOP:Cvti32Op => TYPE . CVTOP C1  ... </instrs>
          <valstack> < i32 > C1 : VALSTACK => VALSTACK </valstack>
 
@@ -312,13 +371,9 @@ Operator `drop` removes a single item from the `<valstack>`.
 The `select` operator picks one of the second or third stack values based on the first.
 
 ```k
-    syntax PlainInstr ::= "drop"
- // ----------------------------
     rule <instrs> drop => . ... </instrs>
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
-    syntax PlainInstr ::= "select"
- // ------------------------------
     rule <instrs> select => . ... </instrs>
          <valstack>
            < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
@@ -332,16 +387,12 @@ Structured Control Flow
 `nop` does nothing.
 
 ```k
-    syntax PlainInstr ::= "nop"
- // ---------------------------
     rule <instrs> nop => . ... </instrs>
 ```
 
 `unreachable` causes an immediate `trap`.
 
 ```k
-    syntax PlainInstr ::= "unreachable"
- // -----------------------------------
     rule <instrs> unreachable => trap ... </instrs>
 ```
 
@@ -372,16 +423,12 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax PlainInstr ::= "br" Index
- // --------------------------------
     rule <instrs> br _IDX ~> (_S:Stmt => .) ... </instrs>
     rule <instrs> br 0   ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
     rule <instrs> br N:Int ~> _L:Label => br N -Int 1 ... </instrs>
       requires N >Int 0
 
-    syntax PlainInstr ::= "br_if" Index
- // -----------------------------------
     rule <instrs> br_if IDX => br IDX ... </instrs>
          <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
@@ -389,8 +436,6 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
          <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
-    syntax PlainInstr ::= "br_table" ElemSegment
- // --------------------------------------------
     rule <instrs> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </instrs>
          <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
@@ -442,10 +487,6 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax PlainInstr ::= "local.get" Index
-                        | "local.set" Index
-                        | "local.tee" Index
- //----------------------------------------
     rule <instrs> local.get I:Int => . ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... I |-> VALUE ... </locals>
@@ -503,9 +544,6 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax PlainInstr ::= "global.get" Index
-                        | "global.set" Index
- // ----------------------------------------
     rule <instrs> global.get TFIDX => . ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
@@ -546,15 +584,6 @@ This defines helper functions that gathers function together.
 The function `gatherTypes` keeps the `TypeDecl`s that have the same `TypeKeyWord` as we need and throws away the `TypeDecl` having different `TypeKeyWord`.
 
 ```k
-    syntax TypeKeyWord ::= "param" | "result"
- // -----------------------------------------
-
-    syntax TypeDecl  ::= "(" TypeDecl ")"     [bracket]
-                       | TypeKeyWord ValTypes
-                       | "param" Identifier ValType
-    syntax TypeDecls ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
- // ---------------------------------------------------------------
-
     syntax VecType ::=  gatherTypes ( TypeKeyWord , TypeDecls )            [function]
                      | #gatherTypes ( TypeKeyWord , TypeDecls , ValTypes ) [function]
  // ---------------------------------------------------------------------------------
@@ -574,14 +603,7 @@ A type use is a reference to a type definition.
 It may optionally be augmented by explicit inlined parameter and result declarations.
 A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
 
-# TODO: Remove the middle case (single `(type X)` without declaration), and move to wasm-text.
-
 ```k
-    syntax TypeUse ::= TypeDecls
-                     | "(type" Index ")"           [prefer]
-                     | "(type" Index ")" TypeDecls
- // ----------------------------------------------
-
     syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
                       | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
  // --------------------------------------------------------------------------------------------
@@ -718,8 +740,6 @@ The `#take` function will return the parameter stack in the reversed order, then
            ...
          </funcDef>
 
-    syntax PlainInstr ::= "return"
- // ------------------------------
     rule <instrs> return ~> (_S:Stmt  => .)  ... </instrs>
     rule <instrs> return ~> (_L:Label => .)  ... </instrs>
     rule <instrs> (return => .) ~> _FR:Frame ... </instrs>
@@ -730,8 +750,6 @@ The `#take` function will return the parameter stack in the reversed order, then
 `call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
 
 ```k
-    syntax PlainInstr ::= "call" Index
- // ----------------------------------
     rule <instrs> call IDX:Int => ( invoke FADDR ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -744,8 +762,6 @@ The `#take` function will return the parameter stack in the reversed order, then
 TODO: Desugar to use a type-index.
 
 ```k
-    syntax PlainInstr ::= "call_indirect" TypeUse
- // ---------------------------------------------
     rule <instrs> call_indirect TUSE:TypeUse => ( invoke FADDR ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
@@ -917,12 +933,6 @@ The value is encoded as bytes and stored at the "effective address", which is th
                    | "store" "{" Int Int Number "}"
  // -----------------------------------------------
 
-    syntax PlainInstr ::= IValType  "." StoreOpM
-                        | FValType  "." StoreOpM
- // --------------------------------------------
-
-    syntax StoreOpM ::= StoreOp | StoreOp MemArg
- // --------------------------------------------
     rule <instrs> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
     rule <instrs> ITYPE . SOP:StoreOp MEMARG:MemArg => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </instrs>
@@ -957,8 +967,6 @@ The value is encoded as bytes and stored at the "effective address", which is th
          </memInst>
          requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    syntax StoreOp ::= "store" | "store8" | "store16" | "store32"
- // -------------------------------------------------------------
     rule <instrs> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL           } ... </instrs>
     rule <instrs> _     . store8  EA VAL => store { 1                EA #wrap(1, VAL) } ... </instrs>
     rule <instrs> _     . store16 EA VAL => store { 2                EA #wrap(2, VAL) } ... </instrs>
@@ -974,13 +982,6 @@ Sort `Signedness` is defined in module `BYTES`.
     syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
-
-    syntax PlainInstr ::= IValType "." LoadOpM
-                        | FValType "." LoadOpM
- // ------------------------------------------
-
-    syntax LoadOpM ::= LoadOp | LoadOp MemArg
- // -----------------------------------------
     rule <instrs> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </instrs>
          <valstack> < i32 > IDX : VALSTACK         => VALSTACK </valstack>
     rule <instrs> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </instrs>
@@ -1021,10 +1022,6 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    syntax LoadOp ::= "load"
-                    | "load8_u" | "load16_u" | "load32_u"
-                    | "load8_s" | "load16_s" | "load32_s"
- // -----------------------------------------------------
     rule <instrs> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </instrs>
     rule <instrs> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </instrs>
     rule <instrs> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </instrs>
@@ -1039,13 +1036,6 @@ The `offset` parameter is added to the the address given on the stack, resulting
 The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
 
 ```k
-    syntax MemArg ::= OffsetArg | AlignArg | OffsetArg AlignArg
- // -----------------------------------------------------------
-
-    syntax OffsetArg ::= "offset=" WasmInt
-    syntax AlignArg  ::= "align="  WasmInt
- // --------------------------------------
-
     syntax Int ::= #getOffset ( MemArg ) [function, functional]
  // -----------------------------------------------------------
     rule #getOffset(           _:AlignArg) => 0
@@ -1056,8 +1046,6 @@ The `align` parameter is for optimization only and is not allowed to influence t
 The `size` operation returns the size of the memory, measured in pages.
 
 ```k
-    syntax PlainInstr ::= "memory.size"
- // -----------------------------------
     rule <instrs> memory.size => < i32 > SIZE ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1081,9 +1069,6 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 ```k
     syntax Instr ::= "grow" Int
  // ---------------------------
-
-    syntax PlainInstr ::= "memory.grow"
- // -----------------------------------
     rule <instrs> memory.grow => grow N ... </instrs>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
