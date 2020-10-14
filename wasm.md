@@ -8,6 +8,7 @@ require "numeric.md"
 module WASM-SYNTAX
     imports WASM-DATA-SYNTAX
     imports WASM-COMMON-SYNTAX
+    imports WASM-NUMERIC-SYNTAX
 endmodule
 ```
 
