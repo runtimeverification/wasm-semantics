@@ -5,24 +5,15 @@ WebAssembly Data
 module WASM-DATA-SYNTAX
     imports WASM-DATA-COMMON-SYNTAX
 endmodule
+```
 
+Common Syntax
+-------------
+
+```k
 module WASM-DATA-COMMON-SYNTAX
     imports INT-SYNTAX
     imports FLOAT-SYNTAX
-endmodule
-```
-
-`WASM-DATA` module
-
-```k
-module WASM-DATA
-    imports INT
-    imports BOOL
-    imports STRING
-    imports LIST
-    imports MAP
-    imports FLOAT
-    imports BYTES
 ```
 
 ### WASM Token Sorts
@@ -37,15 +28,148 @@ module WASM-DATA
 
 ### Identifiers
 
-In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
 And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
     syntax Identifier ::= IdentifierToken
-                        | #freshId ( Int )
     syntax OptionalId ::= "" [klabel(.Identifier)]
                         | Identifier
  // --------------------------------
+```
+
+### Strings
+
+Wasm binary data can sometimes be specified as a string.
+The string considered to represent the sequence of UTF-8 bytes that encode it.
+The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
+
+```k
+    syntax WasmString ::= ".WasmString"
+                        | WasmStringToken
+ // -------------------------------------
+
+    syntax String          ::= #parseWasmString   ( WasmStringToken ) [function, functional, hook(STRING.token2string)]
+    syntax WasmStringToken ::= #unparseWasmString ( String          ) [function, functional, hook(STRING.string2token)]
+ // -------------------------------------------------------------------------------------------------------------------
+
+    syntax DataString ::= List{WasmString, ""} [klabel(listWasmString)]
+ // -------------------------------------------------------------------
+```
+
+### Indices
+
+Many constructions in Wasm, such a functions, labels, locals, types, etc., are referred to by their index.
+In the abstract syntax of Wasm, indices are 32 bit unsigned integers.
+However, we extend the `Index` sort with another subsort, `Identifier`, in the text format.
+
+```k
+    syntax Index ::= WasmInt
+ // ------------------------
+```
+
+### ElemSegment
+
+Element Segment is a list of indices.
+It is used when initializing a WebAssembly table, or used as the parameter of the `br_table` function.
+
+```k
+    syntax ElemSegment ::= List{Index, ""} [klabel(listIndex)]
+ // ----------------------------------------------------------
+```
+
+### WebAssembly Types
+
+#### Base Types
+
+WebAssembly has four basic types, for 32 and 64 bit integers and floats.
+
+```k
+    syntax IValType ::= "i32" | "i64"
+    syntax FValType ::= "f32" | "f64"
+    syntax ValType  ::= IValType | FValType
+ // ---------------------------------------
+```
+
+#### Type Constructors
+
+There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
+
+```k
+    syntax ValTypes ::= List{ValType, ""} [klabel(listValTypes)]
+ // ------------------------------------------------------------
+```
+
+### Integers
+
+Here we define the rules about what integer formats can be used in Wasm.
+For the core language, only regular integers are allowed.
+
+```k
+    syntax WasmInt ::= Int
+ // ----------------------
+```
+### Type Mutability
+
+```k
+    syntax Mut ::= "const" | "var"
+ // ------------------------------
+```
+
+### Limits
+
+Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
+
+```k
+    syntax Limits ::= Int | Int Int
+ // -------------------------------
+```
+
+### Basic Values
+
+WebAssembly values are either integers or floating-point numbers, of 32- or 64-bit widths.
+
+```k
+    syntax Number ::= Int | Float
+ // -----------------------------
+```
+
+### External Values
+
+An `external value` is the runtime representation of an entity that can be `imported` or `exported`.
+It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
+
+```k
+    syntax AllocatedKind ::= "func" | "table" | "memory" | "global"
+    syntax Externval     ::= AllocatedKind Index
+ // --------------------------------------------
+```
+
+```k
+endmodule
+```
+
+`WASM-DATA` module
+------------------
+
+```k
+module WASM-DATA
+    imports WASM-DATA-COMMON-SYNTAX
+
+    imports INT
+    imports BOOL
+    imports STRING
+    imports LIST
+    imports MAP
+    imports FLOAT
+    imports BYTES
+```
+
+### Identifiers
+
+In `KWASM` rules, we use `#freshId ( Int )` to generate a fresh identifier based on the element index in the current module.
+```k
+    syntax Identifier ::= #freshId ( Int )
+ // --------------------------------------
 ```
 
 In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` being an index.
@@ -56,17 +180,6 @@ This rule handles adding an `OptionalId` as a map key, but only when it is a pro
  // -------------------------------------------------------
     rule #saveId (MAP, ID:OptionalId, _)   => MAP             requires notBool isIdentifier(ID)
     rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
-```
-
-### Indices
-
-Many constructions in Wasm, such a functions, labels, locals, types, etc., are referred to by their index.
-In the abstract syntax of Wasm, indicies are 32 bit unsigned integers.
-However, we extend the `Index` sort with another subsort, `Identifier`, in the text format.
-
-```k
-    syntax Index ::= WasmInt
- // ------------------------
 ```
 
 `Int` is the basic form of index, and indices always need to resolve to integers.
@@ -84,13 +197,7 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 
 ### ElemSegment
 
-Element Segment is a list of indices.
-It is used when initializing a WebAssembly table, or used as the parameter of the `br_table` function.
-
 ```k
-    syntax ElemSegment ::= List{Index, ""} [klabel(listIndex)]
- // ----------------------------------------------------------
-
     syntax Int   ::= #lenElemSegment (ElemSegment)      [function]
     syntax Index ::= #getElemSegment (ElemSegment, Int) [function]
  // --------------------------------------------------------------
@@ -101,6 +208,8 @@ It is used when initializing a WebAssembly table, or used as the parameter of th
     rule #getElemSegment(_E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
 ```
 
+### OptionalInt
+
 In some cases, an integer is optional, such as when either giving or omitting the max bound when defining a table or memory.
 The sort `OptionalInt` provides this potentially "undefined" `Int`.
 
@@ -109,26 +218,11 @@ The sort `OptionalInt` provides this potentially "undefined" `Int`.
  // -----------------------------------
 ```
 
-WebAssembly Types
------------------
-
-### Base Types
-
-WebAssembly has four basic types, for 32 and 64 bit integers and floats.
-
-```k
-    syntax IValType ::= "i32" | "i64"
-    syntax FValType ::= "f32" | "f64"
-    syntax ValType  ::= IValType | FValType
- // ---------------------------------------
-```
-
 ### Type Constructors
 
 There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax ValTypes ::= List{ValType, ""} [klabel(listValTypes)]
     syntax VecType  ::= "[" ValTypes "]"
  // ------------------------------------
 
@@ -195,41 +289,14 @@ The `#width` function returns the bit-width of a given `IValType`.
     rule #pow (i64) => 18446744073709551616
 ```
 
-Here we define the rules about what integer formats can be used in Wasm.
-For the core language, only regular integers are allowed.
-
-```k
-    syntax WasmInt ::= Int
- // ----------------------
-```
-
 ### Type Mutability
 
 ```k
-    syntax Mut ::= ".Mut" | "const" | "var"
- // ---------------------------------------
+    syntax Mut ::= ".Mut"
+ // ----------------------
 ```
 
-### Limits
-
-Tables and memories have limits, defined as either a sinlge `Int` or two `Int`s, representing min and max bounds.
-
-```k
-    syntax Limits ::= Int | Int Int
- // -------------------------------
-```
-
-Values
-------
-
-### Basic Values
-
-WebAssembly values are either integers or floating-point numbers, of 32- or 64-bit widths.
-
-```k
-    syntax Number ::= Int | Float
- // -----------------------------
-```
+### Values
 
 Proper values are numbers annotated with their types.
 
@@ -248,7 +315,7 @@ We also add `undefined` as a value, which makes many partial functions in the se
  // --------------------------
 ```
 
-### Value Operations
+#### Value Operations
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
 The `#wrap` function wraps an integer to a given byte width.
@@ -278,7 +345,7 @@ The `#round` function casts a `f64` float to a `f32` float.
     rule #round(f32 , N:Int  ) => < f32 >  Int2Float(N, 24, 8)  [concrete]
 ```
 
-### Signed Interpretation
+#### Signed Interpretation
 
 Functions `#signed` and `#unsigned` allow for easier operation on twos-complement numbers.
 These functions assume that the argument integer is in the valid range of signed and unsigned values of the respective type, so they will not correctly map arbitrary integers into the corret range.
@@ -302,7 +369,7 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
     rule #signedWidth(4, N) => #signed(i32, N)
 ```
 
-### Boolean Interpretation
+#### Boolean Interpretation
 
 Function `#bool` converts a `Bool` into an `Int`.
 
@@ -313,8 +380,7 @@ Function `#bool` converts a `Bool` into an `Int`.
     rule #bool( B:Bool ) => 0 requires notBool B
 ```
 
-Data Structures
----------------
+### Data Structures
 
 WebAssembly is a stack-machine, so here we provide the stack to operate over.
 Operator `_++_` implements an append operator for sort `ValStack`.
@@ -361,8 +427,7 @@ Each call site _must_ ensure that this is desired behavior before using these fu
     rule #revs(V : VS   , VS') => #revs(VS, V : VS')
 ```
 
-Strings
--------
+### Strings
 
 Wasm uses a different character escape rule with K, so we need to define the `unescape` function ourselves.
 
@@ -440,21 +505,6 @@ The implementation is not correct for now because the UTF-8 encoding is not impl
        andBool substrString(S, IDX +Int 1, IDX +Int 2) ==K "u"
 ```
 
-Wasm binary data can sometimes be specified as a string.
-The string considered to represent the sequence of UTF-8 bytes that encode it.
-The exception is for characters that are explicitly escaped which can represent bytes in hexadecimal form.
-
-```k
-    syntax WasmString ::= ".WasmString"
-                        | WasmStringToken
- // -------------------------------------
-
-    syntax String          ::= #parseWasmString   ( WasmStringToken ) [function, functional, hook(STRING.token2string)]
-    syntax WasmStringToken ::= #unparseWasmString ( String          ) [function, functional, hook(STRING.string2token)]
-    syntax DataString      ::= List{WasmString, ""}                   [klabel(listWasmString)]
- // ------------------------------------------------------------------------------------------
-```
-
 `DataString`, as is defined in the wasm semantics, is a list of `WasmString`s.
 `#concatDS` concatenates them together into a single string.
 The strings to connect needs to be unescaped before concatenated, because the `unescape` function removes the quote sign `"` before and after each substring.
@@ -476,8 +526,7 @@ The strings to connect needs to be unescaped before concatenated, because the `u
     rule #DS2Bytes(DS) => String2Bytes(#concatDS(DS))
 ```
 
-Byte Map
---------
+### Byte Map
 
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
 
@@ -521,18 +570,6 @@ The function interprets the range of bytes as little-endian.
  // ---------------------------------------------------------------------------
     rule isByte(I)    => 0 <=Int I andBool I <Int 256
     rule I inBytes BM => 0 <=Int I andBool I <Int lengthBytes(BM)
-```
-
-External Values
----------------
-
-An `external value` is the runtime representation of an entity that can be `imported` or `exported`.
-It is an `address` denoting either a `function instance`, `table instance`, `memory instance`, or `global instances` in the shared store.
-
-```k
-    syntax AllocatedKind ::= "func" | "table" | "memory" | "global"
-    syntax Externval     ::= AllocatedKind Index
- // --------------------------------------------
 ```
 
 ```k
