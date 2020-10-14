@@ -189,6 +189,16 @@ proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
 test-prove: $(proof_tests:=.prove)
 
+# Analysis
+# --------
+json_build := $(haskell_dir)/$(haskell_main_file)-kompiled/parsed.json
+
+$(json_build):
+	$(MAKE) build-haskell -B KOMPILE_OPTS="--emit-json"
+
+graph-imports: $(json_build)
+	kpyk $(haskell_dir)/$(haskell_main_file)-kompiled graph-imports
+
 # Presentation
 # ------------
 
