@@ -66,6 +66,8 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
  // --------------------------------
 ```
 
+### Instructions
+
 **TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
@@ -122,6 +124,86 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax OffsetArg  ::= "offset=" WasmInt
     syntax AlignArg   ::= "align="  WasmInt
  // ---------------------------------------
+```
+
+### Definitions at the Module Level
+
+```k
+    syntax Defn ::= TypeDefn
+                  | GlobalDefn
+                  | FuncDefn
+                  | TableDefn
+                  | MemoryDefn
+                  | ElemDefn
+                  | DataDefn
+                  | StartDefn
+                  | ExportDefn
+                  | ImportDefn
+ // --------------------------
+```
+
+The following are kept abstract, and can be extended in other formats, such as the text format.
+
+```k
+    syntax TypeDefn
+    syntax GlobalDefn
+    syntax FuncDefn
+ // ---------------
+```
+
+TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
+
+```k
+    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
+    syntax TableSpec ::= TableType
+    syntax TableType ::= Limits TableElemType
+    syntax TableElemType ::= "funcref"
+    syntax TableElemType ::= "funcref"
+ // ----------------------------------
+
+    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
+    syntax MemorySpec ::= MemType
+    syntax MemType    ::= Limits
+ // ----------------------------
+
+    syntax ElemDefn ::= "(" "elem" Index Offset ElemSegment ")"
+ // -----------------------------------------------------------
+
+    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
+ // --------------------------------------------------------------
+
+    syntax StartDefn ::= "(" "start" Index ")"
+ // ------------------------------------------
+
+    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
+ // -------------------------------------------------------------------
+
+    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
+ // -----------------------------------------------------------------------
+
+    syntax ImportDesc ::= "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
+ // -----------------------------------------------------------------------------------------------
+```
+
+#### Offset
+
+The `elem` and `data` initializers take an offset, which is an instruction.
+This is not optional.
+
+```k
+    syntax Offset ::= "(" "offset" Instrs ")"
+ // -----------------------------------------
+```
+
+#### Function Local Declaration
+
+```k
+    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
+                        | "local"            ValTypes
+                        | "local" Identifier ValType
+    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
+ // -------------------------------------------------------------------------
 ```
 
 ```k
@@ -513,7 +595,6 @@ The importing and exporting parts of specifications are dealt with in the respec
     syntax GlobalType ::= Mut ValType
 // ----------------------------------
 
-    syntax Defn       ::= GlobalDefn
     syntax GlobalDefn ::= #global( id: OptionalId, type: GlobalType, init: Instrs)
     syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
  // ----------------------------------------------------------
@@ -622,7 +703,6 @@ Type could be declared explicitly and could optionally bind with an identifier.
 When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
 
 ```k
-    syntax Defn     ::= TypeDefn
     syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId)
     syntax Alloc    ::= alloctype (OptionalId, FuncType)
  // ----------------------------------------------------
@@ -642,16 +722,6 @@ When defining `TypeDefn`, the `identifier` for `param` will be ignored and will 
 Function Declaration and Invocation
 -----------------------------------
 
-### Function Local Declaration
-
-```k
-    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
-                        | "local"            ValTypes
-                        | "local" Identifier ValType
-    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
- // -------------------------------------------------------------------------
-```
-
 ### Function Declaration
 
 Function declarations can look quite different depending on which fields are ommitted and what the context is.
@@ -662,7 +732,6 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax Defn     ::= FuncDefn
     syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata)
     syntax Alloc    ::= allocfunc ( Int , Int , FuncType , VecType , Instrs , FuncMetadata )
  // ----------------------------------------------------------------------------------------
@@ -826,14 +895,6 @@ TODO: Desugar to use a type-index.
 Table
 -----
 
-When implementing a table, we first need to define the `TableElemType` type to define the type of elements inside a `tableinst`.
-Currently there is only one possible value for it which is "funcref".
-
-```k
-    syntax TableElemType ::= "funcref"
- // ----------------------------------
-```
-
 The allocation of a new `tableinst`.
 Currently at most one table may be defined or imported in a single module.
 The only allowed `TableElemType` is "funcref", so we ignore this term in the reducted sort.
@@ -844,12 +905,8 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax Defn      ::= TableDefn
-    syntax TableType ::= Limits TableElemType
-    syntax TableSpec ::= TableType
-    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
-    syntax Alloc     ::= alloctable (OptionalId, Int, OptionalInt)
- // --------------------------------------------------------------
+    syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt)
+ // ----------------------------------------------------------
     rule <instrs> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable(OID, MIN, .Int) ... </instrs>
       requires MIN <=Int #maxTableSize()
     rule <instrs> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable(OID, MIN,  MAX) ... </instrs>
@@ -890,12 +947,8 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax Defn       ::= MemoryDefn
-    syntax MemType    ::= Limits
-    syntax MemorySpec ::= MemType
-    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
-    syntax Alloc      ::= allocmemory (OptionalId, Int, OptionalInt)
- // ----------------------------------------------------------------
+    syntax Alloc ::= allocmemory (OptionalId, Int, OptionalInt)
+ // -----------------------------------------------------------
     rule <instrs> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory(OID, MIN, .Int) ... </instrs>
       requires MIN <=Int #maxMemorySize()
     rule <instrs> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </instrs>
@@ -1128,16 +1181,6 @@ The maximum of table size is 2^32 bytes.
 Initializers
 ------------
 
-### Offset
-
-The `elem` and `data` initializers take an offset, which is an instruction.
-This is not optional.
-
-```k
-    syntax Offset ::= "(" "offset" Instrs ")"
- // -----------------------------------------
-```
-
 ### Table initialization
 
 Tables can be initialized with element and the element type is always `funcref`.
@@ -1145,11 +1188,9 @@ The initialization of a table needs an offset and a list of functions, given as 
 A table index is optional and will be default to zero.
 
 ```k
-    syntax Defn     ::= ElemDefn
-    syntax ElemDefn ::= "(" "elem"     Index Offset ElemSegment ")"
-                      |     "elem" "{" Index        ElemSegment "}"
-    syntax Stmt     ::= #initElements ( Int, Int, Map, ElemSegment )
- // ----------------------------------------------------------------
+    syntax ElemDefn ::= "elem" "{" Index        ElemSegment "}"
+    syntax Stmt ::= #initElements ( Int, Int, Map, ElemSegment )
+ // ------------------------------------------------------------
     rule <instrs> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
     rule <instrs> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </instrs>
@@ -1178,10 +1219,8 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax Defn     ::= DataDefn
-    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
-                      |     "data" "{" Index        Bytes      "}"
- // --------------------------------------------------------------
+    syntax DataDefn ::= "data" "{" Index Bytes "}"
+ // ----------------------------------------------
     // Default to memory 0.
     rule <instrs> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
 
@@ -1212,9 +1251,6 @@ Start Function
 The `start` component of a module declares the function index of a `start function` that is automatically invoked when the module is instantiated, after `tables` and `memories` have been initialized.
 
 ```k
-    syntax Defn      ::= StartDefn
-    syntax StartDefn ::= "(" "start" Index ")"
- // ------------------------------------------
     rule <instrs> ( start IDX:Int ) => ( invoke FADDR ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1230,10 +1266,8 @@ Export
 Exports make functions, tables, memories and globals available for importing into other modules.
 
 ```k
-    syntax Defn       ::= ExportDefn
-    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
-    syntax Alloc      ::= ExportDefn
- // --------------------------------
+    syntax Alloc ::= ExportDefn
+ // ---------------------------
     rule <instrs> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1251,11 +1285,7 @@ That an import is really a subtype of the declared import needs to be checked at
 The value of a global gets copied when it is imported.
 
 ```k
-    syntax Defn       ::= ImportDefn
-    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
     syntax ImportDesc ::= #funcDesc(id: OptionalId, type: Int)
-                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
-                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
                         | #globalDesc(id: OptionalId, type: GlobalType)
     syntax Alloc      ::= ImportDefn
  // --------------------------------
