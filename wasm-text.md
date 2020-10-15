@@ -6,9 +6,9 @@ require "wasm.md"
 require "data.md"
 
 module WASM-TEXT-SYNTAX
-    imports WASM-TEXT
     imports WASM-SYNTAX
     imports WASM-TOKEN-SYNTAX
+    imports WASM-TEXT-COMMON-SYNTAX
 endmodule
 ```
 

@@ -18,7 +18,7 @@ Common Syntax
 ```k
 module WASM-COMMON-SYNTAX
     imports WASM-DATA-COMMON-SYNTAX
-    imports WASM-NUMERIC
+    imports WASM-NUMERIC-SYNTAX
 ```
 
 ### Text Format

@@ -12,7 +12,6 @@ Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consi
 
 ```k
 module WASM-TEST-SYNTAX
-    imports WASM-TEST
     imports WASM-TEXT-SYNTAX
     imports WASM-AUXIL
     imports WASM-REFERENCE-INTERPRETER-SYNTAX
