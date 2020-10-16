@@ -43,27 +43,9 @@ In this file we define 3 types of statements:
 -   Definitions (`Defn`) : The declarations of `type`, `func`, `table`, `mem` etc.
 -   The Declaration of a module.
 
-The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list of `Stmt`, `Instr`, or `Defn` has a unique least sort.
-
 ```k
-    syntax EmptyStmt
- // ----------------
-
-    syntax Instr ::= EmptyStmt
-    syntax Defn  ::= EmptyStmt
-    syntax Stmt  ::= Instr | Defn
- // -----------------------------
-
-    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
     syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
     syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
-    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
- // -------------------------------------------------------------
-
-    syntax Instrs ::= EmptyStmts
-    syntax Defns  ::= EmptyStmts
-    syntax Stmts  ::= Instrs | Defns
- // --------------------------------
 ```
 
 ### Instructions
@@ -314,6 +296,26 @@ Since memory data is bytes, all integers in the `Map` in the `<mdata>` cell are 
 All places in the data with no entry are considered zero bytes.
 
 ### Translations to Abstract Syntax
+
+The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list of `Stmt`, `Instr`, or `Defn` has a unique least sort.
+```k
+    syntax EmptyStmt
+ // ----------------
+
+    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
+    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
+ // -------------------------------------------------------------
+
+    syntax Instrs ::= EmptyStmts
+    syntax Defns  ::= EmptyStmts
+    syntax Stmts  ::= Instrs | Defns
+ // --------------------------------
+
+    syntax Instr ::= EmptyStmt
+    syntax Defn  ::= EmptyStmt
+    syntax Stmt  ::= Instr | Defn
+ // -----------------------------
+```
 
 Before execution, the program is translated from the text-format concrete syntax tree into an abstract syntax tree using the following function.
 It's full definition is found in the `wasm-text.md` file.
