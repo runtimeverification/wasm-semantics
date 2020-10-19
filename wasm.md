@@ -44,8 +44,11 @@ In this file we define 3 types of statements:
 -   The Declaration of a module.
 
 ```k
+    syntax Stmt
     syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
     syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
+    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
+ // -------------------------------------------------------------
 ```
 
 ### Instructions
@@ -303,8 +306,6 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
  // ----------------
 
     syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
-    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
- // -------------------------------------------------------------
 
     syntax Instrs ::= EmptyStmts
     syntax Defns  ::= EmptyStmts
