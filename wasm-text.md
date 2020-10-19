@@ -187,8 +187,8 @@ The following is the text format representation of an import specification.
 ### Globals
 
 ```k
-    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
-    syntax GlobalSpec ::= TextFormatGlobalType Instr
+    syntax GlobalDefn ::= "(" "global" OptionalId GlobalSpec ")"
+    syntax GlobalSpec ::= TextFormatGlobalType PlainInstr
                         | InlineImport TextFormatGlobalType
                         | InlineExport GlobalSpec
  // ---------------------------------------------
@@ -437,7 +437,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule asGMut ( (mut T:ValType ) ) => var   T
     rule asGMut (      T:ValType   ) => const T
 
-    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... id: OID, type: asGMut(TYP), init: unfoldInstrs(IS .Instrs))) _DS, _I, _M)
+    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:PlainInstr) => #global(... id: OID, type: asGMut(TYP), init: unfoldInstrs(IS .Instrs))) _DS, _I, _M)
 
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
       => #unfoldDefns(( import MOD NAME (global OID TYP ) ) DS, I, M)
