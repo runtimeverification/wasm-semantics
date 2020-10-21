@@ -5,6 +5,7 @@ For testing, we augment the semantics with some helpers.
 
 ```k
 require "wasm-text.md"
+require "auxil.md"
 ```
 
 Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consists of the definitions both for parsing and execution.
@@ -13,9 +14,75 @@ Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consi
 module WASM-TEST-SYNTAX
     imports WASM-TEST
     imports WASM-TEXT-SYNTAX
+    imports WASM-AUXIL
+    imports WASM-REFERENCE-INTERPRETER-SYNTAX
+endmodule
+
+module WASM-REFERENCE-INTERPRETER-SYNTAX
+    imports WASM-COMMON-SYNTAX
+
+    syntax Auxil  ::= Action
+    syntax Action ::= "(" "invoke" OptionalId WasmString Instrs ")"
+                    |     "invoke" Int        WasmString
+                    | "(" "get"    OptionalId WasmString        ")"
+                    |     "get"    Int        WasmString
+ // ----------------------------------------------------
+
+    syntax Auxil ::= "(" "register" WasmString       ")"
+                   | "(" "register" WasmString Index ")"
+ // ----------------------------------------------------
+
+    syntax DefnStrings ::= List{WasmString, ""}
+    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
+                        | "(" "module" OptionalId "quote"  DefnStrings ")"
+ // ----------------------------------------------------------------------
+```
+
+Assertions for KWasm tests
+--------------------------
+
+We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level embedder instrucion.
+
+```k
+    syntax Auxil ::= Assertion
+ // --------------------------
+```
+
+### Conformance Assertions
+
+Here we inplement the conformance assertions specified in [spec interpreter] including:
+
+```
+  ( assert_return <action> <expr>* )         ;; assert action has expected results. Sometimes <expr>* is just empty.
+  ( assert_return_canonical_nan <action> )   ;; assert action results in NaN in a canonical form
+  ( assert_return_arithmetic_nan <action> )  ;; assert action results in NaN with 1 in MSB of fraction field
+  ( assert_trap <action> <failure> )         ;; assert action traps with given failure string
+  ( assert_exhaustion <action> <failure> )   ;; assert action exhausts system resources
+  ( assert_malformed <module> <failure> )    ;; assert module cannot be decoded with given failure string
+  ( assert_invalid <module> <failure> )      ;; assert module is invalid with given failure string
+  ( assert_unlinkable <module> <failure> )   ;; assert module fails to link
+  ( assert_trap <module> <failure> )         ;; assert module traps on instantiation
+```
+
+```k
+    syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
+                       | "(" "assert_return"                Action            ")"
+                       | "(" "assert_return_canonical_nan"  Action            ")"
+                       | "(" "assert_return_arithmetic_nan" Action            ")"
+                       | "(" "assert_trap"                  Action     WasmString ")"
+                       | "(" "assert_exhaustion"            Action     WasmString ")"
+                       | "(" "assert_malformed"             ModuleDecl WasmString ")"
+                       | "(" "assert_invalid"               ModuleDecl WasmString ")"
+                       | "(" "assert_unlinkable"            ModuleDecl WasmString ")"
+                       | "(" "assert_trap"                  ModuleDecl WasmString ")"
+ // ---------------------------------------------------------------------------------
+```
+
+```k
 endmodule
 
 module WASM-TEST
+    imports WASM-REFERENCE-INTERPRETER-SYNTAX
     imports WASM-AUXIL
     imports WASM-TEXT
 ```
@@ -87,15 +154,7 @@ We allow 2 kinds of actions:
 -   We allow to `invoke` a function by its exported name.
 -   We allow to `get` a global export.
 
-**TODO**: implement "get".
-
 ```k
-    syntax Auxil  ::= Action
-    syntax Action ::= "(" "invoke" OptionalId WasmString Instrs ")"
-                    |     "invoke" Int        WasmString
-                    | "(" "get"    OptionalId WasmString        ")"
-                    |     "get"    Int        WasmString
- // ----------------------------------------------------
     rule <instrs> ( invoke OID:OptionalId ENAME:WasmString IS:Instrs ) => sequenceInstrs(IS) ~> ( invoke OID ENAME .Instrs ) ... </instrs>
       requires IS =/=K .Instrs
 
@@ -140,9 +199,6 @@ We will reference modules by name in imports.
 `register` is the instruction that allows us to associate a name with a module.
 
 ```k
-    syntax Auxil ::= "(" "register" WasmString       ")"
-                   | "(" "register" WasmString Index ")"
- // ----------------------------------------------------
     rule <instrs> ( register S ) => ( register S (NEXT -Int 1) )... </instrs> // Register last instantiated module.
          <nextModuleIdx> NEXT </nextModuleIdx>
       requires NEXT >Int 0
@@ -161,10 +217,6 @@ They are not defined in the official specification.
 In order to parse the conformance test cases, we handle these declarations here and just reduce them to the empty module.
 
 ```k
-    syntax DefnStrings ::= List{WasmString, ""}
-    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
-                        | "(" "module" OptionalId "quote"  DefnStrings ")"
- // ----------------------------------------------------------------------
     rule ( module OID binary _DS ) => ( module OID .Defns ) [macro]
 
     rule ( module OID quote _DS ) => ( module OID .Defns ) [macro]
@@ -195,51 +247,11 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
         orBool MOD ==K #unparseWasmString("\"test\"")
 ```
 
-Assertions for KWasm tests
---------------------------
-
-These assertions will check the supplied property, and then clear that state from the configuration.
-In this way, tests can be written as a serious of setup, execute, assert cycles which leaves the configuration empty on success.
-
-We'll make `Assertion` a subsort of `Auxil`, since it is a form of top-level embedder instrucion.
-
-```k
-    syntax Auxil ::= Assertion
- // --------------------------
-```
-
-### Conformance Assertions
-
-Here we inplement the conformance assertions specified in [spec interpreter] including:
-
-```
-  ( assert_return <action> <expr>* )         ;; assert action has expected results. Sometimes <expr>* is just empty.
-  ( assert_return_canonical_nan <action> )   ;; assert action results in NaN in a canonical form
-  ( assert_return_arithmetic_nan <action> )  ;; assert action results in NaN with 1 in MSB of fraction field
-  ( assert_trap <action> <failure> )         ;; assert action traps with given failure string
-  ( assert_exhaustion <action> <failure> )   ;; assert action exhausts system resources
-  ( assert_malformed <module> <failure> )    ;; assert module cannot be decoded with given failure string
-  ( assert_invalid <module> <failure> )      ;; assert module is invalid with given failure string
-  ( assert_unlinkable <module> <failure> )   ;; assert module fails to link
-  ( assert_trap <module> <failure> )         ;; assert module traps on instantiation
-```
-
 Except `assert_return` and `assert_trap`, the remaining rules are directly reduced to empty. We are not planning to implement them and these rules are only used to make it easier to parse conformance tests.
 
 *TODO:* Make use of `assert_exhaustion`, by detecting stack overflow.
 
 ```k
-    syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
-                       | "(" "assert_return"                Action            ")"
-                       | "(" "assert_return_canonical_nan"  Action            ")"
-                       | "(" "assert_return_arithmetic_nan" Action            ")"
-                       | "(" "assert_trap"                  Action     WasmString ")"
-                       | "(" "assert_exhaustion"            Action     WasmString ")"
-                       | "(" "assert_malformed"             ModuleDecl WasmString ")"
-                       | "(" "assert_invalid"               ModuleDecl WasmString ")"
-                       | "(" "assert_unlinkable"            ModuleDecl WasmString ")"
-                       | "(" "assert_trap"                  ModuleDecl WasmString ")"
- // ---------------------------------------------------------------------------------
     rule <instrs> (assert_return ACT INSTR)               => ACT ~> INSTR ~> #assertAndRemoveEqual ~> #assertAndRemoveToken ... </instrs>
          <valstack> VALSTACK => token : VALSTACK </valstack>
     rule <instrs> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </instrs>
@@ -511,43 +523,6 @@ We also want to be able to test that the embedder's registration function is wor
     rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
-```
-
-```k
-endmodule
-```
-
-```k
-module WASM-AUXIL
-    imports WASM
-```
-
-Generally useful commands that are not part of the actual Wasm semantics.
-
-```k
-    syntax Stmt ::= Auxil
- // ---------------------
-
-    syntax Auxil ::= "#clearConfig"
- // -------------------------------
-    rule <instrs> #clearConfig => . ...     </instrs>
-         <curModIdx>         _ => .Int      </curModIdx>
-         <valstack>          _ => .ValStack </valstack>
-         <locals>            _ => .Map      </locals>
-         <moduleInstances>   _ => .Bag      </moduleInstances>
-         <moduleIds>         _ => .Map      </moduleIds>
-         <nextModuleIdx>     _ => 0         </nextModuleIdx>
-         <moduleRegistry>    _ => .Map      </moduleRegistry>
-         <mainStore>
-           <nextFuncAddr>    _ => 0         </nextFuncAddr>
-           <funcs>           _ => .Bag      </funcs>
-           <nextTabAddr>     _ => 0         </nextTabAddr>
-           <tabs>            _ => .Bag      </tabs>
-           <nextMemAddr>     _ => 0         </nextMemAddr>
-           <mems>            _ => .Bag      </mems>
-           <nextGlobAddr>    _ => 0         </nextGlobAddr>
-           <globals>         _ => .Bag      </globals>
-         </mainStore>
 ```
 
 ```k

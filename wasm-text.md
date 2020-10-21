@@ -8,11 +8,7 @@ require "data.md"
 module WASM-TEXT-SYNTAX
     imports WASM-TEXT
     imports WASM-SYNTAX
-endmodule
-
-module WASM-SYNTAX
     imports WASM-TOKEN-SYNTAX
-    imports WASM-DATA
 endmodule
 ```
 
@@ -72,62 +68,56 @@ Declaring regular expressions of sort `#Layout` infroms the K lexer to drop thes
 endmodule
 ```
 
-Wasm Textual Format
--------------------
+Wasm Textual Format Syntax
+--------------------------
+
+### Values
 
 ```k
-module WASM-TEXT
-    imports WASM
-```
+module WASM-TEXT-COMMON-SYNTAX
+    imports WASM-COMMON-SYNTAX
 
-The text format is a concrete syntax for Wasm.
-It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
-Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used idrectly.
-
-### Text Integers
-
-All integers given in the text format are automatically turned into regular integers.
-That means converting between hexadecimal and decimal when necessary, and removing underscores.
-
-**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet.
-In the future should investigate which direction the subsort should go.
-(`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
-
-```k
     syntax WasmInt ::= Int
     syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
- // --------------------------------------------------------------------------
-    rule `WasmInt`(VAL) => WasmIntToken2Int(VAL)
 
-    syntax String ::= WasmIntToken2String    ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
-    syntax Int    ::= WasmIntTokenString2Int ( String       ) [function]
-                    | WasmIntToken2Int       ( WasmIntToken ) [function]
- // --------------------------------------------------------------------
-    rule WasmIntTokenString2Int(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
-    rule WasmIntTokenString2Int(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
-
-    rule WasmIntToken2Int(VAL) => WasmIntTokenString2Int(replaceAll(WasmIntToken2String(VAL), "_", ""))
-```
-
-### Identifiers
-
-When we want to specify an identifier, we can do so with the following helper function.
-
-```k
-    syntax IdentifierToken ::= String2Identifier(String) [function, functional, hook(STRING.string2token)]
-```
-
-### Looking up Indices
-
-In the abstract Wasm syntax, indices are always integers.
-In the text format, we extend indices to incorporate identifiers.
-We also enable context lookups with identifiers.
-
-```k
     syntax Index ::= Identifier
  // ---------------------------
-    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
-      requires ID in_keys(IDS)
+```
+
+### Instructions
+
+```k
+    syntax Instr ::= BlockInstr
+ // ---------------------------
+
+    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
+                        | "loop" Identifier TypeDecls Instrs "end" OptionalId
+                        | "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
+ // ------------------------------------------------------------------------------------------------
+```
+
+##### Folded Instructions
+
+Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
+
+```k
+    syntax Instr ::= FoldedInstr
+ // ----------------------------
+```
+
+One type of folded instruction are `PlainInstr`s wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
+
+```k
+    syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
+                         | "(" PlainInstr        ")" [prefer]
+ // ---------------------------------------------------------
+
+    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
+                         | "(" "loop" OptionalId TypeDecls Instrs ")"
+                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
+                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
+ // -----------------------------------------------------------------------------------------------------------
 ```
 
 ### Types
@@ -166,6 +156,71 @@ The following is the text format representation of an import specification.
  // -----------------------------------------------------------------------------------------------
 ```
 
+### Functions
+
+```k
+    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
+    syntax FuncSpec ::= TypeUse LocalDecls Instrs
+                      | InlineImport TypeUse
+                      | InlineExport FuncSpec
+ // -----------------------------------------
+```
+
+### Tables
+
+```k
+    syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
+                       | InlineImport TableType
+                       | InlineExport TableSpec
+ // -------------------------------------------
+```
+
+### Memories
+
+```k
+    syntax MemorySpec ::= "(" "data" DataString ")"
+                        | InlineImport MemType
+                        | InlineExport MemorySpec
+ // ---------------------------------------------
+```
+
+### Globals
+
+```k
+    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
+    syntax GlobalSpec ::= TextFormatGlobalType Instr
+                        | InlineImport TextFormatGlobalType
+                        | InlineExport GlobalSpec
+ // ---------------------------------------------
+
+    syntax TextFormatGlobalType ::= ValType | "(" "mut" ValType ")"
+ // ---------------------------------------------------------------
+```
+
+### Offset
+
+The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
+
+```k
+    syntax Offset ::= Instrs
+ // ------------------------
+```
+
+### Element Segments
+
+```k
+    syntax ElemDefn ::= "(" "elem" Offset        ElemSegment ")"
+                      | "(" "elem" Offset "func" ElemSegment ")"
+ // ------------------------------------------------------------
+```
+
+### Data Segments
+
+```k
+    syntax DataDefn ::= "(" "data" Offset DataString ")"
+ // ----------------------------------------------------
+```
+
 ### Modules
 
 Modules are defined as a sequence of definitions, that may come in any order.
@@ -177,8 +232,66 @@ The only requirements are that all imports must precede all other definitions, a
  // -------------------------------------------------------
 ```
 
-Desugaring
-----------
+```k
+endmodule
+```
+
+Translation from Text Format to Core Format
+-------------------------------------------
+
+```k
+module WASM-TEXT
+    imports WASM-TEXT-COMMON-SYNTAX
+    imports WASM
+```
+
+The text format is a concrete syntax for Wasm.
+It allows specifying instructions in a folded, S-expression like format, and a few other syntactic sugars.
+Most instructions, those in the sort `PlainInstr`, have identical keywords in the abstract and concrete syntax, and can be used directly.
+
+### Text Integers
+
+All integers given in the text format are automatically turned into regular integers.
+That means converting between hexadecimal and decimal when necessary, and removing underscores.
+
+**TODO**: Symbolic reasoning for sort `WasmIntToken` not tested yet.
+In the future should investigate which direction the subsort should go.
+(`WasmIntToken` under `Int`/`Int` under `WasmIntToken`)
+
+```k
+    rule `WasmInt`(VAL) => WasmIntToken2Int(VAL)
+
+    syntax String ::= WasmIntToken2String    ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+    syntax Int    ::= WasmIntTokenString2Int ( String       ) [function]
+                    | WasmIntToken2Int       ( WasmIntToken ) [function]
+ // --------------------------------------------------------------------
+    rule WasmIntTokenString2Int(S)  => String2Base(replaceFirst(S, "0x", ""), 16) requires findString(S, "0x", 0) =/=Int -1
+    rule WasmIntTokenString2Int(S)  => String2Base(                        S, 10) requires findString(S, "0x", 0)  ==Int -1
+
+    rule WasmIntToken2Int(VAL) => WasmIntTokenString2Int(replaceAll(WasmIntToken2String(VAL), "_", ""))
+```
+
+### Identifiers
+
+When we want to specify an identifier, we can do so with the following helper function.
+
+```k
+    syntax IdentifierToken ::= String2Identifier(String) [function, functional, hook(STRING.string2token)]
+ // ------------------------------------------------------------------------------------------------------
+```
+
+### Looking up Indices
+
+In the abstract Wasm syntax, indices are always integers.
+In the text format, we extend indices to incorporate identifiers.
+We also enable context lookups with identifiers.
+
+```k
+    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
+      requires ID in_keys(IDS)
+```
+
+### Desugaring
 
 The text format is one of the concrete formats of Wasm.
 Every concrete format maps to a common structure, described as an abstract syntax.
@@ -188,7 +301,7 @@ Some classes of invalid programs, such as those where an identifier appears in a
 The function deals with the desugarings which are context dependent.
 Other desugarings are either left for runtime or expressed as macros (for now).
 
-### Unfolding Abbreviations
+#### Unfolding Abbreviations
 
 ```k
     syntax Stmts ::= unfoldStmts  ( Stmts )                  [function]
@@ -260,15 +373,9 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Functions
 
 ```k
-    syntax FuncDefn ::= "(" "func" OptionalId  FuncSpec ")"
-    syntax FuncSpec ::= TypeUse LocalDecls Instrs
-                      | InlineImport TypeUse
- // ----------------------------------------
     rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I, M)
       => #unfoldDefns(( import MOD NAME (func OID TUSE) ) DS, I, M)
 
-    syntax FuncSpec   ::= InlineExport FuncSpec
- // -------------------------------------------
     rule #unfoldDefns(( func EXPO:InlineExport SPEC:FuncSpec ) DS, I, M)
       => #unfoldDefns(( func #freshId(I) EXPO  SPEC) DS, I +Int 1, M)
 
@@ -279,8 +386,6 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Tables
 
 ```k
-    syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
- // -------------------------------------------------------------
     rule #unfoldDefns(( table funcref ( elem ELEM ) ) DS, I, M)
       => #unfoldDefns(( table #freshId(I) funcref ( elem ELEM ) ) DS, I +Int 1, M)
 
@@ -289,13 +394,9 @@ Since the inserted type is module-level, any subsequent functions declaring the 
          ( elem  ID (offset (i32.const 0) .Instrs) ELEM )
          #unfoldDefns(DS, I, M)
 
-    syntax TableSpec  ::= InlineImport TableType
- // --------------------------------------------
     rule #unfoldDefns(( table OID:OptionalId (import MOD NAME) TT:TableType ) DS, I, M)
       => #unfoldDefns(( import MOD NAME (table OID TT) ) DS, I, M)
 
-    syntax TableSpec  ::= InlineExport TableSpec
- // --------------------------------------------
     rule #unfoldDefns(( table EXPO:InlineExport SPEC:TableSpec ) DS, I, M)
       => #unfoldDefns(( table #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
 
@@ -306,8 +407,6 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Memories
 
 ```k
-    syntax MemorySpec ::= "(" "data" DataString ")"
- // -----------------------------------------------
     rule #unfoldDefns(( memory ( data DATA ) ) DS, I, M)
       => #unfoldDefns(( memory #freshId(I) ( data DATA ) ) DS, I +Int 1, M)
 
@@ -316,47 +415,33 @@ Since the inserted type is module-level, any subsequent functions declaring the 
          ( data   ID (offset (i32.const 0) .Instrs) DATA )
          #unfoldDefns(DS, I, M)
 
-    syntax Int ::= #lengthDataPages ( DataString ) [function]
- // ---------------------------------------------------------
-    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
-
-    syntax MemorySpec ::= InlineImport MemType
- // ------------------------------------------
     rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I, M)
       => #unfoldDefns(( import MOD NAME (memory OID MT  ) ) DS, I, M)
 
-    syntax MemorySpec ::= InlineExport MemorySpec
- // ---------------------------------------------
     rule #unfoldDefns(( memory EXPO:InlineExport SPEC:MemorySpec ) DS, I, M)
       => #unfoldDefns(( memory #freshId(I:Int) EXPO SPEC ) DS, I +Int 1, M)
 
     rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I, M)
       => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I, M)
+
+    syntax Int ::= #lengthDataPages ( DataString ) [function]
+ // ---------------------------------------------------------
+    rule #lengthDataPages(DS:DataString) => lengthBytes(#DS2Bytes(DS)) up/Int #pageSize()
 ```
 
 #### Globals
 
 ```k
-    syntax TextFormatGlobalType ::= ValType | "(" "mut" ValType ")"
- // ---------------------------------------------------------------
-
     syntax GlobalType ::= asGMut (TextFormatGlobalType) [function]
  // --------------------------------------------------------------
     rule asGMut ( (mut T:ValType ) ) => var   T
     rule asGMut (      T:ValType   ) => const T
 
-    syntax GlobalDefn ::= "(" "global" OptionalId  GlobalSpec ")"
-    syntax GlobalSpec ::= TextFormatGlobalType Instr
- // ------------------------------------------------
     rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... id: OID, type: asGMut(TYP), init: unfoldInstrs(IS .Instrs))) _DS, _I, _M)
 
-    syntax GlobalSpec ::= InlineImport TextFormatGlobalType
- // -------------------------------------------------------
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
       => #unfoldDefns(( import MOD NAME (global OID TYP ) ) DS, I, M)
 
-    syntax GlobalSpec ::= InlineExport GlobalSpec
- // ---------------------------------------------
     rule #unfoldDefns(( global EXPO:InlineExport SPEC:GlobalSpec ) DS, I, M)
       => #unfoldDefns(( global #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
 
@@ -364,21 +449,9 @@ Since the inserted type is module-level, any subsequent functions declaring the 
       => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I, M)
 ```
 
-#### Offset
-
-The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
-
-```k
-    syntax Offset ::= Instrs
- // ------------------------
-```
-
 #### Element Segments
 
 ```k
-    syntax ElemDefn ::= "(" "elem" Offset        ElemSegment ")"
-                      | "(" "elem" Offset "func" ElemSegment ")"
- // ------------------------------------------------------------
     rule #unfoldDefns(((elem OFFSET func ES) => (elem OFFSET ES)) _DS, _I, _M)
     rule #unfoldDefns(((elem OFFSET:Offset ES ) => ( elem 0 OFFSET ES )) _DS, _I, _M)
     rule #unfoldDefns(((elem IDX OFFSET:Instrs ES ) => ( elem IDX ( offset OFFSET ) ES )) _DS, _I, _M)
@@ -389,8 +462,6 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 #### Data Segments
 
 ```k
-    syntax DataDefn ::= "(" "data" Offset DataString ")"
- // ----------------------------------------------------
     rule #unfoldDefns(((data OFFSET:Offset DATA ) => ( data 0 OFFSET DATA )) _DS, _I, _M)
     rule #unfoldDefns(((data IDX OFFSET:Instrs DATA ) => ( data IDX ( offset OFFSET ) DATA )) _DS, _I, _M)
 
@@ -445,44 +516,22 @@ The same identifier can optionally be repeated at the end of the block instructi
 `if` blocks may omit the `else`-branch, as long as the type declaration is empty.
 
 ```k
-    syntax Instr ::= BlockInstr
- // ---------------------------
-
-    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
- // --------------------------------------------------------------------------
     rule #unfoldInstrs( (block ID:Identifier TDS IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
     rule #unfoldInstrs(block TDS:TypeDecls IS end IS', DEPTH, M) => block TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
-    syntax BlockInstr ::= "loop" Identifier TypeDecls Instrs "end" OptionalId
- // -------------------------------------------------------------------------
     rule #unfoldInstrs( (loop ID:Identifier TDS IS end _OID' => loop    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
     rule #unfoldInstrs(loop TDS:TypeDecls IS end IS', DEPTH, M) => loop TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
    // TODO: Only unfold empty else-branch if the type declaration is empty.
-    syntax BlockInstr ::= "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
-                        | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
- // ------------------------------------------------------------------------------------------------
     rule #unfoldInstrs( (if ID:Identifier  TDS      IS                                   end _OID'' => if  ID TDS IS else .Instrs end) _IS'', _DEPTH, _M)
     rule #unfoldInstrs( (if                TDS      IS                                   end _OID'' => if     TDS IS else .Instrs end) _IS'', _DEPTH, _M)
     rule #unfoldInstrs( (if ID:Identifier  TDS      IS         else _OID':OptionalId IS' end _OID'' => if     TDS IS else IS'     end) _IS'',  DEPTH,  M => M [ ID <- DEPTH ])
     rule #unfoldInstrs(if TDS IS else IS' end IS'', DEPTH, M) => if TDS #unfoldInstrs(IS, DEPTH +Int 1, M) else #unfoldInstrs(IS', DEPTH +Int 1, M) end #unfoldInstrs(IS'', DEPTH, M)
 ```
 
-##### Folded Instructions
-
-Folded instructions are a syntactic sugar where expressions can be grouped using parentheses for higher readability.
+#### Folded Instructions
 
 ```k
-    syntax Instr ::= FoldedInstr
- // ----------------------------
-```
-
-One type of folded instruction are `PlainInstr`s wrapped in parentheses and optionally includes nested folded instructions to indicate its operands.
-
-```k
-    syntax FoldedInstr ::= "(" PlainInstr Instrs ")"
-                         | "(" PlainInstr        ")" [prefer]
- // ---------------------------------------------------------
     rule #unfoldInstrs(( PI:PlainInstr  IS:Instrs ):FoldedInstr IS', DEPTH, M)
       =>             (#unfoldInstrs(IS        , DEPTH, M)
          appendInstrs #unfoldInstrs(PI .Instrs, DEPTH, M))
@@ -495,25 +544,18 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
 Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
 
 ```k
-    syntax FoldedInstr ::= "(" "block" OptionalId TypeDecls Instrs ")"
- // ------------------------------------------------------------------
     rule #unfoldInstrs(((block ID:Identifier TDS IS)          => block ID TDS IS end) _IS', _DEPTH, _M)
     rule #unfoldInstrs(((block               TDS IS)          => block    TDS IS end) _IS', _DEPTH, _M)
 
-    syntax FoldedInstr ::= "(" "loop" OptionalId TypeDecls Instrs ")"
- // -----------------------------------------------------------------
     rule #unfoldInstrs(((loop ID:Identifier TDS IS)          => loop ID TDS IS end) _IS', _DEPTH, _M)
     rule #unfoldInstrs(((loop               TDS IS)          => loop    TDS IS end) _IS', _DEPTH, _M)
 
-    syntax FoldedInstr ::= "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" ")"
-                         | "(" "if" OptionalId TypeDecls Instrs "(" "then" Instrs ")" "(" "else" Instrs ")" ")"
- // -----------------------------------------------------------------------------------------------------------
     rule #unfoldInstrs(((if OID:OptionalId TDS COND (then IS)) => (if OID TDS COND (then IS) (else .Instrs))) _IS'', _DEPTH, _M)
     rule #unfoldInstrs(((if ID:Identifier  TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if ID TDS IS else IS' end IS''), _DEPTH, _M)
     rule #unfoldInstrs(((if                TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if    TDS IS else IS' end IS''), _DEPTH, _M)
 ```
 
-### Structuring Modules
+#### Structuring Modules
 
 The text format allows definitions to appear in any order in a module.
 In the abstract format, the module is a record, one for each type of definition.
@@ -551,7 +593,7 @@ In doing so, the respective ordering of all types of definitions are preserved.
     rule #reverseDefns(D:Defn DS:Defns, ACC) => #reverseDefns(DS, D ACC)
 ```
 
-## Replacing Identifiers and Unfolding Instructions
+### Replacing Identifiers and Unfolding Instructions
 
 The desugaring is done on the module level.
 First, if the program is just a list of definitions, that's an abbreviation for a single module.
@@ -569,7 +611,7 @@ If not, we distribute the text to abstract transformation out over all the state
     Then identifiers and other text-only constructs can be completely removed from the abstract format.
 
 
-### The Context
+#### The Context
 
 The `Context` contains information of how to map text-level identifiers to corresponding indices.
 Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
@@ -593,7 +635,7 @@ Record updates can currently not be done in a function rule which also does othe
     rule #updateFuncIdsAux(C, _, true) => C
 ```
 
-### Traversing the Full Program
+#### Traversing the Full Program
 
 The program is traversed in full once, context being gathered along the way.
 Since we do not have polymorphic functions available, we define one function per sort of syntactic construct we need to traverse, and for each type of list we encounter.
@@ -711,7 +753,7 @@ After unfolding, each type use in a function starts with an explicit reference t
     rule #t2aDefn<_C>(D:Defn) => D [owise]
 ```
 
-### Instructions
+#### Instructions
 
 ```k
     syntax Instr ::= "#t2aInstr" "<" Context ">" "(" Instr ")" [function]
@@ -821,7 +863,7 @@ They are currently supported in KWasm text files, but may be deprecated.
     rule #t2aInstr<_>(init_locals VS) => init_locals VS
 ```
 
-### List Functions
+#### List Functions
 
 The following are helper functions.
 They distribute the text-to-abstract functions above over lists.
@@ -841,7 +883,7 @@ They distribute the text-to-abstract functions above over lists.
     rule #t2aInstrs<_>(.Instrs) => .Instrs
 ```
 
-### Functions for Gathering Context
+#### Functions for Gathering Context
 
 The following are helper functions for gathering and updating context.
 
