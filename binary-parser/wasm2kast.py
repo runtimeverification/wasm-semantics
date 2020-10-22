@@ -1,6 +1,5 @@
 import sys
-
-from ast import *
+from wasm.parsers.module import parse_module
 
 
 def main():
@@ -14,20 +13,8 @@ def main():
 
 
 def wasm2kast(wasm_bytes : bytes):
-    ast = wasm2ast(wasm_bytes)
+    ast = parse_module(wasm_bytes)
     return None
-
-
-def wasm2ast(wasm_bytes : bytes) -> Module :
-    magic = wasm_bytes.read(4)
-    assert magic == b'\x00asm', magic
-    version = wasm_bytes.read(4)
-    print(version)
-    assert version == b'\x01\x00\x00\x00', version
-
-    remainder = wasm_bytes.peek()
-    assert remainder == b'', remainder
-    return Module()
 
 
 if __name__ == "__main__":

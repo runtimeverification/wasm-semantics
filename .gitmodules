@@ -6,3 +6,6 @@
 	path = tests/wasm-tests
 	url = https://github.com/webassembly/spec
 	ignore = untracked
+[submodule "deps/py-wasm"]
+	path = deps/py-wasm
+	url = https://github.com/ethereum/py-wasm

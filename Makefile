@@ -24,6 +24,9 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
+PYTHONPATH:=./deps/py-wasm/venv/lib/python3.6/site-packages:$(PYTHONPATH)
+export PYTHONPATH
+
 .PHONY: all clean deps                                                     \
         build build-llvm build-haskell                                     \
         test test-execution test-simple test-prove                         \
