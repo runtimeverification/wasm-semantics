@@ -189,6 +189,30 @@ proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
 test-prove: $(proof_tests:=.prove)
 
+### Binary Parser Test
+
+BINARY:=python3 binary-parser/wasm2kast.py
+
+tests/binary/%.wasm: tests/binary/%.wat
+	wat2wasm $< --output=$@
+
+tests/%.wasm.bparse: tests/%.wasm
+	$(BINARY) $<
+
+binary_parser_tests:=$(wildcard tests/binary/*.wat)
+
+test-binary-parser: $(binary_parser_tests:.wat=.wasm.bparse)
+
+# Analysis
+# --------
+json_build := $(haskell_dir)/$(haskell_main_file)-kompiled/parsed.json
+
+$(json_build):
+	$(MAKE) build-haskell -B KOMPILE_OPTS="--emit-json"
+
+graph-imports: $(json_build)
+	kpyk $(haskell_dir)/$(haskell_main_file)-kompiled graph-imports
+
 # Presentation
 # ------------
 
