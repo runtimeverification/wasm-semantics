@@ -24,7 +24,7 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
-PYTHONPATH:=./deps/py-wasm/venv/lib/python3.6/site-packages:$(PYTHONPATH)
+PYTHONPATH:=./deps/py-wasm/venv/lib/python3.6/site-packages:./deps/py-wasm:$(PYTHONPATH)
 export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
