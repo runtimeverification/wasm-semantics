@@ -54,7 +54,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax Stmt  ::= Instr | Defn
  // -----------------------------
 
-    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
+    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt), symbol]
     syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
     syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
     syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
@@ -1414,15 +1414,15 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata)
- // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata) [klabel(aModuleDecl), symbol]
+ // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
  // ---------------------------------------------------------------------
     rule #emptyModule(OID) =>  #module (... types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns, metadata: #meta(... id: OID, funcIds: .Map))
 
-    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map)
- // -------------------------------------------------------------
+    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map) [klabel(moduleMeta), symbol]
+ // ------------------------------------------------------------------------------------------
 ```
 
 A new module instance gets allocated.

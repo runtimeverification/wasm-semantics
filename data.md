@@ -32,7 +32,7 @@ And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
     syntax Identifier ::= IdentifierToken
-    syntax OptionalId ::= "" [klabel(.Identifier)]
+    syntax OptionalId ::= "" [klabel(.Identifier), symbol]
                         | Identifier
  // --------------------------------
 ```
