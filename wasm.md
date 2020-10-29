@@ -703,7 +703,7 @@ Type could be declared explicitly and could optionally bind with an identifier.
 When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
 
 ```k
-    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId)
+    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId) [klabel(aTypeDecl), symbol]
     syntax Alloc    ::= alloctype (OptionalId, FuncType)
  // ----------------------------------------------------
     rule <instrs> #type(... type: TYPE, metadata: OID) => alloctype(OID, TYPE) ... </instrs>

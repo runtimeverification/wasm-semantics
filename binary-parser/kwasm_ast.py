@@ -1,29 +1,97 @@
 from pyk.kast import KSequence, KConstant, KApply, KToken
 
+
+
+###########
+# KLabels #
+###########
+
 MODULE = 'aModuleDecl'
-EMPTY_DEFNS = '.List{\"listStmt\"}_EmptyStmts'
 MODULE_METADATA = 'moduleMeta'
+TYPE = 'aTypeDecl'
+FUNC_TYPE = 'aFuncType'
+VEC_TYPE = 'aVecType'
+VAL_TYPES = 'listValTypes'
+VAL_TYPES_NIL = '.List{\"listValTypes\"}_ValTypes'
+I32 = 'i32'
+I64 = 'i32'
+
+DEFNS = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
+
+EMPTY_STMTS = '.List{\"listStmt\"}_EmptyStmts'
 EMPTY_ID = '.Identifier'
 EMPTY_MAP = '.Map'
 
-def empty_defns():
-    """Empty list of definitions."""
-    return KApply(EMPTY_DEFNS, [])
+#########
+# Lists #
+#########
 
-def empty_module_metadata():
-    """No metadata."""
-    return KApply(MODULE_METADATA, [KApply(EMPTY_ID, []), KApply(EMPTY_MAP, [])])
+def KNamedList(klabel, empty_klabel, items):
+    if items == []:
+        return KApply(empty_klabel, [])
+    head = items[0]
+    tail = KNamedList(klabel, empty_klabel, items[1:])
+    return KApply(klabel, [head, tail])
 
-def module(types=None,
-           funcs=None,
-           tables=None,
-           mems=None,
-           globs=None,
-           elem=None,
-           data=None,
-           start=None,
-           imports=None,
-           exports=None,
-           metadata=None):
+def defns(items):
+    return KNamedList(DEFNS, EMPTY_STMTS, items)
+
+def val_types(items):
+    return KNamedList(VAL_TYPES, VAL_TYPES_NIL, items)
+
+###########
+# Empties #
+###########
+
+EMPTY_ID = KApply(EMPTY_ID, [])
+
+EMPTY_DEFNS = KApply(EMPTY_STMTS, [])
+
+EMPTY_MODULE_METADATA = KApply(MODULE_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])])
+
+############
+# ValTypes #
+############
+
+i32 = KApply('i32', [])
+i64 = KApply('i64', [])
+f32 = KApply('f32', [])
+f64 = KApply('f64', [])
+
+def vec_type(valtypes):
+    return KApply(VEC_TYPE, [valtypes])
+
+def func_type(params, results):
+    return KApply(FUNC_TYPE, [params, results])
+
+################
+# Declarations #
+################
+
+def type(func_type, metadata=EMPTY_ID):
+    return KApply(TYPE, [func_type, metadata])
+
+def module(types=EMPTY_DEFNS,
+           funcs=EMPTY_DEFNS,
+           tables=EMPTY_DEFNS,
+           mems=EMPTY_DEFNS,
+           globs=EMPTY_DEFNS,
+           elem=EMPTY_DEFNS,
+           data=EMPTY_DEFNS,
+           start=EMPTY_DEFNS,
+           imports=EMPTY_DEFNS,
+           exports=EMPTY_DEFNS,
+           metadata=EMPTY_MODULE_METADATA):
     """Construct a Kast of a module."""
-    return KApply(MODULE, [empty_defns()] * 10 + [empty_module_metadata()])
+    return KApply(MODULE,
+                  [types,
+                   funcs,
+                   tables,
+                   mems,
+                   globs,
+                   elem,
+                   data,
+                   start,
+                   imports,
+                   exports,
+                   metadata])
