@@ -1,4 +1,6 @@
 import sys
+import pyk
+
 from wasm.parsers.module import parse_module
 
 

@@ -12,7 +12,7 @@ else
   K_RELEASE ?= $(dir $(shell which kompile))..
 endif
 K_BIN := $(K_RELEASE)/bin
-K_LIB := $(K_RELEASE)/lib
+K_LIB := $(K_RELEASE)/lib/kframework
 export K_RELEASE
 
 ifneq ($(RELEASE),)
@@ -24,7 +24,11 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
-PYTHONPATH:=./deps/py-wasm/venv/lib/python3.6/site-packages:./deps/py-wasm:$(PYTHONPATH)
+PYK_PATH         := $(K_LIB)
+PYWASM_PATH      := ./deps/py-wasm
+PYWASM_DEPS_PATH := ./deps/py-wasm/venv/lib/python3.6/site-packages
+
+PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYWASM_DEPTHS_PATH):$(PYTHONPATH)
 export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
