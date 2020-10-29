@@ -198,7 +198,7 @@ test-prove: $(proof_tests:=.prove)
 
 ### Binary Parser Test
 
-BINARY:=python3 binary-parser/wasm2kast.py
+BINARY:=python3 binary-parser/test.py
 
 tests/binary/%.wasm: tests/binary/%.wat
 	wat2wasm $< --output=$@

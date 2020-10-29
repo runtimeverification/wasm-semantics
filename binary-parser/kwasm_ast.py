@@ -1,0 +1,5 @@
+MODULE = 'aModuleDecl'
+EMPTY_DEFNS = '.List{\"listStmt\"}_EmptyStmts'
+MODULE_METADATA = 'moduleMeta'
+EMPTY_ID = '.Identifier'
+EMPTY_MAP = '.Map'
