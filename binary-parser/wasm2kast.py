@@ -1,11 +1,9 @@
 import sys
-import pyk
 import json
-import kwasm_ast as labels
+import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
 
-from pyk.kast import KSequence, KConstant, KApply, KToken
 
 def main():
     if len(list(sys.argv)) == 1:
@@ -25,8 +23,7 @@ def wasm2kast(wasm_bytes : bytes) -> dict:
 
 def ast2kast(wasm_ast : Module) -> dict:
     """Returns a dictionary representing the Kast JSON."""
-    return KApply(labels.MODULE, [KApply(labels.EMPTY_DEFNS, [])] * 10 + [KApply(labels.MODULE_METADATA, [KApply(labels.EMPTY_ID, []), KApply(labels.EMPTY_MAP, [])])])
-
+    return a.module()
 
 if __name__ == "__main__":
     main()
