@@ -9,3 +9,4 @@
 [submodule "deps/py-wasm"]
 	path = deps/py-wasm
 	url = https://github.com/ethereum/py-wasm
+	ignore = untracked
