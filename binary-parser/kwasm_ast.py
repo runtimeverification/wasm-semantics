@@ -16,11 +16,22 @@ VAL_TYPES_NIL = '.List{\"listValTypes\"}_ValTypes'
 I32 = 'i32'
 I64 = 'i32'
 
-DEFNS = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
+FUNC = 'aFuncDefn'
+FUNC_METADATA = 'funcMeta'
+
+DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
+INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
 EMPTY_STMTS = '.List{\"listStmt\"}_EmptyStmts'
 EMPTY_ID = '.Identifier'
 EMPTY_MAP = '.Map'
+
+###################
+# Basic Datatypes #
+###################
+
+def KInt(value : int):
+    return KToken(str(value), 'Int')
 
 #########
 # Lists #
@@ -36,6 +47,9 @@ def KNamedList(klabel, empty_klabel, items):
 def defns(items):
     return KNamedList(DEFNS, EMPTY_STMTS, items)
 
+def instrs(items):
+    return KNamedList(INSTRS, EMPTY_STMTS, items)
+
 def val_types(items):
     return KNamedList(VAL_TYPES, VAL_TYPES_NIL, items)
 
@@ -48,6 +62,8 @@ EMPTY_ID = KApply(EMPTY_ID, [])
 EMPTY_DEFNS = KApply(EMPTY_STMTS, [])
 
 EMPTY_MODULE_METADATA = KApply(MODULE_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])])
+
+EMPTY_FUNC_METADATA = KApply(FUNC_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])])
 
 ############
 # ValTypes #
@@ -70,6 +86,9 @@ def func_type(params, results):
 
 def type(func_type, metadata=EMPTY_ID):
     return KApply(TYPE, [func_type, metadata])
+
+def func(type, locals, body, metadata=EMPTY_FUNC_METADATA):
+    return KApply(FUNC, [type, locals, body, metadata])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,

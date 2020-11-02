@@ -732,7 +732,7 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata)
+    syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata) [klabel(aFuncDefn), symbol]
     syntax Alloc    ::= allocfunc ( Int , Int , FuncType , VecType , Instrs , FuncMetadata )
  // ----------------------------------------------------------------------------------------
     rule <instrs> #func(... type: TYPIDX, locals: LOCALS, body: INSTRS, metadata: META) => allocfunc(CUR, NEXTADDR, TYPE, LOCALS, INSTRS, META) ... </instrs>
@@ -765,8 +765,8 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </funcs>
 
-    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map)
- // ------------------------------------------------------------
+    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map) [klabel(funcMeta), symbol]
+ // ---------------------------------------------------------------------------------------
 ```
 
 ### Function Invocation/Return

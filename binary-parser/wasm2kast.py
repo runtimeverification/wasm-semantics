@@ -3,7 +3,7 @@ import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType
+from wasm.datatypes import ValType, FunctionType, Function
 
 def main():
     if len(list(sys.argv)) == 1:
@@ -21,8 +21,24 @@ def wasm2kast(wasm_bytes : bytes) -> dict:
 
 def ast2kast(wasm_ast : Module) -> dict:
     """Returns a dictionary representing the Kast JSON."""
-    types = a.defns([a.type(func_type(t.params, t.results)) for t in wasm_ast.types])
-    return a.module(types=types)
+    print(wasm_ast)
+    types = a.defns([type(x) for x in wasm_ast.types])
+    funcs = a.defns([func(x) for x in wasm_ast.funcs])
+    return a.module(types=types, funcs=funcs)
+
+#########
+# Defns #
+#########
+
+def type(t : FunctionType):
+    return a.type(func_type(t.params, t.results))
+
+def func(f : Function):
+    type = a.KInt(f.type_idx)
+    ls_list = [val_type(x) for x in f.locals]
+    locals = a.vec_type(a.val_types(ls_list))
+    body = a.instrs([]) # TODO: Implement instructions.
+    return a.func(type, locals, body)
 
 ########
 # Data #
