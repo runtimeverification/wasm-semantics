@@ -19,6 +19,7 @@ pipeline {
           options { timeout(time: 25, unit: 'MINUTES') }
           parallel {
             stage('Simple')            { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-simple -j4'                } }
+            stage('Binary Parse')      { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-simple -j4'                } }
             stage('Conformance Parse') { steps { sh 'make test-conformance-parse -j3'                                } }
             stage('Conformance')       { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-conformance-supported -j4' } }
             stage('Proofs')            { steps { sh 'make test-prove -j2'                                            } }

@@ -33,7 +33,7 @@ export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
         build build-llvm build-haskell                                     \
-        test test-execution test-simple test-prove                         \
+        test test-execution test-simple test-prove test-binary-parser      \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
@@ -143,7 +143,7 @@ tests/proofs/memory-spec.k.prove:    KPROVE_OPTS   = --concrete-rules WASM-DATA.
 tests/proofs/wrc20-spec.k.prove:     KPROVE_MODULE = WRC20-LEMMAS
 tests/proofs/wrc20-spec.k.prove:     KPROVE_OPTS   = --concrete-rules WASM-DATA.wrap-Positive,WASM-DATA.setRange-Positive,WASM-DATA.getRange-Positive,WASM-DATA.get-Existing,WASM-DATA.set-Extend
 
-test: test-execution test-prove
+test: test-execution test-prove test-binary-parser
 
 # Generic Test Harnesses
 
