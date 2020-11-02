@@ -27,11 +27,11 @@ EMPTY_MAP = '.Map'
 #########
 
 def KNamedList(klabel, empty_klabel, items):
-    if items == []:
-        return KApply(empty_klabel, [])
-    head = items[0]
-    tail = KNamedList(klabel, empty_klabel, items[1:])
-    return KApply(klabel, [head, tail])
+    tail = KApply(empty_klabel, [])
+    while not items == []:
+        last = items.pop()
+        tail = KApply(klabel, [last, tail])
+    return tail
 
 def defns(items):
     return KNamedList(DEFNS, EMPTY_STMTS, items)

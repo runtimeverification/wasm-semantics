@@ -1,5 +1,6 @@
 import wasm2kast
 import pyk
+import sys
 
 WASM_definition_llvm_no_coverage_dir = '.build/defn/llvm'
 
@@ -12,6 +13,8 @@ def run_module(parsed_module):
     (rc, new_wasm_config, err) = pyk.krunJSON(WASM_definition_llvm_no_coverage_dir, input_json, krunArgs = krun_args, teeOutput=True)
     if rc != 0:
         raise Exception("Received error while running: " + err )
+
+sys.setrecursionlimit(1500000000)
 
 if __name__ == "__main__":
     module = wasm2kast.main()
