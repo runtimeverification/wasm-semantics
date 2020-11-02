@@ -8,7 +8,7 @@ from pyk.kast import KSequence, KConstant, KApply, KToken
 
 MODULE = 'aModuleDecl'
 MODULE_METADATA = 'moduleMeta'
-TYPE = 'aTypeDecl'
+TYPE = 'aTypeDefn'
 FUNC_TYPE = 'aFuncType'
 VEC_TYPE = 'aVecType'
 VAL_TYPES = 'listValTypes'
