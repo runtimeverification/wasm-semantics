@@ -49,7 +49,7 @@ K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAP
 
 deps: $(K_JAR) $(TANGLER)
 
-$(PYWAS_PATH)/lib:
+$(PYWAS_PATH)/venv:
 	cd $(PYWASM_PATH) && virtualenv -p python3 venv && . venv/bin/activate
 
 $(K_JAR):
@@ -206,7 +206,7 @@ BINARY:=python3 binary-parser/test.py
 tests/binary/%.wasm: tests/binary/%.wat
 	wat2wasm $< --output=$@
 
-tests/%.wasm.bparse: tests/%.wasm  $(PYWASM_PATH)/lib
+tests/%.wasm.bparse: tests/%.wasm  $(PYWASM_PATH)/venv
 	$(BINARY) $<
 
 binary_parser_tests:=$(wildcard tests/binary/*.wat)
