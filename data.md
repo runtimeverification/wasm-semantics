@@ -213,6 +213,11 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 
     rule #getInts(E _ES, 0) => E
     rule #getInts(_E ES, I) => #getInts(ES, I -Int 1) requires I >Int 0
+
+    syntax Ints ::= elemSegment2Ints ( ElemSegment ) [function]
+ // -----------------------------------------------------------
+    rule elemSegment2Ints(.ElemSegment) => .Ints
+    rule elemSegment2Ints(E:Int ES)     => E elemSegment2Ints(ES)
 ```
 
 ### OptionalInt

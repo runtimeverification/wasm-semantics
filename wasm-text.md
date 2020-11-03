@@ -512,13 +512,13 @@ The correct label index is calculated by looking at whih depth the index occured
 Conceptually, `br ID => br CURRENT_EXECUTION_DEPTH -Int IDENTIFIER_LABEL_DEPTH -Int 1`.
 
 ```k
-    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => #br(      DEPTH -Int {M [ ID ]}:>Int -Int 1) #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => #br_if(   DEPTH -Int {M [ ID ]}:>Int -Int 1) #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => #br_table(elemSegment2Indices(ES, DEPTH, M)) #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br      DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if   DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => br_table elemSegment2Indices(ES, DEPTH, M) #unfoldInstrs(IS, DEPTH, M)
 
-    syntax Ints ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
- // -----------------------------------------------------------------------
-    rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .Ints
+    syntax ElemSegment ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
+ // ------------------------------------------------------------------------------
+    rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .ElemSegment
     rule elemSegment2Indices(ID:Identifier ES,  DEPTH,  M) => DEPTH -Int {M [ ID ]}:>Int -Int 1 elemSegment2Indices(ES, DEPTH, M)
     rule elemSegment2Indices(E             ES,  DEPTH,  M) => E                                 elemSegment2Indices(ES, DEPTH, M) [owise]
 ```
@@ -779,9 +779,9 @@ After unfolding, each type use in a function starts with an explicit reference t
 ```k
     rule #t2aInstr<_>(unreachable) => unreachable
     rule #t2aInstr<_>(nop)         => nop
-    rule #t2aInstr<_>(br L)        => br L
-    rule #t2aInstr<_>(br_if L)     => br_if L
-    rule #t2aInstr<_>(br_table ES) => br_table ES
+    rule #t2aInstr<_>(br L:Int)    => #br(L)
+    rule #t2aInstr<_>(br_if L:Int) => #br_if(L)
+    rule #t2aInstr<_>(br_table ES) => #br_table(elemSegment2Ints(ES))
     rule #t2aInstr<_>(return)      => return
 
     rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => #call({FIDS[ID]}:>Int)
