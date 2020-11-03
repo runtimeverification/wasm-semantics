@@ -83,7 +83,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | ValType "." CvtOp
                         | "drop"
                         | "select"
-                        | "nop"
+                        | "nop"                           [klabel(aNop), symbol]
                         | "unreachable"
                         | "br" Index
                         | "br_if" Index
@@ -493,10 +493,10 @@ It simply executes the block then records a label with an empty continuation.
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
 
     syntax Instr ::= "block" TypeDecls Instrs "end"
-                   | "block" VecType   Instrs "end"
- // -----------------------------------------------
-    rule <instrs> block TDECLS:TypeDecls IS end => block gatherTypes(result, TDECLS) IS end ... </instrs>
-    rule <instrs> block VECTYP:VecType   IS end => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
+                   | #block(VecType, Instrs) [klabel(aBlock), symbol]
+ // ------------------------------------------------------------------
+    rule <instrs> block TDECLS:TypeDecls IS end => #block(gatherTypes(result, TDECLS), IS) ... </instrs>
+    rule <instrs> #block(VECTYP, IS) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -794,7 +794,7 @@ The `#take` function will return the parameter stack in the reversed order, then
  // -------------------------------------
     rule <instrs> ( invoke FADDR )
                => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
-               ~> block [TRANGE] INSTRS end
+               ~> #block([TRANGE], INSTRS)
                ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL
                ...
          </instrs>
