@@ -23,7 +23,6 @@ def wasm2kast(wasm_bytes : bytes) -> dict:
 
 def ast2kast(wasm_ast : Module) -> dict:
     """Returns a dictionary representing the Kast JSON."""
-    print(wasm_ast)
     types = a.defns([type(x) for x in wasm_ast.types])
     funcs = a.defns([func(x) for x in wasm_ast.funcs])
     return a.module(types=types, funcs=funcs)

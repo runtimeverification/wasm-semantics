@@ -16,8 +16,16 @@ def run_module(parsed_module):
     if rc != 0:
         raise Exception("Received error while running: " + err )
 
+def pykPrettyPrint(module):
+    WASM_definition_llvm_no_coverage_dir = '.build/defn/llvm'
+    WASM_definition_main_file = 'test'
+    WASM_definition_llvm_no_coverage = pyk.readKastTerm(WASM_definition_llvm_no_coverage_dir + '/' + WASM_definition_main_file + '-kompiled/compiled.json')
+    WASM_symbols_llvm_no_coverage = pyk.buildSymbolTable(WASM_definition_llvm_no_coverage)
+    print(pyk.prettyPrintKast(module, WASM_symbols_llvm_no_coverage))
+
 sys.setrecursionlimit(1500000000)
 
 if __name__ == "__main__":
     module = wasm2kast.main()
+    pykPrettyPrint(module)
     run_module(module)
