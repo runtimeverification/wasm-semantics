@@ -86,6 +86,17 @@ module WASM-TEXT-COMMON-SYNTAX
 
 ### Instructions
 
+#### Plain Instructions
+
+```k
+    syntax PlainInstr ::= "br" Index
+                        | "br_if" Index
+                        | "br_table" ElemSegment
+ // --------------------------------------------
+```
+
+#### Block Instructions
+
 ```k
     syntax Instr ::= BlockInstr
  // ---------------------------
@@ -500,13 +511,13 @@ The correct label index is calculated by looking at whih depth the index occured
 Conceptually, `br ID => br CURRENT_EXECUTION_DEPTH -Int IDENTIFIER_LABEL_DEPTH -Int 1`.
 
 ```k
-    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br       DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if    DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => br_table elemSegment2Indices(ES, DEPTH, M) #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => #br(      DEPTH -Int {M [ ID ]}:>Int -Int 1) #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => #br_if(   DEPTH -Int {M [ ID ]}:>Int -Int 1) #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => #br_table(elemSegment2Indices(ES, DEPTH, M)) #unfoldInstrs(IS, DEPTH, M)
 
-    syntax ElemSegment ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
- // ------------------------------------------------------------------------------
-    rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .ElemSegment
+    syntax Ints ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
+ // -----------------------------------------------------------------------
+    rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .Ints
     rule elemSegment2Indices(ID:Identifier ES,  DEPTH,  M) => DEPTH -Int {M [ ID ]}:>Int -Int 1 elemSegment2Indices(ES, DEPTH, M)
     rule elemSegment2Indices(E             ES,  DEPTH,  M) => E                                 elemSegment2Indices(ES, DEPTH, M) [owise]
 ```

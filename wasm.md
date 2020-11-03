@@ -85,9 +85,6 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "select"
                         | "nop"                           [klabel(aNop), symbol]
                         | "unreachable"
-                        | "br" Index
-                        | "br_if" Index
-                        | "br_table" ElemSegment
                         | "local.get" Index
                         | "global.get" Index
                         | "global.set" Index
@@ -506,20 +503,26 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    rule <instrs> br _IDX ~> (_S:Stmt => .) ... </instrs>
-    rule <instrs> br 0   ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
+    syntax Instr ::= #br( Int ) [klabel(aBr), symbol]
+ // -------------------------------------------------
+    rule <instrs> #br(_IDX) ~> (_S:Stmt => .) ... </instrs>
+    rule <instrs> #br(0   ) ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
-    rule <instrs> br N:Int ~> _L:Label => br N -Int 1 ... </instrs>
+    rule <instrs> #br(N:Int) ~> _L:Label => #br(N -Int 1) ... </instrs>
       requires N >Int 0
 
-    rule <instrs> br_if IDX => br IDX ... </instrs>
+    syntax Instr ::= "#br_if" "(" Int ")" [klabel(aBr_if), symbol]
+ // --------------------------------------------------------------
+    rule <instrs> #br_if(IDX) => #br(IDX) ... </instrs>
          <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
-    rule <instrs> br_if _IDX => .    ... </instrs>
+    rule <instrs> #br_if(_IDX) => .    ... </instrs>
          <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
-    rule <instrs> br_table ES:ElemSegment => br #getElemSegment(ES, minInt(VAL, #lenElemSegment(ES) -Int 1)) ... </instrs>
+    syntax Instr ::= "#br_table" "(" Ints ")" [klabel(aBr_table), symbol]
+ // ---------------------------------------------------------------------
+    rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenElemSegment(ES) -Int 1))) ... </instrs>
          <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
 
