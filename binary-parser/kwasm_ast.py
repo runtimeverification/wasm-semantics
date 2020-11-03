@@ -112,19 +112,30 @@ def CALL(function_idx : int):
 def CALL_INDIRECT(type_idx : int):
     return KApply('aCall_indirect', [KInt(type_idx)])
 
-DROP = NOP
-END = NOP
-F32_ABS = NOP
-F32_CEIL = NOP
+  ##############
+  # Float Unop #
+  ##############
+F32_ABS  = KApply('aFUnOp', [f32, KApply('aAbs', [])])
+F32_CEIL = KApply('aFUnOp', [f32, KApply('aCeil', [])])
+F32_FLOOR = KApply('aFUnOp', [f32, KApply('aFloor', [])])
+F32_NEAREST = KApply('aFUnOp', [f32, KApply('aNearest', [])])
+F32_NEG = KApply('aFUnOp', [f32, KApply('aNeg', [])])
+F32_SQRT = KApply('aFUnOp', [f32, KApply('aSqrt', [])])
+F32_TRUNC = KApply('aFUnOp', [f32, KApply('aTrunc', [])])
+F64_ABS  = KApply('aFUnOp', [f64, KApply('aAbs', [])])
+F64_CEIL = KApply('aFUnOp', [f64, KApply('aCeil', [])])
+F64_FLOOR = KApply('aFUnOp', [f64, KApply('aFloor', [])])
+F64_NEAREST = KApply('aFUnOp', [f64, KApply('aNearest', [])])
+F64_NEG = KApply('aFUnOp', [f64, KApply('aNeg', [])])
+F64_SQRT = KApply('aFUnOp', [f64, KApply('aSqrt', [])])
+F64_TRUNC = KApply('aFUnOp', [f64, KApply('aTrunc', [])])
+
+DROP = KApply('aDrop', [])
 F32_CONST = NOP
 F32_DEMOTE_F64 = NOP
-F32_FLOOR = NOP
 F32_LOAD = NOP
-F32_NEAREST = NOP
-F32_NEG = NOP
-F32_SQRT = NOP
+
 F32_STORE = NOP
-F32_TRUNC = NOP
 F64_ADD = NOP
 F64_CONVERT_S_I32 = NOP
 F64_CONVERT_U_I32 = NOP

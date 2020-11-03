@@ -13,8 +13,14 @@ module WASM-NUMERIC-SYNTAX
     syntax IUnOp ::= "clz" | "ctz" | "popcnt"
  // -----------------------------------------
 
-    syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
- // --------------------------------------------------------------------------------
+    syntax FUnOp ::= "abs"     [klabel(aAbs)    , symbol]
+                   | "neg"     [klabel(aNeg)    , symbol]
+                   | "sqrt"    [klabel(aSqrt)   , symbol]
+                   | "floor"   [klabel(aFloor)  , symbol]
+                   | "ceil"    [klabel(aCeil)   , symbol]
+                   | "trunc"   [klabel(aTrunc)  , symbol]
+                   | "nearest" [klabel(aNearest), symbol]
+ // --------------------------------------------------------------------------------------------------------
 
     syntax IBinOp ::= "add" | "sub" | "mul"
                     | "div_u" | "rem_u"

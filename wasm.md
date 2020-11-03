@@ -74,7 +74,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax PlainInstr ::= IValType "." "const" WasmInt
                         | FValType "." "const" Number
                         | IValType "." IUnOp
-                        | FValType "." FUnOp
+                        | FValType "." FUnOp              [klabel(aFUnOp), symbol]
                         | IValType "." IBinOp
                         | FValType "." FBinOp
                         | IValType "." TestOp
