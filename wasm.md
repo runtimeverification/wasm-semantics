@@ -95,8 +95,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "memory.grow"
  // -----------------------------------
 
-    syntax PlainInstr  ::= "call" Index
-                         | "call_indirect" TypeUse
+    syntax PlainInstr  ::= "call_indirect" TypeUse
     syntax TypeUse     ::= TypeDecls
                          | "(type" Index ")"           [prefer] // TODO: Remove and move to wasm-text.
                          | "(type" Index ")" TypeDecls
@@ -823,7 +822,9 @@ The `#take` function will return the parameter stack in the reversed order, then
 `call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
 
 ```k
-    rule <instrs> call IDX:Int => ( invoke FADDR ) ... </instrs>
+    syntax Instr ::= #call(Int) [klabel(aCall), symbol]
+ // ---------------------------------------------------
+    rule <instrs> #call(IDX) => ( invoke FADDR ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>

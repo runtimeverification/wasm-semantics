@@ -106,7 +106,9 @@ def BR_IF(idx : int):
 def BR_TABLE(idxs : [int], default):
     return KApply('aBr_table', [ints(idxs + (default,))])
 
-CALL = NOP
+def CALL(idx : int):
+    return KApply('aCall', [KInt(idx)])
+
 CALL_INDIRECT = NOP
 DROP = NOP
 END = NOP

@@ -92,7 +92,8 @@ module WASM-TEXT-COMMON-SYNTAX
     syntax PlainInstr ::= "br" Index
                         | "br_if" Index
                         | "br_table" ElemSegment
- // --------------------------------------------
+                        | "call" Index
+ // ----------------------------------
 ```
 
 #### Block Instructions
@@ -783,9 +784,9 @@ After unfolding, each type use in a function starts with an explicit reference t
     rule #t2aInstr<_>(br_table ES) => br_table ES
     rule #t2aInstr<_>(return)      => return
 
-    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => call {FIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => #call({FIDS[ID]}:>Int)
       requires ID in_keys(FIDS)
-    rule #t2aInstr<_>                     (call I:Int)         => call I
+    rule #t2aInstr<_>                     (call I:Int)         => #call(I)
 
     rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
 ```
