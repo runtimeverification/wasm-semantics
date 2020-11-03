@@ -4,7 +4,7 @@ module LOOPS-SPEC
     imports KWASM-LEMMAS
 
     // Lemma
-    rule <instrs> br 0
+    rule <instrs> #br(0)
                ~> label // Loop label.
                     [ .ValTypes ]
                     { loop .TypeDecls
@@ -17,8 +17,8 @@ module LOOPS-SPEC
                         ITYPE.sub
                         local.tee 0
                         ITYPE.eqz
-                        br_if 1
-                        br 0
+                        #br_if(1)
+                        #br(0)
                       end
                    }
                    .ValStack
@@ -49,8 +49,8 @@ module LOOPS-SPEC
                      ITYPE.sub
                      local.tee 0
                      ITYPE.eqz
-                     br_if 1
-                     br 0
+                     #br_if(1)
+                     #br(0)
                 end
              end
           => .
