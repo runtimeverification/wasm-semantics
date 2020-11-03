@@ -5,7 +5,8 @@ RUN    apt-get update         \
     && apt-get upgrade --yes  \
     && apt-get install --yes  \
                        cmake  \
-                       pandoc
+                       pandoc \
+                       python3
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
