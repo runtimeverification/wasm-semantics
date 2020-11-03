@@ -833,7 +833,16 @@ The `#take` function will return the parameter stack in the reversed order, then
          </moduleInst>
 ```
 
-TODO: Desugar to use a type-index.
+```k
+    syntax Instr ::= "#call_indirect" "(" Int ")" [klabel(aCall_indirect), symbol]
+ // ------------------------------------------------------------------------------
+    rule <instrs> #call_indirect(I) => call_indirect (type I) ... </instrs>
+```
+
+TODO: This is kept for compatibility with the text format.
+The `TypeUses` should be desugared to use a type-index instead.
+But this requires a recursive descent into all the instructions of a function, with feedback up to the top level.
+The types need to be inserted at the definitions level, if a previously undeclared type is present in a `call_indirect` function.
 
 ```k
     rule <instrs> call_indirect TUSE:TypeUse => ( invoke FADDR ) ... </instrs>

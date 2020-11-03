@@ -61,9 +61,9 @@ def instr(i):
         return a.BR_TABLE(i.label_indices, i.default_idx)
     if i.opcode == B.CALL:
         return a.CALL(i.function_idx)
-    # TODO: Implement instructions.
     if i.opcode == B.CALL_INDIRECT:
-        return a.CALL_INDIRECT
+        return a.CALL_INDIRECT(i.type_idx)
+    # TODO: Implement instructions.
     if i.opcode == B.DROP:
         return a.DROP
     if i.opcode == B.END:

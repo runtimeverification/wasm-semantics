@@ -106,10 +106,12 @@ def BR_IF(idx : int):
 def BR_TABLE(idxs : [int], default):
     return KApply('aBr_table', [ints(idxs + (default,))])
 
-def CALL(idx : int):
-    return KApply('aCall', [KInt(idx)])
+def CALL(function_idx : int):
+    return KApply('aCall', [KInt(function_idx)])
 
-CALL_INDIRECT = NOP
+def CALL_INDIRECT(type_idx : int):
+    return KApply('aCall_indirect', [KInt(type_idx)])
+
 DROP = NOP
 END = NOP
 F32_ABS = NOP
