@@ -53,17 +53,13 @@ def instr(i):
         instrs = a.instrs([instr(x) for x in i.instructions ])
         res = vec_type(i.result_type)
         return a.BLOCK(res, instrs)
-    # TODO: Implement instructions.
     if i.opcode == B.BR:
-        return a.BR
+        return a.BR(i.label_idx)
     if i.opcode == B.BR_IF:
-        return a.BR_IF
-    if i.opcode == B.BR:
-        return a.BR
-    if i.opcode == B.BR_IF:
-        return a.BR_IF
+        return a.BR_IF(i.label_idx)
     if i.opcode == B.BR_TABLE:
-        return a.BR_TABLE
+        return a.BR_TABLE(i.label_indices, i.default_idx)
+    # TODO: Implement instructions.
     if i.opcode == B.CALL:
         return a.CALL
     if i.opcode == B.CALL_INDIRECT:

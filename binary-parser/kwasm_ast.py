@@ -17,6 +17,8 @@ VAL_TYPES = 'listValTypes'
 VAL_TYPES_NIL = '.List{\"listValTypes\"}_ValTypes'
 I32 = 'i32'
 I64 = 'i32'
+INTS = 'listInt'
+INTS_NIL = '.List{\"listInt\"}_Ints'
 
 FUNC = 'aFuncDefn'
 FUNC_METADATA = 'funcMeta'
@@ -55,6 +57,10 @@ def instrs(items):
 def val_types(items):
     return KNamedList(VAL_TYPES, VAL_TYPES_NIL, items)
 
+def ints(iis : [int]):
+    kis = [KInt(x) for x in iis]
+    return KNamedList(INTS, INTS_NIL, kis)
+
 ###########
 # Empties #
 ###########
@@ -91,9 +97,15 @@ NOP = KApply('aNop', [])
 def BLOCK(vec_type, instrs):
     return KApply('aBlock', [vec_type, instrs])
 
-BR = NOP
-BR_IF = NOP
-BR_TABLE = NOP
+def BR(idx : int):
+    return KApply('aBr', [KInt(idx)])
+
+def BR_IF(idx : int):
+    return KApply('aBr_if', [KInt(idx)])
+
+def BR_TABLE(idxs : [int], default):
+    return KApply('aBr_table', [ints(idxs + (default,))])
+
 CALL = NOP
 CALL_INDIRECT = NOP
 DROP = NOP
