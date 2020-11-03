@@ -50,7 +50,7 @@ K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAP
 deps: $(K_JAR) $(TANGLER)
 
 $(PYWASM_DEPS_PATH):
-	cd $(PYWASM_PATH) && virtialenv -p python3 venv && . venv/bin/activate
+	cd $(PYWASM_PATH) && virtualenv -p python3 venv && . venv/bin/activate
 
 $(K_JAR):
 	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
