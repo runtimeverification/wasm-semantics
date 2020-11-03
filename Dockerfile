@@ -4,6 +4,7 @@ FROM runtimeverificationinc/kframework-k:ubuntu-bionic-${K_COMMIT}
 RUN    apt-get update         \
     && apt-get upgrade --yes  \
     && apt-get install --yes  \
+                       cmake  \
                        pandoc
 
 ARG USER_ID=1000
