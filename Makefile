@@ -26,7 +26,7 @@ export PATH
 
 PYK_PATH         := $(K_LIB)
 PYWASM_PATH      := ./deps/py-wasm
-PYWASM_DEPS_PATH := ./deps/py-wasm/venv/lib/python3.6/site-packages
+PYWASM_DEPS_PATH := $(PYWASM_PATH)/venv/lib/python3.6/site-packages
 
 PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYWASM_DEPTHS_PATH):$(PYTHONPATH)
 export PYTHONPATH
@@ -47,7 +47,10 @@ clean:
 
 K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAPSHOT.jar
 
-deps: $(K_JAR) $(TANGLER)
+deps: $(K_JAR) $(TANGLER) $(PYWASM_DEPS_PATH)
+
+$(PYWASM_DEPS_PATH):
+	cd $(PYWASM_PATH) && virtialenv -p python3 venv && . venv/bin/activate
 
 $(K_JAR):
 	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
