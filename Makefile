@@ -26,7 +26,7 @@ export PATH
 
 PYK_PATH         := $(K_LIB)
 PYWASM_PATH      := ./deps/py-wasm
-PYWASM_DEPS_PATH := $(PYWASM_PATH)/venv/lib/python3.6/site-packages
+PYWASM_DEPS_PATH := $(dir $(shell find $(PYWASM_PATH) -name os.py))
 
 PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYWASM_DEPS_PATH):$(PYTHONPATH)
 export PYTHONPATH
