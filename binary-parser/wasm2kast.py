@@ -45,7 +45,7 @@ def func(f : Function):
 # Data #
 ########
 
-def val_type(t):
+def val_type(t : ValType):
     if t == ValType.i32:
         return a.i32
     if t == ValType.i64:
@@ -55,11 +55,14 @@ def val_type(t):
     if t == ValType.f64:
         return a.f64
 
+def vec_type(ts : [ValType]):
+    _ts = [val_type(x) for x in ts]
+    return a.vec_type(a.val_types(_ts))
+
+
 def func_type(params, results):
-    ps_list = [val_type(p) for p in params]
-    rs_list = [val_type(r) for r in results]
-    pvec = a.vec_type(a.val_types(ps_list))
-    rvec = a.vec_type(a.val_types(rs_list))
+    pvec = vec_type(params)
+    rvec = vec_type(results)
     return a.func_type(pvec, rvec)
 
 ########
