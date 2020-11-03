@@ -28,7 +28,7 @@ PYK_PATH         := $(K_LIB)
 PYWASM_PATH      := ./deps/py-wasm
 PYWASM_DEPS_PATH := $(PYWASM_PATH)/venv/lib/python3.6/site-packages
 
-PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYWASM_DEPTHS_PATH):$(PYTHONPATH)
+PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYWASM_DEPS_PATH):$(PYTHONPATH)
 export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
