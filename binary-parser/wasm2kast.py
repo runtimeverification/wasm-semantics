@@ -39,20 +39,22 @@ def func(f : Function):
     type = a.KInt(f.type_idx)
     ls_list = [val_type(x) for x in f.locals]
     locals = a.vec_type(a.val_types(ls_list))
-    body = a.instrs([instr(i) for i in f.body])
-
+    body = instrs(f.body)
     return a.func(type, locals, body)
 
 ##########
 # Instrs #
 ##########
 
+def instrs(iis):
+    return a.instrs([instr(i) for i in iis if not i.opcode == BinaryOpcode.END])
+
 def instr(i):
     B = BinaryOpcode
     if i.opcode == B.BLOCK:
-        instrs = a.instrs([instr(x) for x in i.instructions ])
+        iis = instrs(i.instructions)
         res = vec_type(i.result_type)
-        return a.BLOCK(res, instrs)
+        return a.BLOCK(res, iis)
     if i.opcode == B.BR:
         return a.BR(i.label_idx)
     if i.opcode == B.BR_IF:
@@ -63,11 +65,11 @@ def instr(i):
         return a.CALL(i.function_idx)
     if i.opcode == B.CALL_INDIRECT:
         return a.CALL_INDIRECT(i.type_idx)
-    # TODO: Implement instructions.
     if i.opcode == B.DROP:
         return a.DROP
     if i.opcode == B.END:
-        return a.END
+        raise(ValueError("End opcode: should have been filtered out."))
+    # TODO: Implement instructions.
     if i.opcode == B.F32_ABS:
         return a.F32_ABS
     if i.opcode == B.F32_CEIL:
