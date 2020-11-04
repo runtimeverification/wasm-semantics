@@ -94,6 +94,17 @@ module WASM-TEXT-COMMON-SYNTAX
                         | "br_table" ElemSegment
                         | "call" Index
  // ----------------------------------
+
+    syntax PlainInstr ::= IValType  "." StoreOpM
+                        | FValType  "." StoreOpM
+                        | IValType "." LoadOpM
+                        | FValType "." LoadOpM
+    syntax StoreOpM   ::= StoreOp | StoreOp MemArg
+    syntax LoadOpM    ::= LoadOp | LoadOp MemArg
+    syntax MemArg     ::= OffsetArg | AlignArg | OffsetArg AlignArg
+    syntax OffsetArg  ::= "offset=" WasmInt
+    syntax AlignArg   ::= "align="  WasmInt
+ // ---------------------------------------
 ```
 
 #### Block Instructions
@@ -817,6 +828,10 @@ After unfolding, each type use in a function starts with an explicit reference t
 
 #### Memory Instructions
 
+`MemArg`s can optionally be passed to `load` and `store` operations.
+The `offset` parameter is added to the the address given on the stack, resulting in the "effective address" to store to or load from.
+The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
+
 ```k
     rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp)        => #store(ITYPE, OP, 0)
     rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp MemArg) => #store(ITYPE, OP, #getOffset(MemArg))
@@ -828,6 +843,12 @@ After unfolding, each type use in a function starts with an explicit reference t
     rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOp MemArg)  => #load(FTYPE, OP, #getOffset(MemArg))
     rule #t2aInstr<_>(memory.size)                => memory.size
     rule #t2aInstr<_>(memory.grow)                => memory.grow
+
+    syntax Int ::= #getOffset ( MemArg ) [function, functional]
+ // -----------------------------------------------------------
+    rule #getOffset(           _:AlignArg) => 0
+    rule #getOffset(offset= OS           ) => OS
+    rule #getOffset(offset= OS _:AlignArg) => OS
 ```
 
 #### Numeric Instructions

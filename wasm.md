@@ -106,27 +106,18 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax TypeDecls   ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
  // -----------------------------------------------------------------
 
-    syntax PlainInstr ::= IValType  "." StoreOpM
-                        | FValType  "." StoreOpM
-                        | IValType "." LoadOpM
-                        | FValType "." LoadOpM
-    syntax StoreOpM   ::= StoreOp | StoreOp MemArg
-    syntax StoreOp    ::= "store"   [klabel(storeOpStore),   symbol]
-                        | "store8"  [klabel(storeOpStore8),  symbol]
-                        | "store16" [klabel(storeOpStore16), symbol]
-                        | "store32" [klabel(storeOpStore32), symbol]
-    syntax LoadOpM    ::= LoadOp | LoadOp MemArg
-    syntax LoadOp     ::= "load"     [klabel(loadOpLoad), symbol]
-                        | "load8_u"  [klabel(loadOpLoad8_u), symbol]
-                        | "load16_u" [klabel(loadOpLoad16_u), symbol]
-                        | "load32_u" [klabel(loadOpLoad32_u), symbol]
-                        | "load8_s"  [klabel(loadOpLoad8_s), symbol]
-                        | "load16_s" [klabel(loadOpLoad16_s), symbol]
-                        | "load32_s" [klabel(loadOpLoad32_s), symbol]
-    syntax MemArg     ::= OffsetArg | AlignArg | OffsetArg AlignArg
-    syntax OffsetArg  ::= "offset=" WasmInt
-    syntax AlignArg   ::= "align="  WasmInt
- // ---------------------------------------
+    syntax StoreOp ::= "store"    [klabel(storeOpStore),   symbol]
+                     | "store8"   [klabel(storeOpStore8),  symbol]
+                     | "store16"  [klabel(storeOpStore16), symbol]
+                     | "store32"  [klabel(storeOpStore32), symbol]
+    syntax LoadOp  ::= "load"     [klabel(loadOpLoad), symbol]
+                     | "load8_u"  [klabel(loadOpLoad8_u), symbol]
+                     | "load16_u" [klabel(loadOpLoad16_u), symbol]
+                     | "load32_u" [klabel(loadOpLoad32_u), symbol]
+                     | "load8_s"  [klabel(loadOpLoad8_s), symbol]
+                     | "load16_s" [klabel(loadOpLoad16_s), symbol]
+                     | "load32_s" [klabel(loadOpLoad32_s), symbol]
+ // --------------------------------------------------------------
 ```
 
 ### Definitions at the Module Level
@@ -1100,18 +1091,6 @@ Sort `Signedness` is defined in module `BYTES`.
     rule <instrs> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </instrs>
     rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </instrs>
     rule <instrs> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </instrs>
-```
-
-`MemArg`s can optionally be passed to `load` and `store` operations.
-The `offset` parameter is added to the the address given on the stack, resulting in the "effective address" to store to or load from.
-The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
-
-```k
-    syntax Int ::= #getOffset ( MemArg ) [function, functional]
- // -----------------------------------------------------------
-    rule #getOffset(           _:AlignArg) => 0
-    rule #getOffset(offset= OS           ) => OS
-    rule #getOffset(offset= OS _:AlignArg) => OS
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
