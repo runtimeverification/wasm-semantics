@@ -372,8 +372,8 @@ def I64_LOAD32_U(offset : int):
 def I64_LOAD32_S(offset : int):
     return KApply('aLoad', [i64, KApply('loadOpLoad32_s', []), KInt(offset)])
 
-MEMORY_GROW = NOP
-MEMORY_SIZE = NOP
+MEMORY_GROW = KApply('aGrow', [])
+MEMORY_SIZE = KApply('aSize', [])
 
 GET_GLOBAL = NOP
 GET_LOCAL = NOP

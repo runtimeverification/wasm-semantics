@@ -91,8 +91,8 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "local.set" Index
                         | "local.tee" Index
                         | "return"
-                        | "memory.size"
-                        | "memory.grow"
+                        | "memory.size"                   [klabel(aSize), symbol]
+                        | "memory.grow"                   [klabel(aGrow), symbol]
  // -----------------------------------
 
     syntax PlainInstr  ::= "call_indirect" TypeUse
