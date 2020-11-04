@@ -82,10 +82,10 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | FValType "." FRelOp             [klabel(aFRelOp), symbol]
                         | ValType "." CvtOp               [klabel(aCvtOp), symbol]
                         | "drop"                          [klabel(aDrop), symbol]
-                        | "select"
+                        | "select"                        [klabel(aSelect), symbol]
                         | "nop"                           [klabel(aNop), symbol]
-                        | "unreachable"
-                        | "return"
+                        | "unreachable"                   [klabel(aUnreachable), symbol]
+                        | "return"                        [klabel(aReturn), symbol]
                         | "memory.size"                   [klabel(aSize), symbol]
                         | "memory.grow"                   [klabel(aGrow), symbol]
  // -----------------------------------

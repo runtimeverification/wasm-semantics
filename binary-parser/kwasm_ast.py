@@ -100,14 +100,14 @@ def func_type(params, results):
   ########################
 
 NOP = KApply('aNop', [])
-UNREACHABLE = NOP
+UNREACHABLE = KApply('aUnreachable', [])
 
 def BLOCK(vec_type, instrs):
     return KApply('aBlock', [vec_type, instrs])
 
 IF = NOP
 LOOP = NOP
-RETURN = NOP
+RETURN = KApply('aReturn', [])
 
 def BR(idx : int):
     return KApply('aBr', [KInt(idx)])
@@ -129,7 +129,7 @@ def CALL_INDIRECT(type_idx : int):
   ##########################
 
 DROP = KApply('aDrop', [])
-SELECT = NOP
+SELECT = KApply('aSelect', [])
 
   ##############
   # Float UnOp #
