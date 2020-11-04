@@ -84,7 +84,7 @@ def instr(i):
     if i.opcode == B.F64_PROMOTE_F32:
         return a.F64_PROMOTE_F32
     if i.opcode == B.F64_REINTERPRET_I64:
-        return a.F64_REINTERPRET_I64
+        raise(ValueError('Reinterpret instructions not implemented.'))
     if i.opcode == B.GET_GLOBAL:
         return a.GET_GLOBAL
     if i.opcode == B.GET_LOCAL:
@@ -104,7 +104,7 @@ def instr(i):
     if i.opcode == B.I32_LOAD8_U:
         return a.I32_LOAD8_U
     if i.opcode == B.I32_REINTERPRET_F32:
-        return a.I32_REINTERPRET_F32
+        raise(ValueError('Reinterpret instructions not implemented.'))
     if i.opcode == B.I32_STORE:
         return a.I32_STORE
     if i.opcode == B.I32_STORE16:

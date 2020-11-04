@@ -27,8 +27,8 @@
         f64.promote_f32               drop
         f64.convert_i32_s             drop
         f64.convert_i32_u             drop
-        i32.reinterpret_f32           drop
-        f64.reinterpret_i64           drop
+     ;; i32.reinterpret_f32           drop
+     ;; f64.reinterpret_i64           drop
         ;; --
         unreachable
 
