@@ -205,6 +205,55 @@ I64_SHR_U = KApply('aIBinOp', [i64, KApply('intShr_u', [])])
 I64_SUB = KApply('aIBinOp', [i64, KApply('intSub', [])])
 I64_XOR = KApply('aIBinOp', [i64, KApply('intXor', [])])
 
+  ##########
+  # TestOp #
+  ##########
+
+I32_EQZ = KApply('aTestOp', [i32, KApply('aEqz', [])])
+I64_EQZ = KApply('aTestOp', [i64, KApply('aEqz', [])])
+
+  #############
+  # Int RelOp #
+  #############
+
+I32_EQ = KApply('aIRelOp', [i32, KApply('intEq', [])])
+I32_NE = KApply('aIRelOp', [i32, KApply('intNe', [])])
+I32_LT_U = KApply('aIRelOp', [i32, KApply('intLt_u', [])])
+I32_GT_U = KApply('aIRelOp', [i32, KApply('intGt_u', [])])
+I32_LT_S = KApply('aIRelOp', [i32, KApply('intLt_s', [])])
+I32_GT_S = KApply('aIRelOp', [i32, KApply('intGt_s', [])])
+I32_LE_U = KApply('aIRelOp', [i32, KApply('intLe_u', [])])
+I32_GE_U = KApply('aIRelOp', [i32, KApply('intGe_u', [])])
+I32_LE_S = KApply('aIRelOp', [i32, KApply('intLe_s', [])])
+I32_GE_S = KApply('aIRelOp', [i32, KApply('intGe_s', [])])
+I64_EQ = KApply('aIRelOp', [i64, KApply('intEq', [])])
+I64_NE = KApply('aIRelOp', [i64, KApply('intNe', [])])
+I64_LT_U = KApply('aIRelOp', [i64, KApply('intLt_u', [])])
+I64_GT_U = KApply('aIRelOp', [i64, KApply('intGt_u', [])])
+I64_LT_S = KApply('aIRelOp', [i64, KApply('intLt_s', [])])
+I64_GT_S = KApply('aIRelOp', [i64, KApply('intGt_s', [])])
+I64_LE_U = KApply('aIRelOp', [i64, KApply('intLe_u', [])])
+I64_GE_U = KApply('aIRelOp', [i64, KApply('intGe_u', [])])
+I64_LE_S = KApply('aIRelOp', [i64, KApply('intLe_s', [])])
+I64_GE_S = KApply('aIRelOp', [i64, KApply('intGe_s', [])])
+
+  ###############
+  # Float RelOp #
+  ###############
+
+F32_LT = KApply('aFRelOp', [f32, KApply('floatLt', [])])
+F32_GT = KApply('aFRelOp', [f32, KApply('floatGt', [])])
+F32_LE = KApply('aFRelOp', [f32, KApply('floatLe', [])])
+F32_GE = KApply('aFRelOp', [f32, KApply('floatGe', [])])
+F32_EQ = KApply('aFRelOp', [f32, KApply('floatEq', [])])
+F32_NE = KApply('aFRelOp', [f32, KApply('floatNe', [])])
+F64_LT = KApply('aFRelOp', [f64, KApply('floatLt', [])])
+F64_GT = KApply('aFRelOp', [f64, KApply('floatGt', [])])
+F64_LE = KApply('aFRelOp', [f64, KApply('floatLe', [])])
+F64_GE = KApply('aFRelOp', [f64, KApply('floatGe', [])])
+F64_EQ = KApply('aFRelOp', [f64, KApply('floatEq', [])])
+F64_NE = KApply('aFRelOp', [f64, KApply('floatNe', [])])
+
   #########
   # Const #
   #########
@@ -226,32 +275,15 @@ F32_LOAD = NOP
 F32_STORE = NOP
 F64_CONVERT_S_I32 = NOP
 F64_CONVERT_U_I32 = NOP
-F64_EQ = NOP
-F64_GE = NOP
-F64_GT = NOP
-F64_LE = NOP
-F64_LT = NOP
-F64_NE = NOP
 F64_PROMOTE_F32 = NOP
 F64_REINTERPRET_I64 = NOP
 GET_GLOBAL = NOP
 GET_LOCAL = NOP
-I32_EQ = NOP
-I32_EQZ = NOP
-I32_GE_S = NOP
-I32_GE_U = NOP
-I32_GT_S = NOP
-I32_GT_U = NOP
-I32_LE_S = NOP
-I32_LE_U = NOP
 I32_LOAD = NOP
 I32_LOAD16_S = NOP
 I32_LOAD16_U = NOP
 I32_LOAD8_S = NOP
 I32_LOAD8_U = NOP
-I32_LT_S = NOP
-I32_LT_U = NOP
-I32_NE = NOP
 I32_REINTERPRET_F32  = NOP
 I32_STORE = NOP
 I32_STORE16 = NOP

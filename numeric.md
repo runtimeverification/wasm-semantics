@@ -50,15 +50,25 @@ module WASM-NUMERIC-SYNTAX
                     | "copysign" [klabel(floatCopysign), symbol]
  // ------------------------------------------------------------
 
-    syntax TestOp ::= "eqz"
- // -----------------------
+    syntax TestOp ::= "eqz" [klabel(aEqz), symbol]
+ // ----------------------------------------------
 
-    syntax IRelOp ::= "eq" | "ne"
-                    | "lt_u" | "gt_u" | "lt_s" | "gt_s"
-                    | "le_u" | "ge_u" | "le_s" | "ge_s"
- // ---------------------------------------------------
+    syntax IRelOp ::= "eq" [klabel(intEq), symbol]
+                    | "ne" [klabel(intNe), symbol]
+                    | "lt_u" [klabel(intLt_u), symbol]
+                    | "gt_u" [klabel(intGt_u), symbol]
+                    | "lt_s" [klabel(intLt_s), symbol]
+                    | "gt_s" [klabel(intGt_s), symbol]
+                    | "le_u" [klabel(intLe_u), symbol]
+                    | "ge_u" [klabel(intGe_u), symbol]
+                    | "le_s" [klabel(intLe_s), symbol]
+                    | "ge_s" [klabel(intGe_s), symbol]
+ // --------------------------------------------------
 
-    syntax FRelOp ::= "lt" | "gt" | "le" | "ge"
+    syntax FRelOp ::= "lt" [klabel(floatLt), symbol]
+                    | "gt" [klabel(floatGt), symbol]
+                    | "le" [klabel(floatLe), symbol]
+                    | "ge" [klabel(floatGe), symbol]
                     | "eq" [klabel(floatEq), symbol]
                     | "ne" [klabel(floatNe), symbol]
  // ------------------------------------------------

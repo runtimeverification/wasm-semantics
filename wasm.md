@@ -77,9 +77,9 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | FValType "." FUnOp              [klabel(aFUnOp), symbol]
                         | IValType "." IBinOp             [klabel(aIBinOp), symbol]
                         | FValType "." FBinOp             [klabel(aFBinOp), symbol]
-                        | IValType "." TestOp
-                        | IValType "." IRelOp
-                        | FValType "." FRelOp
+                        | IValType "." TestOp             [klabel(aTestOp), symbol]
+                        | IValType "." IRelOp             [klabel(aIRelOp), symbol]
+                        | FValType "." FRelOp             [klabel(aFRelOp), symbol]
                         | ValType "." CvtOp
                         | "drop"                          [klabel(aDrop), symbol]
                         | "select"
