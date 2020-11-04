@@ -7,7 +7,7 @@ module LOOPS-SPEC
     rule <instrs> #br(0)
                ~> label // Loop label.
                     [ .ValTypes ]
-                    { loop .TypeDecls
+                    { #loop([ .ValTypes ],
                         #local.get(0)
                         #local.get(1)
                         ITYPE.add
@@ -19,7 +19,7 @@ module LOOPS-SPEC
                         ITYPE.eqz
                         #br_if(1)
                         #br(0)
-                      end
+                      )
                    }
                    .ValStack
                ~> label [ .ValTypes ] {.Instrs } STACK // Block label.
@@ -38,8 +38,8 @@ module LOOPS-SPEC
 
     // Main claim.
     rule <instrs>
-              block .TypeDecls
-                 loop .TypeDecls
+              #block([ .ValTypes ],
+                 #loop([ .ValTypes],
                      #local.get(0)
                      #local.get(1)
                      ITYPE.add
@@ -51,8 +51,8 @@ module LOOPS-SPEC
                      ITYPE.eqz
                      #br_if(1)
                      #br(0)
-                end
-             end
+                )
+             )
           => .
           ...
          </instrs>

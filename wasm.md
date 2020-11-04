@@ -481,10 +481,8 @@ It simply executes the block then records a label with an empty continuation.
     rule <instrs> label [ TYPES ] { _ } VALSTACK' => . ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax Instr ::= "block" TypeDecls Instrs "end"
-                   | #block(VecType, Instrs) [klabel(aBlock), symbol]
+    syntax Instr ::= #block(VecType, Instrs) [klabel(aBlock), symbol]
  // ------------------------------------------------------------------
-    rule <instrs> block TDECLS:TypeDecls IS end => #block(gatherTypes(result, TDECLS), IS) ... </instrs>
     rule <instrs> #block(VECTYP, IS) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
@@ -521,19 +519,19 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= "if" TypeDecls Instrs "else" Instrs "end"
- // ----------------------------------------------------------
-    rule <instrs> if TDECLS:TypeDecls IS else _ end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </instrs>
+    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs) [klabel(aIf), symbol]
+ // ----------------------------------------------------------------------------------
+    rule <instrs> #if(VECTYP, IS, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
 
-    rule <instrs> if TDECLS:TypeDecls _ else IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { .Instrs } VALSTACK ... </instrs>
+    rule <instrs> #if(VECTYP, _, IS) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL ==Int 0
 
-    syntax Instr ::= "loop" TypeDecls Instrs "end"
- // ----------------------------------------------
-    rule <instrs> loop TDECLS:TypeDecls IS end => sequenceInstrs(IS) ~> label gatherTypes(result, TDECLS) { loop TDECLS IS end } VALSTACK ... </instrs>
+    syntax Instr ::= #loop(VecType, Instrs) [klabel(aLoop), symbol]
+ // ---------------------------------------------------------------
+    rule <instrs> #loop(VECTYP, IS) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS) } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 

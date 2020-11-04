@@ -118,9 +118,9 @@ module WASM-TEXT-COMMON-SYNTAX
     syntax Instr ::= BlockInstr
  // ---------------------------
 
-    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
-                        | "loop" Identifier TypeDecls Instrs "end" OptionalId
-                        | "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+    syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
+                        | "loop" OptionalId TypeDecls Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
  // ------------------------------------------------------------------------------------------------
 ```
@@ -885,21 +885,12 @@ The `align` parameter is for optimization only and is not allowed to influence t
 #### Block Instructions
 
 There are several formats of block instructions, and the text-to-abstract transformation must be distributed over them.
+At this point, all branching identifiers should have been resolved, so we can remove the id.
 
 ```k
-    rule #t2aInstr<C>( block                TDS:TypeDecls IS end)     =>  block     TDS #t2aInstrs<C>(IS) end
-    rule #t2aInstr<C>( block  ID:Identifier TDS           IS end OID) =>  block  ID TDS #t2aInstrs<C>(IS) end OID
-    rule #t2aInstr<C>((block OID:OptionalId TDS           IS))        => (block OID TDS #t2aInstrs<C>(IS))
-
-    rule #t2aInstr<C>( loop                 TDS IS end)      =>  loop     TDS #t2aInstrs<C>(IS) end
-    rule #t2aInstr<C>( loop  ID:Identifier  TDS IS end OID') =>  loop ID  TDS #t2aInstrs<C>(IS) end OID'
-    rule #t2aInstr<C>((loop OID:OptionalId  TDS IS))         => (loop OID TDS #t2aInstrs<C>(IS))
-
-    rule #t2aInstr<C>( if                TDS IS else IS'                 end)       =>  if     TDS #t2aInstrs<C>(IS) else      #t2aInstrs<C>(IS') end
-    rule #t2aInstr<C>( if  ID:Identifier TDS IS else OID':OptionalId IS' end OID'') =>  if  ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
-    rule #t2aInstr<C>( if OID:OptionalId TDS IS                          end OID'') =>  if OID TDS #t2aInstrs<C>(IS)                              end OID''
-    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS)))                       => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
-    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS) (else IS')))            => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
+    rule #t2aInstr<C>( block _OID:OptionalId TDS:TypeDecls IS end _OID') => #block(gatherTypes(result, TDS), #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>( loop  _OID:OptionalId TDS IS end _OID') => #loop(gatherTypes(result, TDS), #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>( if    _OID:OptionalId TDS IS else _OID':OptionalId IS' end _OID'') => #if(gatherTypes(result, TDS), #t2aInstrs<C>(IS), #t2aInstrs<C>(IS'))
 ```
 
 #### KWasm Administrative Instructions
