@@ -18,7 +18,7 @@ USER user:user
 WORKDIR /home/user
 
 RUN pip3 install         \
-                 cytools \
+                 cytoolz \
                  numpy
 
 RUN    git clone 'https://github.com/WebAssembly/wabt' --branch 1.0.13 --recurse-submodules wabt \
