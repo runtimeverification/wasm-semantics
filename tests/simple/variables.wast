@@ -28,14 +28,16 @@ init_locals < i32 > 0 : < i32 > 0 : < i32 > 0 : .ValStack
         (global.set 0)
     )
 
+    (func (export "set")
+      (i32.const 55)
+      (global.set $someglobal)
+    )
+
     (start 0)
 )
 #assertGlobal 0 < i32 > 43 "set_global"
 
-(i32.const 55)
-(global.set $someglobal)
-(global.get $someglobal)
-#assertTopStack < i32 > 55 "set_global stack"
+(invoke "set")
 #assertGlobal $someglobal < i32 > 55 "set_global"
 
 ;; Test global folded forms

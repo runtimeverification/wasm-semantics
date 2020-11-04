@@ -86,8 +86,6 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "nop"                           [klabel(aNop), symbol]
                         | "unreachable"
                         | "local.get" Index
-                        | "global.get" Index
-                        | "global.set" Index
                         | "local.set" Index
                         | "local.tee" Index
                         | "return"
