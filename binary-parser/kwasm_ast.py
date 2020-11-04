@@ -115,6 +115,12 @@ def CALL(function_idx : int):
 def CALL_INDIRECT(type_idx : int):
     return KApply('aCall_indirect', [KInt(type_idx)])
 
+  ##########################
+  # Parametric Instruction #
+  ##########################
+
+DROP = KApply('aDrop', [])
+
   ##############
   # Float Unop #
   ##############
@@ -132,8 +138,6 @@ F64_NEAREST = KApply('aFUnOp', [f64, KApply('aNearest', [])])
 F64_NEG = KApply('aFUnOp', [f64, KApply('aNeg', [])])
 F64_SQRT = KApply('aFUnOp', [f64, KApply('aSqrt', [])])
 F64_TRUNC = KApply('aFUnOp', [f64, KApply('aTrunc', [])])
-
-DROP = KApply('aDrop', [])
 
   #########
   # Const #
