@@ -385,13 +385,23 @@ def GET_GLOBAL(idx : int):
 def SET_GLOBAL(idx : int):
     return KApply('aGlobal.set', [KInt(idx)])
 
-GET_LOCAL = NOP
+  ######################
+  # Local Instructions #
+  ######################
+
+def GET_LOCAL(idx : int):
+    return KApply('aLocal.get', [KInt(idx)])
+
+def SET_LOCAL(idx : int):
+    return KApply('aLocal.set', [KInt(idx)])
+
+def TEE_LOCAL(idx : int):
+    return KApply('aLocal.tee', [KInt(idx)])
+
 IF = NOP
 LOOP = NOP
 RETURN = NOP
 SELECT = NOP
-SET_LOCAL = NOP
-TEE_LOCAL = NOP
 UNREACHABLE = NOP
 
 ################

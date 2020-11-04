@@ -84,7 +84,7 @@ def instr(i):
     if i.opcode == B.GET_GLOBAL:
         return a.GET_GLOBAL(i.global_idx)
     if i.opcode == B.GET_LOCAL:
-        return a.GET_LOCAL
+        return a.GET_LOCAL(i.local_idx)
     if i.opcode == B.I32_CONST:
         return a.I32_CONST(i.value)
     if i.opcode == B.I64_CONST:
@@ -164,9 +164,9 @@ def instr(i):
     if i.opcode == B.SET_GLOBAL:
         return a.SET_GLOBAL(i.global_idx)
     if i.opcode == B.SET_LOCAL:
-        return a.SET_LOCAL
+        return a.SET_LOCAL(i.local_idx)
     if i.opcode == B.TEE_LOCAL:
-        return a.TEE_LOCAL
+        return a.TEE_LOCAL(i.local_idx)
     if i.opcode == B.UNREACHABLE:
         return a.UNREACHABLE
     # Catch all.

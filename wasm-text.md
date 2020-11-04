@@ -95,7 +95,10 @@ module WASM-TEXT-COMMON-SYNTAX
                         | "call" Index
                         | "global.get" Index
                         | "global.set" Index
- // ----------------------------------------
+                        | "local.get" Index
+                        | "local.set" Index
+                        | "local.tee" Index
+ // ---------------------------------------
 
     syntax PlainInstr ::= IValType  "." StoreOpM
                         | FValType  "." StoreOpM
@@ -819,16 +822,16 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Variable Instructions
 
 ```k
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => #local.get({LIDS[ID]}:>Int)
       requires ID in_keys(LIDS)
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => #local.set({LIDS[ID]}:>Int)
       requires ID in_keys(LIDS)
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => #local.tee({LIDS[ID]}:>Int)
       requires ID in_keys(LIDS)
 
-    rule #t2aInstr<_>(local.get I:Int) => local.get I
-    rule #t2aInstr<_>(local.set I:Int) => local.set I
-    rule #t2aInstr<_>(local.tee I:Int) => local.tee I
+    rule #t2aInstr<_>(local.get I:Int) => #local.get(I)
+    rule #t2aInstr<_>(local.set I:Int) => #local.set(I)
+    rule #t2aInstr<_>(local.tee I:Int) => #local.tee(I)
 
     rule #t2aInstr<ctx(... globalIds: GIDS)>(global.get ID:Identifier) => #global.get({GIDS[ID]}:>Int)
       requires ID in_keys(GIDS)

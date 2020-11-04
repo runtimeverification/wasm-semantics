@@ -85,9 +85,6 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "select"
                         | "nop"                           [klabel(aNop), symbol]
                         | "unreachable"
-                        | "local.get" Index
-                        | "local.set" Index
-                        | "local.tee" Index
                         | "return"
                         | "memory.size"                   [klabel(aSize), symbol]
                         | "memory.grow"                   [klabel(aGrow), symbol]
@@ -568,15 +565,19 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    rule <instrs> local.get I:Int => . ... </instrs>
+    syntax Instr ::= "#local.get" "(" Int ")" [klabel(aLocal.get), symbol]
+                   | "#local.set" "(" Int ")" [klabel(aLocal.set), symbol]
+                   | "#local.tee" "(" Int ")" [klabel(aLocal.tee), symbol]
+ // ----------------------------------------------------------------------
+    rule <instrs> #local.get(I) => . ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... I |-> VALUE ... </locals>
 
-    rule <instrs> local.set I:Int => . ... </instrs>
+    rule <instrs> #local.set(I) => . ... </instrs>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> ... I |-> (_ => VALUE) ... </locals>
 
-    rule <instrs> local.tee I:Int => . ... </instrs>
+    rule <instrs> #local.tee(I) => . ... </instrs>
          <valstack> VALUE : _VALSTACK </valstack>
          <locals> ... I |-> (_ => VALUE) ... </locals>
 ```

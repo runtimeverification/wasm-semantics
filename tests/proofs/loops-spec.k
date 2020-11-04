@@ -8,14 +8,14 @@ module LOOPS-SPEC
                ~> label // Loop label.
                     [ .ValTypes ]
                     { loop .TypeDecls
-                        local.get 0
-                        local.get 1
+                        #local.get(0)
+                        #local.get(1)
                         ITYPE.add
-                        local.set 1
-                        local.get 0
+                        #local.set(1)
+                        #local.get(0)
                         ITYPE.const 1
                         ITYPE.sub
-                        local.tee 0
+                        #local.tee(0)
                         ITYPE.eqz
                         #br_if(1)
                         #br(0)
@@ -40,14 +40,14 @@ module LOOPS-SPEC
     rule <instrs>
               block .TypeDecls
                  loop .TypeDecls
-                     local.get 0
-                     local.get 1
+                     #local.get(0)
+                     #local.get(1)
                      ITYPE.add
-                     local.set 1
-                     local.get 0
+                     #local.set(1)
+                     #local.get(0)
                      ITYPE.const 1
                      ITYPE.sub
-                     local.tee 0
+                     #local.tee(0)
                      ITYPE.eqz
                      #br_if(1)
                      #br(0)
