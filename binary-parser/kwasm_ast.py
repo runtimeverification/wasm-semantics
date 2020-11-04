@@ -95,10 +95,19 @@ def func_type(params, results):
 # Instrs #
 ##########
 
+  ########################
+  # Control Instructions #
+  ########################
+
 NOP = KApply('aNop', [])
+UNREACHABLE = NOP
 
 def BLOCK(vec_type, instrs):
     return KApply('aBlock', [vec_type, instrs])
+
+IF = NOP
+LOOP = NOP
+RETURN = NOP
 
 def BR(idx : int):
     return KApply('aBr', [KInt(idx)])
@@ -120,6 +129,7 @@ def CALL_INDIRECT(type_idx : int):
   ##########################
 
 DROP = KApply('aDrop', [])
+SELECT = NOP
 
   ##############
   # Float UnOp #
@@ -397,12 +407,6 @@ def SET_LOCAL(idx : int):
 
 def TEE_LOCAL(idx : int):
     return KApply('aLocal.tee', [KInt(idx)])
-
-IF = NOP
-LOOP = NOP
-RETURN = NOP
-SELECT = NOP
-UNREACHABLE = NOP
 
 ################
 # Declarations #
