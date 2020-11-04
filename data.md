@@ -32,7 +32,7 @@ And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
     syntax Identifier ::= IdentifierToken
-    syntax OptionalId ::= "" [klabel(.Identifier)]
+    syntax OptionalId ::= "" [klabel(.Identifier), symbol]
                         | Identifier
  // --------------------------------
 ```
@@ -84,8 +84,8 @@ It is used when initializing a WebAssembly table, or used as the parameter of th
 WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 
 ```k
-    syntax IValType ::= "i32" | "i64"
-    syntax FValType ::= "f32" | "f64"
+    syntax IValType ::= "i32" [klabel(i32), symbol] | "i64" [klabel(i64), symbol]
+    syntax FValType ::= "f32" [klabel(f32), symbol] | "f64" [klabel(f64), symbol]
     syntax ValType  ::= IValType | FValType
  // ---------------------------------------
 ```
@@ -95,8 +95,8 @@ WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax ValTypes ::= List{ValType, ""} [klabel(listValTypes)]
- // ------------------------------------------------------------
+    syntax ValTypes ::= List{ValType, ""} [klabel(listValTypes), symbol]
+ // --------------------------------------------------------------------
 ```
 
 ### Integers
@@ -223,11 +223,11 @@ The sort `OptionalInt` provides this potentially "undefined" `Int`.
 There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax VecType  ::= "[" ValTypes "]"
- // ------------------------------------
+    syntax VecType  ::= "[" ValTypes "]" [klabel(aVecType), symbol]
+ // ---------------------------------------------------------------
 
-    syntax FuncType ::= VecType "->" VecType
- // ----------------------------------------
+    syntax FuncType ::= VecType "->" VecType [klabel(aFuncType), symbol]
+ // --------------------------------------------------------------------
 
     syntax Int ::= lengthValTypes ( ValTypes ) [function, functional]
  // -----------------------------------------------------------------

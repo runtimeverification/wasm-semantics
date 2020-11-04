@@ -12,7 +12,7 @@ else
   K_RELEASE ?= $(dir $(shell which kompile))..
 endif
 K_BIN := $(K_RELEASE)/bin
-K_LIB := $(K_RELEASE)/lib
+K_LIB := $(K_RELEASE)/lib/kframework
 export K_RELEASE
 
 ifneq ($(RELEASE),)
@@ -24,9 +24,15 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
+PYK_PATH             := $(K_LIB)
+PYWASM_PATH          := ./deps/py-wasm
+
+PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYTHONPATH)
+export PYTHONPATH
+
 .PHONY: all clean deps                                                     \
         build build-llvm build-haskell                                     \
-        test test-execution test-simple test-prove                         \
+        test test-execution test-simple test-prove test-binary-parser      \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
@@ -136,7 +142,7 @@ tests/proofs/memory-spec.k.prove:    KPROVE_OPTS   = --concrete-rules WASM-DATA.
 tests/proofs/wrc20-spec.k.prove:     KPROVE_MODULE = WRC20-LEMMAS
 tests/proofs/wrc20-spec.k.prove:     KPROVE_OPTS   = --concrete-rules WASM-DATA.wrap-Positive,WASM-DATA.setRange-Positive,WASM-DATA.getRange-Positive,WASM-DATA.get-Existing,WASM-DATA.set-Extend
 
-test: test-execution test-prove
+test: test-execution test-prove test-binary-parser
 
 # Generic Test Harnesses
 
@@ -188,6 +194,30 @@ test-conformance: test-conformance-parse test-conformance-supported
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
 test-prove: $(proof_tests:=.prove)
+
+### Binary Parser Test
+
+BINARY:=python3 binary-parser/test.py
+
+tests/binary/%.wasm: tests/binary/%.wat
+	wat2wasm $< --output=$@
+
+tests/%.wasm.bparse: tests/%.wasm
+	$(BINARY) $<
+
+binary_parser_tests:=$(wildcard tests/binary/*.wat)
+
+test-binary-parser: $(binary_parser_tests:.wat=.wasm.bparse)
+
+# Analysis
+# --------
+json_build := $(haskell_dir)/$(haskell_main_file)-kompiled/parsed.json
+
+$(json_build):
+	$(MAKE) build-haskell -B KOMPILE_OPTS="--emit-json"
+
+graph-imports: $(json_build)
+	kpyk $(haskell_dir)/$(haskell_main_file)-kompiled graph-imports
 
 # Presentation
 # ------------
