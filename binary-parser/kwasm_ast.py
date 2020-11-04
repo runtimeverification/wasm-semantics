@@ -37,6 +37,9 @@ EMPTY_MAP = '.Map'
 def KInt(value : int):
     return KToken(str(value), 'Int')
 
+def KFloat(value : float):
+    return KToken(str(value), 'Float')
+
 #########
 # Lists #
 #########
@@ -131,7 +134,23 @@ F64_SQRT = KApply('aFUnOp', [f64, KApply('aSqrt', [])])
 F64_TRUNC = KApply('aFUnOp', [f64, KApply('aTrunc', [])])
 
 DROP = KApply('aDrop', [])
-F32_CONST = NOP
+
+  #########
+  # Const #
+  #########
+
+def F32_CONST(f: float):
+    return KApply('aFConst', [f32, KFloat(f)])
+
+def F64_CONST(f: float):
+    return KApply('aFConst', [f64, KFloat(f)])
+
+def I32_CONST(i : int):
+    return (KApply('aIConst', [i32, KInt(i)]))
+
+def I64_CONST(i : int):
+    return (KApply('aIConst', [i64, KInt(i)]))
+
 F32_DEMOTE_F64 = NOP
 F32_LOAD = NOP
 
@@ -156,7 +175,6 @@ F64_SUB = NOP
 GET_GLOBAL = NOP
 GET_LOCAL = NOP
 I32_CLZ = NOP
-I32_CONST = NOP
 I32_CTZ = NOP
 I32_EQ = NOP
 I32_EQZ = NOP

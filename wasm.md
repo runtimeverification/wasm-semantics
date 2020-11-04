@@ -71,8 +71,8 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
 **TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
-    syntax PlainInstr ::= IValType "." "const" WasmInt
-                        | FValType "." "const" Number
+    syntax PlainInstr ::= IValType "." "const" WasmInt    [klabel(aIConst), symbol]
+                        | FValType "." "const" Number     [klabel(aFConst), symbol]
                         | IValType "." IUnOp
                         | FValType "." FUnOp              [klabel(aFUnOp), symbol]
                         | IValType "." IBinOp

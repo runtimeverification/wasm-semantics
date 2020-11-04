@@ -69,13 +69,14 @@ def instr(i):
         return a.DROP
     if i.opcode == B.END:
         raise(ValueError("End opcode: should have been filtered out."))
-    # TODO: Implement instructions.
     if i.opcode == B.F32_ABS:
         return a.F32_ABS
     if i.opcode == B.F32_CEIL:
         return a.F32_CEIL
     if i.opcode == B.F32_CONST:
-        return a.F32_CONST
+        return a.F32_CONST(i.value)
+    if i.opcode == B.F64_CONST:
+        return a.F64_CONST(i.value)
     if i.opcode == B.F32_DEMOTE_F64:
         return a.F32_DEMOTE_F64
     if i.opcode == B.F32_FLOOR:
@@ -133,7 +134,9 @@ def instr(i):
     if i.opcode == B.I32_CLZ:
         return a.I32_CLZ
     if i.opcode == B.I32_CONST:
-        return a.I32_CONST
+        return a.I32_CONST(i.value)
+    if i.opcode == B.I64_CONST:
+        return a.I64_CONST(i.value)
     if i.opcode == B.I32_CTZ:
         return a.I32_CTZ
     if i.opcode == B.I32_EQ:
