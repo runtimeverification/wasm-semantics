@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pyk.kast import KSequence, KConstant, KApply, KToken
 
 
