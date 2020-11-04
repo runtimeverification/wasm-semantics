@@ -26,7 +26,7 @@ export PATH
 
 PYK_PATH             := $(K_LIB)
 PYWASM_PATH          := ./deps/py-wasm
-PYWASM_VENV_ACITVATE := $(PYWASM_PATH)/venv/bin/activate
+PYWASM_VENV_ACTIVATE := $(PYWASM_PATH)/venv/bin/activate
 
 PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYTHONPATH)
 export PYTHONPATH
