@@ -818,10 +818,14 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Memory Instructions
 
 ```k
-    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOpM) => ITYPE.OP
-    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOpM) => FTYPE.OP
-    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOpM)  => ITYPE.OP
-    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOpM)  => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp)        => #store(ITYPE, OP, 0)
+    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp MemArg) => #store(ITYPE, OP, #getOffset(MemArg))
+    rule #t2aInstr<_>(FTYPE:IValType.OP:StoreOp)        => #store(FTYPE, OP, 0)
+    rule #t2aInstr<_>(FTYPE:IValType.OP:StoreOp MemArg) => #store(FTYPE, OP, #getOffset(MemArg))
+    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOp)         => #load(ITYPE, OP, 0)
+    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOp MemArg)  => #load(ITYPE, OP, #getOffset(MemArg))
+    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOp)         => #load(FTYPE, OP, 0)
+    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOp MemArg)  => #load(FTYPE, OP, #getOffset(MemArg))
     rule #t2aInstr<_>(memory.size)                => memory.size
     rule #t2aInstr<_>(memory.grow)                => memory.grow
 ```

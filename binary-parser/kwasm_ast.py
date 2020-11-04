@@ -258,7 +258,6 @@ F64_NE = KApply('aFRelOp', [f64, KApply('floatNe', [])])
   # Convert Op #
   ##############
 
-
 I64_EXTEND_U_I32 = KApply('aCvtOp', [i64, KApply('aExtend_i32_u', [])])
 I64_EXTEND_S_I32 = KApply('aCvtOp', [f64, KApply('aExtend_i32_s', [])])
 I32_WRAP_I64 = KApply('aCvtOp', [i32, KApply('aWrap_i64', [])])
@@ -300,25 +299,86 @@ def I32_CONST(i : int):
 def I64_CONST(i : int):
     return (KApply('aIConst', [i64, KInt(i)]))
 
-F32_LOAD = NOP
-F32_STORE = NOP
-GET_GLOBAL = NOP
-GET_LOCAL = NOP
-I32_LOAD = NOP
-I32_LOAD16_S = NOP
-I32_LOAD16_U = NOP
-I32_LOAD8_S = NOP
-I32_LOAD8_U = NOP
-I32_STORE = NOP
-I32_STORE16 = NOP
-I32_STORE8 = NOP
-I64_LOAD32_S = NOP
-I64_LOAD32_U = NOP
-I64_STORE32 = NOP
-IF = NOP
-LOOP = NOP
+  #######################
+  # Memory Instructions #
+  #######################
+
+def F32_STORE(offset : int):
+    return KApply('aStore', [f32, KApply('storeOpStore', []), KInt(offset)])
+
+def F64_STORE(offset : int):
+    return KApply('aStore', [f64, KApply('storeOpStore', []), KInt(offset)])
+
+def I32_STORE(offset : int):
+    return KApply('aStore', [i32, KApply('storeOpStore', []), KInt(offset)])
+
+def I64_STORE(offset : int):
+    return KApply('aStore', [i64, KApply('storeOpStore', []), KInt(offset)])
+
+def I32_STORE8(offset : int):
+    return KApply('aStore', [i32, KApply('storeOpStore8', []), KInt(offset)])
+
+def I64_STORE8(offset : int):
+    return KApply('aStore', [i64, KApply('storeOpStore8', []), KInt(offset)])
+
+def I32_STORE16(offset : int):
+    return KApply('aStore', [i32, KApply('storeOpStore16', []), KInt(offset)])
+
+def I32_STORE16(offset : int):
+    return KApply('aStore', [i32, KApply('storeOpStore16', []), KInt(offset)])
+
+def I64_STORE32(offset : int):
+    return KApply('aStore', [i32, KApply('storeOpStore32', []), KInt(offset)])
+
+def F32_LOAD(offset : int):
+    return KApply('aLoad', [f32, KApply('loadOpLoad', []), KInt(offset)])
+
+def F64_LOAD(offset : int):
+    return KApply('aLoad', [f64, KApply('loadOpLoad', []), KInt(offset)])
+
+def I32_LOAD(offset : int):
+    return KApply('aLoad', [i32, KApply('loadOpLoad', []), KInt(offset)])
+
+def I64_LOAD(offset : int):
+    return KApply('aLoad', [i64, KApply('loadOpLoad', []), KInt(offset)])
+
+def I32_LOAD16_S(offset : int):
+    return KApply('aLoad', [i32, KApply('loadOpLoad16_s', []), KInt(offset)])
+
+def I32_LOAD16_U(offset : int):
+    return KApply('aLoad', [i32, KApply('loadOpLoad16_u', []), KInt(offset)])
+
+def I64_LOAD16_S(offset : int):
+    return KApply('aLoad', [i64, KApply('loadOpLoad16_s', []), KInt(offset)])
+
+def I64_LOAD16_U(offset : int):
+    return KApply('aLoad', [i64, KApply('loadOpLoad16_u', []), KInt(offset)])
+
+def I32_LOAD8_S(offset : int):
+    return KApply('aLoad', [i32, KApply('loadOpLoad8_s', []), KInt(offset)])
+
+def I32_LOAD8_U(offset : int):
+    return KApply('aLoad', [i32, KApply('loadOpLoad8_u', []), KInt(offset)])
+
+def I64_LOAD8_S(offset : int):
+    return KApply('aLoad', [i64, KApply('loadOpLoad8_s', []), KInt(offset)])
+
+def I64_LOAD8_U(offset : int):
+    return KApply('aLoad', [i64, KApply('loadOpLoad8_u', []), KInt(offset)])
+
+def I64_LOAD32_U(offset : int):
+    return KApply('aLoad', [i64, KApply('loadOpLoad32_u', []), KInt(offset)])
+
+def I64_LOAD32_S(offset : int):
+    return KApply('aLoad', [i64, KApply('loadOpLoad32_s', []), KInt(offset)])
+
 MEMORY_GROW = NOP
 MEMORY_SIZE = NOP
+
+GET_GLOBAL = NOP
+GET_LOCAL = NOP
+IF = NOP
+LOOP = NOP
 RETURN = NOP
 SELECT = NOP
 SET_GLOBAL = NOP

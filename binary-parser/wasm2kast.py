@@ -73,10 +73,6 @@ def instr(i):
         return a.F64_CONST(i.value)
     if i.opcode == B.F32_DEMOTE_F64:
         return a.F32_DEMOTE_F64
-    if i.opcode == B.F32_LOAD:
-        return a.F32_LOAD
-    if i.opcode == B.F32_STORE:
-        return a.F32_STORE
     if i.opcode == B.F64_CONVERT_S_I32:
         return a.F64_CONVERT_S_I32
     if i.opcode == B.F64_CONVERT_U_I32:
@@ -93,24 +89,26 @@ def instr(i):
         return a.I32_CONST(i.value)
     if i.opcode == B.I64_CONST:
         return a.I64_CONST(i.value)
-    if i.opcode == B.I32_LOAD:
-        return a.I32_LOAD
-    if i.opcode == B.I32_LOAD16_S:
-        return a.I32_LOAD16_S
-    if i.opcode == B.I32_LOAD16_U:
-        return a.I32_LOAD16_U
-    if i.opcode == B.I32_LOAD8_S:
-        return a.I32_LOAD8_S
-    if i.opcode == B.I32_LOAD8_U:
-        return a.I32_LOAD8_U
     if i.opcode == B.I32_REINTERPRET_F32:
         raise(ValueError('Reinterpret instructions not implemented.'))
+    if i.opcode == B.F32_STORE:
+        return a.F32_STORE(i.memarg.offset)
+    if i.opcode == B.F64_STORE:
+        return a.F64_STORE(i.memarg.offset)
     if i.opcode == B.I32_STORE:
-        return a.I32_STORE
+        return a.I32_STORE(i.memarg.offset)
+    if i.opcode == B.I64_STORE:
+        return a.I64_STORE(i.memarg.offset)
     if i.opcode == B.I32_STORE16:
-        return a.I32_STORE16
+        return a.I32_STORE16(i.memarg.offset)
+    if i.opcode == B.I64_STORE16:
+        return a.I64_STORE16(i.memarg.offset)
     if i.opcode == B.I32_STORE8:
-        return a.I32_STORE8
+        return a.I32_STORE8(i.memarg.offset)
+    if i.opcode == B.I64_STORE8:
+        return a.I64_STORE8(i.memarg.offset)
+    if i.opcode == B.I64_STORE32:
+        return a.I64_STORE32(i.memarg.offset)
     if i.opcode == B.I32_TRUNC_S_F64:
         return a.I32_TRUNC_S_F64
     if i.opcode == B.I32_WRAP_I64:
@@ -119,12 +117,34 @@ def instr(i):
         return a.I64_EXTEND_S_I32
     if i.opcode == B.I64_EXTEND_U_I32:
         return a.I64_EXTEND_U_I32
+    if i.opcode == B.F32_LOAD:
+        return a.F32_LOAD(i.memarg.offset)
+    if i.opcode == B.F64_LOAD:
+        return a.F64_LOAD(i.memarg.offset)
+    if i.opcode == B.I32_LOAD:
+        return a.I32_LOAD(i.memarg.offset)
+    if i.opcode == B.I64_LOAD:
+        return a.I64_LOAD(i.memarg.offset)
+    if i.opcode == B.I32_LOAD16_S:
+        return a.I32_LOAD16_S(i.memarg.offset)
+    if i.opcode == B.I32_LOAD16_U:
+        return a.I32_LOAD16_U(i.memarg.offset)
+    if i.opcode == B.I64_LOAD16_S:
+        return a.I64_LOAD16_S(i.memarg.offset)
+    if i.opcode == B.I64_LOAD16_U:
+        return a.I64_LOAD16_U(i.memarg.offset)
+    if i.opcode == B.I32_LOAD8_S:
+        return a.I32_LOAD8_S(i.memarg.offset)
+    if i.opcode == B.I32_LOAD8_U:
+        return a.I32_LOAD8_U(i.memarg.offset)
+    if i.opcode == B.I64_LOAD8_S:
+        return a.I64_LOAD8_S(i.memarg.offset)
+    if i.opcode == B.I64_LOAD8_U:
+        return a.I64_LOAD8_U(i.memarg.offset)
     if i.opcode == B.I64_LOAD32_S:
-        return a.I64_LOAD32_S
+        return a.I64_LOAD32_S(i.memarg.offset)
     if i.opcode == B.I64_LOAD32_U:
-        return a.I64_LOAD32_U
-    if i.opcode == B.I64_STORE32:
-        return a.I64_STORE32
+        return a.I64_LOAD32_U(i.memarg.offset)
     if i.opcode == B.I64_TRUNC_U_F32:
         return a.I64_TRUNC_U_F32
     if i.opcode == B.IF:

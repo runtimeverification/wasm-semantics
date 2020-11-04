@@ -111,11 +111,18 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | IValType "." LoadOpM
                         | FValType "." LoadOpM
     syntax StoreOpM   ::= StoreOp | StoreOp MemArg
-    syntax StoreOp    ::= "store" | "store8" | "store16" | "store32"
+    syntax StoreOp    ::= "store"   [klabel(storeOpStore),   symbol]
+                        | "store8"  [klabel(storeOpStore8),  symbol]
+                        | "store16" [klabel(storeOpStore16), symbol]
+                        | "store32" [klabel(storeOpStore32), symbol]
     syntax LoadOpM    ::= LoadOp | LoadOp MemArg
-    syntax LoadOp     ::= "load"
-                        | "load8_u" | "load16_u" | "load32_u"
-                        | "load8_s" | "load16_s" | "load32_s"
+    syntax LoadOp     ::= "load"     [klabel(loadOpLoad), symbol]
+                        | "load8_u"  [klabel(loadOpLoad8_u), symbol]
+                        | "load16_u" [klabel(loadOpLoad16_u), symbol]
+                        | "load32_u" [klabel(loadOpLoad32_u), symbol]
+                        | "load8_s"  [klabel(loadOpLoad8_s), symbol]
+                        | "load16_s" [klabel(loadOpLoad16_s), symbol]
+                        | "load32_s" [klabel(loadOpLoad32_s), symbol]
     syntax MemArg     ::= OffsetArg | AlignArg | OffsetArg AlignArg
     syntax OffsetArg  ::= "offset=" WasmInt
     syntax AlignArg   ::= "align="  WasmInt
@@ -995,14 +1002,12 @@ The `storeX` operations first wrap the the value to be stored to the bit wdith `
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
 
 ```k
-    syntax Instr ::= IValType "." StoreOp Int Int
+    syntax Instr ::= #store(ValType, StoreOp, offset : Int) [klabel(aStore), symbol]
+                   | IValType "." StoreOp Int Int
  //                | FValType "." StoreOp Int Float
                    | "store" "{" Int Int Number "}"
  // -----------------------------------------------
-
-    rule <instrs> ITYPE . SOP:StoreOp               => ITYPE . SOP  IDX                          VAL ... </instrs>
-         <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
-    rule <instrs> ITYPE . SOP:StoreOp MEMARG:MemArg => ITYPE . SOP (IDX +Int #getOffset(MEMARG)) VAL ... </instrs>
+    rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <instrs> store { WIDTH EA VAL } => . ... </instrs>
@@ -1046,13 +1051,12 @@ The value is fetched from the "effective address", which is the address given on
 Sort `Signedness` is defined in module `BYTES`.
 
 ```k
-    syntax Instr ::= "load" "{" IValType Int Int Signedness"}"
+    syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
+                   | "load" "{" IValType Int Int Signedness"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
-    rule <instrs> ITYPE . LOP:LoadOp               => ITYPE . LOP  IDX                          ... </instrs>
-         <valstack> < i32 > IDX : VALSTACK         => VALSTACK </valstack>
-    rule <instrs> ITYPE . LOP:LoadOp MEMARG:MemArg => ITYPE . LOP (IDX +Int #getOffset(MEMARG)) ... </instrs>
-         <valstack> < i32 > IDX : VALSTACK         => VALSTACK </valstack>
+    rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
+         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
     rule <instrs> load { ITYPE WIDTH EA SIGN }
                => < ITYPE > #if SIGN ==K Signed
