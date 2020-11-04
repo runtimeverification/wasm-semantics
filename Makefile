@@ -28,7 +28,7 @@ PYK_PATH             := $(K_LIB)
 PYWASM_PATH          := ./deps/py-wasm
 PYWASM_VENV_ACITVATE := $(PYWASM_PATH)/venv/bin/activate
 
-PYTHONPATH := $(PYK_PATH):$(PYTHONPATH)
+PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYTHONPATH)
 export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
