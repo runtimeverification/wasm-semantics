@@ -54,7 +54,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax Stmt  ::= Instr | Defn
  // -----------------------------
 
-    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt)]
+    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt), symbol]
     syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
     syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
     syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
@@ -703,7 +703,7 @@ Type could be declared explicitly and could optionally bind with an identifier.
 When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
 
 ```k
-    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId)
+    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId) [klabel(aTypeDefn), symbol]
     syntax Alloc    ::= alloctype (OptionalId, FuncType)
  // ----------------------------------------------------
     rule <instrs> #type(... type: TYPE, metadata: OID) => alloctype(OID, TYPE) ... </instrs>
@@ -732,7 +732,7 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata)
+    syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata) [klabel(aFuncDefn), symbol]
     syntax Alloc    ::= allocfunc ( Int , Int , FuncType , VecType , Instrs , FuncMetadata )
  // ----------------------------------------------------------------------------------------
     rule <instrs> #func(... type: TYPIDX, locals: LOCALS, body: INSTRS, metadata: META) => allocfunc(CUR, NEXTADDR, TYPE, LOCALS, INSTRS, META) ... </instrs>
@@ -765,8 +765,8 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </funcs>
 
-    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map)
- // ------------------------------------------------------------
+    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map) [klabel(funcMeta), symbol]
+ // ---------------------------------------------------------------------------------------
 ```
 
 ### Function Invocation/Return
@@ -1414,15 +1414,15 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata)
- // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata) [klabel(aModuleDecl), symbol]
+ // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
  // ---------------------------------------------------------------------
     rule #emptyModule(OID) =>  #module (... types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns, metadata: #meta(... id: OID, funcIds: .Map))
 
-    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map)
- // -------------------------------------------------------------
+    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map) [klabel(moduleMeta), symbol]
+ // ------------------------------------------------------------------------------------------
 ```
 
 A new module instance gets allocated.
