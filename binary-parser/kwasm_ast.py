@@ -122,7 +122,7 @@ def CALL_INDIRECT(type_idx : int):
 DROP = KApply('aDrop', [])
 
   ##############
-  # Float Unop #
+  # Float UnOp #
   ##############
 
 F32_ABS  = KApply('aFUnOp', [f32, KApply('aAbs', [])])
@@ -141,7 +141,7 @@ F64_SQRT = KApply('aFUnOp', [f64, KApply('aSqrt', [])])
 F64_TRUNC = KApply('aFUnOp', [f64, KApply('aTrunc', [])])
 
   ############
-  # Int Unop #
+  # Int UnOp #
   ############
 
 I32_CLZ = KApply('aIUnOp', [i32, KApply('aClz', [])])
