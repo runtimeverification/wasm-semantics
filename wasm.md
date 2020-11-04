@@ -75,8 +75,8 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | FValType "." "const" Number     [klabel(aFConst), symbol]
                         | IValType "." IUnOp              [klabel(aIUnOp), symbol]
                         | FValType "." FUnOp              [klabel(aFUnOp), symbol]
-                        | IValType "." IBinOp
-                        | FValType "." FBinOp
+                        | IValType "." IBinOp             [klabel(aIBinOp), symbol]
+                        | FValType "." FBinOp             [klabel(aFBinOp), symbol]
                         | IValType "." TestOp
                         | IValType "." IRelOp
                         | FValType "." FRelOp

@@ -151,6 +151,60 @@ I64_CLZ = KApply('aIUnOp', [i64, KApply('aClz', [])])
 I64_CTZ = KApply('aIUnOp', [i64, KApply('aCtz', [])])
 I64_POPCNT = KApply('aIUnOp', [i64, KApply('aPopcnt', [])])
 
+  ###############
+  # Float BinOp #
+  ###############
+
+F32_ADD = KApply('aFBinOp', [f32, KApply('floatAdd', [])])
+F32_SUB = KApply('aFBinOp', [f32, KApply('floatSub', [])])
+F32_MUL = KApply('aFBinOp', [f32, KApply('floatMul', [])])
+F32_DIV = KApply('aFBinOp', [f32, KApply('floatDiv', [])])
+F32_MIN = KApply('aFBinOp', [f32, KApply('floatMin', [])])
+F32_MAX = KApply('aFBinOp', [f32, KApply('floatMax', [])])
+F32_COPYSIGN = KApply('aFBinOp', [f32, KApply('floatCopysign', [])])
+F64_ADD = KApply('aFBinOp', [f64, KApply('floatAdd', [])])
+F64_SUB = KApply('aFBinOp', [f64, KApply('floatSub', [])])
+F64_MUL = KApply('aFBinOp', [f64, KApply('floatMul', [])])
+F64_DIV = KApply('aFBinOp', [f64, KApply('floatDiv', [])])
+F64_MIN = KApply('aFBinOp', [f64, KApply('floatMin', [])])
+F64_MAX = KApply('aFBinOp', [f64, KApply('floatMax', [])])
+F64_COPYSIGN = KApply('aFBinOp', [f64, KApply('floatCopysign', [])])
+
+  #############
+  # Int BinOp #
+  #############
+
+I32_ADD = KApply('aIBinOp', [i32, KApply('intAdd', [])])
+I32_AND = KApply('aIBinOp', [i32, KApply('intAnd', [])])
+I32_DIV_S = KApply('aIBinOp', [i32, KApply('intDiv_s', [])])
+I32_DIV_U = KApply('aIBinOp', [i32, KApply('intDiv_u', [])])
+I32_MUL = KApply('aIBinOp', [i32, KApply('intMul', [])])
+I32_OR = KApply('aIBinOp', [i32, KApply('intOr', [])])
+I32_REM_S = KApply('aIBinOp', [i32, KApply('intRem_s', [])])
+I32_REM_U = KApply('aIBinOp', [i32, KApply('intRem_u', [])])
+I32_ROTL = KApply('aIBinOp', [i32, KApply('intRotl', [])])
+I32_ROTR = KApply('aIBinOp', [i32, KApply('intRotr', [])])
+I32_SHL = KApply('aIBinOp', [i32, KApply('intShl', [])])
+I32_SHR_S = KApply('aIBinOp', [i32, KApply('intShr_s', [])])
+I32_SHR_U = KApply('aIBinOp', [i32, KApply('intShr_u', [])])
+I32_SUB = KApply('aIBinOp', [i32, KApply('intSub', [])])
+I32_XOR = KApply('aIBinOp', [i32, KApply('intXor', [])])
+I64_ADD = KApply('aIBinOp', [i64, KApply('intAdd', [])])
+I64_AND = KApply('aIBinOp', [i64, KApply('intAnd', [])])
+I64_DIV_S = KApply('aIBinOp', [i64, KApply('intDiv_s', [])])
+I64_DIV_U = KApply('aIBinOp', [i64, KApply('intDiv_u', [])])
+I64_MUL = KApply('aIBinOp', [i64, KApply('intMul', [])])
+I64_OR = KApply('aIBinOp', [i64, KApply('intOr', [])])
+I64_REM_S = KApply('aIBinOp', [i64, KApply('intRem_s', [])])
+I64_REM_U = KApply('aIBinOp', [i64, KApply('intRem_u', [])])
+I64_ROTL = KApply('aIBinOp', [i64, KApply('intRotl', [])])
+I64_ROTR = KApply('aIBinOp', [i64, KApply('intRotr', [])])
+I64_SHL = KApply('aIBinOp', [i64, KApply('intShl', [])])
+I64_SHR_S = KApply('aIBinOp', [i64, KApply('intShr_s', [])])
+I64_SHR_U = KApply('aIBinOp', [i64, KApply('intShr_u', [])])
+I64_SUB = KApply('aIBinOp', [i64, KApply('intSub', [])])
+I64_XOR = KApply('aIBinOp', [i64, KApply('intXor', [])])
+
   #########
   # Const #
   #########
@@ -170,23 +224,16 @@ def I64_CONST(i : int):
 F32_DEMOTE_F64 = NOP
 F32_LOAD = NOP
 F32_STORE = NOP
-F64_ADD = NOP
 F64_CONVERT_S_I32 = NOP
 F64_CONVERT_U_I32 = NOP
-F64_COPYSIGN = NOP
-F64_DIV = NOP
 F64_EQ = NOP
 F64_GE = NOP
 F64_GT = NOP
 F64_LE = NOP
 F64_LT = NOP
-F64_MAX = NOP
-F64_MIN = NOP
-F64_MUL = NOP
 F64_NE = NOP
 F64_PROMOTE_F32 = NOP
 F64_REINTERPRET_I64 = NOP
-F64_SUB = NOP
 GET_GLOBAL = NOP
 GET_LOCAL = NOP
 I32_EQ = NOP
@@ -211,27 +258,12 @@ I32_STORE16 = NOP
 I32_STORE8 = NOP
 I32_TRUNC_S_F64 = NOP
 I32_WRAP_I64 = NOP
-I64_ADD = NOP
-I64_AND = NOP
-I64_DIV_S = NOP
-I64_DIV_U = NOP
 I64_EXTEND_S_I32 = NOP
 I64_EXTEND_U_I32 = NOP
 I64_LOAD32_S = NOP
 I64_LOAD32_U = NOP
-I64_MUL = NOP
-I64_OR = NOP
-I64_REM_S = NOP
-I64_REM_U = NOP
-I64_ROTL = NOP
-I64_ROTR = NOP
-I64_SHL = NOP
-I64_SHR_S = NOP
-I64_SHR_U = NOP
 I64_STORE32 = NOP
-I64_SUB = NOP
 I64_TRUNC_U_F32 = NOP
-I64_XOR = NOP
 IF = NOP
 LOOP = NOP
 MEMORY_GROW = NOP

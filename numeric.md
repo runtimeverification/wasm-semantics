@@ -24,19 +24,31 @@ module WASM-NUMERIC-SYNTAX
                    | "nearest" [klabel(aNearest), symbol]
  // -----------------------------------------------------
 
-    syntax IBinOp ::= "add" | "sub" | "mul"
-                    | "div_u" | "rem_u"
-                    | "div_s" | "rem_s"
-                    | "and" | "or" | "xor"
-                    | "shl" | "shr_u" | "shr_s"
-                    | "rotl" | "rotr"
- // ---------------------------------
+    syntax IBinOp ::= "add" [klabel(intAdd), symbol]
+                    | "sub" [klabel(intSub), symbol]
+                    | "mul" [klabel(intMul), symbol]
+                    | "div_u" [klabel(intDiv_u), symbol]
+                    | "rem_u" [klabel(intRem_u), symbol]
+                    | "div_s" [klabel(intDiv_s), symbol]
+                    | "rem_s" [klabel(intRem_s), symbol]
+                    | "and" [klabel(intAnd), symbol]
+                    | "or" [klabel(intOr), symbol]
+                    | "xor" [klabel(intXor), symbol]
+                    | "shl" [klabel(intShl), symbol]
+                    | "shr_u" [klabel(intShr_u), symbol]
+                    | "shr_s" [klabel(intShr_s), symbol]
+                    | "rotl" [klabel(intRotl), symbol]
+                    | "rotr" [klabel(intRotr), symbol]
+ // --------------------------------------------------
 
     syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
                     | "sub" [klabel(floatSub), symbol]
                     | "mul" [klabel(floatMul), symbol]
-                    | "div" | "min" | "max" | "copysign"
- // ----------------------------------------------------
+                    | "div" [klabel(floatDiv), symbol]
+                    | "min" [klabel(floatMin), symbol]
+                    | "max" [klabel(floatMax), symbol]
+                    | "copysign" [klabel(floatCopysign), symbol]
+ // ------------------------------------------------------------
 
     syntax TestOp ::= "eqz"
  // -----------------------
