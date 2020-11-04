@@ -24,11 +24,11 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
-PYK_PATH         := $(K_LIB)
-PYWASM_PATH      := ./deps/py-wasm
-PYWASM_DEPS_PATH := $(dir $(shell find $(PYWASM_PATH) -name os.py))
+PYK_PATH             := $(K_LIB)
+PYWASM_PATH          := ./deps/py-wasm
+PYWASM_VENV_ACITVATE := $(PYWASM_PATH)/venv/bin/activate
 
-PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYWASM_DEPS_PATH):$(PYTHONPATH)
+PYTHONPATH := $(PYK_PATH):$(PYTHONPATH)
 export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
@@ -49,7 +49,7 @@ K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAP
 
 deps: $(K_JAR) $(TANGLER)
 
-$(PYWASM_PATH)/venv:
+$(PYWASM_VENV_ACTIVATE):
 	cd $(PYWASM_PATH) && virtualenv -p python3 venv
 
 $(K_JAR):
@@ -201,12 +201,12 @@ test-prove: $(proof_tests:=.prove)
 
 ### Binary Parser Test
 
-BINARY:=cd $(PYWASM_PATH) && . venv/bin/activate && python3 binary-parser/test.py
+BINARY:=. $(PYWASM_VENV_ACTIVATE) && python3 binary-parser/test.py
 
 tests/binary/%.wasm: tests/binary/%.wat
 	wat2wasm $< --output=$@
 
-tests/%.wasm.bparse: tests/%.wasm  $(PYWASM_PATH)/venv
+tests/%.wasm.bparse: tests/%.wasm  $(PYWASM_VENV_ACTIVATE)
 	$(BINARY) $<
 
 binary_parser_tests:=$(wildcard tests/binary/*.wat)
