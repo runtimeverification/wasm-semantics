@@ -375,13 +375,21 @@ def I64_LOAD32_S(offset : int):
 MEMORY_GROW = KApply('aGrow', [])
 MEMORY_SIZE = KApply('aSize', [])
 
-GET_GLOBAL = NOP
+  #######################
+  # Global Instructions #
+  #######################
+
+def GET_GLOBAL(idx : int):
+    return KApply('aGlobal.get', [KInt(idx)])
+
+def SET_GLOBAL(idx : int):
+    return KApply('aGlobal.set', [KInt(idx)])
+
 GET_LOCAL = NOP
 IF = NOP
 LOOP = NOP
 RETURN = NOP
 SELECT = NOP
-SET_GLOBAL = NOP
 SET_LOCAL = NOP
 TEE_LOCAL = NOP
 UNREACHABLE = NOP
