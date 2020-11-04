@@ -26,7 +26,6 @@ export PATH
 
 PYK_PATH             := $(K_LIB)
 PYWASM_PATH          := ./deps/py-wasm
-PYWASM_VENV_ACTIVATE := $(PYWASM_PATH)/venv/bin/activate
 
 PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYTHONPATH)
 export PYTHONPATH
@@ -48,9 +47,6 @@ clean:
 K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAPSHOT.jar
 
 deps: $(K_JAR) $(TANGLER)
-
-$(PYWASM_VENV_ACTIVATE):
-	cd $(PYWASM_PATH) && virtualenv -p python3 venv
 
 $(K_JAR):
 	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
@@ -201,12 +197,12 @@ test-prove: $(proof_tests:=.prove)
 
 ### Binary Parser Test
 
-BINARY:=. $(PYWASM_VENV_ACTIVATE) && python3 binary-parser/test.py
+BINARY:=python3 binary-parser/test.py
 
 tests/binary/%.wasm: tests/binary/%.wat
 	wat2wasm $< --output=$@
 
-tests/%.wasm.bparse: tests/%.wasm  $(PYWASM_VENV_ACTIVATE)
+tests/%.wasm.bparse: tests/%.wasm
 	$(BINARY) $<
 
 binary_parser_tests:=$(wildcard tests/binary/*.wat)
