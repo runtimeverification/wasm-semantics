@@ -50,7 +50,7 @@ K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAP
 deps: $(K_JAR) $(TANGLER)
 
 $(PYWASM_PATH)/venv:
-	cd $(PYWASM_PATH) && virtualenv -p python3 venv && . venv/bin/activate
+	cd $(PYWASM_PATH) && virtualenv -p python3 venv
 
 $(K_JAR):
 	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
@@ -201,7 +201,7 @@ test-prove: $(proof_tests:=.prove)
 
 ### Binary Parser Test
 
-BINARY:=python3 binary-parser/test.py
+BINARY:=cd $(PYWASM_PATH) && . venv/bin/activate && python3 binary-parser/test.py
 
 tests/binary/%.wasm: tests/binary/%.wat
 	wat2wasm $< --output=$@
