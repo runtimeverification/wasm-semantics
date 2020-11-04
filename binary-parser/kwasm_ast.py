@@ -124,6 +124,7 @@ DROP = KApply('aDrop', [])
   ##############
   # Float Unop #
   ##############
+
 F32_ABS  = KApply('aFUnOp', [f32, KApply('aAbs', [])])
 F32_CEIL = KApply('aFUnOp', [f32, KApply('aCeil', [])])
 F32_FLOOR = KApply('aFUnOp', [f32, KApply('aFloor', [])])
@@ -138,6 +139,17 @@ F64_NEAREST = KApply('aFUnOp', [f64, KApply('aNearest', [])])
 F64_NEG = KApply('aFUnOp', [f64, KApply('aNeg', [])])
 F64_SQRT = KApply('aFUnOp', [f64, KApply('aSqrt', [])])
 F64_TRUNC = KApply('aFUnOp', [f64, KApply('aTrunc', [])])
+
+  ############
+  # Int Unop #
+  ############
+
+I32_CLZ = KApply('aIUnOp', [i32, KApply('aClz', [])])
+I32_CTZ = KApply('aIUnOp', [i32, KApply('aCtz', [])])
+I32_POPCNT = KApply('aIUnOp', [i32, KApply('aPopcnt', [])])
+I64_CLZ = KApply('aIUnOp', [i64, KApply('aClz', [])])
+I64_CTZ = KApply('aIUnOp', [i64, KApply('aCtz', [])])
+I64_POPCNT = KApply('aIUnOp', [i64, KApply('aPopcnt', [])])
 
   #########
   # Const #
@@ -157,7 +169,6 @@ def I64_CONST(i : int):
 
 F32_DEMOTE_F64 = NOP
 F32_LOAD = NOP
-
 F32_STORE = NOP
 F64_ADD = NOP
 F64_CONVERT_S_I32 = NOP
@@ -178,8 +189,6 @@ F64_REINTERPRET_I64 = NOP
 F64_SUB = NOP
 GET_GLOBAL = NOP
 GET_LOCAL = NOP
-I32_CLZ = NOP
-I32_CTZ = NOP
 I32_EQ = NOP
 I32_EQZ = NOP
 I32_GE_S = NOP
@@ -196,7 +205,6 @@ I32_LOAD8_U = NOP
 I32_LT_S = NOP
 I32_LT_U = NOP
 I32_NE = NOP
-I32_POPCNT = NOP
 I32_REINTERPRET_F32  = NOP
 I32_STORE = NOP
 I32_STORE16 = NOP

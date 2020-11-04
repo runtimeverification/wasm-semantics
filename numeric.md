@@ -10,8 +10,10 @@ require "data.md"
 
 module WASM-NUMERIC-SYNTAX
 
-    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
- // -----------------------------------------
+    syntax IUnOp ::= "clz"    [klabel(aClz), symbol]
+                   | "ctz"    [klabel(aCtz), symbol]
+                   | "popcnt" [klabel(aPopcnt), symbol]
+ // ---------------------------------------------------
 
     syntax FUnOp ::= "abs"     [klabel(aAbs)    , symbol]
                    | "neg"     [klabel(aNeg)    , symbol]
@@ -20,7 +22,7 @@ module WASM-NUMERIC-SYNTAX
                    | "ceil"    [klabel(aCeil)   , symbol]
                    | "trunc"   [klabel(aTrunc)  , symbol]
                    | "nearest" [klabel(aNearest), symbol]
- // --------------------------------------------------------------------------------------------------------
+ // -----------------------------------------------------
 
     syntax IBinOp ::= "add" | "sub" | "mul"
                     | "div_u" | "rem_u"
