@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import wasm2kast
 import pyk
 import sys
