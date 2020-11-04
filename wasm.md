@@ -624,13 +624,15 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    rule <instrs> global.get TFIDX => . ... </instrs>
+    syntax Instr ::= "#global.get" "(" Int ")" [klabel(aGlobal.get), symbol]
+                   | "#global.set" "(" Int ")" [klabel(aGlobal.set), symbol]
+ // ------------------------------------------------------------------------
+    rule <instrs> #global.get(IDX) => . ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS </globIds>
-           <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
+           <globalAddrs> ... IDX |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>
@@ -639,13 +641,12 @@ The `get` and `set` instructions read and write globals.
            ...
          </globalInst>
 
-    rule <instrs> global.set TFIDX => . ... </instrs>
+    rule <instrs> #global.set(IDX) => . ... </instrs>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <globIds> IDS </globIds>
-           <globalAddrs> ... #ContextLookup(IDS , TFIDX) |-> GADDR ... </globalAddrs>
+           <globalAddrs> ... IDX |-> GADDR ... </globalAddrs>
            ...
          </moduleInst>
          <globalInst>
