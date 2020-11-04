@@ -76,21 +76,26 @@ module WASM-NUMERIC-SYNTAX
     syntax CvtOp ::= Cvti32Op | Cvti64Op | Cvtf32Op | Cvtf64Op
  // ----------------------------------------------------------
 
-    syntax Cvti32Op ::= "extend_i32_u" | "extend_i32_s"
-                      | "convert_i32_s" | "convert_i32_u"
- // -----------------------------------------------------
+    syntax Cvti32Op ::= "extend_i32_u" [klabel(aExtend_i32_u), symbol]
+                      | "extend_i32_s" [klabel(aExtend_i32_s), symbol]
+                      | "convert_i32_s" [klabel(aConvert_i32_s), symbol]
+                      | "convert_i32_u" [klabel(aConvert_i32_u), symbol]
+ // --------------------------------------------------------------------
 
-    syntax Cvti64Op ::= "wrap_i64"
-                      | "convert_i64_s" | "convert_i64_u"
- // -----------------------------------------------------
+    syntax Cvti64Op ::= "wrap_i64" [klabel(aWrap_i64), symbol]
+                      | "convert_i64_s" [klabel(aConvert_i64_s), symbol]
+                      | "convert_i64_u" [klabel(aConvert_i64_u), symbol]
+ // --------------------------------------------------------------------
 
-    syntax Cvtf32Op ::= "promote_f32"
-                      | "trunc_f32_s" | "trunc_f32_u"
- // -------------------------------------------------
+    syntax Cvtf32Op ::= "promote_f32" [klabel(aPromote_f32), symbol]
+                      | "trunc_f32_s" [klabel(aTrunc_f32_s), symbol]
+                      | "trunc_f32_u" [klabel(aTrunc_f32_u), symbol]
+ // ----------------------------------------------------------------
 
-    syntax Cvtf64Op ::= "demote_f64"
-                      | "trunc_f64_s" | "trunc_f64_u"
- // -------------------------------------------------
+    syntax Cvtf64Op ::= "demote_f64" [klabel(aDemote_f64), symbol]
+                      | "trunc_f64_s" [klabel(aTrunc_f64_s), symbol]
+                      | "trunc_f64_u" [klabel(aTrunc_f64_u), symbol]
+ // ----------------------------------------------------------------
 
 endmodule
 

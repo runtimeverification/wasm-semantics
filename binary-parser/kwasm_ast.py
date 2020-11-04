@@ -254,6 +254,36 @@ F64_GE = KApply('aFRelOp', [f64, KApply('floatGe', [])])
 F64_EQ = KApply('aFRelOp', [f64, KApply('floatEq', [])])
 F64_NE = KApply('aFRelOp', [f64, KApply('floatNe', [])])
 
+  ##############
+  # Convert Op #
+  ##############
+
+
+I64_EXTEND_U_I32 = KApply('aCvtOp', [i64, KApply('aExtend_i32_u', [])])
+I64_EXTEND_S_I32 = KApply('aCvtOp', [f64, KApply('aExtend_i32_s', [])])
+I32_WRAP_I64 = KApply('aCvtOp', [i32, KApply('aWrap_i64', [])])
+
+F64_PROMOTE_F32 = KApply('aCvtOp', [f64, KApply('aPromote_f32', [])])
+F32_DEMOTE_F64 = KApply('aCvtOp', [f32, KApply('aDemote_f64', [])])
+
+F32_CONVERT_U_I32 = KApply('aCvtOp', [f32, KApply('aConvert_i32_u', [])])
+F64_CONVERT_U_I32 = KApply('aCvtOp', [f64, KApply('aConvert_i32_u', [])])
+F32_CONVERT_U_I64 = KApply('aCvtOp', [f32, KApply('aConvert_i64_u', [])])
+F64_CONVERT_U_I64 = KApply('aCvtOp', [f64, KApply('aConvert_i64_u', [])])
+F32_CONVERT_S_I32 = KApply('aCvtOp', [f32, KApply('aConvert_i32_s', [])])
+F64_CONVERT_S_I32 = KApply('aCvtOp', [f64, KApply('aConvert_i32_s', [])])
+F32_CONVERT_S_I64 = KApply('aCvtOp', [f32, KApply('aConvert_i64_s', [])])
+F64_CONVERT_S_I64 = KApply('aCvtOp', [f64, KApply('aConvert_i64_s', [])])
+
+I32_TRUNC_U_F32 = KApply('aCvtOp', [i32, KApply('aTrunc_f32_u', [])])
+I32_TRUNC_U_F64 = KApply('aCvtOp', [i32, KApply('aTrunc_f64_u', [])])
+I64_TRUNC_U_F32 = KApply('aCvtOp', [i64, KApply('aTrunc_f32_u', [])])
+I64_TRUNC_U_F64 = KApply('aCvtOp', [i64, KApply('aTrunc_f64_u', [])])
+I32_TRUNC_S_F32 = KApply('aCvtOp', [i32, KApply('aTrunc_f32_s', [])])
+I32_TRUNC_S_F64 = KApply('aCvtOp', [i32, KApply('aTrunc_f64_s', [])])
+I64_TRUNC_S_F32 = KApply('aCvtOp', [i64, KApply('aTrunc_f32_s', [])])
+I64_TRUNC_S_F64 = KApply('aCvtOp', [i64, KApply('aTrunc_f64_s', [])])
+
   #########
   # Const #
   #########
@@ -270,12 +300,8 @@ def I32_CONST(i : int):
 def I64_CONST(i : int):
     return (KApply('aIConst', [i64, KInt(i)]))
 
-F32_DEMOTE_F64 = NOP
 F32_LOAD = NOP
 F32_STORE = NOP
-F64_CONVERT_S_I32 = NOP
-F64_CONVERT_U_I32 = NOP
-F64_PROMOTE_F32 = NOP
 GET_GLOBAL = NOP
 GET_LOCAL = NOP
 I32_LOAD = NOP
@@ -286,14 +312,9 @@ I32_LOAD8_U = NOP
 I32_STORE = NOP
 I32_STORE16 = NOP
 I32_STORE8 = NOP
-I32_TRUNC_S_F64 = NOP
-I32_WRAP_I64 = NOP
-I64_EXTEND_S_I32 = NOP
-I64_EXTEND_U_I32 = NOP
 I64_LOAD32_S = NOP
 I64_LOAD32_U = NOP
 I64_STORE32 = NOP
-I64_TRUNC_U_F32 = NOP
 IF = NOP
 LOOP = NOP
 MEMORY_GROW = NOP
