@@ -27,5 +27,4 @@ sys.setrecursionlimit(1500000000)
 
 if __name__ == "__main__":
     module = wasm2kast.main()
-    pykPrettyPrint(module)
     run_module(module)
