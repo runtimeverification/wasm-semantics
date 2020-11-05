@@ -851,8 +851,8 @@ The `align` parameter is for optimization only and is not allowed to influence t
 ```k
     rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp)        => #store(ITYPE, OP, 0)
     rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp MemArg) => #store(ITYPE, OP, #getOffset(MemArg))
-    rule #t2aInstr<_>(FTYPE:IValType.OP:StoreOp)        => #store(FTYPE, OP, 0)
-    rule #t2aInstr<_>(FTYPE:IValType.OP:StoreOp MemArg) => #store(FTYPE, OP, #getOffset(MemArg))
+    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOp)        => #store(FTYPE, OP, 0)
+    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOp MemArg) => #store(FTYPE, OP, #getOffset(MemArg))
     rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOp)         => #load(ITYPE, OP, 0)
     rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOp MemArg)  => #load(ITYPE, OP, #getOffset(MemArg))
     rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOp)         => #load(FTYPE, OP, 0)
