@@ -203,6 +203,7 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 
     syntax Int   ::= #lenElemSegment (ElemSegment)      [function]
     syntax Index ::= #getElemSegment (ElemSegment, Int) [function]
+    syntax Int   ::= #lenInts        (Ints)             [function]
     syntax Int   ::= #getInts        (Ints,        Int) [function]
  // --------------------------------------------------------------
     rule #lenElemSegment(.ElemSegment) => 0
@@ -210,6 +211,9 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 
     rule #getElemSegment(E _ES, 0) => E
     rule #getElemSegment(_E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
+
+    rule #lenInts(.Ints) => 0
+    rule #lenInts(_TFIDX    ES) => 1 +Int #lenInts(ES)
 
     rule #getInts(E _ES, 0) => E
     rule #getInts(_E ES, I) => #getInts(ES, I -Int 1) requires I >Int 0

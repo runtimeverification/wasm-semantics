@@ -512,7 +512,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 
     syntax Instr ::= "#br_table" "(" Ints ")" [klabel(aBr_table), symbol]
  // ---------------------------------------------------------------------
-    rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenElemSegment(ES) -Int 1))) ... </instrs>
+    rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenInts(ES) -Int 1))) ... </instrs>
          <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
 ```
 
