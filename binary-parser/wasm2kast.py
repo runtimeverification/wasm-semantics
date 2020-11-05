@@ -80,14 +80,6 @@ def instr(i):
         return a.F32_CONST(i.value)
     if i.opcode == B.F64_CONST:
         return a.F64_CONST(i.value)
-    if i.opcode == B.F32_DEMOTE_F64:
-        return a.F32_DEMOTE_F64
-    if i.opcode == B.F64_CONVERT_S_I32:
-        return a.F64_CONVERT_S_I32
-    if i.opcode == B.F64_CONVERT_U_I32:
-        return a.F64_CONVERT_U_I32
-    if i.opcode == B.F64_PROMOTE_F32:
-        return a.F64_PROMOTE_F32
     if i.opcode == B.F32_REINTERPRET_I32:
         raise(ValueError('Reinterpret instructions not implemented.'))
     if i.opcode == B.F64_REINTERPRET_I64:
@@ -127,14 +119,6 @@ def instr(i):
         return a.I64_STORE8(i.memarg.offset)
     if i.opcode == B.I64_STORE32:
         return a.I64_STORE32(i.memarg.offset)
-    if i.opcode == B.I32_TRUNC_S_F64:
-        return a.I32_TRUNC_S_F64
-    if i.opcode == B.I32_WRAP_I64:
-        return a.I32_WRAP_I64
-    if i.opcode == B.I64_EXTEND_S_I32:
-        return a.I64_EXTEND_S_I32
-    if i.opcode == B.I64_EXTEND_U_I32:
-        return a.I64_EXTEND_U_I32
     if i.opcode == B.F32_LOAD:
         return a.F32_LOAD(i.memarg.offset)
     if i.opcode == B.F64_LOAD:
@@ -163,31 +147,17 @@ def instr(i):
         return a.I64_LOAD32_S(i.memarg.offset)
     if i.opcode == B.I64_LOAD32_U:
         return a.I64_LOAD32_U(i.memarg.offset)
-    if i.opcode == B.I64_TRUNC_U_F32:
-        return a.I64_TRUNC_U_F32
     if i.opcode == B.LOOP:
         iis = instrs(i.instructions)
         res = vec_type(i.result_type)
         return a.LOOP(res, iis)
-    if i.opcode == B.MEMORY_GROW:
-        return a.MEMORY_GROW
-    if i.opcode == B.MEMORY_SIZE:
-        return a.MEMORY_SIZE
-    if i.opcode == B.NOP:
-        return a.NOP
-    if i.opcode == B.RETURN:
-        return a.RETURN
-    if i.opcode == B.SELECT:
-        return a.SELECT
     if i.opcode == B.SET_GLOBAL:
         return a.SET_GLOBAL(i.global_idx)
     if i.opcode == B.SET_LOCAL:
         return a.SET_LOCAL(i.local_idx)
     if i.opcode == B.TEE_LOCAL:
         return a.TEE_LOCAL(i.local_idx)
-    if i.opcode == B.UNREACHABLE:
-        return a.UNREACHABLE
-    # Catch all.
+    # Catch all for operations without direct arguments.
     op = i.opcode
     return eval('a.' + i.opcode.name)
 
