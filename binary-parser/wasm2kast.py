@@ -62,15 +62,6 @@ def instr(i):
         iis = instrs(i.instructions)
         res = vec_type(i.result_type)
         return a.BLOCK(res, iis)
-    if i.opcode == B.IF:
-        thens = instrs(i.instructions)
-        els = instrs(i.else_instructions)
-        res = vec_type(i.result_type)
-        return a.IF(res, thens, els)
-    if i.opcode == B.LOOP:
-        iis = instrs(i.instructions)
-        res = vec_type(i.result_type)
-        return a.LOOP(res, iis)
     if i.opcode == B.BR:
         return a.BR(i.label_idx)
     if i.opcode == B.BR_IF:
@@ -81,6 +72,8 @@ def instr(i):
         return a.CALL(i.function_idx)
     if i.opcode == B.CALL_INDIRECT:
         return a.CALL_INDIRECT(i.type_idx)
+    if i.opcode == B.ELSE:
+        raise(ValueError("ELSE opcode: should have been filtered out."))
     if i.opcode == B.END:
         raise(ValueError("End opcode: should have been filtered out."))
     if i.opcode == B.F32_CONST:
@@ -107,6 +100,11 @@ def instr(i):
         return a.I64_CONST(i.value)
     if i.opcode == B.I32_REINTERPRET_F32:
         raise(ValueError('Reinterpret instructions not implemented.'))
+    if i.opcode == B.IF:
+        thens = instrs(i.instructions)
+        els = instrs(i.else_instructions)
+        res = vec_type(i.result_type)
+        return a.IF(res, thens, els)
     if i.opcode == B.F32_STORE:
         return a.F32_STORE(i.memarg.offset)
     if i.opcode == B.F64_STORE:
@@ -163,6 +161,10 @@ def instr(i):
         return a.I64_LOAD32_U(i.memarg.offset)
     if i.opcode == B.I64_TRUNC_U_F32:
         return a.I64_TRUNC_U_F32
+    if i.opcode == B.LOOP:
+        iis = instrs(i.instructions)
+        res = vec_type(i.result_type)
+        return a.LOOP(res, iis)
     if i.opcode == B.MEMORY_GROW:
         return a.MEMORY_GROW
     if i.opcode == B.MEMORY_SIZE:
