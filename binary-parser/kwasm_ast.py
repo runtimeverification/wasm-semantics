@@ -105,8 +105,12 @@ UNREACHABLE = KApply('aUnreachable', [])
 def BLOCK(vec_type, instrs):
     return KApply('aBlock', [vec_type, instrs])
 
-IF = NOP
-LOOP = NOP
+def IF(vec_type, then_instrs, else_instrs):
+    return KApply('aIf', [vec_type, then_instrs, else_instrs])
+
+def LOOP(vec_type, instrs):
+    return KApply('aLoop', [vec_type, instrs])
+
 RETURN = KApply('aReturn', [])
 
 def BR(idx : int):

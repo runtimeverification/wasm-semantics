@@ -47,7 +47,14 @@ def func(f : Function):
 ##########
 
 def instrs(iis):
-    return a.instrs([instr(i) for i in iis if not i.opcode == BinaryOpcode.END])
+    """Turn a list of instructions into KAST."""
+    # We ignore `END`.
+    # The AST supplied by py-wasm has already parsed these and terminated the blocks.
+    # We also ignore `ELSE`.
+    # The AST supplied by py-wasm includes the statements in the else-branch as part of the `IF` instruction.
+    return a.instrs([instr(i) for i in iis
+                                            if not i.opcode == BinaryOpcode.END
+                                           and not i.opcode == BinaryOpcode.ELSE])
 
 def instr(i):
     B = BinaryOpcode
@@ -55,6 +62,15 @@ def instr(i):
         iis = instrs(i.instructions)
         res = vec_type(i.result_type)
         return a.BLOCK(res, iis)
+    if i.opcode == B.IF:
+        thens = instrs(i.instructions)
+        els = instrs(i.else_instructions)
+        res = vec_type(i.result_type)
+        return a.IF(res, thens, els)
+    if i.opcode == B.LOOP:
+        iis = instrs(i.instructions)
+        res = vec_type(i.result_type)
+        return a.LOOP(res, iis)
     if i.opcode == B.BR:
         return a.BR(i.label_idx)
     if i.opcode == B.BR_IF:
@@ -147,10 +163,6 @@ def instr(i):
         return a.I64_LOAD32_U(i.memarg.offset)
     if i.opcode == B.I64_TRUNC_U_F32:
         return a.I64_TRUNC_U_F32
-    if i.opcode == B.IF:
-        return a.IF
-    if i.opcode == B.LOOP:
-        return a.LOOP
     if i.opcode == B.MEMORY_GROW:
         return a.MEMORY_GROW
     if i.opcode == B.MEMORY_SIZE:
