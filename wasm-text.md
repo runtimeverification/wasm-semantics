@@ -688,7 +688,7 @@ Since we do not have polymorphic functions available, we define one function per
                     , funcs: #t2aDefns<C>(FS)
                     , tables: TABS
                     , mems: MS
-                    , globals: GS
+                    , globals: #t2aDefns<C>(GS)
                     , elem: #t2aDefns<C>(EL)
                     , data: #t2aDefns<C>(DAT)
                     , start: #t2aDefns<C>(S)
@@ -715,6 +715,12 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType))) => ( import MOD NAME #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)) )
 
+```
+
+#### Globals
+
+```k
+    rule #t2aDefn<C>(#global(... id: OID, type: GTYP, init: IS)) => #global(... id: OID, type: GTYP, init: #t2aInstrs<C>(IS) )
 ```
 
 #### Functions
