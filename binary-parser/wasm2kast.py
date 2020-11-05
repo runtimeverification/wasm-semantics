@@ -88,6 +88,8 @@ def instr(i):
         return a.F64_CONVERT_U_I32
     if i.opcode == B.F64_PROMOTE_F32:
         return a.F64_PROMOTE_F32
+    if i.opcode == B.F32_REINTERPRET_I32:
+        raise(ValueError('Reinterpret instructions not implemented.'))
     if i.opcode == B.F64_REINTERPRET_I64:
         raise(ValueError('Reinterpret instructions not implemented.'))
     if i.opcode == B.GET_GLOBAL:
@@ -99,6 +101,8 @@ def instr(i):
     if i.opcode == B.I64_CONST:
         return a.I64_CONST(i.value)
     if i.opcode == B.I32_REINTERPRET_F32:
+        raise(ValueError('Reinterpret instructions not implemented.'))
+    if i.opcode == B.I64_REINTERPRET_F64:
         raise(ValueError('Reinterpret instructions not implemented.'))
     if i.opcode == B.IF:
         thens = instrs(i.instructions)
