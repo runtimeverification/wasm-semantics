@@ -111,8 +111,9 @@ For the core language, only regular integers are allowed.
 ### Type Mutability
 
 ```k
-    syntax Mut ::= "const" | "var"
- // ------------------------------
+    syntax Mut ::= "const" [klabel(mutConst), symbol]
+                 | "var"   [klabel(mutVar), symbol]
+ // -----------------------------------------------
 ```
 
 ### Limits

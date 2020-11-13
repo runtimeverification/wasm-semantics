@@ -589,13 +589,13 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax GlobalType ::= Mut ValType
-// ----------------------------------
+    syntax GlobalType ::= Mut ValType [klabel(aGlobalType), symbol]
+ // ---------------------------------------------------------------
 
-    syntax GlobalDefn ::= #global( id: OptionalId, type: GlobalType, init: Instrs)
+    syntax GlobalDefn ::= #global(type: GlobalType, init: Instrs, metadata: OptionalId) [klabel(aGlobalDefn), symbol]
     syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
  // ----------------------------------------------------------
-    rule <instrs> #global(... id: OID, type: TYP, init: IS ) => sequenceInstrs(IS) ~> allocglobal(OID, TYP) ... </instrs>
+    rule <instrs> #global(... type: TYP, init: IS, metadata: OID) => sequenceInstrs(IS) ~> allocglobal(OID, TYP) ... </instrs>
 
     rule <instrs> allocglobal(OID:OptionalId, MUT:Mut TYP:ValType) => . ... </instrs>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
