@@ -208,6 +208,12 @@ The following is the text format representation of an import specification.
 ### Memories
 
 ```k
+    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
+ // ------------------------------------------------------------
+
+    syntax MemorySpec ::= MemType
+ // --------------------------------
+
     syntax MemorySpec ::= "(" "data" DataString ")"
                         | InlineImport MemType
                         | InlineExport MemorySpec
@@ -689,7 +695,7 @@ Since we do not have polymorphic functions available, we define one function per
       => #module( ... types: #t2aDefns<C>(TS)
                     , funcs: #t2aDefns<C>(FS)
                     , tables: #t2aDefns<C>(TABS)
-                    , mems: MS
+                    , mems: #t2aDefns<C>(MS)
                     , globals: #t2aDefns<C>(GS)
                     , elem: #t2aDefns<C>(EL)
                     , data: #t2aDefns<C>(DAT)
@@ -760,6 +766,12 @@ After unfolding, each type use in a function starts with an explicit reference t
     rule #t2aDefn<_>((table OID:OptionalId LIMITS:TextLimits funcref )) => #table(... limits: t2aLimits(LIMITS), metadata: OID)
 ```
 
+#### Memories
+
+```k
+    rule #t2aDefn<_>((memory OID:OptionalId LIMITS:TextLimits )) => #memory(... limits: t2aLimits(LIMITS), metadata: OID)
+```
+
 ```k
     syntax Limits ::= t2aLimits(TextLimits) [function, functional]
  // --------------------------------------------------------------
@@ -777,14 +789,17 @@ After unfolding, each type use in a function starts with an explicit reference t
 
 #### Element Segments
 
+Wasm currently supports only one table, so we do not need to resolve any identifiers.
+
 ```k
-    rule #t2aDefn<C>(( elem IDX:Index (offset IS) ES )) => ( elem IDX (offset #t2aInstrs<C>(IS)) #t2aElemSegment<C>(ES) )
-    syntax ElemSegment ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
- // ---------------------------------------------------------------------------------------
+    rule #t2aDefn<C>(( elem _:Index (offset IS) ES )) => #elem(0, #t2aInstrs<C>(IS), #t2aElemSegment<C>(ES) )
+
+    syntax Ints ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
+ // --------------------------------------------------------------------------------
     rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Identifier ES) => {FIDS[ID]}:>Int #t2aElemSegment<C>(ES)
       requires ID in_keys(FIDS)
     rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
-    rule #t2aElemSegment<_C>(.ElemSegment) => .ElemSegment
+    rule #t2aElemSegment<_C>(.ElemSegment) => .Ints
 ```
 
 #### Data Segments
