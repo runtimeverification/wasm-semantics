@@ -32,6 +32,8 @@ GLOBAL_TYPE = 'aGlobalType'
 
 ELEM = 'aElemDefn'
 
+DATA = 'aDataDefn'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -48,6 +50,9 @@ def KInt(value : int):
 
 def KFloat(value : float):
     return KToken(str(value), 'Float')
+
+def KBytes(bs : bytes):
+    return KToken(str(bs), 'Bytes')
 
 #########
 # Lists #
@@ -454,6 +459,10 @@ def glob(type, init, metadata=EMPTY_ID):
 
 def elem(table_idx : int, offset, init : [int]):
     return KApply(ELEM, [KInt(table_idx), offset, ints(init)])
+
+def data(memory_idx : int, offset, data : bytes):
+    pass
+    return KApply(DATA, [KInt(memory_idx), offset, KBytes(data)])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
