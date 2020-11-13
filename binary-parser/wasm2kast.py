@@ -5,7 +5,7 @@ import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType, FunctionType, Function, Table, Limits
+from wasm.datatypes import ValType, FunctionType, Function, Table, Limits, Memory
 from wasm.opcodes import BinaryOpcode
 
 def main():
@@ -24,10 +24,11 @@ def wasm2kast(wasm_bytes : bytes) -> dict:
 
 def ast2kast(wasm_ast : Module) -> dict:
     """Returns a dictionary representing the Kast JSON."""
-    types  = a.defns([type(x)  for x in wasm_ast.types])
-    funcs  = a.defns([func(x)  for x in wasm_ast.funcs])
-    tables = a.defns([table(x) for x in wasm_ast.tables])
-    return a.module(types=types, funcs=funcs, tables=tables)
+    types  = a.defns([type(x)   for x in wasm_ast.types])
+    funcs  = a.defns([func(x)   for x in wasm_ast.funcs])
+    tables = a.defns([table(x)  for x in wasm_ast.tables])
+    mems   = a.defns([memory(x) for x in wasm_ast.mems])
+    return a.module(types=types, funcs=funcs, tables=tables, mems=mems)
 
 #########
 # Defns #
@@ -46,6 +47,10 @@ def func(f : Function):
 def table(t : Table):
     ls = limits(t.type.limits)
     return a.table(ls)
+
+def memory(m : Memory):
+    ls = limits(m.type)
+    return a.memory(ls)
 
 ##########
 # Instrs #

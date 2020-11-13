@@ -25,6 +25,8 @@ FUNC_METADATA = 'funcMeta'
 
 TABLE = 'aTableDefn'
 
+MEMORY = 'aMemoryDefn'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -432,6 +434,9 @@ def func(type, locals, body, metadata=EMPTY_FUNC_METADATA):
 
 def table(limits, metadata=EMPTY_ID):
     return KApply(TABLE, [limits, metadata])
+
+def memory(limits, metadata=EMPTY_ID):
+    return KApply(MEMORY, [limits, metadata])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
