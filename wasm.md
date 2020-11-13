@@ -138,7 +138,8 @@ The following are kept abstract, and can be extended in other formats, such as t
     syntax GlobalDefn
     syntax FuncDefn
     syntax TableDefn
- // ----------------
+    syntax MemoryDefn
+ // -----------------
 ```
 
 TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
@@ -148,8 +149,6 @@ TODO: Make the following definitions abstract as well, and move these concrete d
     syntax TableElemType ::= "funcref"
  // ----------------------------------
 
-    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
-    syntax MemorySpec ::= MemType
     syntax MemType    ::= TextLimits
  // --------------------------------
 
@@ -958,11 +957,12 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
+    syntax MemoryDefn ::= #memory(limits: Limits, metadata: OptionalId) [klabel(aMemoryDefn), symbol]
     syntax Alloc ::= allocmemory (OptionalId, Int, OptionalInt)
  // -----------------------------------------------------------
-    rule <instrs> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory(OID, MIN, .Int) ... </instrs>
+    rule <instrs> #memory(... limits: #limitsMin(MIN),   metadata: OID) => allocmemory(OID, MIN, .Int) ... </instrs>
       requires MIN <=Int #maxMemorySize()
-    rule <instrs> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </instrs>
+    rule <instrs> #memory(... limits: #limits(MIN, MAX), metadata: OID) => allocmemory(OID, MIN, MAX)  ... </instrs>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
@@ -1184,10 +1184,12 @@ The initialization of a table needs an offset and a list of functions, given as 
 A table index is optional and will be default to zero.
 
 ```k
-    syntax ElemDefn ::= "elem" "{" Index        ElemSegment "}"
-    syntax Stmt ::= #initElements ( Int, Int, Map, ElemSegment )
- // ------------------------------------------------------------
-    rule <instrs> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
+
+    syntax ElemDefn ::= #elem(index : Int, offset : Instrs, elemSegment : Ints) [klabel(aElemDefn), symbol]
+                      | "elem" "{" Int        Ints "}"
+    syntax Stmt ::= #initElements ( Int, Int, Map, Ints )
+ // -----------------------------------------------------
+    rule <instrs> #elem(TABIDX, IS, ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
     rule <instrs> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -1195,12 +1197,11 @@ A table index is optional and will be default to zero.
          <moduleInst>
            <modIdx> CUR  </modIdx>
            <funcAddrs> FADDRS </funcAddrs>
-           <tabIds>  TIDS </tabIds>
-           <tabAddrs> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabAddrs>
+           <tabAddrs> TABIDX |-> ADDR </tabAddrs>
            ...
          </moduleInst>
 
-    rule <instrs> #initElements (    _,      _,      _, .ElemSegment ) => . ... </instrs>
+    rule <instrs> #initElements (    _,      _,      _, .Ints ) => . ... </instrs>
     rule <instrs> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </instrs>
          <tabInst>
            <tAddr> ADDR </tAddr>
