@@ -245,7 +245,9 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ### Element Segments
 
 ```k
-    syntax ElemDefn ::= "(" "elem" Offset        ElemSegment ")"
+
+    syntax ElemDefn ::= "(" "elem" Index Offset ElemSegment ")"
+                      | "(" "elem" Offset        ElemSegment ")"
                       | "(" "elem" Offset "func" ElemSegment ")"
  // ------------------------------------------------------------
 ```
@@ -253,7 +255,8 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ### Data Segments
 
 ```k
-    syntax DataDefn ::= "(" "data" Offset DataString ")"
+    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
+                      | "(" "data" Offset DataString ")"
  // ----------------------------------------------------
 ```
 
