@@ -461,7 +461,6 @@ def elem(table_idx : int, offset, init : [int]):
     return KApply(ELEM, [KInt(table_idx), offset, ints(init)])
 
 def data(memory_idx : int, offset, data : bytes):
-    pass
     return KApply(DATA, [KInt(memory_idx), offset, KBytes(data)])
 
 def module(types=EMPTY_DEFNS,

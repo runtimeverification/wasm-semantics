@@ -139,7 +139,9 @@ The following are kept abstract, and can be extended in other formats, such as t
     syntax FuncDefn
     syntax TableDefn
     syntax MemoryDefn
- // -----------------
+    syntax ElemDefn
+    syntax DataDefn
+ // ---------------
 ```
 
 TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
@@ -154,12 +156,6 @@ TODO: Make the following definitions abstract as well, and move these concrete d
 
     syntax TextLimits ::= Int | Int Int
  // -----------------------------------
-
-    syntax ElemDefn ::= "(" "elem" Index Offset ElemSegment ")"
- // -----------------------------------------------------------
-
-    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
- // --------------------------------------------------------------
 
     syntax StartDefn ::= "(" "start" Index ")"
  // ------------------------------------------
