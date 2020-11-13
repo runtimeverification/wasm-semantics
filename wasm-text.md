@@ -197,7 +197,9 @@ The following is the text format representation of an import specification.
 ### Tables
 
 ```k
-    syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
+    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
+    syntax TableSpec ::= TableType
+                       | TableElemType "(" "elem" ElemSegment ")"
                        | InlineImport TableType
                        | InlineExport TableSpec
  // -------------------------------------------
@@ -686,7 +688,7 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
       => #module( ... types: #t2aDefns<C>(TS)
                     , funcs: #t2aDefns<C>(FS)
-                    , tables: TABS
+                    , tables: #t2aDefns<C>(TABS)
                     , mems: MS
                     , globals: #t2aDefns<C>(GS)
                     , elem: #t2aDefns<C>(EL)
@@ -750,6 +752,19 @@ After unfolding, each type use in a function starts with an explicit reference t
     rule #locals2vectype(.LocalDecls                                             , VTYPES) => [ VTYPES ]
     rule #locals2vectype(local                VTYPES':ValTypes LDECLS:LocalDecls , VTYPES) => #locals2vectype(LDECLS , VTYPES + VTYPES')
     rule #locals2vectype(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #locals2vectype(LDECLS , VTYPES + VTYPE .ValTypes)
+```
+
+#### Tables
+
+```k
+    rule #t2aDefn<_>((table OID:OptionalId LIMITS:TextLimits funcref )) => #table(... limits: t2aLimits(LIMITS), metadata: OID)
+```
+
+```k
+    syntax Limits ::= t2aLimits(TextLimits) [function, functional]
+ // --------------------------------------------------------------
+    rule t2aLimits(MIN:Int) => #limitsMin(MIN)
+    rule t2aLimits(MIN:Int MAX:Int) => #limits(MIN, MAX)
 ```
 
 #### Start Function

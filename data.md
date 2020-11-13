@@ -120,8 +120,9 @@ For the core language, only regular integers are allowed.
 Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
 
 ```k
-    syntax Limits ::= Int | Int Int
- // -------------------------------
+    syntax Limits ::= #limitsMin(Int)   [klabel(limitsMin),    symbol]
+                    | #limits(Int, Int) [klabel(limitsMinMax), symbol]
+ // ------------------------------------------------------------------
 ```
 
 ### Basic Values

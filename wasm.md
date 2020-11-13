@@ -137,23 +137,24 @@ The following are kept abstract, and can be extended in other formats, such as t
     syntax TypeDefn
     syntax GlobalDefn
     syntax FuncDefn
- // ---------------
+    syntax TableDefn
+ // ----------------
 ```
 
 TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
 
 ```k
-    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
-    syntax TableSpec ::= TableType
-    syntax TableType ::= Limits TableElemType
-    syntax TableElemType ::= "funcref"
+    syntax TableType ::= TextLimits TableElemType
     syntax TableElemType ::= "funcref"
  // ----------------------------------
 
     syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
     syntax MemorySpec ::= MemType
-    syntax MemType    ::= Limits
- // ----------------------------
+    syntax MemType    ::= TextLimits
+ // --------------------------------
+
+    syntax TextLimits ::= Int | Int Int
+ // -----------------------------------
 
     syntax ElemDefn ::= "(" "elem" Index Offset ElemSegment ")"
  // -----------------------------------------------------------
@@ -914,11 +915,12 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
+    syntax TableDefn ::= #table (limits: Limits, metadata: OptionalId) [klabel(aTableDefn), symbol]
     syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt)
  // ----------------------------------------------------------
-    rule <instrs> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable(OID, MIN, .Int) ... </instrs>
+    rule <instrs> #table(... limits: #limitsMin(MIN), metadata: OID)   => alloctable(OID, MIN, .Int) ... </instrs>
       requires MIN <=Int #maxTableSize()
-    rule <instrs> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable(OID, MIN,  MAX) ... </instrs>
+    rule <instrs> #table(... limits: #limits(MIN, MAX), metadata: OID) => alloctable(OID, MIN, MAX) ... </instrs>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
@@ -1330,7 +1332,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <instrs> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </instrs>
+    rule <instrs> ( import MOD NAME (memory OID:OptionalId LIM:TextLimits) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1383,8 +1385,8 @@ Subtyping is determined by whether the limits of one table/memory fit in the lim
 The following function checks if the limits in the first parameter *match*, i.e. is a subtype of, the limits in the second.
 
 ```k
-    syntax Bool ::= #limitsMatchImport(Int, OptionalInt, Limits) [function]
- // -----------------------------------------------------------------------
+    syntax Bool ::= #limitsMatchImport(Int, OptionalInt, TextLimits) [function]
+ // ---------------------------------------------------------------------------
     rule #limitsMatchImport(L1,      _, L2:Int   ) => L1 >=Int L2
     rule #limitsMatchImport( _,   .Int,  _:Int  _) => false
     rule #limitsMatchImport(L1, U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
