@@ -95,10 +95,10 @@ def vec_type(valtypes):
 def func_type(params, results):
     return KApply(FUNC_TYPE, [params, results])
 
-def limitsMin(i : int):
+def limits_min(i : int):
     return KApply('limitsMin', [KInt(i)])
 
-def limitsMinMax(i : int, j : int):
+def limits_min_max(i : int, j : int):
     return KApply('limitsMinMax', [KInt(i), KInt(j)])
 
 ##########
