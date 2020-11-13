@@ -804,8 +804,10 @@ Wasm currently supports only one table, so we do not need to resolve any identif
 
 #### Data Segments
 
+Wasm currently supports only one memory, so we do not need to resolve any identifiers.
+
 ```k
-    rule #t2aDefn<C>(( data IDX:Index (offset IS) DS )) => ( data IDX (offset #t2aInstrs<C>(IS)) DS )
+    rule #t2aDefn<C>(( data _:Index (offset IS) DS )) => #data(0, #t2aInstrs<C>(IS), #DS2Bytes(DS))
 ```
 
 #### Exports
