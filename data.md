@@ -116,15 +116,6 @@ For the core language, only regular integers are allowed.
  // -----------------------------------------------
 ```
 
-### Limits
-
-Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
-
-```k
-    syntax Limits ::= #limitsMin(Int)   [klabel(limitsMin),    symbol]
-                    | #limits(Int, Int) [klabel(limitsMinMax), symbol]
- // ------------------------------------------------------------------
-```
 
 ### Basic Values
 
@@ -234,6 +225,16 @@ The sort `OptionalInt` provides this potentially "undefined" `Int`.
 ```k
     syntax OptionalInt ::= Int | ".Int"
  // -----------------------------------
+```
+
+### Limits
+
+Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
+
+```k
+    syntax Limits ::= #limitsMin(Int)   [klabel(limitsMin),    symbol]
+                    | #limits(Int, Int) [klabel(limitsMinMax), symbol]
+ // ------------------------------------------------------------------
 ```
 
 ### Type Constructors
