@@ -142,7 +142,8 @@ The following are kept abstract, and can be extended in other formats, such as t
     syntax ElemDefn
     syntax DataDefn
     syntax StartDefn
- // ----------------
+    syntax ImportDefn
+ // -----------------
 ```
 
 TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
@@ -160,13 +161,6 @@ TODO: Make the following definitions abstract as well, and move these concrete d
 
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
  // -------------------------------------------------------------------
-
-    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
- // -----------------------------------------------------------------------
-
-    syntax ImportDesc ::= "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
-                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
- // -----------------------------------------------------------------------------------------------
 ```
 
 #### Offset
@@ -1278,11 +1272,14 @@ That an import is really a subtype of the declared import needs to be checked at
 The value of a global gets copied when it is imported.
 
 ```k
-    syntax ImportDesc ::= #funcDesc(id: OptionalId, type: Int)
-                        | #globalDesc(id: OptionalId, type: GlobalType)
+    syntax ImportDefn ::= #import(mod : WasmString, name : WasmString, ImportDesc) [klabel(aImportDefn), symbol]
+    syntax ImportDesc ::= #funcDesc   (id: OptionalId, type: Int)                  [klabel(aFuncDesc),   symbol]
+                        | #globalDesc (id: OptionalId, type: GlobalType)           [klabel(aGlobalDesc), symbol]
+                        | #tableDesc  (id: OptionalId, type: Limits)               [klabel(aTableDesc),  symbol]
+                        | #memoryDesc (id: OptionalId, type: Limits)               [klabel(aMemoryDesc), symbol]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
-    rule <instrs> ( import MOD NAME #funcDesc(... type: TIDX) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #funcDesc(... type: TIDX) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1305,7 +1302,7 @@ The value of a global gets copied when it is imported.
          </funcDef>
       requires FTYPE ==K TYPES[TIDX]
 
-    rule <instrs> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #tableDesc(... id: OID, type: LIM) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1329,7 +1326,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <instrs> ( import MOD NAME (memory OID:OptionalId LIM:TextLimits) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #memoryDesc(... id: OID, type: LIM) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1353,7 +1350,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <instrs> ( import MOD NAME #globalDesc(... id: OID, type: MUT TYP) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #globalDesc(... id: OID, type: MUT TYP) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1382,11 +1379,11 @@ Subtyping is determined by whether the limits of one table/memory fit in the lim
 The following function checks if the limits in the first parameter *match*, i.e. is a subtype of, the limits in the second.
 
 ```k
-    syntax Bool ::= #limitsMatchImport(Int, OptionalInt, TextLimits) [function]
- // ---------------------------------------------------------------------------
-    rule #limitsMatchImport(L1,      _, L2:Int   ) => L1 >=Int L2
-    rule #limitsMatchImport( _,   .Int,  _:Int  _) => false
-    rule #limitsMatchImport(L1, U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
+    syntax Bool ::= #limitsMatchImport(Int, OptionalInt, Limits) [function]
+ // -----------------------------------------------------------------------
+    rule #limitsMatchImport(L1,      _, #limitsMin(L2:Int )) => L1 >=Int L2
+    rule #limitsMatchImport( _,   .Int, #limits( _:Int,  _)) => false
+    rule #limitsMatchImport(L1, U1:Int, #limits(L2:Int, U2)) => L1 >=Int L2 andBool U1 <=Int U2
 ```
 
 Module Instantiation
