@@ -169,6 +169,11 @@ Note that it is possible to define multiple exports inline, i.e. export a single
 
 ### Imports
 
+```k
+    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
+ // -----------------------------------------------------------------------
+```
+
 Imports can be declared like regular functions, memories, etc., by giving an inline import declaration.
 
 ```k
@@ -181,6 +186,8 @@ The following is the text format representation of an import specification.
 ```k
     syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
  // -----------------------------------------------------------------------------------------------
 ```
 
@@ -726,13 +733,15 @@ Since we do not have polymorphic functions available, we define one function per
 #### Imports
 
 ```k
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier)            ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
-    rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int)                  ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
-    rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type ID:Identifier)            ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type ID:Identifier) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
+    rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int)                  ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
+    rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
 
-    rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType))) => ( import MOD NAME #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)) )
+    rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType)))         => #import(MOD, NAME, #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)))
 
+    rule #t2aDefn<_                     >(( import MOD NAME (table  OID:OptionalId LIM:TextLimits funcref)))           => #import(MOD, NAME, #tableDesc(...  id: OID:OptionalId, type: t2aLimits(LIM)))
+    rule #t2aDefn<_                     >(( import MOD NAME (memory OID:OptionalId LIM:TextLimits        )))           => #import(MOD, NAME, #memoryDesc(... id: OID:OptionalId, type: t2aLimits(LIM)))
 ```
 
 #### Globals
