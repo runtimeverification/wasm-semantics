@@ -5,7 +5,7 @@ import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType, FunctionType, Function, Table, Limits, Memory, Global, GlobalType, Mutability
+from wasm.datatypes import ValType, FunctionType, Function, Table, Limits, Memory, Global, GlobalType, Mutability, ElementSegment
 from wasm.opcodes import BinaryOpcode
 
 def main():
@@ -29,7 +29,8 @@ def ast2kast(wasm_ast : Module) -> dict:
     tables = a.defns([table(x)  for x in wasm_ast.tables])
     mems   = a.defns([memory(x) for x in wasm_ast.mems])
     globs  = a.defns([glob(x)   for x in wasm_ast.globals])
-    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs)
+    elems  = a.defns([elem(x)   for x in wasm_ast.elem])
+    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems)
 
 #########
 # Defns #
@@ -57,6 +58,10 @@ def glob(g : Global):
     t = global_type(g.type)
     init = instrs(g.init)
     return a.glob(t, init)
+
+def elem(e : ElementSegment):
+    offset = instrs(e.offset)
+    return a.elem(e.table_idx, offset, e.init)
 
 ##########
 # Instrs #

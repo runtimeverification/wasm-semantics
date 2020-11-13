@@ -30,6 +30,8 @@ MEMORY = 'aMemoryDefn'
 GLOBAL = 'aGlobalDefn'
 GLOBAL_TYPE = 'aGlobalType'
 
+ELEM = 'aElemDefn'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -449,6 +451,9 @@ def memory(limits, metadata=EMPTY_ID):
 
 def glob(type, init, metadata=EMPTY_ID):
     return KApply(GLOBAL, [type, init, metadata])
+
+def elem(table_idx : int, offset, init : [int]):
+    return KApply(ELEM, [KInt(table_idx), offset, ints(init)])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
