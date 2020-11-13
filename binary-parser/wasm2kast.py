@@ -196,8 +196,8 @@ def func_type(params, results):
 
 def limits(l : Limits):
     if l.max is None:
-        return a.limitsMin(l.min)
-    return a.limitsMinMax(l.min, l.max)
+        return a.limits_min(l.min)
+    return a.limits_min_max(l.min, l.max)
 
 ########
 # Main #
