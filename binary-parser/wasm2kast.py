@@ -5,7 +5,7 @@ import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType, FunctionType, Function
+from wasm.datatypes import ValType, FunctionType, Function, Table, Limits
 from wasm.opcodes import BinaryOpcode
 
 def main():
@@ -24,9 +24,10 @@ def wasm2kast(wasm_bytes : bytes) -> dict:
 
 def ast2kast(wasm_ast : Module) -> dict:
     """Returns a dictionary representing the Kast JSON."""
-    types = a.defns([type(x) for x in wasm_ast.types])
-    funcs = a.defns([func(x) for x in wasm_ast.funcs])
-    return a.module(types=types, funcs=funcs)
+    types  = a.defns([type(x)  for x in wasm_ast.types])
+    funcs  = a.defns([func(x)  for x in wasm_ast.funcs])
+    tables = a.defns([table(x) for x in wasm_ast.tables])
+    return a.module(types=types, funcs=funcs, tables=tables)
 
 #########
 # Defns #
@@ -41,6 +42,10 @@ def func(f : Function):
     locals = a.vec_type(a.val_types(ls_list))
     body = instrs(f.body)
     return a.func(type, locals, body)
+
+def table(t : Table):
+    ls = limits(t.type.limits)
+    return a.table(ls)
 
 ##########
 # Instrs #
@@ -179,11 +184,15 @@ def vec_type(ts : [ValType]):
     _ts = [val_type(x) for x in ts]
     return a.vec_type(a.val_types(_ts))
 
-
 def func_type(params, results):
     pvec = vec_type(params)
     rvec = vec_type(results)
     return a.func_type(pvec, rvec)
+
+def limits(l : Limits):
+    if l.max is None:
+        return a.limitsMin(l.min)
+    return a.limitsMinMax(l.min, l.max)
 
 ########
 # Main #
