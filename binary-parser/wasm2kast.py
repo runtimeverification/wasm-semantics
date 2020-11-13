@@ -5,7 +5,7 @@ import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType, FunctionType, Function, Table, Limits, Memory
+from wasm.datatypes import ValType, FunctionType, Function, Table, Limits, Memory, Global, GlobalType, Mutability
 from wasm.opcodes import BinaryOpcode
 
 def main():
@@ -28,7 +28,8 @@ def ast2kast(wasm_ast : Module) -> dict:
     funcs  = a.defns([func(x)   for x in wasm_ast.funcs])
     tables = a.defns([table(x)  for x in wasm_ast.tables])
     mems   = a.defns([memory(x) for x in wasm_ast.mems])
-    return a.module(types=types, funcs=funcs, tables=tables, mems=mems)
+    globs  = a.defns([glob(x)   for x in wasm_ast.globals])
+    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs)
 
 #########
 # Defns #
@@ -51,6 +52,11 @@ def table(t : Table):
 def memory(m : Memory):
     ls = limits(m.type)
     return a.memory(ls)
+
+def glob(g : Global):
+    t = global_type(g.type)
+    init = instrs(g.init)
+    return a.glob(t, init)
 
 ##########
 # Instrs #
@@ -198,6 +204,12 @@ def limits(l : Limits):
     if l.max is None:
         return a.limits_min(l.min)
     return a.limits_min_max(l.min, l.max)
+
+def global_type(t : GlobalType):
+    vt = val_type(t.valtype)
+    if t.mut is Mutability.const:
+        return a.global_type(a.MUT_CONST, vt)
+    return a.global_type(a.MUT_VAR, vt)
 
 ########
 # Main #

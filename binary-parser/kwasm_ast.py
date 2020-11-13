@@ -27,6 +27,9 @@ TABLE = 'aTableDefn'
 
 MEMORY = 'aMemoryDefn'
 
+GLOBAL = 'aGlobalDefn'
+GLOBAL_TYPE = 'aGlobalType'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -89,6 +92,9 @@ i64 = KApply('i64', [])
 f32 = KApply('f32', [])
 f64 = KApply('f64', [])
 
+MUT_CONST = KApply('mutConst', [])
+MUT_VAR = KApply('mutVar', [])
+
 def vec_type(valtypes):
     return KApply(VEC_TYPE, [valtypes])
 
@@ -100,6 +106,9 @@ def limits_min(i : int):
 
 def limits_min_max(i : int, j : int):
     return KApply('limitsMinMax', [KInt(i), KInt(j)])
+
+def global_type(mut, valtype):
+    return KApply(GLOBAL_TYPE, [mut, valtype])
 
 ##########
 # Instrs #
@@ -437,6 +446,9 @@ def table(limits, metadata=EMPTY_ID):
 
 def memory(limits, metadata=EMPTY_ID):
     return KApply(MEMORY, [limits, metadata])
+
+def glob(type, init, metadata=EMPTY_ID):
+    return KApply(GLOBAL, [type, init, metadata])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
