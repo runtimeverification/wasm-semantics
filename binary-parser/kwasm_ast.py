@@ -34,6 +34,8 @@ ELEM = 'aElemDefn'
 
 DATA = 'aDataDefn'
 
+START = 'aStartDefn'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -462,6 +464,9 @@ def elem(table_idx : int, offset, init : [int]):
 
 def data(memory_idx : int, offset, data : bytes):
     return KApply(DATA, [KInt(memory_idx), offset, KBytes(data)])
+
+def start(start_idx : int):
+    return KApply(START, [KInt(start_idx)])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
