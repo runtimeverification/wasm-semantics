@@ -473,7 +473,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule asGMut ( (mut T:ValType ) ) => var   T
     rule asGMut (      T:ValType   ) => const T
 
-    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... id: OID, type: asGMut(TYP), init: unfoldInstrs(IS .Instrs))) _DS, _I, _M)
+    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... type: asGMut(TYP), init: unfoldInstrs(IS .Instrs), metadata: OID)) _DS, _I, _M)
 
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
       => #unfoldDefns(( import MOD NAME (global OID TYP ) ) DS, I, M)
@@ -728,7 +728,7 @@ Since we do not have polymorphic functions available, we define one function per
 #### Globals
 
 ```k
-    rule #t2aDefn<C>(#global(... id: OID, type: GTYP, init: IS)) => #global(... id: OID, type: GTYP, init: #t2aInstrs<C>(IS) )
+    rule #t2aDefn<C>(#global(... type: GTYP, init: IS, metadata: OID)) => #global(... type: GTYP, init: #t2aInstrs<C>(IS), metadata: OID)
 ```
 
 #### Functions
@@ -999,7 +999,7 @@ The following are helper functions for gathering and updating context.
     rule #idcGlobalsAux((import _ _ (global               _)) IS => IS, _GS,  IDX => IDX +Int 1, _ACC)
     rule #idcGlobalsAux(_I                                    IS => IS, _GS, _IDX              , _ACC) [owise]
 
-    rule #idcGlobalsAux(.Defns, #global(... id: ID:Identifier) GS => GS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcGlobalsAux(.Defns, #global(... metadata: ID:Identifier) GS => GS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
     rule #idcGlobalsAux(.Defns, #global(...) GS => GS, IDX => IDX +Int 1, _ACC) [owise]
     rule #idcGlobalsAux(.Defns, .Defns, _, ACC) => ACC
 
