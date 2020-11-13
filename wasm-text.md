@@ -260,6 +260,13 @@ The offset can either be specified explicitly with the `offset` key word, or be 
  // ----------------------------------------------------
 ```
 
+### Start Function
+
+```k
+    syntax StartDefn ::= "(" "start" Index ")"
+ // ------------------------------------------
+```
+
 ### Modules
 
 Modules are defined as a sequence of definitions, that may come in any order.
@@ -785,9 +792,9 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Start Function
 
 ```k
-    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => ( start {FIDS[ID]}:>Int )
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => #start({FIDS[ID]}:>Int)
       requires ID in_keys(FIDS)
-    rule #t2aDefn<_>(( start I:Int )) => ( start I )
+    rule #t2aDefn<_>(( start I:Int )) => #start(I)
 ```
 
 #### Element Segments

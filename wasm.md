@@ -141,7 +141,8 @@ The following are kept abstract, and can be extended in other formats, such as t
     syntax MemoryDefn
     syntax ElemDefn
     syntax DataDefn
- // ---------------
+    syntax StartDefn
+ // ----------------
 ```
 
 TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
@@ -156,9 +157,6 @@ TODO: Make the following definitions abstract as well, and move these concrete d
 
     syntax TextLimits ::= Int | Int Int
  // -----------------------------------
-
-    syntax StartDefn ::= "(" "start" Index ")"
- // ------------------------------------------
 
     syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
  // -------------------------------------------------------------------
@@ -1244,7 +1242,9 @@ Start Function
 The `start` component of a module declares the function index of a `start function` that is automatically invoked when the module is instantiated, after `tables` and `memories` have been initialized.
 
 ```k
-    rule <instrs> ( start IDX:Int ) => ( invoke FADDR ) ... </instrs>
+    syntax StartDefn ::= #start(Int) [klabel(aStartDefn), symbol]
+ // -------------------------------------------------------------
+    rule <instrs> #start(IDX) => ( invoke FADDR ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
