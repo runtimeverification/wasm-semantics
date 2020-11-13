@@ -1216,10 +1216,11 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax DataDefn ::= "data" "{" Index Bytes "}"
- // ----------------------------------------------
+    syntax DataDefn ::= #data(index : Int, offset : Instrs, data : Bytes) [klabel(aDataDefn), symbol]
+                      | "data" "{" Int Bytes "}"
+ // --------------------------------------------
     // Default to memory 0.
-    rule <instrs> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
+    rule <instrs> #data(IDX, IS, DATA) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
 
     // For now, deal only with memory 0.
     rule <instrs> data { MEMIDX DSBYTES } => . ... </instrs>
@@ -1227,8 +1228,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS </memIds>
-           <memAddrs> #ContextLookup(IDS, MEMIDX) |-> ADDR </memAddrs>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
