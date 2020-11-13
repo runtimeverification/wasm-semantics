@@ -23,6 +23,8 @@ INTS_NIL = '.List{\"listInt\"}_Ints'
 FUNC = 'aFuncDefn'
 FUNC_METADATA = 'funcMeta'
 
+TABLE = 'aTableDefn'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -76,9 +78,9 @@ EMPTY_MODULE_METADATA = KApply(MODULE_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])
 
 EMPTY_FUNC_METADATA = KApply(FUNC_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])])
 
-############
-# ValTypes #
-############
+#########
+# Types #
+#########
 
 i32 = KApply('i32', [])
 i64 = KApply('i64', [])
@@ -90,6 +92,12 @@ def vec_type(valtypes):
 
 def func_type(params, results):
     return KApply(FUNC_TYPE, [params, results])
+
+def limitsMin(i : int):
+    return KApply('limitsMin', [KInt(i)])
+
+def limitsMinMax(i : int, j : int):
+    return KApply('limitsMinMax', [KInt(i), KInt(j)])
 
 ##########
 # Instrs #
@@ -421,6 +429,9 @@ def type(func_type, metadata=EMPTY_ID):
 
 def func(type, locals, body, metadata=EMPTY_FUNC_METADATA):
     return KApply(FUNC, [type, locals, body, metadata])
+
+def table(limits, metadata=EMPTY_ID):
+    return KApply(TABLE, [limits, metadata])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
