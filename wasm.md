@@ -143,6 +143,7 @@ The following are kept abstract, and can be extended in other formats, such as t
     syntax DataDefn
     syntax StartDefn
     syntax ImportDefn
+    syntax ExportDefn
  // -----------------
 ```
 
@@ -158,9 +159,6 @@ TODO: Make the following definitions abstract as well, and move these concrete d
 
     syntax TextLimits ::= Int | Int Int
  // -----------------------------------
-
-    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
- // -------------------------------------------------------------------
 ```
 
 #### Offset
@@ -1253,13 +1251,14 @@ Export
 Exports make functions, tables, memories and globals available for importing into other modules.
 
 ```k
+    syntax ExportDefn ::= #export(name : WasmString, index : Int) [klabel(aExportDefn), symbol]
     syntax Alloc ::= ExportDefn
  // ---------------------------
-    rule <instrs> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </instrs>
+    rule <instrs> #export(ENAME, IDX) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
+           <exports> EXPORTS => EXPORTS [ ENAME <- IDX ] </exports>
            ...
          </moduleInst>
 ```

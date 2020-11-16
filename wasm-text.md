@@ -832,9 +832,9 @@ Wasm currently supports only one memory, so we do not need to resolve any identi
 #### Exports
 
 ```k
-    rule #t2aDefn<ctx(... funcIds: FIDS)>(( export ENAME ( func ID:Identifier ) )) => ( export ENAME (func {FIDS[ID]}:>Int) )
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( export ENAME ( func ID:Identifier ) )) => #export(ENAME, {FIDS[ID]}:>Int)
       requires ID in_keys(FIDS)
-    rule #t2aDefn<_>(( export ENAME ( func I:Int ) )) => ( export ENAME (func I) )
+    rule #t2aDefn<_>(( export ENAME ( func I:Int ) )) => #export(ENAME, I)
 ```
 
 #### Other Definitions
