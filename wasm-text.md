@@ -153,6 +153,9 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
 ```k
     syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
+
+    syntax TextLimits ::= Int | Int Int
+ // -----------------------------------
 ```
 
 ### Exports
@@ -201,6 +204,16 @@ The following is the text format representation of an import specification.
  // -----------------------------------------
 ```
 
+#### Function Local Declaration
+
+```k
+    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
+                        | "local"            ValTypes
+                        | "local" Identifier ValType
+    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
+ // -------------------------------------------------------------------------
+```
+
 ### Tables
 
 ```k
@@ -210,6 +223,10 @@ The following is the text format representation of an import specification.
                        | InlineImport TableType
                        | InlineExport TableSpec
  // -------------------------------------------
+
+    syntax TableType ::= TextLimits TableElemType
+    syntax TableElemType ::= "funcref"
+ // ----------------------------------
 ```
 
 ### Memories
@@ -225,6 +242,9 @@ The following is the text format representation of an import specification.
                         | InlineImport MemType
                         | InlineExport MemorySpec
  // ---------------------------------------------
+
+    syntax MemType    ::= TextLimits
+ // --------------------------------
 ```
 
 ### Globals
@@ -241,6 +261,14 @@ The following is the text format representation of an import specification.
 ```
 
 ### Offset
+
+The `elem` and `data` initializers take an offset, which is an instruction.
+This is not optional.
+
+```k
+    syntax Offset ::= "(" "offset" Instrs ")"
+ // -----------------------------------------
+```
 
 The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
 
