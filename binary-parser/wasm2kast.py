@@ -5,7 +5,7 @@ import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType, FunctionType, Function, Table, Limits, Memory, Global, GlobalType, Mutability, ElementSegment, DataSegment, StartFunction
+from wasm.datatypes import ValType, TypeIdx, FunctionType, Function, Table, TableType, Memory, MemoryType, Limits, Global, GlobalType, Mutability, ElementSegment, DataSegment, StartFunction, Import
 from wasm.opcodes import BinaryOpcode
 
 def main():
@@ -24,21 +24,22 @@ def wasm2kast(wasm_bytes : bytes) -> dict:
 
 def ast2kast(wasm_ast : Module) -> dict:
     """Returns a dictionary representing the Kast JSON."""
-    types  = a.defns([type(x)   for x in wasm_ast.types])
-    funcs  = a.defns([func(x)   for x in wasm_ast.funcs])
-    tables = a.defns([table(x)  for x in wasm_ast.tables])
-    mems   = a.defns([memory(x) for x in wasm_ast.mems])
-    globs  = a.defns([glob(x)   for x in wasm_ast.globals])
-    elems  = a.defns([elem(x)   for x in wasm_ast.elem])
-    datas  = a.defns([data(x)   for x in wasm_ast.data])
-    starts = a.defns([start(x)  for x in wasm_ast.start])
-    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems, data=datas, start=starts)
+    types   = a.defns([typ(x)    for x in wasm_ast.types])
+    funcs   = a.defns([func(x)   for x in wasm_ast.funcs])
+    tables  = a.defns([table(x)  for x in wasm_ast.tables])
+    mems    = a.defns([memory(x) for x in wasm_ast.mems])
+    globs   = a.defns([glob(x)   for x in wasm_ast.globals])
+    elems   = a.defns([elem(x)   for x in wasm_ast.elem])
+    datas   = a.defns([data(x)   for x in wasm_ast.data])
+    starts  = a.defns(start(wasm_ast.start))
+    imports = a.defns([imp(x)    for x in wasm_ast.imports])
+    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems, data=datas, start=starts, imports=imports)
 
 #########
 # Defns #
 #########
 
-def type(t : FunctionType):
+def typ(t : FunctionType):
     return a.type(func_type(t.params, t.results))
 
 def func(f : Function):
@@ -53,7 +54,7 @@ def table(t : Table):
     return a.table(ls)
 
 def memory(m : Memory):
-    ls = limits(m.type)
+    ls = limits(t.type.limits)
     return a.memory(ls)
 
 def glob(g : Global):
@@ -70,7 +71,24 @@ def data(d : DataSegment):
     return a.data(d.memory_idx, offset, d.init)
 
 def start(s : StartFunction):
-    return a.start(s)
+    if s is None:
+        return []
+    return [a.start(s)]
+
+def imp(i : Import):
+    print(i)
+    mod_name = a.wasm_string(i.module_name)
+    name = a.wasm_string(i.as_name)
+    t = type(i.desc)
+    if t is TypeIdx:
+        desc = a.func_desc(i.desc)
+    elif t is GlobalType:
+        desc = a.global_desc(global_type(i.desc))
+    elif t is TableType:
+        desc = a.table_desc(limits(i.desc.limits))
+    elif t is MemoryType:
+        desc = a.memory_desc(limits(i.desc))
+    return a.imp(mod_name, name, desc)
 
 ##########
 # Instrs #
@@ -215,9 +233,7 @@ def func_type(params, results):
     return a.func_type(pvec, rvec)
 
 def limits(l : Limits):
-    if l.max is None:
-        return a.limits_min(l.min)
-    return a.limits_min_max(l.min, l.max)
+    return (l.min, l.max)
 
 def global_type(t : GlobalType):
     vt = val_type(t.valtype)
