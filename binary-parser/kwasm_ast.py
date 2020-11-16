@@ -42,6 +42,8 @@ GLOBAL_DESC = 'aGlobalDesc'
 TABLE_DESC = 'aTableDesc'
 MEMORY_DESC = 'aMemoryDesc'
 
+EXPORT = 'aExportDefn'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -500,6 +502,9 @@ def start(start_idx : int):
 
 def imp(mod_name, name, import_desc):
     return KApply(IMPORT, [mod_name, name, import_desc])
+
+def export(name, index):
+    return KApply(EXPORT, [name, KInt(index)])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
