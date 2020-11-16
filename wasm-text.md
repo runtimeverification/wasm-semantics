@@ -166,6 +166,9 @@ If no identifer is present, one must be introduced so that the export can refer 
 Note that it is possible to define multiple exports inline, i.e. export a single entity under many names.
 
 ```k
+    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
+ // -------------------------------------------------------------------
+
     syntax InlineExport  ::= "(" "export" WasmString ")"
  // ----------------------------------------------------
 ```
