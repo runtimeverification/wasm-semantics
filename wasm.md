@@ -147,40 +147,6 @@ The following are kept abstract, and can be extended in other formats, such as t
  // -----------------
 ```
 
-TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
-
-```k
-    syntax TableType ::= TextLimits TableElemType
-    syntax TableElemType ::= "funcref"
- // ----------------------------------
-
-    syntax MemType    ::= TextLimits
- // --------------------------------
-
-    syntax TextLimits ::= Int | Int Int
- // -----------------------------------
-```
-
-#### Offset
-
-The `elem` and `data` initializers take an offset, which is an instruction.
-This is not optional.
-
-```k
-    syntax Offset ::= "(" "offset" Instrs ")"
- // -----------------------------------------
-```
-
-#### Function Local Declaration
-
-```k
-    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
-                        | "local"            ValTypes
-                        | "local" Identifier ValType
-    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
- // -------------------------------------------------------------------------
-```
-
 ```k
 endmodule
 ```
