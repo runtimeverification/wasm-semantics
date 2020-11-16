@@ -5,7 +5,7 @@ import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType, TypeIdx, FunctionType, Function, Table, TableType, Memory, MemoryType, Limits, Global, GlobalType, Mutability, ElementSegment, DataSegment, StartFunction, Import
+from wasm.datatypes import ValType, TypeIdx, FunctionType, Function, Table, TableType, Memory, MemoryType, Limits, Global, GlobalType, Mutability, ElementSegment, DataSegment, StartFunction, Import, Export
 from wasm.opcodes import BinaryOpcode
 
 def main():
@@ -33,7 +33,8 @@ def ast2kast(wasm_ast : Module) -> dict:
     datas   = a.defns([data(x)   for x in wasm_ast.data])
     starts  = a.defns(start(wasm_ast.start))
     imports = a.defns([imp(x)    for x in wasm_ast.imports])
-    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems, data=datas, start=starts, imports=imports)
+    exports = a.defns([export(x) for x in wasm_ast.exports])
+    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems, data=datas, start=starts, imports=imports, exports=exports)
 
 #########
 # Defns #
@@ -89,6 +90,11 @@ def imp(i : Import):
     elif t is MemoryType:
         desc = a.memory_desc(limits(i.desc))
     return a.imp(mod_name, name, desc)
+
+def export(e : Export):
+    name = a.wasm_string(e.name)
+    idx = e.desc
+    return a.export(name, idx)
 
 ##########
 # Instrs #
