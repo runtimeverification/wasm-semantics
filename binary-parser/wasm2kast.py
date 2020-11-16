@@ -54,7 +54,7 @@ def table(t : Table):
     return a.table(ls)
 
 def memory(m : Memory):
-    ls = limits(t.type.limits)
+    ls = limits(m.type)
     return a.memory(ls)
 
 def glob(g : Global):
