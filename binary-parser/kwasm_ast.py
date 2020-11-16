@@ -36,6 +36,12 @@ DATA = 'aDataDefn'
 
 START = 'aStartDefn'
 
+IMPORT = 'aImportDefn'
+FUNC_DESC = 'aFuncDesc'
+GLOBAL_DESC = 'aGlobalDesc'
+TABLE_DESC = 'aTableDesc'
+MEMORY_DESC = 'aMemoryDesc'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -55,6 +61,13 @@ def KFloat(value : float):
 
 def KBytes(bs : bytes):
     return KToken(str(bs), 'Bytes')
+
+###########
+# Strings #
+###########
+
+def wasm_string(s : str):
+    return KToken('\"%s\"' % s, 'WasmStringToken')
 
 #########
 # Lists #
@@ -110,10 +123,11 @@ def vec_type(valtypes):
 def func_type(params, results):
     return KApply(FUNC_TYPE, [params, results])
 
-def limits_min(i : int):
-    return KApply('limitsMin', [KInt(i)])
-
-def limits_min_max(i : int, j : int):
+def limits(tup):
+    i = tup[0]
+    j = tup[1]
+    if j is None:
+        return KApply('limitsMin', [KInt(i)])
     return KApply('limitsMinMax', [KInt(i), KInt(j)])
 
 def global_type(mut, valtype):
@@ -440,6 +454,22 @@ def SET_LOCAL(idx : int):
 def TEE_LOCAL(idx : int):
     return KApply('aLocal.tee', [KInt(idx)])
 
+#######################
+# Import Descriptions #
+#######################
+
+def func_desc(type : int, id=EMPTY_ID):
+    return KApply(FUNC_DESC, [id, KInt(type)])
+
+def global_desc(global_type, id=EMPTY_ID):
+    return KApply(GLOBAL_DESC, [id, global_type])
+
+def table_desc(lim, id=EMPTY_ID):
+    return KApply(TABLE_DESC, [id, limits(lim)])
+
+def memory_desc(lim, id=EMPTY_ID):
+    return KApply(MEMORY_DESC, [id, limits(lim)])
+
 ################
 # Declarations #
 ################
@@ -450,11 +480,11 @@ def type(func_type, metadata=EMPTY_ID):
 def func(type, locals, body, metadata=EMPTY_FUNC_METADATA):
     return KApply(FUNC, [type, locals, body, metadata])
 
-def table(limits, metadata=EMPTY_ID):
-    return KApply(TABLE, [limits, metadata])
+def table(lim, metadata=EMPTY_ID):
+    return KApply(TABLE, [limits(lim), metadata])
 
-def memory(limits, metadata=EMPTY_ID):
-    return KApply(MEMORY, [limits, metadata])
+def memory(lim, metadata=EMPTY_ID):
+    return KApply(MEMORY, [limits(lim), metadata])
 
 def glob(type, init, metadata=EMPTY_ID):
     return KApply(GLOBAL, [type, init, metadata])
@@ -467,6 +497,9 @@ def data(memory_idx : int, offset, data : bytes):
 
 def start(start_idx : int):
     return KApply(START, [KInt(start_idx)])
+
+def imp(mod_name, name, import_desc):
+    return KApply(IMPORT, [mod_name, name, import_desc])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
