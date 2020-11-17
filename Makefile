@@ -27,7 +27,7 @@ export PATH
 PYK_PATH             := $(K_LIB)
 PYWASM_PATH          := ./deps/py-wasm
 
-PYTHONPATH := $(PYK_PATH):$(PYWASM_PATH):$(PYTHONPATH)
+PYTHONPATH := $(PYK_PATH)
 export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
