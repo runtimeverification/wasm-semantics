@@ -8,6 +8,15 @@ from wasm.parsers.module import parse_module, Module
 from wasm.datatypes import ValType, TypeIdx, FunctionType, Function, Table, TableType, Memory, MemoryType, Limits, Global, GlobalType, Mutability, ElementSegment, DataSegment, StartFunction, Import, Export
 from wasm.opcodes import BinaryOpcode
 
+def main():
+    if len(list(sys.argv)) == 1:
+        infile = sys.stdin
+    else:
+        infile = open(sys.argv[1], 'rb')
+    module = wasm2kast(infile)
+    infile.close()
+    return module
+
 def wasm2kast(wasm_bytes : bytes) -> dict:
     """Returns a dictionary representing the Kast JSON."""
     ast = parse_module(wasm_bytes)
@@ -236,3 +245,10 @@ def global_type(t : GlobalType):
     if t.mut is Mutability.const:
         return a.global_type(a.MUT_CONST, vt)
     return a.global_type(a.MUT_VAR, vt)
+
+########
+# Main #
+########
+
+if __name__ == "__main__":
+    main()
