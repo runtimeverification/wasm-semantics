@@ -86,13 +86,41 @@ module WASM-TEXT-COMMON-SYNTAX
 
 ### Instructions
 
+#### Plain Instructions
+
+```k
+    syntax PlainInstr ::= "br" Index
+                        | "br_if" Index
+                        | "br_table" ElemSegment
+                        | "call" Index
+                        | "global.get" Index
+                        | "global.set" Index
+                        | "local.get" Index
+                        | "local.set" Index
+                        | "local.tee" Index
+ // ---------------------------------------
+
+    syntax PlainInstr ::= IValType  "." StoreOpM
+                        | FValType  "." StoreOpM
+                        | IValType "." LoadOpM
+                        | FValType "." LoadOpM
+    syntax StoreOpM   ::= StoreOp | StoreOp MemArg
+    syntax LoadOpM    ::= LoadOp | LoadOp MemArg
+    syntax MemArg     ::= OffsetArg | AlignArg | OffsetArg AlignArg
+    syntax OffsetArg  ::= "offset=" WasmInt
+    syntax AlignArg   ::= "align="  WasmInt
+ // ---------------------------------------
+```
+
+#### Block Instructions
+
 ```k
     syntax Instr ::= BlockInstr
  // ---------------------------
 
-    syntax BlockInstr ::= "block" Identifier TypeDecls Instrs "end" OptionalId
-                        | "loop" Identifier TypeDecls Instrs "end" OptionalId
-                        | "if" Identifier TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
+    syntax BlockInstr ::= "block" OptionalId TypeDecls Instrs "end" OptionalId
+                        | "loop" OptionalId TypeDecls Instrs "end" OptionalId
+                        | "if" OptionalId TypeDecls Instrs "else" OptionalId Instrs "end" OptionalId
                         | "if" OptionalId TypeDecls Instrs                          "end" OptionalId
  // ------------------------------------------------------------------------------------------------
 ```
@@ -500,8 +528,8 @@ The correct label index is calculated by looking at whih depth the index occured
 Conceptually, `br ID => br CURRENT_EXECUTION_DEPTH -Int IDENTIFIER_LABEL_DEPTH -Int 1`.
 
 ```k
-    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br       DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if    DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br      DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if   DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
     rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => br_table elemSegment2Indices(ES, DEPTH, M) #unfoldInstrs(IS, DEPTH, M)
 
     syntax ElemSegment ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
@@ -617,14 +645,14 @@ The `Context` contains information of how to map text-level identifiers to corre
 Record updates can currently not be done in a function rule which also does other updates, so we have helper functions to update specific fields.
 
 ```k
-    syntax Context ::= ctx(localIds: Map, funcIds: Map, typeIds: Map)
+    syntax Context ::= ctx(localIds: Map, globalIds: Map, funcIds: Map, typeIds: Map)
                      | #freshCtx ( )                               [function, functional]
                      | #updateLocalIds    ( Context , Map )        [function, functional]
                      | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
                      | #updateFuncIds     ( Context , Map )        [function, functional]
                      | #updateFuncIdsAux  ( Context , Map , Bool ) [function, functional]
  // -------------------------------------------------------------------------------------
-    rule #freshCtx ( ) => ctx(... localIds: .Map, funcIds: .Map, typeIds: .Map)
+    rule #freshCtx ( ) => ctx(... localIds: .Map, globalIds: .Map, funcIds: .Map, typeIds: .Map)
 
     rule #updateLocalIds(C, M) => #updateLocalIdsAux(C, M, false)
     rule #updateLocalIdsAux(ctx(... localIds: (_ => M)), M, false => true)
@@ -654,15 +682,15 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aStmt<C>(I:Instr) => #t2aInstr<C>(I)
     rule #t2aStmt<_>(S) => S [owise]
 
-    rule #t2aModuleDecl<_>(#module(... types: TS, funcs: FS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, funcIds: #idcFuncs(IS, FS), typeIds: #idcTypes(TS))>(M)
+    rule #t2aModuleDecl<_>(#module(... types: TS, funcs: FS, globals: GS, importDefns: IS) #as M) => #t2aModule<ctx(... localIds: .Map, globalIds: #idcGlobals(IS, GS), funcIds: #idcFuncs(IS, FS), typeIds: #idcTypes(TS))>(M)
     rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
       => #module( ... types: #t2aDefns<C>(TS)
                     , funcs: #t2aDefns<C>(FS)
                     , tables: TABS
                     , mems: MS
-                    , globals: GS
+                    , globals: #t2aDefns<C>(GS)
                     , elem: #t2aDefns<C>(EL)
-                    , data: DAT
+                    , data: #t2aDefns<C>(DAT)
                     , start: #t2aDefns<C>(S)
                     , importDefns: #t2aDefns<C>(IS)
                     , exports: #t2aDefns<C>(ES)
@@ -687,6 +715,12 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType))) => ( import MOD NAME #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)) )
 
+```
+
+#### Globals
+
+```k
+    rule #t2aDefn<C>(#global(... id: OID, type: GTYP, init: IS)) => #global(... id: OID, type: GTYP, init: #t2aInstrs<C>(IS) )
 ```
 
 #### Functions
@@ -729,14 +763,19 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Element Segments
 
 ```k
-    rule #t2aDefn<C>(( elem IDX:Index OFFSET ES )) => ( elem IDX OFFSET #t2aElemSegment<C>(ES) )
-
+    rule #t2aDefn<C>(( elem IDX:Index (offset IS) ES )) => ( elem IDX (offset #t2aInstrs<C>(IS)) #t2aElemSegment<C>(ES) )
     syntax ElemSegment ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
  // ---------------------------------------------------------------------------------------
     rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Identifier ES) => {FIDS[ID]}:>Int #t2aElemSegment<C>(ES)
       requires ID in_keys(FIDS)
     rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
     rule #t2aElemSegment<_C>(.ElemSegment) => .ElemSegment
+```
+
+#### Data Segments
+
+```k
+    rule #t2aDefn<C>(( data IDX:Index (offset IS) DS )) => ( data IDX (offset #t2aInstrs<C>(IS)) DS )
 ```
 
 #### Exports
@@ -767,14 +806,14 @@ After unfolding, each type use in a function starts with an explicit reference t
 ```k
     rule #t2aInstr<_>(unreachable) => unreachable
     rule #t2aInstr<_>(nop)         => nop
-    rule #t2aInstr<_>(br L)        => br L
-    rule #t2aInstr<_>(br_if L)     => br_if L
-    rule #t2aInstr<_>(br_table ES) => br_table ES
+    rule #t2aInstr<_>(br L:Int)    => #br(L)
+    rule #t2aInstr<_>(br_if L:Int) => #br_if(L)
+    rule #t2aInstr<_>(br_table ES) => #br_table(elemSegment2Ints(ES))
     rule #t2aInstr<_>(return)      => return
 
-    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => call {FIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => #call({FIDS[ID]}:>Int)
       requires ID in_keys(FIDS)
-    rule #t2aInstr<_>                     (call I:Int)         => call I
+    rule #t2aInstr<_>                     (call I:Int)         => #call(I)
 
     rule #t2aInstr<_>(call_indirect TU) => call_indirect TU
 ```
@@ -789,29 +828,49 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Variable Instructions
 
 ```k
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => local.get {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => #local.get({LIDS[ID]}:>Int)
       requires ID in_keys(LIDS)
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => local.set {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => #local.set({LIDS[ID]}:>Int)
       requires ID in_keys(LIDS)
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => local.tee {LIDS[ID]}:>Int
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => #local.tee({LIDS[ID]}:>Int)
       requires ID in_keys(LIDS)
 
-    rule #t2aInstr<_>(local.get I:Int) => local.get I
-    rule #t2aInstr<_>(local.set I:Int) => local.set I
-    rule #t2aInstr<_>(local.tee I:Int) => local.tee I
-    rule #t2aInstr<_>(global.get I)    => global.get I
-    rule #t2aInstr<_>(global.set I)    => global.set I
+    rule #t2aInstr<_>(local.get I:Int) => #local.get(I)
+    rule #t2aInstr<_>(local.set I:Int) => #local.set(I)
+    rule #t2aInstr<_>(local.tee I:Int) => #local.tee(I)
+
+    rule #t2aInstr<ctx(... globalIds: GIDS)>(global.get ID:Identifier) => #global.get({GIDS[ID]}:>Int)
+      requires ID in_keys(GIDS)
+    rule #t2aInstr<ctx(... globalIds: GIDS)>(global.set ID:Identifier) => #global.set({GIDS[ID]}:>Int)
+      requires ID in_keys(GIDS)
+
+    rule #t2aInstr<_>(global.get I:Int) => #global.get(I)
+    rule #t2aInstr<_>(global.set I:Int) => #global.set(I)
 ```
 
 #### Memory Instructions
 
+`MemArg`s can optionally be passed to `load` and `store` operations.
+The `offset` parameter is added to the the address given on the stack, resulting in the "effective address" to store to or load from.
+The `align` parameter is for optimization only and is not allowed to influence the semantics, so we ignore it.
+
 ```k
-    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOpM) => ITYPE.OP
-    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOpM) => FTYPE.OP
-    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOpM)  => ITYPE.OP
-    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOpM)  => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp)        => #store(ITYPE, OP, 0)
+    rule #t2aInstr<_>(ITYPE:IValType.OP:StoreOp MemArg) => #store(ITYPE, OP, #getOffset(MemArg))
+    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOp)        => #store(FTYPE, OP, 0)
+    rule #t2aInstr<_>(FTYPE:FValType.OP:StoreOp MemArg) => #store(FTYPE, OP, #getOffset(MemArg))
+    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOp)         => #load(ITYPE, OP, 0)
+    rule #t2aInstr<_>(ITYPE:IValType.OP:LoadOp MemArg)  => #load(ITYPE, OP, #getOffset(MemArg))
+    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOp)         => #load(FTYPE, OP, 0)
+    rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOp MemArg)  => #load(FTYPE, OP, #getOffset(MemArg))
     rule #t2aInstr<_>(memory.size)                => memory.size
     rule #t2aInstr<_>(memory.grow)                => memory.grow
+
+    syntax Int ::= #getOffset ( MemArg ) [function, functional]
+ // -----------------------------------------------------------
+    rule #getOffset(           _:AlignArg) => 0
+    rule #getOffset(offset= OS           ) => OS
+    rule #getOffset(offset= OS _:AlignArg) => OS
 ```
 
 #### Numeric Instructions
@@ -832,21 +891,12 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Block Instructions
 
 There are several formats of block instructions, and the text-to-abstract transformation must be distributed over them.
+At this point, all branching identifiers should have been resolved, so we can remove the id.
 
 ```k
-    rule #t2aInstr<C>( block                TDS:TypeDecls IS end)     =>  block     TDS #t2aInstrs<C>(IS) end
-    rule #t2aInstr<C>( block  ID:Identifier TDS           IS end OID) =>  block  ID TDS #t2aInstrs<C>(IS) end OID
-    rule #t2aInstr<C>((block OID:OptionalId TDS           IS))        => (block OID TDS #t2aInstrs<C>(IS))
-
-    rule #t2aInstr<C>( loop                 TDS IS end)      =>  loop     TDS #t2aInstrs<C>(IS) end
-    rule #t2aInstr<C>( loop  ID:Identifier  TDS IS end OID') =>  loop ID  TDS #t2aInstrs<C>(IS) end OID'
-    rule #t2aInstr<C>((loop OID:OptionalId  TDS IS))         => (loop OID TDS #t2aInstrs<C>(IS))
-
-    rule #t2aInstr<C>( if                TDS IS else IS'                 end)       =>  if     TDS #t2aInstrs<C>(IS) else      #t2aInstrs<C>(IS') end
-    rule #t2aInstr<C>( if  ID:Identifier TDS IS else OID':OptionalId IS' end OID'') =>  if  ID TDS #t2aInstrs<C>(IS) else OID' #t2aInstrs<C>(IS') end OID''
-    rule #t2aInstr<C>( if OID:OptionalId TDS IS                          end OID'') =>  if OID TDS #t2aInstrs<C>(IS)                              end OID''
-    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS)))                       => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)))
-    rule #t2aInstr<C>((if OID:OptionalId TDS COND (then IS) (else IS')))            => (if OID TDS #t2aInstrs<C>(COND) (then #t2aInstrs<C>(IS)) (else #t2aInstrs<C>(IS')))
+    rule #t2aInstr<C>( block _OID:OptionalId TDS:TypeDecls IS end _OID') => #block(gatherTypes(result, TDS), #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>( loop  _OID:OptionalId TDS IS end _OID') => #loop(gatherTypes(result, TDS), #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>( if    _OID:OptionalId TDS IS else _OID':OptionalId IS' end _OID'') => #if(gatherTypes(result, TDS), #t2aInstrs<C>(IS), #t2aInstrs<C>(IS'))
 ```
 
 #### KWasm Administrative Instructions
@@ -857,7 +907,7 @@ They are currently supported in KWasm text files, but may be deprecated.
 ```k
     rule #t2aInstr<_C>(trap) => trap
 
-    rule #t2aInstr<C>(block VT:VecType IS:Instrs end) => block VT #t2aInstrs<C>(IS) end
+    rule #t2aInstr<C>(#block(VT:VecType, IS:Instrs)) => #block(VT, #t2aInstrs<C>(IS))
 
     rule #t2aInstr<_>(init_local I V) => init_local I V
     rule #t2aInstr<_>(init_locals VS) => init_locals VS
@@ -909,6 +959,19 @@ The following are helper functions for gathering and updating context.
     rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS => FS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
     rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS => FS, IDX => IDX +Int 1, _ACC)
     rule #idcFuncsAux(.Defns, .Defns, _, ACC) => ACC
+
+    syntax Map ::= #idcGlobals    ( Defns, Defns           ) [function]
+                 | #idcGlobalsAux ( Defns, Defns, Int, Map ) [function]
+ // -------------------------------------------------------------------
+    rule #idcGlobals(IMPORTS, DEFNS) => #idcGlobalsAux(IMPORTS, DEFNS, 0, .Map)
+
+    rule #idcGlobalsAux((import _ _ (global ID:Identifier _)) IS => IS, _GS,  IDX => IDX +Int 1,  ACC => ACC [ ID <-IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcGlobalsAux((import _ _ (global               _)) IS => IS, _GS,  IDX => IDX +Int 1, _ACC)
+    rule #idcGlobalsAux(_I                                    IS => IS, _GS, _IDX              , _ACC) [owise]
+
+    rule #idcGlobalsAux(.Defns, #global(... id: ID:Identifier) GS => GS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcGlobalsAux(.Defns, #global(...) GS => GS, IDX => IDX +Int 1, _ACC) [owise]
+    rule #idcGlobalsAux(.Defns, .Defns, _, ACC) => ACC
 
     syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
                  | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]

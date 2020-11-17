@@ -26,17 +26,17 @@ block (result i32 i32)
 end
 #assertStack < i32 > 3 : < i32 > 2 : .ValStack "block 3 (invalid)"
 
-(block (result i32)
-    (i32.const 1)
-)
-#assertTopStack < i32 > 1 "block with named result 1"
+;; (block (result i32)
+;;     (i32.const 1)
+;; )
+;; #assertTopStack < i32 > 1 "block with named result 1"
 
-(block result i64 i32
-    (i32.const 2)
-    (i32.const 1)
-    (i64.const 5)
-)
-#assertStack < i64 > 5 : < i32 > 1 : .ValStack "block with named result 2"
+;; (block result i64 i32
+;;     (i32.const 2)
+;;     (i32.const 1)
+;;     (i64.const 5)
+;; )
+;; #assertStack < i64 > 5 : < i32 > 1 : .ValStack "block with named result 2"
 
 ;; Breaks
 
@@ -135,32 +135,32 @@ if (result i32) i32.const 1 else i32.const -1 end
 if (result i32) i32.const 1 else i32.const -1 end
 #assertTopStack < i32 > -1 "if false"
 
-(i32.const -1)
-(if (i32.const 0) (then))
-#assertTopStack < i32 > -1 "if folded false empty"
+;; (i32.const -1)
+;; (if (i32.const 0) (then))
+;; #assertTopStack < i32 > -1 "if folded false empty"
 
-(i32.const -1)
-(if (result i32) (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
-#assertStack < i32 > 1 : < i32 > -1 : .ValStack "if folded true"
+;; (i32.const -1)
+;; (if (result i32) (i32.const 1) (then (i32.const 1)) (else (i32.const 2)))
+;; #assertStack < i32 > 1 : < i32 > -1 : .ValStack "if folded true"
 
-(i32.const -1)
-(if (result i32) (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
-#assertStack < i32 > 2 : < i32 > -1 : .ValStack "if folded false"
+;; (i32.const -1)
+;; (if (result i32) (i32.const 0) (then (i32.const 1)) (else (i32.const 2)))
+;; #assertStack < i32 > 2 : < i32 > -1 : .ValStack "if folded false"
 
-(if (result i32) (i32.const 1) (then (unreachable)) (else (i32.const 1)))
-#assertTrap "if lazy first branch true"
+;; (if (result i32) (i32.const 1) (then (unreachable)) (else (i32.const 1)))
+;; #assertTrap "if lazy first branch true"
 
-(if (result i32) (i32.const 0) (then (unreachable)) (else (i32.const 1)))
-#assertTopStack < i32 > 1 "if lazy first branch false"
+;; (if (result i32) (i32.const 0) (then (unreachable)) (else (i32.const 1)))
+;; #assertTopStack < i32 > 1 "if lazy first branch false"
 
-(if (result i32) (i32.const 1) (then (i32.const -1)) (else (unreachable)))
-#assertTopStack < i32 > -1 "if lazy second branch true"
+;; (if (result i32) (i32.const 1) (then (i32.const -1)) (else (unreachable)))
+;; #assertTopStack < i32 > -1 "if lazy second branch true"
 
-(if (result i32) (i32.const 0) (then (i32.const -1)) (else (unreachable)))
-#assertTrap "if lazy second branch false"
+;; (if (result i32) (i32.const 0) (then (i32.const -1)) (else (unreachable)))
+;; #assertTrap "if lazy second branch false"
 
-(if (result i32) (unreachable) (then (i32.const -1)) (else (unreachable)))
-#assertTrap "if strict condition"
+;; (if (result i32) (unreachable) (then (i32.const -1)) (else (unreachable)))
+;; #assertTrap "if strict condition"
 
 ;; Looping
 
@@ -181,7 +181,7 @@ end
 
 init_locals < i32 > 10 : < i32 > 0 : .ValStack
 block
-    ( loop
+    loop
         (local.get 0)
         (local.get 1)
         (i32.add)
@@ -193,7 +193,7 @@ block
         (i32.eqz)
         (br_if 1)
         (br 0)
-    )
+    end
 end
 #assertLocal 0 < i32 > 0  "sum 1 -> 10 loop concrete syntax"
 #assertLocal 1 < i32 > 55 "sum 1 -> 10 loop concrete syntax"
