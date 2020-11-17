@@ -15,7 +15,7 @@ Basic logic
 -----------
 
 ```k
-    rule #bool(P) ==Int 0 => notBool P
+    rule #bool(P) ==Int 0 => notBool P [simplification]
 ```
 
 Basic arithmetic
