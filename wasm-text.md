@@ -754,7 +754,6 @@ Since we do not have polymorphic functions available, we define one function per
                 )
 ```
 
-
 #### Types
 
 ```k

@@ -77,7 +77,6 @@ def start(s : StartFunction):
     return [a.start(s)]
 
 def imp(i : Import):
-    print(i)
     mod_name = a.wasm_string(i.module_name)
     name = a.wasm_string(i.as_name)
     t = type(i.desc)
