@@ -4,7 +4,7 @@ module LOOPS-SPEC
     imports KWASM-LEMMAS
 
     // Lemma
-    rule <instrs> br 0
+    claim <instrs> br 0
                ~> label // Loop label.
                     [ .ValTypes ]
                     { loop .TypeDecls
@@ -37,7 +37,7 @@ module LOOPS-SPEC
        andBool #inUnsignedRange(ITYPE, X +Int ((I *Int (I +Int 1)) /Int 2))
 
     // Main claim.
-    rule <instrs>
+    claim <instrs>
               block .TypeDecls
                  loop .TypeDecls
                      local.get 0

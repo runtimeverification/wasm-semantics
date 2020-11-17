@@ -3,7 +3,7 @@ requires "kwasm-lemmas.md"
 module MEMORY-SPEC
     imports KWASM-LEMMAS
 
-    rule <instrs> i32.const ADDR ~> i32.const ADDR ~> i64.load32_u ~> i64.store16 => . ... </instrs>
+    claim <instrs> i32.const ADDR ~> i32.const ADDR ~> i64.load32_u ~> i64.store16 => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -20,7 +20,7 @@ module MEMORY-SPEC
         ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
         andBool #inUnsignedRange(i32, ADDR)
 
-    rule <instrs>  i32.const ADDR ~> i32.const ADDR ~> ITYPE:IValType.load ~> ITYPE.store => . ... </instrs>
+    claim <instrs>  i32.const ADDR ~> i32.const ADDR ~> ITYPE:IValType.load ~> ITYPE.store => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>

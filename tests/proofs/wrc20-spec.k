@@ -7,7 +7,7 @@ module WRC20-SPEC
 
     // Reverse bytes spec.
 
-    rule <instrs> sequenceDefns(#t2aDefns<#freshCtx()>(#wrc20ReverseBytes)) // TODO: Have this pre-loaded in the store.
+    claim <instrs> sequenceDefns(#t2aDefns<#freshCtx()>(#wrc20ReverseBytes)) // TODO: Have this pre-loaded in the store.
                ~> i32.const ADDR
                ~> i32.const ADDR
                ~> i64.load
