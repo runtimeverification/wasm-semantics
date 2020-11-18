@@ -10,35 +10,65 @@ require "data.md"
 
 module WASM-NUMERIC-SYNTAX
 
-    syntax IUnOp ::= "clz" | "ctz" | "popcnt"
- // -----------------------------------------
+    syntax IUnOp ::= "clz"    [klabel(aClz), symbol]
+                   | "ctz"    [klabel(aCtz), symbol]
+                   | "popcnt" [klabel(aPopcnt), symbol]
+ // ---------------------------------------------------
 
-    syntax FUnOp ::= "abs" | "neg" | "sqrt" | "floor" | "ceil" | "trunc" | "nearest"
- // --------------------------------------------------------------------------------
+    syntax FUnOp ::= "abs"     [klabel(aAbs)    , symbol]
+                   | "neg"     [klabel(aNeg)    , symbol]
+                   | "sqrt"    [klabel(aSqrt)   , symbol]
+                   | "floor"   [klabel(aFloor)  , symbol]
+                   | "ceil"    [klabel(aCeil)   , symbol]
+                   | "trunc"   [klabel(aTrunc)  , symbol]
+                   | "nearest" [klabel(aNearest), symbol]
+ // -----------------------------------------------------
 
-    syntax IBinOp ::= "add" | "sub" | "mul"
-                    | "div_u" | "rem_u"
-                    | "div_s" | "rem_s"
-                    | "and" | "or" | "xor"
-                    | "shl" | "shr_u" | "shr_s"
-                    | "rotl" | "rotr"
- // ---------------------------------
+    syntax IBinOp ::= "add" [klabel(intAdd), symbol]
+                    | "sub" [klabel(intSub), symbol]
+                    | "mul" [klabel(intMul), symbol]
+                    | "div_u" [klabel(intDiv_u), symbol]
+                    | "rem_u" [klabel(intRem_u), symbol]
+                    | "div_s" [klabel(intDiv_s), symbol]
+                    | "rem_s" [klabel(intRem_s), symbol]
+                    | "and" [klabel(intAnd), symbol]
+                    | "or" [klabel(intOr), symbol]
+                    | "xor" [klabel(intXor), symbol]
+                    | "shl" [klabel(intShl), symbol]
+                    | "shr_u" [klabel(intShr_u), symbol]
+                    | "shr_s" [klabel(intShr_s), symbol]
+                    | "rotl" [klabel(intRotl), symbol]
+                    | "rotr" [klabel(intRotr), symbol]
+ // --------------------------------------------------
 
     syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
                     | "sub" [klabel(floatSub), symbol]
                     | "mul" [klabel(floatMul), symbol]
-                    | "div" | "min" | "max" | "copysign"
- // ----------------------------------------------------
+                    | "div" [klabel(floatDiv), symbol]
+                    | "min" [klabel(floatMin), symbol]
+                    | "max" [klabel(floatMax), symbol]
+                    | "copysign" [klabel(floatCopysign), symbol]
+ // ------------------------------------------------------------
 
-    syntax TestOp ::= "eqz"
- // -----------------------
+    syntax TestOp ::= "eqz" [klabel(aEqz), symbol]
+ // ----------------------------------------------
 
-    syntax IRelOp ::= "eq" | "ne"
-                    | "lt_u" | "gt_u" | "lt_s" | "gt_s"
-                    | "le_u" | "ge_u" | "le_s" | "ge_s"
- // ---------------------------------------------------
+    syntax IRelOp ::= "eq" [klabel(intEq), symbol]
+                    | "ne" [klabel(intNe), symbol]
+                    | "lt_u" [klabel(intLt_u), symbol]
+                    | "gt_u" [klabel(intGt_u), symbol]
+                    | "lt_s" [klabel(intLt_s), symbol]
+                    | "gt_s" [klabel(intGt_s), symbol]
+                    | "le_u" [klabel(intLe_u), symbol]
+                    | "ge_u" [klabel(intGe_u), symbol]
+                    | "le_s" [klabel(intLe_s), symbol]
+                    | "ge_s" [klabel(intGe_s), symbol]
+ // --------------------------------------------------
 
-    syntax FRelOp ::= "lt" | "gt" | "le" | "ge"
+    syntax FRelOp ::= "lt" [klabel(floatLt), symbol]
+                    | "gt" [klabel(floatGt), symbol]
+                    | "le" [klabel(floatLe), symbol]
+                    | "ge" [klabel(floatGe), symbol]
                     | "eq" [klabel(floatEq), symbol]
                     | "ne" [klabel(floatNe), symbol]
  // ------------------------------------------------
@@ -46,21 +76,26 @@ module WASM-NUMERIC-SYNTAX
     syntax CvtOp ::= Cvti32Op | Cvti64Op | Cvtf32Op | Cvtf64Op
  // ----------------------------------------------------------
 
-    syntax Cvti32Op ::= "extend_i32_u" | "extend_i32_s"
-                      | "convert_i32_s" | "convert_i32_u"
- // -----------------------------------------------------
+    syntax Cvti32Op ::= "extend_i32_u" [klabel(aExtend_i32_u), symbol]
+                      | "extend_i32_s" [klabel(aExtend_i32_s), symbol]
+                      | "convert_i32_s" [klabel(aConvert_i32_s), symbol]
+                      | "convert_i32_u" [klabel(aConvert_i32_u), symbol]
+ // --------------------------------------------------------------------
 
-    syntax Cvti64Op ::= "wrap_i64"
-                      | "convert_i64_s" | "convert_i64_u"
- // -----------------------------------------------------
+    syntax Cvti64Op ::= "wrap_i64" [klabel(aWrap_i64), symbol]
+                      | "convert_i64_s" [klabel(aConvert_i64_s), symbol]
+                      | "convert_i64_u" [klabel(aConvert_i64_u), symbol]
+ // --------------------------------------------------------------------
 
-    syntax Cvtf32Op ::= "promote_f32"
-                      | "trunc_f32_s" | "trunc_f32_u"
- // -------------------------------------------------
+    syntax Cvtf32Op ::= "promote_f32" [klabel(aPromote_f32), symbol]
+                      | "trunc_f32_s" [klabel(aTrunc_f32_s), symbol]
+                      | "trunc_f32_u" [klabel(aTrunc_f32_u), symbol]
+ // ----------------------------------------------------------------
 
-    syntax Cvtf64Op ::= "demote_f64"
-                      | "trunc_f64_s" | "trunc_f64_u"
- // -------------------------------------------------
+    syntax Cvtf64Op ::= "demote_f64" [klabel(aDemote_f64), symbol]
+                      | "trunc_f64_s" [klabel(aTrunc_f64_s), symbol]
+                      | "trunc_f64_u" [klabel(aTrunc_f64_u), symbol]
+ // ----------------------------------------------------------------
 
 endmodule
 

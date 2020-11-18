@@ -10,9 +10,9 @@ module WRC20-SPEC
     claim <instrs> sequenceDefns(#t2aDefns<#freshCtx()>(#wrc20ReverseBytes)) // TODO: Have this pre-loaded in the store.
                 ~> i32.const ADDR
                 ~> i32.const ADDR
-                ~> i64.load
+                ~> #load(i64, load, 0)
                 ~> (invoke NEXTADDR) // TODO: Use `call`.
-                ~> i64.store
+                ~> #store(i64, store, 0)
                 => .
                    ...
           </instrs>

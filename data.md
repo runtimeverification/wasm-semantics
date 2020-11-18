@@ -111,18 +111,11 @@ For the core language, only regular integers are allowed.
 ### Type Mutability
 
 ```k
-    syntax Mut ::= "const" | "var"
- // ------------------------------
+    syntax Mut ::= "const" [klabel(mutConst), symbol]
+                 | "var"   [klabel(mutVar), symbol]
+ // -----------------------------------------------
 ```
 
-### Limits
-
-Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
-
-```k
-    syntax Limits ::= Int | Int Int
- // -------------------------------
-```
 
 ### Basic Values
 
@@ -198,14 +191,30 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 ### ElemSegment
 
 ```k
+    syntax Ints ::= List{Int, ""} [klabel(listInt), symbol]
+ // -------------------------------------------------------
+
     syntax Int   ::= #lenElemSegment (ElemSegment)      [function]
     syntax Index ::= #getElemSegment (ElemSegment, Int) [function]
+    syntax Int   ::= #lenInts        (Ints)             [function]
+    syntax Int   ::= #getInts        (Ints,        Int) [function]
  // --------------------------------------------------------------
     rule #lenElemSegment(.ElemSegment) => 0
     rule #lenElemSegment(_TFIDX    ES) => 1 +Int #lenElemSegment(ES)
 
     rule #getElemSegment(E _ES, 0) => E
     rule #getElemSegment(_E ES, I) => #getElemSegment(ES, I -Int 1) requires I >Int 0
+
+    rule #lenInts(.Ints) => 0
+    rule #lenInts(_TFIDX    ES) => 1 +Int #lenInts(ES)
+
+    rule #getInts(E _ES, 0) => E
+    rule #getInts(_E ES, I) => #getInts(ES, I -Int 1) requires I >Int 0
+
+    syntax Ints ::= elemSegment2Ints ( ElemSegment ) [function]
+ // -----------------------------------------------------------
+    rule elemSegment2Ints(.ElemSegment) => .Ints
+    rule elemSegment2Ints(E:Int ES)     => E elemSegment2Ints(ES)
 ```
 
 ### OptionalInt
@@ -216,6 +225,16 @@ The sort `OptionalInt` provides this potentially "undefined" `Int`.
 ```k
     syntax OptionalInt ::= Int | ".Int"
  // -----------------------------------
+```
+
+### Limits
+
+Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
+
+```k
+    syntax Limits ::= #limitsMin(Int)   [klabel(limitsMin),    symbol]
+                    | #limits(Int, Int) [klabel(limitsMinMax), symbol]
+ // ------------------------------------------------------------------
 ```
 
 ### Type Constructors

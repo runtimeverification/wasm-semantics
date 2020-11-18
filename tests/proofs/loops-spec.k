@@ -4,22 +4,22 @@ module LOOPS-SPEC
     imports KWASM-LEMMAS
 
     // Lemma
-    claim <instrs> br 0
+    claim <instrs> #br(0)
                 ~> label // Loop label.
                      [ .ValTypes ]
-                     { loop .TypeDecls
-                         local.get 0
-                         local.get 1
+                     { #loop([ .ValTypes ],
+                         #local.get(0)
+                         #local.get(1)
                          ITYPE.add
-                         local.set 1
-                         local.get 0
+                         #local.set(1)
+                         #local.get(0)
                          ITYPE.const 1
                          ITYPE.sub
-                         local.tee 0
+                         #local.tee(0)
                          ITYPE.eqz
-                         br_if 1
-                         br 0
-                       end
+                         #br_if(1)
+                         #br(0)
+                       )
                     }
                     .ValStack
                 ~> label [ .ValTypes ] {.Instrs } STACK // Block label.
@@ -38,21 +38,21 @@ module LOOPS-SPEC
 
     // Main claim.
     claim <instrs>
-               block .TypeDecls
-                  loop .TypeDecls
-                      local.get 0
-                      local.get 1
+               #block([ .ValTypes ],
+                  #loop([ .ValTypes],
+                      #local.get(0)
+                      #local.get(1)
                       ITYPE.add
-                      local.set 1
-                      local.get 0
+                      #local.set(1)
+                      #local.get(0)
                       ITYPE.const 1
                       ITYPE.sub
-                      local.tee 0
+                      #local.tee(0)
                       ITYPE.eqz
-                      br_if 1
-                      br 0
-                 end
-              end
+                      #br_if(1)
+                      #br(0)
+                 )
+              )
            => .
            ...
           </instrs>
