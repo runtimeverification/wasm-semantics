@@ -996,18 +996,22 @@ Sort `Signedness` is defined in module `BYTES`.
 ```k
     syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
                    | "load" "{" IValType Int Int Signedness"}"
+                   | "load" "{" IValType Int Int Signedness Bytes"}"
+                   | "load" "{" IValType Int Int Signedness"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
     rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> load { ITYPE WIDTH EA SIGN }
-               => < ITYPE > #if SIGN ==K Signed
-                                #then #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))
-                                #else #getRange(DATA, EA, WIDTH)
-                            #fi
-              ...
-         </instrs>
+    rule <instrs> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </instrs>
+    rule <instrs> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </instrs>
+    rule <instrs> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </instrs>
+    rule <instrs> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </instrs>
+    rule <instrs> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </instrs>
+    rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </instrs>
+    rule <instrs> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </instrs>
+
+    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1036,13 +1040,8 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </instrs>
-    rule <instrs> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </instrs>
-    rule <instrs> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </instrs>
-    rule <instrs> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </instrs>
-    rule <instrs> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </instrs>
-    rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </instrs>
-    rule <instrs> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA   Signed DATA } => < ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH)) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
 ```
 
 The `size` operation returns the size of the memory, measured in pages.

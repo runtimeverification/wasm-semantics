@@ -3,8 +3,8 @@ requires "kwasm-lemmas.md"
 module LOCALS-SPEC
     imports KWASM-LEMMAS
 
-    rule <instrs> #local.get(X) ~> #local.set(X) => . ... </instrs>
-         <locals>
-           X |-> < _ITYPE > (VAL => VAL)
-         </locals>
+    claim <instrs> #local.get(X) ~> #local.set(X) => . ... </instrs>
+          <locals>
+            X |-> < _ITYPE > (VAL => VAL)
+          </locals>
 endmodule
