@@ -74,7 +74,7 @@ def data(d : DataSegment):
 def start(s : StartFunction):
     if s is None:
         return []
-    return [a.start(s)]
+    return [a.start(s.function_idx)]
 
 def imp(i : Import):
     mod_name = a.wasm_string(i.module_name)
