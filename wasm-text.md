@@ -153,6 +153,9 @@ One type of folded instruction are `PlainInstr`s wrapped in parentheses and opti
 ```k
     syntax TypeDefn ::= "(type" OptionalId "(" "func" TypeDecls ")" ")"
  // -------------------------------------------------------------------
+
+    syntax TextLimits ::= Int | Int Int
+ // -----------------------------------
 ```
 
 ### Exports
@@ -163,11 +166,19 @@ If no identifer is present, one must be introduced so that the export can refer 
 Note that it is possible to define multiple exports inline, i.e. export a single entity under many names.
 
 ```k
+    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
+ // -------------------------------------------------------------------
+
     syntax InlineExport  ::= "(" "export" WasmString ")"
  // ----------------------------------------------------
 ```
 
 ### Imports
+
+```k
+    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
+ // -----------------------------------------------------------------------
+```
 
 Imports can be declared like regular functions, memories, etc., by giving an inline import declaration.
 
@@ -181,6 +192,8 @@ The following is the text format representation of an import specification.
 ```k
     syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
                         | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
+                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
  // -----------------------------------------------------------------------------------------------
 ```
 
@@ -194,22 +207,47 @@ The following is the text format representation of an import specification.
  // -----------------------------------------
 ```
 
+#### Function Local Declaration
+
+```k
+    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
+                        | "local"            ValTypes
+                        | "local" Identifier ValType
+    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
+ // -------------------------------------------------------------------------
+```
+
 ### Tables
 
 ```k
-    syntax TableSpec ::= TableElemType "(" "elem" ElemSegment ")"
+    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
+    syntax TableSpec ::= TableType
+                       | TableElemType "(" "elem" ElemSegment ")"
                        | InlineImport TableType
                        | InlineExport TableSpec
  // -------------------------------------------
+
+    syntax TableType ::= TextLimits TableElemType
+    syntax TableElemType ::= "funcref"
+ // ----------------------------------
 ```
 
 ### Memories
 
 ```k
+    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
+ // ------------------------------------------------------------
+
+    syntax MemorySpec ::= MemType
+ // --------------------------------
+
     syntax MemorySpec ::= "(" "data" DataString ")"
                         | InlineImport MemType
                         | InlineExport MemorySpec
  // ---------------------------------------------
+
+    syntax MemType    ::= TextLimits
+ // --------------------------------
 ```
 
 ### Globals
@@ -227,6 +265,14 @@ The following is the text format representation of an import specification.
 
 ### Offset
 
+The `elem` and `data` initializers take an offset, which is an instruction.
+This is not optional.
+
+```k
+    syntax Offset ::= "(" "offset" Instrs ")"
+ // -----------------------------------------
+```
+
 The offset can either be specified explicitly with the `offset` key word, or be a single instruction.
 
 ```k
@@ -237,7 +283,9 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ### Element Segments
 
 ```k
-    syntax ElemDefn ::= "(" "elem" Offset        ElemSegment ")"
+
+    syntax ElemDefn ::= "(" "elem" Index Offset ElemSegment ")"
+                      | "(" "elem" Offset        ElemSegment ")"
                       | "(" "elem" Offset "func" ElemSegment ")"
  // ------------------------------------------------------------
 ```
@@ -245,8 +293,16 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ### Data Segments
 
 ```k
-    syntax DataDefn ::= "(" "data" Offset DataString ")"
+    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
+                      | "(" "data" Offset DataString ")"
  // ----------------------------------------------------
+```
+
+### Start Function
+
+```k
+    syntax StartDefn ::= "(" "start" Index ")"
+ // ------------------------------------------
 ```
 
 ### Modules
@@ -465,7 +521,7 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule asGMut ( (mut T:ValType ) ) => var   T
     rule asGMut (      T:ValType   ) => const T
 
-    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... id: OID, type: asGMut(TYP), init: unfoldInstrs(IS .Instrs))) _DS, _I, _M)
+    rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... type: asGMut(TYP), init: unfoldInstrs(IS .Instrs), metadata: OID)) _DS, _I, _M)
 
     rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
       => #unfoldDefns(( import MOD NAME (global OID TYP ) ) DS, I, M)
@@ -686,8 +742,8 @@ Since we do not have polymorphic functions available, we define one function per
     rule #t2aModule<ctx(... funcIds: FIDS) #as C>(#module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S, importDefns: IS, exports: ES, metadata: #meta(... id: OID)))
       => #module( ... types: #t2aDefns<C>(TS)
                     , funcs: #t2aDefns<C>(FS)
-                    , tables: TABS
-                    , mems: MS
+                    , tables: #t2aDefns<C>(TABS)
+                    , mems: #t2aDefns<C>(MS)
                     , globals: #t2aDefns<C>(GS)
                     , elem: #t2aDefns<C>(EL)
                     , data: #t2aDefns<C>(DAT)
@@ -698,7 +754,6 @@ Since we do not have polymorphic functions available, we define one function per
                 )
 ```
 
-
 #### Types
 
 ```k
@@ -708,19 +763,21 @@ Since we do not have polymorphic functions available, we define one function per
 #### Imports
 
 ```k
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier)            ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func OID:OptionalId (type ID:Identifier) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
-    rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int)                  ))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
-    rule #t2aDefn<_                     >(( import MOD NAME (func OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => ( import MOD NAME #funcDesc(... id: OID:OptionalId, type: IDX))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type ID:Identifier)            ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type ID:Identifier) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
+    rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int)                  ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
+    rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
 
-    rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType))) => ( import MOD NAME #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)) )
+    rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType)))         => #import(MOD, NAME, #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)))
 
+    rule #t2aDefn<_                     >(( import MOD NAME (table  OID:OptionalId LIM:TextLimits funcref)))           => #import(MOD, NAME, #tableDesc(...  id: OID:OptionalId, type: t2aLimits(LIM)))
+    rule #t2aDefn<_                     >(( import MOD NAME (memory OID:OptionalId LIM:TextLimits        )))           => #import(MOD, NAME, #memoryDesc(... id: OID:OptionalId, type: t2aLimits(LIM)))
 ```
 
 #### Globals
 
 ```k
-    rule #t2aDefn<C>(#global(... id: OID, type: GTYP, init: IS)) => #global(... id: OID, type: GTYP, init: #t2aInstrs<C>(IS) )
+    rule #t2aDefn<C>(#global(... type: GTYP, init: IS, metadata: OID)) => #global(... type: GTYP, init: #t2aInstrs<C>(IS), metadata: OID)
 ```
 
 #### Functions
@@ -752,38 +809,66 @@ After unfolding, each type use in a function starts with an explicit reference t
     rule #locals2vectype(local _ID:Identifier VTYPE:ValType    LDECLS:LocalDecls , VTYPES) => #locals2vectype(LDECLS , VTYPES + VTYPE .ValTypes)
 ```
 
+#### Tables
+
+```k
+    rule #t2aDefn<_>((table OID:OptionalId LIMITS:TextLimits funcref )) => #table(... limits: t2aLimits(LIMITS), metadata: OID)
+```
+
+#### Memories
+
+```k
+    rule #t2aDefn<_>((memory OID:OptionalId LIMITS:TextLimits )) => #memory(... limits: t2aLimits(LIMITS), metadata: OID)
+```
+
+```k
+    syntax Limits ::= t2aLimits(TextLimits) [function, functional]
+ // --------------------------------------------------------------
+    rule t2aLimits(MIN:Int) => #limitsMin(MIN)
+    rule t2aLimits(MIN:Int MAX:Int) => #limits(MIN, MAX)
+```
+
 #### Start Function
 
 ```k
-    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => ( start {FIDS[ID]}:>Int )
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => #start({FIDS[ID]}:>Int)
       requires ID in_keys(FIDS)
-    rule #t2aDefn<_>(( start I:Int )) => ( start I )
+    rule #t2aDefn<_>(( start I:Int )) => #start(I)
 ```
 
 #### Element Segments
 
+Wasm currently supports only one table, so we do not need to resolve any identifiers.
+
 ```k
-    rule #t2aDefn<C>(( elem IDX:Index (offset IS) ES )) => ( elem IDX (offset #t2aInstrs<C>(IS)) #t2aElemSegment<C>(ES) )
-    syntax ElemSegment ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
- // ---------------------------------------------------------------------------------------
+    rule #t2aDefn<C>(( elem _:Index (offset IS) ES )) => #elem(0, #t2aInstrs<C>(IS), #t2aElemSegment<C>(ES) )
+
+    syntax Ints ::= "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
+ // --------------------------------------------------------------------------------
     rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Identifier ES) => {FIDS[ID]}:>Int #t2aElemSegment<C>(ES)
       requires ID in_keys(FIDS)
     rule #t2aElemSegment<C>(I:Int ES) => I #t2aElemSegment<C>(ES)
-    rule #t2aElemSegment<_C>(.ElemSegment) => .ElemSegment
+    rule #t2aElemSegment<_C>(.ElemSegment) => .Ints
 ```
 
 #### Data Segments
 
+Wasm currently supports only one memory, so we do not need to resolve any identifiers.
+
 ```k
-    rule #t2aDefn<C>(( data IDX:Index (offset IS) DS )) => ( data IDX (offset #t2aInstrs<C>(IS)) DS )
+    rule #t2aDefn<C>(( data _:Index (offset IS) DS )) => #data(0, #t2aInstrs<C>(IS), #DS2Bytes(DS))
 ```
 
 #### Exports
 
 ```k
-    rule #t2aDefn<ctx(... funcIds: FIDS)>(( export ENAME ( func ID:Identifier ) )) => ( export ENAME (func {FIDS[ID]}:>Int) )
-      requires ID in_keys(FIDS)
-    rule #t2aDefn<_>(( export ENAME ( func I:Int ) )) => ( export ENAME (func I) )
+    rule #t2aDefn<ctx(...   funcIds: IDS)>(( export ENAME ( func   ID:Identifier ) )) => #export(ENAME, {IDS[ID]}:>Int) requires ID in_keys(IDS)
+    rule #t2aDefn<ctx(... globalIds: IDS)>(( export ENAME ( global ID:Identifier ) )) => #export(ENAME, {IDS[ID]}:>Int) requires ID in_keys(IDS)
+    rule #t2aDefn<_>(( export ENAME ( func   I:Int ) )) => #export(ENAME, I)
+    rule #t2aDefn<_>(( export ENAME ( global I:Int ) )) => #export(ENAME, I)
+
+    rule #t2aDefn<_>(( export ENAME ( table   _ ) )) => #export(ENAME, 0)
+    rule #t2aDefn<_>(( export ENAME ( memory  _ ) )) => #export(ENAME, 0)
 ```
 
 #### Other Definitions
@@ -969,7 +1054,7 @@ The following are helper functions for gathering and updating context.
     rule #idcGlobalsAux((import _ _ (global               _)) IS => IS, _GS,  IDX => IDX +Int 1, _ACC)
     rule #idcGlobalsAux(_I                                    IS => IS, _GS, _IDX              , _ACC) [owise]
 
-    rule #idcGlobalsAux(.Defns, #global(... id: ID:Identifier) GS => GS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcGlobalsAux(.Defns, #global(... metadata: ID:Identifier) GS => GS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
     rule #idcGlobalsAux(.Defns, #global(...) GS => GS, IDX => IDX +Int 1, _ACC) [owise]
     rule #idcGlobalsAux(.Defns, .Defns, _, ACC) => ACC
 

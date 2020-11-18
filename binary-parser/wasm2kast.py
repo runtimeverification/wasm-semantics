@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
+"""
+This library provides a translation from the Wasm binary format to Kast.
+"""
+
 import sys
 import json
 import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
-from wasm.datatypes import ValType, FunctionType, Function
+from wasm.datatypes import ValType, TypeIdx, FunctionType, Function, Table, TableType, Memory, MemoryType, Limits, Global, GlobalType, Mutability, ElementSegment, DataSegment, StartFunction, Import, Export
 from wasm.opcodes import BinaryOpcode
 
 def main():
@@ -24,15 +28,23 @@ def wasm2kast(wasm_bytes : bytes) -> dict:
 
 def ast2kast(wasm_ast : Module) -> dict:
     """Returns a dictionary representing the Kast JSON."""
-    types = a.defns([type(x) for x in wasm_ast.types])
-    funcs = a.defns([func(x) for x in wasm_ast.funcs])
-    return a.module(types=types, funcs=funcs)
+    types   = a.defns([typ(x)    for x in wasm_ast.types])
+    funcs   = a.defns([func(x)   for x in wasm_ast.funcs])
+    tables  = a.defns([table(x)  for x in wasm_ast.tables])
+    mems    = a.defns([memory(x) for x in wasm_ast.mems])
+    globs   = a.defns([glob(x)   for x in wasm_ast.globals])
+    elems   = a.defns([elem(x)   for x in wasm_ast.elem])
+    datas   = a.defns([data(x)   for x in wasm_ast.data])
+    starts  = a.defns(start(wasm_ast.start))
+    imports = a.defns([imp(x)    for x in wasm_ast.imports])
+    exports = a.defns([export(x) for x in wasm_ast.exports])
+    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems, data=datas, start=starts, imports=imports, exports=exports)
 
 #########
 # Defns #
 #########
 
-def type(t : FunctionType):
+def typ(t : FunctionType):
     return a.type(func_type(t.params, t.results))
 
 def func(f : Function):
@@ -41,6 +53,51 @@ def func(f : Function):
     locals = a.vec_type(a.val_types(ls_list))
     body = instrs(f.body)
     return a.func(type, locals, body)
+
+def table(t : Table):
+    ls = limits(t.type.limits)
+    return a.table(ls)
+
+def memory(m : Memory):
+    ls = limits(m.type)
+    return a.memory(ls)
+
+def glob(g : Global):
+    t = global_type(g.type)
+    init = instrs(g.init)
+    return a.glob(t, init)
+
+def elem(e : ElementSegment):
+    offset = instrs(e.offset)
+    return a.elem(e.table_idx, offset, e.init)
+
+def data(d : DataSegment):
+    offset = instrs(d.offset)
+    return a.data(d.memory_idx, offset, d.init)
+
+def start(s : StartFunction):
+    if s is None:
+        return []
+    return [a.start(s.function_idx)]
+
+def imp(i : Import):
+    mod_name = a.wasm_string(i.module_name)
+    name = a.wasm_string(i.as_name)
+    t = type(i.desc)
+    if t is TypeIdx:
+        desc = a.func_desc(i.desc)
+    elif t is GlobalType:
+        desc = a.global_desc(global_type(i.desc))
+    elif t is TableType:
+        desc = a.table_desc(limits(i.desc.limits))
+    elif t is MemoryType:
+        desc = a.memory_desc(limits(i.desc))
+    return a.imp(mod_name, name, desc)
+
+def export(e : Export):
+    name = a.wasm_string(e.name)
+    idx = e.desc
+    return a.export(name, idx)
 
 ##########
 # Instrs #
@@ -179,11 +236,19 @@ def vec_type(ts : [ValType]):
     _ts = [val_type(x) for x in ts]
     return a.vec_type(a.val_types(_ts))
 
-
 def func_type(params, results):
     pvec = vec_type(params)
     rvec = vec_type(results)
     return a.func_type(pvec, rvec)
+
+def limits(l : Limits):
+    return (l.min, l.max)
+
+def global_type(t : GlobalType):
+    vt = val_type(t.valtype)
+    if t.mut is Mutability.const:
+        return a.global_type(a.MUT_CONST, vt)
+    return a.global_type(a.MUT_VAR, vt)
 
 ########
 # Main #

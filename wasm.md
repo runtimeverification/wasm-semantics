@@ -137,62 +137,14 @@ The following are kept abstract, and can be extended in other formats, such as t
     syntax TypeDefn
     syntax GlobalDefn
     syntax FuncDefn
- // ---------------
-```
-
-TODO: Make the following definitions abstract as well, and move these concrete definitions to the text format.
-
-```k
-    syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
-    syntax TableSpec ::= TableType
-    syntax TableType ::= Limits TableElemType
-    syntax TableElemType ::= "funcref"
-    syntax TableElemType ::= "funcref"
- // ----------------------------------
-
-    syntax MemoryDefn ::= "(" "memory" OptionalId MemorySpec ")"
-    syntax MemorySpec ::= MemType
-    syntax MemType    ::= Limits
- // ----------------------------
-
-    syntax ElemDefn ::= "(" "elem" Index Offset ElemSegment ")"
- // -----------------------------------------------------------
-
-    syntax DataDefn ::= "(" "data"     Index Offset DataString ")"
- // --------------------------------------------------------------
-
-    syntax StartDefn ::= "(" "start" Index ")"
- // ------------------------------------------
-
-    syntax ExportDefn ::= "(" "export" WasmString "(" Externval ")" ")"
- // -------------------------------------------------------------------
-
-    syntax ImportDefn ::= "(" "import" WasmString WasmString ImportDesc ")"
- // -----------------------------------------------------------------------
-
-    syntax ImportDesc ::= "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
-                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
- // -----------------------------------------------------------------------------------------------
-```
-
-#### Offset
-
-The `elem` and `data` initializers take an offset, which is an instruction.
-This is not optional.
-
-```k
-    syntax Offset ::= "(" "offset" Instrs ")"
- // -----------------------------------------
-```
-
-#### Function Local Declaration
-
-```k
-    syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
-                        | "local"            ValTypes
-                        | "local" Identifier ValType
-    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
- // -------------------------------------------------------------------------
+    syntax TableDefn
+    syntax MemoryDefn
+    syntax ElemDefn
+    syntax DataDefn
+    syntax StartDefn
+    syntax ImportDefn
+    syntax ExportDefn
+ // -----------------
 ```
 
 ```k
@@ -589,13 +541,13 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax GlobalType ::= Mut ValType
-// ----------------------------------
+    syntax GlobalType ::= Mut ValType [klabel(aGlobalType), symbol]
+ // ---------------------------------------------------------------
 
-    syntax GlobalDefn ::= #global( id: OptionalId, type: GlobalType, init: Instrs)
+    syntax GlobalDefn ::= #global(type: GlobalType, init: Instrs, metadata: OptionalId) [klabel(aGlobalDefn), symbol]
     syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
  // ----------------------------------------------------------
-    rule <instrs> #global(... id: OID, type: TYP, init: IS ) => sequenceInstrs(IS) ~> allocglobal(OID, TYP) ... </instrs>
+    rule <instrs> #global(... type: TYP, init: IS, metadata: OID) => sequenceInstrs(IS) ~> allocglobal(OID, TYP) ... </instrs>
 
     rule <instrs> allocglobal(OID:OptionalId, MUT:Mut TYP:ValType) => . ... </instrs>
          <valstack> < TYP > VAL : STACK => STACK </valstack>
@@ -914,11 +866,12 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
+    syntax TableDefn ::= #table (limits: Limits, metadata: OptionalId) [klabel(aTableDefn), symbol]
     syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt)
  // ----------------------------------------------------------
-    rule <instrs> ( table OID:OptionalId MIN:Int         funcref ):TableDefn => alloctable(OID, MIN, .Int) ... </instrs>
+    rule <instrs> #table(... limits: #limitsMin(MIN), metadata: OID)   => alloctable(OID, MIN, .Int) ... </instrs>
       requires MIN <=Int #maxTableSize()
-    rule <instrs> ( table OID:OptionalId MIN:Int MAX:Int funcref ):TableDefn => alloctable(OID, MIN,  MAX) ... </instrs>
+    rule <instrs> #table(... limits: #limits(MIN, MAX), metadata: OID) => alloctable(OID, MIN, MAX) ... </instrs>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
@@ -956,11 +909,12 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
+    syntax MemoryDefn ::= #memory(limits: Limits, metadata: OptionalId) [klabel(aMemoryDefn), symbol]
     syntax Alloc ::= allocmemory (OptionalId, Int, OptionalInt)
  // -----------------------------------------------------------
-    rule <instrs> ( memory OID:OptionalId MIN:Int         ):MemoryDefn => allocmemory(OID, MIN, .Int) ... </instrs>
+    rule <instrs> #memory(... limits: #limitsMin(MIN),   metadata: OID) => allocmemory(OID, MIN, .Int) ... </instrs>
       requires MIN <=Int #maxMemorySize()
-    rule <instrs> ( memory OID:OptionalId MIN:Int MAX:Int ):MemoryDefn => allocmemory(OID, MIN,  MAX) ... </instrs>
+    rule <instrs> #memory(... limits: #limits(MIN, MAX), metadata: OID) => allocmemory(OID, MIN, MAX)  ... </instrs>
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
@@ -1182,10 +1136,12 @@ The initialization of a table needs an offset and a list of functions, given as 
 A table index is optional and will be default to zero.
 
 ```k
-    syntax ElemDefn ::= "elem" "{" Index        ElemSegment "}"
-    syntax Stmt ::= #initElements ( Int, Int, Map, ElemSegment )
- // ------------------------------------------------------------
-    rule <instrs> ( elem TABIDX (offset IS) ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
+
+    syntax ElemDefn ::= #elem(index : Int, offset : Instrs, elemSegment : Ints) [klabel(aElemDefn), symbol]
+                      | "elem" "{" Int        Ints "}"
+    syntax Stmt ::= #initElements ( Int, Int, Map, Ints )
+ // -----------------------------------------------------
+    rule <instrs> #elem(TABIDX, IS, ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
     rule <instrs> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -1193,12 +1149,11 @@ A table index is optional and will be default to zero.
          <moduleInst>
            <modIdx> CUR  </modIdx>
            <funcAddrs> FADDRS </funcAddrs>
-           <tabIds>  TIDS </tabIds>
-           <tabAddrs> #ContextLookup(TIDS, TABIDX) |-> ADDR </tabAddrs>
+           <tabAddrs> TABIDX |-> ADDR </tabAddrs>
            ...
          </moduleInst>
 
-    rule <instrs> #initElements (    _,      _,      _, .ElemSegment ) => . ... </instrs>
+    rule <instrs> #initElements (    _,      _,      _, .Ints ) => . ... </instrs>
     rule <instrs> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </instrs>
          <tabInst>
            <tAddr> ADDR </tAddr>
@@ -1213,10 +1168,11 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax DataDefn ::= "data" "{" Index Bytes "}"
- // ----------------------------------------------
+    syntax DataDefn ::= #data(index : Int, offset : Instrs, data : Bytes) [klabel(aDataDefn), symbol]
+                      | "data" "{" Int Bytes "}"
+ // --------------------------------------------
     // Default to memory 0.
-    rule <instrs> ( data MEMID (offset IS)   STRINGS ) => sequenceInstrs(IS) ~> data { MEMID #DS2Bytes(STRINGS) } ... </instrs>
+    rule <instrs> #data(IDX, IS, DATA) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
 
     // For now, deal only with memory 0.
     rule <instrs> data { MEMIDX DSBYTES } => . ... </instrs>
@@ -1224,8 +1180,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS </memIds>
-           <memAddrs> #ContextLookup(IDS, MEMIDX) |-> ADDR </memAddrs>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1245,7 +1200,9 @@ Start Function
 The `start` component of a module declares the function index of a `start function` that is automatically invoked when the module is instantiated, after `tables` and `memories` have been initialized.
 
 ```k
-    rule <instrs> ( start IDX:Int ) => ( invoke FADDR ) ... </instrs>
+    syntax StartDefn ::= #start(Int) [klabel(aStartDefn), symbol]
+ // -------------------------------------------------------------
+    rule <instrs> #start(IDX) => ( invoke FADDR ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1260,13 +1217,14 @@ Export
 Exports make functions, tables, memories and globals available for importing into other modules.
 
 ```k
+    syntax ExportDefn ::= #export(name : WasmString, index : Int) [klabel(aExportDefn), symbol]
     syntax Alloc ::= ExportDefn
  // ---------------------------
-    rule <instrs> ( export ENAME ( _:AllocatedKind TFIDX:Index ) ) => . ... </instrs>
+    rule <instrs> #export(ENAME, IDX) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <exports> EXPORTS => EXPORTS [ ENAME <- TFIDX ] </exports>
+           <exports> EXPORTS => EXPORTS [ ENAME <- IDX ] </exports>
            ...
          </moduleInst>
 ```
@@ -1279,11 +1237,14 @@ That an import is really a subtype of the declared import needs to be checked at
 The value of a global gets copied when it is imported.
 
 ```k
-    syntax ImportDesc ::= #funcDesc(id: OptionalId, type: Int)
-                        | #globalDesc(id: OptionalId, type: GlobalType)
+    syntax ImportDefn ::= #import(mod : WasmString, name : WasmString, ImportDesc) [klabel(aImportDefn), symbol]
+    syntax ImportDesc ::= #funcDesc   (id: OptionalId, type: Int)                  [klabel(aFuncDesc),   symbol]
+                        | #globalDesc (id: OptionalId, type: GlobalType)           [klabel(aGlobalDesc), symbol]
+                        | #tableDesc  (id: OptionalId, type: Limits)               [klabel(aTableDesc),  symbol]
+                        | #memoryDesc (id: OptionalId, type: Limits)               [klabel(aMemoryDesc), symbol]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
-    rule <instrs> ( import MOD NAME #funcDesc(... type: TIDX) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #funcDesc(... type: TIDX) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1306,7 +1267,7 @@ The value of a global gets copied when it is imported.
          </funcDef>
       requires FTYPE ==K TYPES[TIDX]
 
-    rule <instrs> ( import MOD NAME (table OID:OptionalId (LIM _):TableType) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #tableDesc(... id: OID, type: LIM) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1330,7 +1291,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <instrs> ( import MOD NAME (memory OID:OptionalId LIM:Limits) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #memoryDesc(... id: OID, type: LIM) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1354,7 +1315,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <instrs> ( import MOD NAME #globalDesc(... id: OID, type: MUT TYP) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #globalDesc(... id: OID, type: MUT TYP) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1385,9 +1346,9 @@ The following function checks if the limits in the first parameter *match*, i.e.
 ```k
     syntax Bool ::= #limitsMatchImport(Int, OptionalInt, Limits) [function]
  // -----------------------------------------------------------------------
-    rule #limitsMatchImport(L1,      _, L2:Int   ) => L1 >=Int L2
-    rule #limitsMatchImport( _,   .Int,  _:Int  _) => false
-    rule #limitsMatchImport(L1, U1:Int, L2:Int U2) => L1 >=Int L2 andBool U1 <=Int U2
+    rule #limitsMatchImport(L1,      _, #limitsMin(L2:Int )) => L1 >=Int L2
+    rule #limitsMatchImport( _,   .Int, #limits( _:Int,  _)) => false
+    rule #limitsMatchImport(L1, U1:Int, #limits(L2:Int, U2)) => L1 >=Int L2 andBool U1 <=Int U2
 ```
 
 Module Instantiation

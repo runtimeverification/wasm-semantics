@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 
+"""
+NOTE: The KLabels in this file must be kept up to date with the ones in the K semantics definition.
+There is unfortunately no way to do this automatically.
+
+This library provides a convenient interface to create KWasm programs in Kast format.
+It is a mirror of the abstract syntax in the K semantics.
+"""
+
 from pyk.kast import KSequence, KConstant, KApply, KToken
-
-
 
 ###########
 # KLabels #
@@ -23,6 +29,27 @@ INTS_NIL = '.List{\"listInt\"}_Ints'
 FUNC = 'aFuncDefn'
 FUNC_METADATA = 'funcMeta'
 
+TABLE = 'aTableDefn'
+
+MEMORY = 'aMemoryDefn'
+
+GLOBAL = 'aGlobalDefn'
+GLOBAL_TYPE = 'aGlobalType'
+
+ELEM = 'aElemDefn'
+
+DATA = 'aDataDefn'
+
+START = 'aStartDefn'
+
+IMPORT = 'aImportDefn'
+FUNC_DESC = 'aFuncDesc'
+GLOBAL_DESC = 'aGlobalDesc'
+TABLE_DESC = 'aTableDesc'
+MEMORY_DESC = 'aMemoryDesc'
+
+EXPORT = 'aExportDefn'
+
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
@@ -39,6 +66,16 @@ def KInt(value : int):
 
 def KFloat(value : float):
     return KToken(str(value), 'Float')
+
+def KBytes(bs : bytes):
+    return KToken(str(bs), 'Bytes')
+
+###########
+# Strings #
+###########
+
+def wasm_string(s : str):
+    return KToken('\"%s\"' % s, 'WasmStringToken')
 
 #########
 # Lists #
@@ -76,20 +113,33 @@ EMPTY_MODULE_METADATA = KApply(MODULE_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])
 
 EMPTY_FUNC_METADATA = KApply(FUNC_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])])
 
-############
-# ValTypes #
-############
+#########
+# Types #
+#########
 
 i32 = KApply('i32', [])
 i64 = KApply('i64', [])
 f32 = KApply('f32', [])
 f64 = KApply('f64', [])
 
+MUT_CONST = KApply('mutConst', [])
+MUT_VAR = KApply('mutVar', [])
+
 def vec_type(valtypes):
     return KApply(VEC_TYPE, [valtypes])
 
 def func_type(params, results):
     return KApply(FUNC_TYPE, [params, results])
+
+def limits(tup):
+    i = tup[0]
+    j = tup[1]
+    if j is None:
+        return KApply('limitsMin', [KInt(i)])
+    return KApply('limitsMinMax', [KInt(i), KInt(j)])
+
+def global_type(mut, valtype):
+    return KApply(GLOBAL_TYPE, [mut, valtype])
 
 ##########
 # Instrs #
@@ -412,6 +462,22 @@ def SET_LOCAL(idx : int):
 def TEE_LOCAL(idx : int):
     return KApply('aLocal.tee', [KInt(idx)])
 
+#######################
+# Import Descriptions #
+#######################
+
+def func_desc(type : int, id=EMPTY_ID):
+    return KApply(FUNC_DESC, [id, KInt(type)])
+
+def global_desc(global_type, id=EMPTY_ID):
+    return KApply(GLOBAL_DESC, [id, global_type])
+
+def table_desc(lim, id=EMPTY_ID):
+    return KApply(TABLE_DESC, [id, limits(lim)])
+
+def memory_desc(lim, id=EMPTY_ID):
+    return KApply(MEMORY_DESC, [id, limits(lim)])
+
 ################
 # Declarations #
 ################
@@ -421,6 +487,30 @@ def type(func_type, metadata=EMPTY_ID):
 
 def func(type, locals, body, metadata=EMPTY_FUNC_METADATA):
     return KApply(FUNC, [type, locals, body, metadata])
+
+def table(lim, metadata=EMPTY_ID):
+    return KApply(TABLE, [limits(lim), metadata])
+
+def memory(lim, metadata=EMPTY_ID):
+    return KApply(MEMORY, [limits(lim), metadata])
+
+def glob(type, init, metadata=EMPTY_ID):
+    return KApply(GLOBAL, [type, init, metadata])
+
+def elem(table_idx : int, offset, init : [int]):
+    return KApply(ELEM, [KInt(table_idx), offset, ints(init)])
+
+def data(memory_idx : int, offset, data : bytes):
+    return KApply(DATA, [KInt(memory_idx), offset, KBytes(data)])
+
+def start(start_idx : int):
+    return KApply(START, [KInt(start_idx)])
+
+def imp(mod_name, name, import_desc):
+    return KApply(IMPORT, [mod_name, name, import_desc])
+
+def export(name, index):
+    return KApply(EXPORT, [name, KInt(index)])
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
