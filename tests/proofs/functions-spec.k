@@ -61,6 +61,4 @@ module FUNCTIONS-SPEC
           </instrs>
        requires 0 <=Int ADDR
 
-    claim <instrs> run ( < ITYPE:IValType > #if ( Unsigned ~> . ) ==K ( Signed ~> . ) #then _THEN #else  #getRange ( _BM , ADDR modInt 4294967296 , #numBytes ( ITYPE ) ) #fi ) => done ( < ITYPE > #getRange (_BM, ADDR modInt 4294967296, #numBytes( ITYPE ))) ... </instrs>
-
 endmodule
