@@ -239,7 +239,7 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
     rule <instrs> (spectest_trap => .) ~> _M:ModuleDecl ... </instrs>
     rule <instrs> (spectest_trap => .) ~> _A:Assertion  ... </instrs>
 
-    rule <instrs> ( import MOD _ #funcDesc(... id: OID, type: TIDX) )
+    rule <instrs> #import(MOD, _, #funcDesc(... id: OID, type: TIDX))
                => #func(... type: TIDX, locals: [ .ValTypes ], body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
                ...
          </instrs>
