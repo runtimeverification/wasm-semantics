@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+This library provides a translation from the Wasm binary format to Kast.
+"""
+
 import sys
 import json
 import kwasm_ast as a

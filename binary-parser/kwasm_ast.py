@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 
+"""
+NOTE: The KLabels in this file must be kept up to date with the ones in the K semantics definition.
+There is unfortunately no way to do this automatically.
+
+This library provides a convenient interface to create KWasm programs in Kast format.
+It is a mirror of the abstract syntax in the K semantics.
+"""
+
 from pyk.kast import KSequence, KConstant, KApply, KToken
-
-
 
 ###########
 # KLabels #
