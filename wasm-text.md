@@ -750,7 +750,7 @@ Since we do not have polymorphic functions available, we define one function per
                     , start: #t2aDefns<C>(S)
                     , importDefns: #t2aDefns<C>(IS)
                     , exports: #t2aDefns<C>(ES)
-                    , metadata: #meta(... id: OID, funcIds: FIDS)
+                    , metadata: #meta(... id: OID, funcIds: FIDS, filename: .String)
                 )
 ```
 

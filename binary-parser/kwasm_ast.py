@@ -53,10 +53,6 @@ EXPORT = 'aExportDefn'
 DEFNS  = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 
-EMPTY_STMTS = '.List{\"listStmt\"}_EmptyStmts'
-EMPTY_ID = '.Identifier'
-EMPTY_MAP = '.Map'
-
 ###################
 # Basic Datatypes #
 ###################
@@ -66,6 +62,9 @@ def KInt(value : int):
 
 def KFloat(value : float):
     return KToken(str(value), 'Float')
+
+def KString(value : str):
+    return KToken(value, 'String')
 
 def KBytes(bs : bytes):
     # Hack around the fact that Python gives no easy way to represent bytes as a string in a way the K frontend accepts.
@@ -114,13 +113,12 @@ def ints(iis : [int]):
 # Empties #
 ###########
 
-EMPTY_ID = KApply(EMPTY_ID, [])
-
+EMPTY_ID = KApply('.Identifier', [])
+EMPTY_STMTS = '.List{\"listStmt\"}_EmptyStmts'
+EMPTY_MAP = KApply('.Map', [])
+EMPTY_OPT_STRING = KApply('.String', [])
 EMPTY_DEFNS = KApply(EMPTY_STMTS, [])
-
-EMPTY_MODULE_METADATA = KApply(MODULE_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])])
-
-EMPTY_FUNC_METADATA = KApply(FUNC_METADATA, [EMPTY_ID, KApply(EMPTY_MAP, [])])
+EMPTY_FUNC_METADATA = KApply(FUNC_METADATA, [EMPTY_ID, EMPTY_MAP])
 
 #########
 # Types #
@@ -520,6 +518,13 @@ def imp(mod_name, name, import_desc):
 
 def export(name, index):
     return KApply(EXPORT, [name, KInt(index)])
+
+def module_metadata(mid=None, fids=None, filename=None):
+    # TODO: Implement module id and function ids metadata transformation.
+    kfilename = EMPTY_OPT_STRING #if filename is None else KString(filename)
+    return KApply(MODULE_METADATA, [EMPTY_ID, EMPTY_MAP, kfilename])
+
+EMPTY_MODULE_METADATA = module_metadata()
 
 def module(types=EMPTY_DEFNS,
            funcs=EMPTY_DEFNS,
