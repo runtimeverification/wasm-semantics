@@ -64,7 +64,7 @@ def KFloat(value : float):
     return KToken(str(value), 'Float')
 
 def KString(value : str):
-    return KToken(value, 'String')
+    return KToken('"%s"' % value, 'String')
 
 def KBytes(bs : bytes):
     # Hack around the fact that Python gives no easy way to represent bytes as a string in a way the K frontend accepts.
@@ -521,7 +521,7 @@ def export(name, index):
 
 def module_metadata(mid=None, fids=None, filename=None):
     # TODO: Implement module id and function ids metadata transformation.
-    kfilename = EMPTY_OPT_STRING #if filename is None else KString(filename)
+    kfilename = EMPTY_OPT_STRING if filename is None else KString(filename)
     return KApply(MODULE_METADATA, [EMPTY_ID, EMPTY_MAP, kfilename])
 
 EMPTY_MODULE_METADATA = module_metadata()
