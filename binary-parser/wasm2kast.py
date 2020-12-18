@@ -21,12 +21,12 @@ def main():
     infile.close()
     return module
 
-def wasm2kast(wasm_bytes : bytes) -> dict:
+def wasm2kast(wasm_bytes : bytes, filename=None) -> dict:
     """Returns a dictionary representing the Kast JSON."""
     ast = parse_module(wasm_bytes)
-    return ast2kast(ast)
+    return ast2kast(ast, filename=filename)
 
-def ast2kast(wasm_ast : Module) -> dict:
+def ast2kast(wasm_ast : Module, filename=None) -> dict:
     """Returns a dictionary representing the Kast JSON."""
     types   = a.defns([typ(x)    for x in wasm_ast.types])
     funcs   = a.defns([func(x)   for x in wasm_ast.funcs])
@@ -38,7 +38,8 @@ def ast2kast(wasm_ast : Module) -> dict:
     starts  = a.defns(start(wasm_ast.start))
     imports = a.defns([imp(x)    for x in wasm_ast.imports])
     exports = a.defns([export(x) for x in wasm_ast.exports])
-    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems, data=datas, start=starts, imports=imports, exports=exports)
+    meta    = a.module_metadata(filename=filename)
+    return a.module(types=types, funcs=funcs, tables=tables, mems=mems, globs=globs, elem=elems, data=datas, start=starts, imports=imports, exports=exports, metadata=meta)
 
 #########
 # Defns #

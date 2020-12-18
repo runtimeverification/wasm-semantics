@@ -190,9 +190,10 @@ module WASM
             <globalAddrs> .Map </globalAddrs>
             <nextGlobIdx> 0    </nextGlobIdx>
             <moduleMetadata>
-              <moduleId>     </moduleId>
-              <funcIds> .Map </funcIds>
-              <typeIds> .Map </typeIds>
+              <moduleFileName> .String </moduleFileName>
+              <moduleId>              </moduleId>
+              <funcIds>        .Map   </funcIds>
+              <typeIds>        .Map   </typeIds>
             </moduleMetadata>
           </moduleInst>
         </moduleInstances>
@@ -1373,10 +1374,11 @@ The groups are chosen to represent different stages of allocation and instantiat
 
     syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
  // ---------------------------------------------------------------------
-    rule #emptyModule(OID) =>  #module (... types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns, metadata: #meta(... id: OID, funcIds: .Map))
+    rule #emptyModule(OID) =>  #module (... types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns, metadata: #meta(... id: OID, funcIds: .Map, filename: .String))
 
-    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map) [klabel(moduleMeta), symbol]
- // ------------------------------------------------------------------------------------------
+    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map, filename : OptionalString) [klabel(moduleMeta), symbol]
+    syntax OptionalString ::= ".String" [klabel(.String), symbol] | String
+ // ----------------------------------------------------------------------
 ```
 
 A new module instance gets allocated.
@@ -1384,7 +1386,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
 
 ```k
     rule <instrs> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
-                         metadata: #meta(... id: OID, funcIds: FIDS))
+                         metadata: #meta(... id: OID, funcIds: FIDS, filename: FILE))
                => sequenceDefns(TS)
                ~> sequenceDefns(IS)
                ~> sequenceDefns(FS)
@@ -1405,6 +1407,7 @@ Then, the surrounding `module` tag is discarded, and the definitions are execute
           => <moduleInst>
                <modIdx> NEXT </modIdx>
                <moduleMetadata>
+                 <moduleFileName> FILE </moduleFileName>
                  <moduleId> OID </moduleId>
                  <funcIds> FIDS </funcIds>
                  ...
