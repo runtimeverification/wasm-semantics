@@ -79,7 +79,7 @@ A module of shorthand commands for the WRC20 module.
     syntax Defns      ::= "#wrc20Functions_fastBalance"
     syntax Defns      ::= "#wrc20ReverseBytes"
     syntax Int        ::= "#wrc20ReverseBytesTypeIdx"
-    syntax FuncTypex  ::= "#wrc20ReverseBytesType"
+    syntax FuncType   ::= "#wrc20ReverseBytesType"
  // ----------------------------------------------
     rule #wrc20 => ( module #wrc20Body ) [macro]
 
