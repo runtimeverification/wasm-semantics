@@ -67,16 +67,11 @@ def KString(value : str):
     return KToken('"%s"' % value, 'String')
 
 def KBytes(bs : bytes):
-    # Hack around the fact that Python gives no easy way to represent bytes as a string in a way the K frontend accepts.
-    # Assume bs = bytes([0, 65, 255])
-    # We want ret = "b'\x00A\xff".
-    # str(bs) = "b'\\x00A\\xff"
-    # bs.decode() throws error, because \xff is not a valid Unicode byte.
-    # bs.decode(errors='backslashescape') = "b'\x00A\\xff" which is alright for bytes below \x7f, but for higher bytes, the fully escaped backslash shows up again.
-    # For now, we just pipe it through a helper function. This approach might be brittle.
-    i = int.from_bytes(bs, 'little')
-    ret = KApply('Int2Bytes(_,_,_)_BYTES-HOOKED_Bytes_Int_Endianness_Signedness', [KInt(i), KApply('littleEndianBytes', []), KApply('unsignedBytes', [])])
-    return ret
+    # Change from python bytes repr to bytes repr in K.
+    byte_repr = '{}'.format(bs)
+    if byte_repr.startswith("b'") and byte_repr.endswith("'") :
+        byte_repr = 'b"' + byte_repr[2:-1] + '"'
+    return KToken(byte_repr, 'Bytes')
 
 ###########
 # Strings #
