@@ -325,7 +325,7 @@ F64_NE = KApply('aFRelOp', [f64, KApply('floatNe', [])])
   ##############
 
 I64_EXTEND_U_I32 = KApply('aCvtOp', [i64, KApply('aExtend_i32_u', [])])
-I64_EXTEND_S_I32 = KApply('aCvtOp', [f64, KApply('aExtend_i32_s', [])])
+I64_EXTEND_S_I32 = KApply('aCvtOp', [i64, KApply('aExtend_i32_s', [])])
 I32_WRAP_I64 = KApply('aCvtOp', [i32, KApply('aWrap_i64', [])])
 
 F64_PROMOTE_F32 = KApply('aCvtOp', [f64, KApply('aPromote_f32', [])])
