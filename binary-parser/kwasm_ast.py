@@ -390,8 +390,8 @@ def I64_STORE8(offset : int):
 def I32_STORE16(offset : int):
     return KApply('aStore', [i32, KApply('storeOpStore16', []), KInt(offset)])
 
-def I32_STORE16(offset : int):
-    return KApply('aStore', [i32, KApply('storeOpStore16', []), KInt(offset)])
+def I64_STORE16(offset : int):
+    return KApply('aStore', [i64, KApply('storeOpStore16', []), KInt(offset)])
 
 def I64_STORE32(offset : int):
     return KApply('aStore', [i32, KApply('storeOpStore32', []), KInt(offset)])
