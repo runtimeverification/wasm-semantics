@@ -54,6 +54,16 @@ run_krun() {
     krun --directory "$backend_dir" "$run_file" "${additional_run_args[@]}" "$@"
 }
 
+run_krun_legacy() {
+    local additional_run_args
+
+    additional_run_args=()
+    ! $bug_report || additional_run_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
+
+    preprocess
+    krun-legacy --directory "$backend_dir" "$run_file" "${additional_run_args[@]}" "$@"
+}
+
 run_kast() {
     local output_mode
 
@@ -80,14 +90,16 @@ run_prove() {
 usage() {
     echo "
     usage: $0 run        [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
+           $0 run-legacy [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
            $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
            $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <def_module> <K args>*
 
            $0 [help|--help|version|--version]
 
-       $0 run   : Run a single WebAssembly program
-       $0 kast  : Parse a single WebAssembly program and output it in supported format
-       $0 prove : Run a WebAssembly K proof
+       $0 run        : Run a single WebAssembly program
+       $0 run-legacy : Run a single WebAssembly program using krun-legacy
+       $0 kast       : Parse a single WebAssembly program and output it in supported format
+       $0 prove      : Run a WebAssembly K proof
 
        $0 help    : Display this help message.
        $0 version : Display the KWasm, K, Kore, and Z3 versions in use.
@@ -161,8 +173,9 @@ fi
 bug_report_name="kwasm-bug-$(basename "$run_file")"
 
 case "$run_command-$backend" in
-    run-@(llvm|haskell)  ) run_krun  "$@" ;;
-    kast-@(llvm|haskell) ) run_kast  "$@" ;;
-    prove-@(haskell)     ) run_prove "$@" ;;
+    run-@(llvm|haskell)        ) run_krun        "$@" ;;
+    run-legacy-@(llvm|haskell) ) run_krun_legacy "$@" ;;
+    kast-@(llvm|haskell)       ) run_kast        "$@" ;;
+    prove-@(haskell)           ) run_prove       "$@" ;;
     *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
 esac
