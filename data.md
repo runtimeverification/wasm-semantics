@@ -545,7 +545,7 @@ The strings to connect needs to be unescaped before concatenated, because the `u
     rule #DS2Bytes(DS) => String2Bytes(#concatDS(DS))
 ```
 
-### Local Memory
+### Linear Memory
 
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
 
@@ -556,7 +556,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
     syntax Bytes ::= #setBytesRange ( Bytes , Int , Bytes ) [function, functional]
  // ------------------------------------------------------------------------------
     rule #setBytesRange(BM, START, BS) => replaceAtBytes(padRightBytes(BM, START +Int lengthBytes(BS), 0), START, BS)
-      requires 0 <=Int START
+      requires          0 <=Int START
 
     rule #setBytesRange(_, START, _ ) => .Bytes
       requires notBool (0 <=Int START)
@@ -567,7 +567,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
       requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
 
     rule [setRange-Positive] : #setRange(BM, ADDR, VAL, WIDTH) => #setBytesRange(BM, ADDR, Int2Bytes(WIDTH, VAL, LE))
-      requires 0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
+      requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
 ```
 
 - `#getBytesRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START` (padding with zeros as needed).
@@ -580,10 +580,12 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
       requires notBool (0 <=Int START andBool 0 <=Int WIDTH)
 
     rule #getBytesRange(BM, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH, 0), START, START +Int WIDTH)
-      requires 0 <=Int START andBool 0 <=Int WIDTH andBool START <Int lengthBytes(BM)
+      requires         (0 <=Int START andBool 0 <=Int WIDTH)
+       andBool         START <Int lengthBytes(BM)
 
     rule #getBytesRange(BM, START, WIDTH) => padRightBytes(.Bytes, WIDTH, 0)
-      requires 0 <=Int START andBool 0 <=Int WIDTH andBool notBool (START <Int lengthBytes(BM))
+      requires         (0 <=Int START andBool 0 <=Int WIDTH)
+       andBool notBool (START <Int lengthBytes(BM))
 
     syntax Int ::= #getRange(Bytes, Int, Int) [function, functional, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
