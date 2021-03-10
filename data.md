@@ -556,10 +556,10 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
     syntax Bytes ::= #setBytesRange ( Bytes , Int , Bytes ) [function, functional]
  // ------------------------------------------------------------------------------
     rule #setBytesRange(BM, START, BS) => replaceAtBytes(padRightBytes(BM, START +Int lengthBytes(BS), 0), START, BS)
-      requires START >=Int 0
+      requires 0 <=Int START
 
     rule #setBytesRange(_, START, _ ) => .Bytes
-      requires START <Int 0
+      requires notBool (0 <=Int START)
 
     syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
@@ -577,13 +577,13 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
     syntax Bytes ::= #getBytesRange ( Bytes , Int , Int ) [function, functional]
  // ----------------------------------------------------------------------------
     rule #getBytesRange(_, START, WIDTH) => .Bytes
-      requires notBool (WIDTH >=Int 0 andBool START >=Int 0)
+      requires notBool (0 <=Int START andBool 0 <=Int WIDTH)
 
     rule #getBytesRange(BM, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH, 0), START, START +Int WIDTH)
-      requires START >=Int 0 andBool WIDTH >=Int 0 andBool START <Int lengthBytes(BM)
+      requires 0 <=Int START andBool 0 <=Int WIDTH andBool START <Int lengthBytes(BM)
 
     rule #getBytesRange(BM, START, WIDTH) => padRightBytes(.Bytes, WIDTH, 0)
-      requires START >=Int 0 andBool WIDTH >=Int 0 andBool lengthBytes(BM) <=Int START
+      requires 0 <=Int START andBool 0 <=Int WIDTH andBool notBool (START <Int lengthBytes(BM))
 
     syntax Int ::= #getRange(Bytes, Int, Int) [function, functional, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
