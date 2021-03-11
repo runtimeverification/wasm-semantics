@@ -1041,7 +1041,7 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { ITYPE WIDTH EA   Signed DATA } => < ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH)) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA   Signed DATA } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
     rule <instrs> load { ITYPE WIDTH EA Unsigned DATA } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
 ```
 

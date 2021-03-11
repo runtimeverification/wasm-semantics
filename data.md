@@ -545,50 +545,55 @@ The strings to connect needs to be unescaped before concatenated, because the `u
     rule #DS2Bytes(DS) => String2Bytes(#concatDS(DS))
 ```
 
-### Byte Map
+### Linear Memory
 
 Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be all zero bytes.
 
-`#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
+- `#setBytesRange(BM, START, BS)` assigns a contiguous chunk of `BS` to `BM` starting at position `N`.
+- `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax Bytes ::= #setRange(Bytes, Int, Int, Int) [function, functional, smtlib(setRange)]
- // -----------------------------------------------------------------------------------------
-    rule                       #setRange(BM, ADDR, VAL, WIDTH) => BM                                                                                 requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
-    rule [setRange-Positive] : #setRange(BM, ADDR, VAL, WIDTH) => #setRange(#set(BM, ADDR, VAL modInt 256), ADDR +Int 1, VAL /Int 256, WIDTH -Int 1) requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
+    syntax Bytes ::= #setBytesRange ( Bytes , Int , Bytes ) [function, functional]
+ // ------------------------------------------------------------------------------
+    rule #setBytesRange(BM, START, BS) => replaceAtBytes(padRightBytes(BM, START +Int lengthBytes(BS), 0), START, BS)
+      requires          0 <=Int START
+
+    rule #setBytesRange(_, START, _ ) => .Bytes
+      requires notBool (0 <=Int START)
+
+    syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
+ // -----------------------------------------------------------------------------------------------
+    rule                       #setRange(BM, ADDR, VAL, WIDTH) => BM
+      requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
+
+    rule [setRange-Positive] : #setRange(BM, ADDR, VAL, WIDTH) => #setBytesRange(BM, ADDR, Int2Bytes(WIDTH, VAL, LE))
+      requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
 ```
 
-`#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer.
-The function interprets the range of bytes as little-endian.
+- `#getBytesRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START` (padding with zeros as needed).
+- `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer. The function interprets the range of bytes as little-endian.
 
 ```k
+    syntax Bytes ::= #getBytesRange ( Bytes , Int , Int ) [function, functional]
+ // ----------------------------------------------------------------------------
+    rule #getBytesRange(_, START, WIDTH) => .Bytes
+      requires notBool (0 <=Int START andBool 0 <=Int WIDTH)
+
+    rule #getBytesRange(BM, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH, 0), START, START +Int WIDTH)
+      requires         (0 <=Int START andBool 0 <=Int WIDTH)
+       andBool         START <Int lengthBytes(BM)
+
+    rule #getBytesRange(BM, START, WIDTH) => padRightBytes(.Bytes, WIDTH, 0)
+      requires         (0 <=Int START andBool 0 <=Int WIDTH)
+       andBool notBool (START <Int lengthBytes(BM))
+
     syntax Int ::= #getRange(Bytes, Int, Int) [function, functional, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
-    rule                       #getRange( _, ADDR, WIDTH) => 0                                                                       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
-    rule [getRange-Positive] : #getRange(BM, ADDR, WIDTH) => #get(BM, ADDR) +Int (#getRange(BM, ADDR +Int 1, WIDTH -Int 1) *Int 256) requires          0 <Int WIDTH andBool 0 <=Int ADDR
-```
+    rule                       #getRange( _, ADDR, WIDTH) => 0
+      requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
 
-`#get` looks up a key in a map, defaulting to 0 if the map does not contain the key.
-`#set` sets a key in a map, extending the map when necessary, but only when setting non-zero values.
-`#set` is total made total by ignoring invalid setting operations, i.e. trying to set an non-byte value or a negative key.
-
-```k
-    syntax Int   ::= #get (Bytes, Int     ) [function, functional, smtlib(bytesGet)]
-    syntax Bytes ::= #set (Bytes, Int, Int) [function, functional, smtlib(bytesSet)]
- // --------------------------------------------------------------------------------
-    rule [get-Existing] : #get(BM, KEY) => BM [KEY] requires         KEY inBytes BM
-    rule                  #get(BM, KEY) => 0        requires notBool KEY inBytes BM
-
-    rule                #set(BM, KEY, VAL) => BM                                               requires notBool (isByte(VAL) andBool 0 <=Int KEY)
-    rule                #set(BM, KEY, VAL) => BM [ KEY <- VAL ]                                requires          isByte(VAL) andBool KEY inBytes BM
-    rule                #set(BM, KEY, VAL) => BM                                               requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool         VAL ==Int 0
-    rule [set-Extend] : #set(BM, KEY, VAL) => #set(padRightBytes(BM, KEY +Int 1, 0), KEY, VAL) requires          isByte(VAL) andBool 0 <=Int KEY  andBool notBool KEY <Int lengthBytes(BM) andBool notBool VAL ==Int 0
-
-    syntax Bool ::= isByte ( Int )      [function, functional, smtlib(isByte)]
-                  | Int "inBytes" Bytes [function, functional, smtlib(inBytes)]
- // ---------------------------------------------------------------------------
-    rule isByte(I)    => 0 <=Int I andBool I <Int 256
-    rule I inBytes BM => 0 <=Int I andBool I <Int lengthBytes(BM)
+    rule [getRange-Positive] : #getRange(BM, ADDR, WIDTH) => Bytes2Int(#getBytesRange(BM, ADDR, WIDTH), LE, Unsigned)
+      requires          0 <Int WIDTH andBool 0 <=Int ADDR
 ```
 
 ```k
