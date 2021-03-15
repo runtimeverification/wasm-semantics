@@ -394,7 +394,7 @@ def I64_STORE16(offset : int):
     return KApply('aStore', [i64, KApply('storeOpStore16', []), KInt(offset)])
 
 def I64_STORE32(offset : int):
-    return KApply('aStore', [i32, KApply('storeOpStore32', []), KInt(offset)])
+    return KApply('aStore', [i64, KApply('storeOpStore32', []), KInt(offset)])
 
 def F32_LOAD(offset : int):
     return KApply('aLoad', [f32, KApply('loadOpLoad', []), KInt(offset)])
