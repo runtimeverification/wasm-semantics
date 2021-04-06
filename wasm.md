@@ -434,9 +434,8 @@ It simply executes the block then records a label with an empty continuation.
     rule <instrs> label [ TYPES ] { _ } VALSTACK' => . ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax BlockMetaData ::= #funcBlockInfo ( Int ) [klabel(funcBlockInfo), symbol]
-                           | #blockInfo     ( Int ) [klabel(blockInfo), symbol]
- // ---------------------------------------------------------------------------
+    syntax BlockMetaData ::= OptionalInt
+ // ------------------------------------
 
     syntax Instr ::= #block(VecType, Instrs, BlockMetaData) [klabel(aBlock), symbol]
  // --------------------------------------------------------------------------------
@@ -749,7 +748,7 @@ The `#take` function will return the parameter stack in the reversed order, then
  // -------------------------------------
     rule <instrs> ( invoke FADDR )
                => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
-               ~> #block([TRANGE], INSTRS, #funcBlockInfo(FADDR))
+               ~> #block([TRANGE], INSTRS, .Int)
                ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL
                ...
          </instrs>
