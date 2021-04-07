@@ -18,7 +18,8 @@ module LOOPS-SPEC
                          #local.tee(0)
                          ITYPE.eqz
                          #br_if(1)
-                         #br(0)
+                         #br(0),
+                         _
                        )
                     }
                     .ValStack
@@ -50,8 +51,10 @@ module LOOPS-SPEC
                       #local.tee(0)
                       ITYPE.eqz
                       #br_if(1)
-                      #br(0)
-                 )
+                      #br(0),
+                      _
+                 ),
+                 _
               )
            => .
            ...

@@ -979,9 +979,9 @@ There are several formats of block instructions, and the text-to-abstract transf
 At this point, all branching identifiers should have been resolved, so we can remove the id.
 
 ```k
-    rule #t2aInstr<C>( block _OID:OptionalId TDS:TypeDecls IS end _OID') => #block(gatherTypes(result, TDS), #t2aInstrs<C>(IS))
-    rule #t2aInstr<C>( loop  _OID:OptionalId TDS IS end _OID') => #loop(gatherTypes(result, TDS), #t2aInstrs<C>(IS))
-    rule #t2aInstr<C>( if    _OID:OptionalId TDS IS else _OID':OptionalId IS' end _OID'') => #if(gatherTypes(result, TDS), #t2aInstrs<C>(IS), #t2aInstrs<C>(IS'))
+    rule #t2aInstr<C>( block _OID:OptionalId TDS:TypeDecls IS end _OID') => #block(gatherTypes(result, TDS), #t2aInstrs<C>(IS), .Int)
+    rule #t2aInstr<C>( loop  _OID:OptionalId TDS IS end _OID') => #loop(gatherTypes(result, TDS), #t2aInstrs<C>(IS), .Int)
+    rule #t2aInstr<C>( if    _OID:OptionalId TDS IS else _OID':OptionalId IS' end _OID'') => #if(gatherTypes(result, TDS), #t2aInstrs<C>(IS), #t2aInstrs<C>(IS'), .Int)
 ```
 
 #### KWasm Administrative Instructions
@@ -992,7 +992,7 @@ They are currently supported in KWasm text files, but may be deprecated.
 ```k
     rule #t2aInstr<_C>(trap) => trap
 
-    rule #t2aInstr<C>(#block(VT:VecType, IS:Instrs)) => #block(VT, #t2aInstrs<C>(IS))
+    rule #t2aInstr<C>(#block(VT:VecType, IS:Instrs, BLOCKINFO)) => #block(VT, #t2aInstrs<C>(IS), BLOCKINFO)
 
     rule #t2aInstr<_>(init_local I V) => init_local I V
     rule #t2aInstr<_>(init_locals VS) => init_locals VS
