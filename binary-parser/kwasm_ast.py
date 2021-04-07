@@ -154,14 +154,14 @@ def global_type(mut, valtype):
 NOP = KApply('aNop', [])
 UNREACHABLE = KApply('aUnreachable', [])
 
-def BLOCK(vec_type, instrs):
-    return KApply('aBlock', [vec_type, instrs])
+def BLOCK(vec_type, instrs, block_info):
+    return KApply('aBlock', [vec_type, instrs, block_info])
 
-def IF(vec_type, then_instrs, else_instrs):
-    return KApply('aIf', [vec_type, then_instrs, else_instrs])
+def IF(vec_type, then_instrs, else_instrs, block_info):
+    return KApply('aIf', [vec_type, then_instrs, else_instrs, block_info])
 
-def LOOP(vec_type, instrs):
-    return KApply('aLoop', [vec_type, instrs])
+def LOOP(vec_type, instrs, block_info):
+    return KApply('aLoop', [vec_type, instrs, block_info])
 
 RETURN = KApply('aReturn', [])
 
