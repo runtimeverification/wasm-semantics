@@ -120,10 +120,11 @@ def instr(i):
     B = BinaryOpcode
     global block_id
     if i.opcode == B.BLOCK:
+        cur_block_id = block_id
+        block_id += 1
         iis = instrs(i.instructions)
         res = vec_type(i.result_type)
-        block_id += 1
-        return a.BLOCK(res, iis, a.KInt(block_id))
+        return a.BLOCK(res, iis, a.KInt(cur_block_id))
     if i.opcode == B.BR:
         return a.BR(i.label_idx)
     if i.opcode == B.BR_IF:
@@ -159,11 +160,12 @@ def instr(i):
     if i.opcode == B.I64_REINTERPRET_F64:
         raise(ValueError('Reinterpret instructions not implemented.'))
     if i.opcode == B.IF:
+        cur_block_id = block_id
+        block_id += 1
         thens = instrs(i.instructions)
         els = instrs(i.else_instructions)
         res = vec_type(i.result_type)
-        block_id += 1
-        return a.IF(res, thens, els, a.KInt(block_id))
+        return a.IF(res, thens, els, a.KInt(cur_block_id))
     if i.opcode == B.F32_STORE:
         return a.F32_STORE(i.memarg.offset)
     if i.opcode == B.F64_STORE:
@@ -211,10 +213,11 @@ def instr(i):
     if i.opcode == B.I64_LOAD32_U:
         return a.I64_LOAD32_U(i.memarg.offset)
     if i.opcode == B.LOOP:
+        cur_block_id = block_id
+        block_id += 1
         iis = instrs(i.instructions)
         res = vec_type(i.result_type)
-        block_id += 1
-        return a.LOOP(res, iis, a.KInt(block_id))
+        return a.LOOP(res, iis, a.KInt(cur_block_id))
     if i.opcode == B.SET_GLOBAL:
         return a.SET_GLOBAL(i.global_idx)
     if i.opcode == B.SET_LOCAL:
