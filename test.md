@@ -243,8 +243,8 @@ TODO: Actually implement the `"spectest"` module, or call out to the supplied on
                => #func(... type: TIDX, locals: [ .ValTypes ], body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
                ...
          </instrs>
-      requires MOD ==K #unparseWasmString("\"spectest\"")
-        orBool MOD ==K #unparseWasmString("\"test\"")
+      requires MOD ==K #token("\"spectest\"", "WasmStringToken")
+        orBool MOD ==K #token("\"test\""    , "WasmStringToken")
 ```
 
 Except `assert_return` and `assert_trap`, the remaining rules are directly reduced to empty. We are not planning to implement them and these rules are only used to make it easier to parse conformance tests.
