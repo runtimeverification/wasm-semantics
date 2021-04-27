@@ -73,6 +73,10 @@ module WRC20
 A module of shorthand commands for the WRC20 module.
 
 ```k
+    syntax WasmStringToken ::= "#ethereumModule"
+ // --------------------------------------------
+    rule #ethereumModule => #token("\"ethereum\"", "WasmStringToken") [macro]
+
     syntax ModuleDecl ::= "#wrc20"
     syntax Defns      ::= "#wrc20Body"
     syntax Defns      ::= "#wrc20Imports"
@@ -86,19 +90,19 @@ A module of shorthand commands for the WRC20 module.
     rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions_fastBalance [macro]
 
     rule #wrc20Imports =>
-      (func String2Identifier("$revert")          ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"revert\"") )          param i32 i32 .ValTypes .TypeDecls )
-      (func String2Identifier("$finish")          ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"finish\"") )          param i32 i32 .ValTypes .TypeDecls )
-      (func String2Identifier("$getCallDataSize") ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"getCallDataSize\"") ) result i32 .ValTypes .TypeDecls )
-      (func String2Identifier("$callDataCopy")    ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"callDataCopy\"") )    param i32 i32 i32 .ValTypes .TypeDecls )
-      (func String2Identifier("$storageLoad")     ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"storageLoad\"") )     param i32 i32 .ValTypes .TypeDecls )
-      (func String2Identifier("$storageStore")    ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"storageStore\"") )    param i32 i32 .ValTypes .TypeDecls )
-      (func String2Identifier("$getCaller")       ( import #unparseWasmString("\"ethereum\"") #unparseWasmString("\"getCaller\"") )       param i32 .ValTypes .TypeDecls )
-      ( memory ( export #unparseWasmString("\"memory\"") ) 1 )
+      (func String2Identifier("$revert")          ( import #ethereumModule #token("\"revert\""         , "WasmStringToken") ) param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$finish")          ( import #ethereumModule #token("\"finish\""         , "WasmStringToken") ) param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$getCallDataSize") ( import #ethereumModule #token("\"getCallDataSize\"", "WasmStringToken") ) result i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$callDataCopy")    ( import #ethereumModule #token("\"callDataCopy\""   , "WasmStringToken") ) param i32 i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$storageLoad")     ( import #ethereumModule #token("\"storageLoad\""    , "WasmStringToken") ) param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$storageStore")    ( import #ethereumModule #token("\"storageStore\""   , "WasmStringToken") ) param i32 i32 .ValTypes .TypeDecls )
+      (func String2Identifier("$getCaller")       ( import #ethereumModule #token("\"getCaller\""      , "WasmStringToken") ) param i32 .ValTypes .TypeDecls )
+      ( memory ( export #token("\"memory\"", "WasmStringToken") ) 1 )
       .Defns
       [macro]
 
     rule #wrc20Functions_fastBalance =>
-      (func ( export #unparseWasmString("\"main\"") ) .TypeDecls .LocalDecls
+      (func ( export #token("\"main\"", "WasmStringToken") ) .TypeDecls .LocalDecls
         block .TypeDecls
           block .TypeDecls
             call String2Identifier("$getCallDataSize")
