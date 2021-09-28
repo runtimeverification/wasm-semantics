@@ -21,6 +21,11 @@ Basic logic
 Basic arithmetic
 ----------------
 
+```k
+    rule #signed(_, 0) => 0 [simplification]
+    rule #signed(_, X -Int Y) => X -Int Y [simplification]
+```
+
 // TODO: Upstream the lemmas in this section into K.
 
 ### Modular Arithmetic
