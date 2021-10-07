@@ -28,8 +28,7 @@ module SIMPLE-SPEC
         <valstack> S => < ITYPE > ?MAX : S </valstack>
     requires
         #inUnsignedRange(ITYPE, X) andBool
-        #inUnsignedRange(ITYPE, Y) andBool
-        #inUnsignedRange(ITYPE, X -Int Y)
+        #inUnsignedRange(ITYPE, Y)
     ensures
         #inUnsignedRange(ITYPE, ?MAX) andBool
         X <=Int ?MAX andBool
