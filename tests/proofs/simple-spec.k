@@ -20,9 +20,7 @@ module SIMPLE-SPEC
         <instrs>
             ITYPE:IValType . const X ~>
             ITYPE:IValType . const Y ~>
-            ITYPE:IValType . sub     ~>
-            ITYPE:IValType . const 0 ~>
-            ITYPE:IValType . ge_s    ~>
+            ITYPE:IValType . ge_u    ~>
             #if([ITYPE:IValType .ValTypes], ITYPE:IValType.const X, ITYPE:IValType.const Y, _)
             => .
             ...
