@@ -154,6 +154,7 @@ module WASM-DATA
     imports MAP
     imports FLOAT
     imports BYTES
+    imports K-EQUAL
 ```
 
 ### Identifiers
