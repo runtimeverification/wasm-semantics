@@ -31,7 +31,7 @@ pipeline {
       when { branch 'master' }
       environment { LONG_REV = """${sh(returnStdout: true, script: 'git rev-parse HEAD').trim()}""" }
       steps {
-        build job: 'rv-devops/master', propagate: false, wait: false                                          \
+        build job: 'DevOps/master', propagate: false, wait: false                                             \
             , parameters: [ booleanParam ( name: 'UPDATE_DEPS'         , value: true                        ) \
                           , string       ( name: 'UPDATE_DEPS_REPO'    , value: 'kframework/wasm-semantics' ) \
                           , string       ( name: 'UPDATE_DEPS_VERSION' , value: "${env.LONG_REV}"           ) \
