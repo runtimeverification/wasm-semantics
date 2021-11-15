@@ -73,21 +73,21 @@ module WRC20
 A module of shorthand commands for the WRC20 module.
 
 ```k
-    syntax WasmStringToken ::= "#ethereumModule"
- // --------------------------------------------
-    rule #ethereumModule => #token("\"ethereum\"", "WasmStringToken") [macro]
+    syntax WasmStringToken ::= "#ethereumModule" [macro]
+ // ----------------------------------------------------
+    rule #ethereumModule => #token("\"ethereum\"", "WasmStringToken")
 
-    syntax ModuleDecl ::= "#wrc20"
-    syntax Defns      ::= "#wrc20Body"
-    syntax Defns      ::= "#wrc20Imports"
-    syntax Defns      ::= "#wrc20Functions_fastBalance"
-    syntax Defns      ::= "#wrc20ReverseBytes"
-    syntax Int        ::= "#wrc20ReverseBytesTypeIdx"
-    syntax FuncType   ::= "#wrc20ReverseBytesType"
- // ----------------------------------------------
-    rule #wrc20 => ( module #wrc20Body ) [macro]
+    syntax ModuleDecl ::= "#wrc20"                      [macro]
+    syntax Defns      ::= "#wrc20Body"                  [macro]
+    syntax Defns      ::= "#wrc20Imports"               [macro]
+    syntax Defns      ::= "#wrc20Functions_fastBalance" [macro]
+    syntax Defns      ::= "#wrc20ReverseBytes"          [macro]
+    syntax Int        ::= "#wrc20ReverseBytesTypeIdx"   [macro]
+    syntax FuncType   ::= "#wrc20ReverseBytesType"      [macro]
+ // -----------------------------------------------------------
+    rule #wrc20 => ( module #wrc20Body )
 
-    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions_fastBalance [macro]
+    rule #wrc20Body => #wrc20Imports ++Defns #wrc20Functions_fastBalance
 
     rule #wrc20Imports =>
       (func String2Identifier("$revert")          ( import #ethereumModule #token("\"revert\""         , "WasmStringToken") ) param i32 i32 .ValTypes .TypeDecls )
@@ -99,7 +99,6 @@ A module of shorthand commands for the WRC20 module.
       (func String2Identifier("$getCaller")       ( import #ethereumModule #token("\"getCaller\""      , "WasmStringToken") ) param i32 .ValTypes .TypeDecls )
       ( memory ( export #token("\"memory\"", "WasmStringToken") ) 1 )
       .Defns
-      [macro]
 
     rule #wrc20Functions_fastBalance =>
       (func ( export #token("\"main\"", "WasmStringToken") ) .TypeDecls .LocalDecls
@@ -255,10 +254,9 @@ A module of shorthand commands for the WRC20 module.
       )
 
       #wrc20ReverseBytes
-      [macro]
 
-    rule #wrc20ReverseBytesTypeIdx => 1 [macro]
-    rule #wrc20ReverseBytesType    => [ i64 ] -> [ i64 ] [macro]
+    rule #wrc20ReverseBytesTypeIdx => 1
+    rule #wrc20ReverseBytesType    => [ i64 ] -> [ i64 ]
 
     rule #wrc20ReverseBytes =>
       (func String2Identifier("$i64.reverse_bytes") (type #wrc20ReverseBytesTypeIdx) local i64 i64 .ValTypes .LocalDecls
@@ -299,7 +297,6 @@ A module of shorthand commands for the WRC20 module.
         .EmptyStmts
         )
       .Defns
-      [macro]
 
     syntax Defns ::= Defns "++Defns" Defns [function, functional]
  // -------------------------------------------------------------
