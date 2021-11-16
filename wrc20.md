@@ -256,7 +256,7 @@ A module of shorthand commands for the WRC20 module.
       #wrc20ReverseBytes
 
     rule #wrc20ReverseBytesTypeIdx => 1
-    rule #wrc20ReverseBytesType    => [ i64 ] -> [ i64 ]
+    rule #wrc20ReverseBytesType    => [ i64 ] -> [ i64 ] [ignoreThisAttribute]
 
     rule #wrc20ReverseBytes =>
       (func String2Identifier("$i64.reverse_bytes") (type #wrc20ReverseBytesTypeIdx) local i64 i64 .ValTypes .LocalDecls
