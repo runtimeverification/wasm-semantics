@@ -33,7 +33,7 @@ pipeline {
       steps {
         build job: 'DevOps/master', propagate: false, wait: false                                             \
             , parameters: [ booleanParam ( name: 'UPDATE_DEPS'         , value: true                        ) \
-                          , string       ( name: 'UPDATE_DEPS_REPO'    , value: 'kframework/wasm-semantics' ) \
+                          , string       ( name: 'UPDATE_DEPS_REPO'    , value: 'runtimeverification/wasm-semantics' ) \
                           , string       ( name: 'UPDATE_DEPS_VERSION' , value: "${env.LONG_REV}"           ) \
                           ]
       }
