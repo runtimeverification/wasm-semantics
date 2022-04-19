@@ -71,7 +71,7 @@ The following are needed for building/running KWasm:
     Note that the version of the `stack` tool provided by your package manager might not be recent enough.
     Please follow installation instructions from the Haskell Stack website linked above.
 -   [LLVM](https://llvm.org/) For building the LLVM backend.
--   [Z3](https://github.com/Z3Prover/z3) version 4.8.11
+-   [Z3](https://github.com/Z3Prover/z3) version 4.8.15
 
 On Ubuntu >= 15.04 (for example):
 
@@ -105,7 +105,7 @@ make deps
 
 #### Installing Z3
 
-Note that KWASM requires Z3 version 4.8.11, which you may need to install from a
+Note that KWASM requires Z3 version 4.8.15, which you may need to install from a
 source build if your package manager supplies a different version. To do so,
 follow the instructions
 [here](https://github.com/Z3Prover/z3#building-z3-using-make-and-gccclang) after
@@ -114,7 +114,7 @@ checking out the correct tag in the Z3 repository:
 ```sh
 git clone https://github.com/Z3Prover/z3.git
 cd z3
-git checkout z3-4.8.11
+git checkout z3-4.8.15
 python scripts/mk_make.py
 cd build
 make
