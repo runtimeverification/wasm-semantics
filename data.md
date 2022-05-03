@@ -338,6 +338,7 @@ We also add `undefined` as a value, which makes many partial functions in the se
 
 The `#chop` function will ensure that an integer value is wrapped to the correct bit-width.
 The `#wrap` function wraps an integer to a given byte width.
+The `#get` function extracts the underlying K integer from a WASM `IVal`.
 
 ```k
     syntax IVal ::= #chop ( IVal ) [function, functional]
@@ -348,6 +349,10 @@ The `#wrap` function wraps an integer to a given byte width.
  // ---------------------------------------------------------
     rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH
     rule                   #wrap(WIDTH, _N) => 0                                        requires notBool 0 <Int WIDTH
+
+    syntax Int ::= #get( IVal ) [function, functional]
+ // --------------------------------------------------
+    rule #get(< _ > N) => N
 ```
 
 In `K` all `Float` numbers are of 64-bits width by default, so we need to downcast a `f32` float to 32-bit manually.
