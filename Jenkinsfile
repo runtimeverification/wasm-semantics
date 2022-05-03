@@ -16,6 +16,7 @@ pipeline {
       stages {
         stage('Build') { steps { sh 'make build -j4 RELEASE=true' } }
         stage('Test') {
+          environment { K_OPTS = '-Xmx8G' }
           options { timeout(time: 25, unit: 'MINUTES') }
           parallel {
             stage('Simple')            { steps { sh 'make TEST_CONCRETE_BACKEND=llvm test-simple -j4'                } }

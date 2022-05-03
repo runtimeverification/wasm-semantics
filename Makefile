@@ -24,7 +24,7 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
-PYK_PATH             := $(K_LIB)
+PYK_PATH             := $(abspath $(K_SUBMODULE)/pyk/src/)
 PYWASM_PATH          := ./deps/py-wasm
 
 PYTHONPATH := $(PYK_PATH)

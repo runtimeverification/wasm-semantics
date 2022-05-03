@@ -8,7 +8,7 @@ This library provides a convenient interface to create KWasm programs in Kast fo
 It is a mirror of the abstract syntax in the K semantics.
 """
 
-from pyk.kast import KSequence, KConstant, KApply, KToken
+from pyk.kast import KSequence, KApply, KToken
 
 ###########
 # KLabels #

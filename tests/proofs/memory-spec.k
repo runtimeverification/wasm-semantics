@@ -33,6 +33,6 @@ module MEMORY-SPEC
             <mdata> _BM      </mdata>
             ...
           </memInst>
-        requires #chop(<i32> ADDR) ==K <i32> ?EA
-         andBool ?EA +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
+        requires
+         #get(#chop(<i32> ADDR)) +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
 endmodule
