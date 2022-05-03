@@ -1,5 +1,5 @@
 ARG K_COMMIT
-FROM runtimeverificationinc/kframework-k:ubuntu-bionic-${K_COMMIT}
+FROM runtimeverificationinc/kframework-k:ubuntu-focal-${K_COMMIT}
 
 RUN    apt-get update              \
     && apt-get upgrade --yes       \
@@ -27,7 +27,6 @@ WORKDIR /home/user
 
 RUN pip3 install       \
            cytoolz     \
-           dataclasses \
            numpy
 
 RUN    git clone 'https://github.com/WebAssembly/wabt' --branch 1.0.13 --recurse-submodules wabt \
