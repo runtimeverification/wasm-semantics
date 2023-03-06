@@ -298,7 +298,7 @@ A module of shorthand commands for the WRC20 module.
         )
       .Defns
 
-    syntax Defns ::= Defns "++Defns" Defns [function, functional]
+    syntax Defns ::= Defns "++Defns" Defns [function, total]
  // -------------------------------------------------------------
     rule .Defns ++Defns DS' => DS'
     rule (D DS) ++Defns DS' => D (DS ++Defns DS')
