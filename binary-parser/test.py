@@ -10,7 +10,7 @@ import tempfile
 WASM_definition_llvm_no_coverage_dir = '.build/defn/llvm'
 
 def config_to_kast_term(config):
-    return { 'format' : 'KAST', 'version': 1, 'term': config.to_dict() }
+    return { 'format' : 'KAST', 'version': 2, 'term': config.to_dict() }
 
 def run_module(parsed_module):
     input_json = config_to_kast_term(parsed_module)
@@ -25,11 +25,10 @@ def run_module(parsed_module):
                 '--parser', 'cat', '--output', 'json']
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate(input=None)
-        out = None if stdout == '' else json.loads(stdout)['term']
         rc = process.returncode
 
         if rc != 0:
-            raise Exception("Received error while running: " + err )
+            raise Exception(f'Received error while running: {str(stderr)}')
 
 def pykPrettyPrint(module):
     WASM_definition_llvm_no_coverage_dir = '.build/defn/llvm'

@@ -345,7 +345,7 @@ In the future should investigate which direction the subsort should go.
 ```k
     rule `WasmInt`(VAL) => WasmIntToken2Int(VAL)
 
-    syntax String ::= WasmIntToken2String    ( WasmIntToken ) [function, functional, hook(STRING.token2string)]
+    syntax String ::= WasmIntToken2String    ( WasmIntToken ) [function, total, hook(STRING.token2string)]
     syntax Int    ::= WasmIntTokenString2Int ( String       ) [function]
                     | WasmIntToken2Int       ( WasmIntToken ) [function]
  // --------------------------------------------------------------------
@@ -360,7 +360,7 @@ In the future should investigate which direction the subsort should go.
 When we want to specify an identifier, we can do so with the following helper function.
 
 ```k
-    syntax IdentifierToken ::= String2Identifier(String) [function, functional, hook(STRING.string2token)]
+    syntax IdentifierToken ::= String2Identifier(String) [function, total, hook(STRING.string2token)]
  // ------------------------------------------------------------------------------------------------------
 ```
 
@@ -702,11 +702,11 @@ Record updates can currently not be done in a function rule which also does othe
 
 ```k
     syntax Context ::= ctx(localIds: Map, globalIds: Map, funcIds: Map, typeIds: Map)
-                     | #freshCtx ( )                               [function, functional]
-                     | #updateLocalIds    ( Context , Map )        [function, functional]
-                     | #updateLocalIdsAux ( Context , Map , Bool ) [function, functional]
-                     | #updateFuncIds     ( Context , Map )        [function, functional]
-                     | #updateFuncIdsAux  ( Context , Map , Bool ) [function, functional]
+                     | #freshCtx ( )                               [function, total]
+                     | #updateLocalIds    ( Context , Map )        [function, total]
+                     | #updateLocalIdsAux ( Context , Map , Bool ) [function, total]
+                     | #updateFuncIds     ( Context , Map )        [function, total]
+                     | #updateFuncIdsAux  ( Context , Map , Bool ) [function, total]
  // -------------------------------------------------------------------------------------
     rule #freshCtx ( ) => ctx(... localIds: .Map, globalIds: .Map, funcIds: .Map, typeIds: .Map)
 
@@ -822,7 +822,7 @@ After unfolding, each type use in a function starts with an explicit reference t
 ```
 
 ```k
-    syntax Limits ::= t2aLimits(TextLimits) [function, functional]
+    syntax Limits ::= t2aLimits(TextLimits) [function, total]
  // --------------------------------------------------------------
     rule t2aLimits(MIN:Int) => #limitsMin(MIN)
     rule t2aLimits(MIN:Int MAX:Int) => #limits(MIN, MAX)
@@ -951,7 +951,7 @@ The `align` parameter is for optimization only and is not allowed to influence t
     rule #t2aInstr<_>(memory.size)                => memory.size
     rule #t2aInstr<_>(memory.grow)                => memory.grow
 
-    syntax Int ::= #getOffset ( MemArg ) [function, functional]
+    syntax Int ::= #getOffset ( MemArg ) [function, total]
  // -----------------------------------------------------------
     rule #getOffset(           _:AlignArg) => 0
     rule #getOffset(offset= OS           ) => OS
@@ -1058,8 +1058,8 @@ The following are helper functions for gathering and updating context.
     rule #idcGlobalsAux(.Defns, #global(...) GS => GS, IDX => IDX +Int 1, _ACC) [owise]
     rule #idcGlobalsAux(.Defns, .Defns, _, ACC) => ACC
 
-    syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, functional]
-                 | #ids2Idxs(Int, TypeUse, LocalDecls) [function, functional]
+    syntax Map ::= #ids2Idxs(TypeUse, LocalDecls)      [function, total]
+                 | #ids2Idxs(Int, TypeUse, LocalDecls) [function, total]
  // -------------------------------------------------------------------------
     rule #ids2Idxs(TU, LDS) => #ids2Idxs(0, TU, LDS)
 
