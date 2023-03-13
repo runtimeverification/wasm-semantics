@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "scripts"
+version = "0.1.0"
+description = ""
+authors = ["Virgil <virgil.serbanuta@runtimeverification.com>"]
+readme = "README.md"
+packages = [{include = "compress_bytes"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyk = { git = "https://github.com/runtimeverification/pyk.git", tag = "v0.1.151" }
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
