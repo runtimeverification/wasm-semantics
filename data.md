@@ -48,7 +48,7 @@ The exception is for characters that are explicitly escaped which can represent 
                         | WasmStringToken
  // -------------------------------------
 
-    syntax String ::= #parseWasmString   ( WasmStringToken ) [function, functional, hook(STRING.token2string)]
+    syntax String ::= #parseWasmString   ( WasmStringToken ) [function, total, hook(STRING.token2string)]
  // ----------------------------------------------------------------------------------------------------------
 
     syntax DataString ::= List{WasmString, ""} [klabel(listWasmString)]
@@ -248,7 +248,7 @@ There are two basic type-constructors: sequencing (`[_]`) and function spaces (`
     syntax FuncType ::= VecType "->" VecType [klabel(aFuncType), symbol]
  // --------------------------------------------------------------------
 
-    syntax Int ::= lengthValTypes ( ValTypes ) [function, functional]
+    syntax Int ::= lengthValTypes ( ValTypes ) [function, total]
  // -----------------------------------------------------------------
     rule lengthValTypes(.ValTypes) => 0
     rule lengthValTypes(_V VS)     => 1 +Int lengthValTypes(VS)
@@ -264,7 +264,7 @@ All told, a `Type` can be a value type, vector of types, or function type.
 We can append two `ValTypes`s with the `_+_` operator.
 
 ```k
-    syntax ValTypes ::= ValTypes "+" ValTypes [function, functional]
+    syntax ValTypes ::= ValTypes "+" ValTypes [function, total]
  // ----------------------------------------------------------------
     rule .ValTypes   + VTYPES' => VTYPES'
     rule (VT VTYPES) + VTYPES' => VT (VTYPES + VTYPES')
@@ -273,8 +273,8 @@ We can append two `ValTypes`s with the `_+_` operator.
 Also we can reverse a `ValTypes` with `#revt`
 
 ```k
-    syntax ValTypes ::= #revt ( ValTypes )            [function, functional]
-                      | #revt ( ValTypes , ValTypes ) [function, functional, klabel(#revtAux)]
+    syntax ValTypes ::= #revt ( ValTypes )            [function, total]
+                      | #revt ( ValTypes , ValTypes ) [function, total, klabel(#revtAux)]
  // ------------------------------------------------------------------------------------------
     rule #revt(VT) => #revt(VT, .ValTypes)
 
@@ -287,8 +287,8 @@ Also we can reverse a `ValTypes` with `#revt`
 The `#width` function returns the bit-width of a given `IValType`.
 
 ```k
-    syntax Int ::= #width    ( IValType ) [function, functional]
-    syntax Int ::= #numBytes ( IValType ) [function, functional, smtlib(numBytes)]
+    syntax Int ::= #width    ( IValType ) [function, total]
+    syntax Int ::= #numBytes ( IValType ) [function, total, smtlib(numBytes)]
  // ------------------------------------------------------------------------------
     rule #width(i32) => 32
     rule #width(i64) => 64
@@ -299,8 +299,8 @@ The `#width` function returns the bit-width of a given `IValType`.
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
 
 ```k
-    syntax Int ::= #pow  ( IValType ) [function, functional, smtlib(pow )] /* 2 ^Int #width(T)          */
-                 | #pow1 ( IValType ) [function, functional, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */
+    syntax Int ::= #pow  ( IValType ) [function, total, smtlib(pow )] /* 2 ^Int #width(T)          */
+                 | #pow1 ( IValType ) [function, total, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */
  // ------------------------------------------------------------------------------------------------------
     rule #pow1(i32) => 2147483648
     rule #pow (i32) => 4294967296
@@ -341,16 +341,16 @@ The `#wrap` function wraps an integer to a given byte width.
 The `#get` function extracts the underlying K integer from a WASM `IVal`.
 
 ```k
-    syntax IVal ::= #chop ( IVal ) [function, functional]
+    syntax IVal ::= #chop ( IVal ) [function, total]
  // -----------------------------------------------------
     rule #chop(< ITYPE > N) => < ITYPE > (N modInt #pow(ITYPE))
 
-    syntax Int ::= #wrap ( Int , Int ) [function, functional]
+    syntax Int ::= #wrap ( Int , Int ) [function, total]
  // ---------------------------------------------------------
     rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH
     rule                   #wrap(WIDTH, _N) => 0                                        requires notBool 0 <Int WIDTH
 
-    syntax Int ::= #get( IVal ) [function, functional]
+    syntax Int ::= #get( IVal ) [function, total]
  // --------------------------------------------------
     rule #get(< _ > N) => N
 ```
@@ -398,7 +398,7 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
 Function `#bool` converts a `Bool` into an `Int`.
 
 ```k
-    syntax Int ::= #bool ( Bool ) [function, functional]
+    syntax Int ::= #bool ( Bool ) [function, total]
  // ----------------------------------------------------
     rule #bool( B:Bool ) => 1 requires         B
     rule #bool( B:Bool ) => 0 requires notBool B
@@ -412,7 +412,7 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 ```k
     syntax ValStack ::= ".ValStack"
                       | Val      ":"  ValStack
-                      | ValStack "++" ValStack [function, functional]
+                      | ValStack "++" ValStack [function, total]
  // -----------------------------------------------------------------
     rule .ValStack       ++ VALSTACK' => VALSTACK'
     rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')
@@ -427,11 +427,11 @@ Operator `_++_` implements an append operator for sort `ValStack`.
 Each call site _must_ ensure that this is desired behavior before using these functions.
 
 ```k
-    syntax ValStack ::= #zero ( ValTypes )            [function, functional]
-                      | #take ( Int , ValStack )      [function, functional]
-                      | #drop ( Int , ValStack )      [function, functional]
-                      | #revs ( ValStack )            [function, functional]
-                      | #revs ( ValStack , ValStack ) [function, functional, klabel(#revsAux)]
+    syntax ValStack ::= #zero ( ValTypes )            [function, total]
+                      | #take ( Int , ValStack )      [function, total]
+                      | #drop ( Int , ValStack )      [function, total]
+                      | #revs ( ValStack )            [function, total]
+                      | #revs ( ValStack , ValStack ) [function, total, klabel(#revsAux)]
  // ------------------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
     rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0   : #zero(VTYPES)
@@ -558,7 +558,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 - `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax Bytes ::= #setBytesRange ( Bytes , Int , Bytes ) [function, functional]
+    syntax Bytes ::= #setBytesRange ( Bytes , Int , Bytes ) [function, total]
  // ------------------------------------------------------------------------------
     rule #setBytesRange(BM, START, BS) => replaceAtBytes(padRightBytes(BM, START +Int lengthBytes(BS), 0), START, BS)
       requires          0 <=Int START
@@ -566,7 +566,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
     rule #setBytesRange(_, START, _ ) => .Bytes
       requires notBool (0 <=Int START)
 
-    syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, functional, smtlib(setRange)]
+    syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, total, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
     rule                       #setRange(BM, ADDR, VAL, WIDTH) => BM
       requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
@@ -579,7 +579,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 - `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer. The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Bytes ::= #getBytesRange ( Bytes , Int , Int ) [function, functional]
+    syntax Bytes ::= #getBytesRange ( Bytes , Int , Int ) [function, total]
  // ----------------------------------------------------------------------------
     rule #getBytesRange(_, START, WIDTH) => .Bytes
       requires notBool (0 <=Int START andBool 0 <=Int WIDTH)
@@ -592,7 +592,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
       requires         (0 <=Int START andBool 0 <=Int WIDTH)
        andBool notBool (START <Int lengthBytes(BM))
 
-    syntax Int ::= #getRange(Bytes, Int, Int) [function, functional, smtlib(getRange)]
+    syntax Int ::= #getRange(Bytes, Int, Int) [function, total, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
     rule                       #getRange( _, ADDR, WIDTH) => 0
       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)

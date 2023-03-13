@@ -6,6 +6,7 @@ For testing, we augment the semantics with some helpers.
 ```k
 require "wasm-text.md"
 require "auxil.md"
+require "elrond.md"
 ```
 
 Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consists of the definitions both for parsing and execution.
@@ -85,6 +86,7 @@ module WASM-TEST
     imports WASM-REFERENCE-INTERPRETER-SYNTAX
     imports WASM-AUXIL
     imports WASM-TEXT
+    imports ELROND
 ```
 
 Configuration

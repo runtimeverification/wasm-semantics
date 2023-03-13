@@ -316,7 +316,7 @@ Common Operator Machinery
 -------------------------
 
 Common machinery for operators is supplied here, based on their categorization.
-This allows us to give purely functional semantics to many of the opcodes.
+This allows us to give purely total semantics to many of the opcodes.
 
 ### Constants
 
@@ -1375,7 +1375,7 @@ The groups are chosen to represent different stages of allocation and instantiat
     syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata) [klabel(aModuleDecl), symbol]
  // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    syntax ModuleDecl ::= #emptyModule(OptionalId) [function, functional]
+    syntax ModuleDecl ::= #emptyModule(OptionalId) [function, total]
  // ---------------------------------------------------------------------
     rule #emptyModule(OID) =>  #module (... types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns, metadata: #meta(... id: OID, funcIds: .Map, filename: .String))
 
