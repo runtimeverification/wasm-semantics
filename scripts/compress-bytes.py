@@ -169,9 +169,9 @@ def main():
     filter = BytesCompressor()
     for line in fileinput.input():
         for l in filter.addLine(line.rstrip()):
-            print(l)
+            print(l, flush=True)
     for l in filter.end():
-        print(l)
+        print(l, flush=True)
 
 if __name__ == '__main__':
     main()

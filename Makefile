@@ -54,7 +54,7 @@ $(K_JAR):
 # Building Definition
 # -------------------
 
-KOMPILE_OPTS         :=
+KOMPILE_OPTS         := --emit-json
 LLVM_KOMPILE_OPTS    :=
 HASKELL_KOMPILE_OPTS :=
 
@@ -111,12 +111,13 @@ $(llvm_kompiled): $(llvm_files)
 
 haskell_dir           := $(DEFN_DIR)/haskell
 haskell_files         := $(ALL_SOURCE_FILES)
-haskell_main_module   := WASM-TEXT
+haskell_main_module   := WASM-TEST
 haskell_syntax_module := $(haskell_main_module)-SYNTAX
 haskell_main_file     := test
 haskell_kompiled      := $(haskell_dir)/$(haskell_main_file)-kompiled/definition.kore
 
 build-haskell: $(haskell_kompiled)
+	$(KOMPILE_HASKELL) --version
 
 $(haskell_kompiled): $(haskell_files)
 	$(KOMPILE_HASKELL) $(haskell_main_file).md   \

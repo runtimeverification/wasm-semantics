@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import logging
+import sys
+
 from contextlib import closing
 import json
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
@@ -23,6 +26,8 @@ from .kast import (replaceChild,
                    loadTokenFromChild,
                    loadMapFromChild,
                    loadToken)
+
+sys.setrecursionlimit(2000)
 
 ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
@@ -58,9 +63,9 @@ def filterBytes(term: KToken) -> KToken:
     if last_end < len(bytes):
         keep.append((last_end, len(bytes)))
 
-    term = KApply(KLabel('.Bytes', []), ())
+    term = KApply(KLabel('.Bytes_BYTES-HOOKED_Bytes', []), ())
     for (start, end) in keep:
-        term = KApply (KLabel('#setBytesRange', []),
+        term = KApply (KLabel('#setBytesRange(_,_,_)_WASM-DATA_Bytes_Bytes_Int_Bytes', []),
                         ( term
                         , KToken(str(start), INT)
                         , KToken(f'b"{bytes[start:end]}"', KSort('Bytes'))
@@ -185,7 +190,7 @@ def getFirstInstruction(term:KInner) -> Optional[KInner]:
 def isElrondTrap(term:KInner) -> bool:
     if not isinstance(term, KApply):
         return False
-    return term.label.name == 'elrond_trap_ELROND_Instr'
+    return term.label.name == 'elrond_trap'
 
 def loadValType(term:KInner) -> List[ValType]:
     assert isinstance(term, KApply), term
@@ -349,11 +354,22 @@ def makeIntToken(value:str) -> KToken:
 def makeACall(address: str) -> KApply:
     return makeApply('aCall', [makeIntToken(address)])
 
+def makeType(vtype:ValType) -> KApply:
+    if vtype == ValType.I32:
+        return KApply('i32')
+    if vtype == ValType.I64:
+        return KApply('i64')
+    if vtype == ValType.F32:
+        return KApply('f32')
+    if vtype == ValType.F64:
+        return KApply('f64')
+    assert False, vtype
+
 def makePush(value:KInner, vtype:ValType) -> KApply:
     if vtype == ValType.I32 or vtype == ValType.I64:
-        return makeApply('aIConst', [value])
+        return makeApply('aIConst', [makeType(vtype), value])
     if vtype == ValType.F32 or vtype == ValType.F64:
-        return makeApply('aFConst', [value])
+        return makeApply('aFConst', [makeType(vtype), value])
 
 def makeStatementList(statements:List[KInner]) -> KApply:
     retv = makeApply('.List{"listStmt"}_EmptyStmts', [])
@@ -363,7 +379,7 @@ def makeStatementList(statements:List[KInner]) -> KApply:
 
 def makeSort(t:ValType):
     if t == ValType.I32 or t == ValType.I64:
-        return INT
+        return KSort('Int')
     if t == ValType.F32 or t == ValType.F64:
         return KSort('Float')
 
@@ -373,7 +389,7 @@ def makeVariable(name:str, t:ValType) -> KVariable:
 def makeVariables(types: List[ValType]) -> List[KVariable]:
     retv = []
     for idx in range(0, len(types)):
-        retv.append(makeVariable(f'Arg{idx}', types[idx]))
+        retv.append(makeVariable(f'MyArg{idx}', types[idx]))
     return retv
 
 def makeTypeConstraint(var:KInner, vType:ValType) -> KApply:
@@ -407,17 +423,30 @@ def generateSymbolicFunctionCall(function:WasmFunction) -> Tuple[KApply, KApply]
     variables = makeVariables(argument_types_list)
     assert len(variables) == len(argument_types_list)
     statements = [makePush(var, vtype) for var, vtype in zip(variables, argument_types_list)]
+    # statements.reverse()
     statements.append(makeACall(function.address()))
     call = makeStatementList(statements)
     constraint_list = [makeTypeConstraint(var, vtype) for var, vtype in zip(variables, argument_types_list)]
     constraint = makeBalancedAndBool(constraint_list)
     return (call, constraint)
 
+def makeRewrite(lhs:KInner, rhs:KInner):
+    def makeRewriteIfNeeded(left, right):
+        if left == right:
+            return left
+        return KRewrite(left, right)
+    assert isinstance(lhs, KApply)
+    assert isinstance(rhs, KApply)
+    assert lhs.arity == rhs.arity, [lhs.arity, lhs.label, rhs.arity, rhs.label]
+    assert lhs.label == rhs.label
+    return lhs.let(args=[makeRewriteIfNeeded(l, r) for (l, r) in zip(lhs.args, rhs.args)])
+
 def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
     function = functions.addrToFunction(address)
     (call, constraint) = generateSymbolicFunctionCall(function)
     lhs = replaceChild(term, '<instrs>', call)
-    return KClaim(body=KRewrite(lhs, term), requires=constraint)
+    writeJson(makeRewrite(lhs, term), ROOT / 'tmp' / 'rewrite.json')
+    return KClaim(body=makeRewrite(lhs, term), requires=constraint)
 
 def makeKProve(temp_dir: tempfile.TemporaryDirectory):
     return KProve(
@@ -447,6 +476,9 @@ def writeJson(term: KInner, output_file: Path):
     output_file.write_text(json.dumps(term.to_dict()))
 
 def main():
+    # logging.basicConfig()
+    # logging.getLogger().setLevel(logging.DEBUG)
+
     krun_output_file = ROOT / 'tmp' / 'krun.json'
     bytes_output_file = ROOT / 'tmp' / 'bytes.json'
     input_file = ROOT / '../elrond/elrond-wasm-rs/contracts/examples/sum-to-n/output/sum-to-n.wat'
@@ -465,7 +497,6 @@ def main():
     temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
     kprove = makeKProve(temp_dir)
     explorer = makeExplorer(kprove)
-    print(claim.to_json())
     kcfg = KCFG.from_claim(kprove.definition, claim)
     first_node_id = kcfg.get_unique_init().id
     (_nextkcfg, new_node_id) = explorer.step(
