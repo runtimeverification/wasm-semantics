@@ -476,8 +476,8 @@ def writeJson(term: KInner, output_file: Path):
     output_file.write_text(json.dumps(term.to_dict()))
 
 def main():
-    # logging.basicConfig()
-    # logging.getLogger().setLevel(logging.DEBUG)
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
 
     krun_output_file = ROOT / 'tmp' / 'krun.json'
     bytes_output_file = ROOT / 'tmp' / 'bytes.json'

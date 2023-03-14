@@ -1,6 +1,12 @@
 /.build/*
 /tests/*/*-out
 
+__pycache__
+tmp
+.kore-repl-history
+.sessionCommands
+kore-rpc.tar.gz
+
 *.pdf
 *.sty
 
