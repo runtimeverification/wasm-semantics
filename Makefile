@@ -197,12 +197,18 @@ test-prove: $(proof_tests:=.prove)
 
 ### Binary Parser Test
 
-BINARY:=python3 binary-parser/test.py
+# TODO pyk is not globally installed. use the poetry-installed pyk
+# until binary-parser is migrated to pykwasm
+BINARY:=poetry -C pykwasm run python3 binary-parser/test.py
 
 tests/binary/%.wasm: tests/binary/%.wat
 	wat2wasm $< --output=$@
 
-tests/%.wasm.bparse: tests/%.wasm
+.PHONY: pykwasm-poetry-install
+pykwasm-poetry-install:
+	make -C pykwasm poetry-install
+
+tests/%.wasm.bparse: tests/%.wasm pykwasm-poetry-install
 	$(BINARY) $<
 
 binary_parser_tests:=$(wildcard tests/binary/*.wat)
