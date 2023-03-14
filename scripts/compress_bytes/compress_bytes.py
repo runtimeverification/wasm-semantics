@@ -29,7 +29,7 @@ from .kast import (replaceChild,
 
 sys.setrecursionlimit(2000)
 
-ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
+ROOT = Path('/mnt/data/runtime-verification/tmp/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
 
 def filterBytes(term: KToken) -> KToken:
@@ -481,7 +481,7 @@ def main():
 
     krun_output_file = ROOT / 'tmp' / 'krun.json'
     bytes_output_file = ROOT / 'tmp' / 'bytes.json'
-    input_file = ROOT / '../elrond/elrond-wasm-rs/contracts/examples/sum-to-n/output/sum-to-n.wat'
+    input_file = ROOT / 'sum-to-n.wat'
     if not bytes_output_file.exists():
         if not krun_output_file.exists():
             krun(input_file, krun_output_file)
