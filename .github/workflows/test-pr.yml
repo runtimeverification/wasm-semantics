@@ -1,0 +1,50 @@
+name: 'Run Tests'
+on:
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  code-quality-checks:
+    name: 'Code Quality Checks'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+      - name: 'Install Poetry'
+        uses: Gr1N/setup-poetry@v8
+      - name: 'Build and run code quality checks'
+        run: make -C pykwasm check
+
+  unit-tests:
+    needs: code-quality-checks
+    name: 'Unit Tests'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+      - name: 'Install Poetry'
+        uses: Gr1N/setup-poetry@v8
+      - name: 'Build and run unit tests'
+        run: make -C pykwasm cov-unit
+
+  integration-tests:
+    needs: code-quality-checks
+    name: 'Integration Tests'
+    runs-on: [self-hosted, linux, normal]
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+      - name: 'Set up Docker'
+        uses: ./.github/actions/with-docker
+        with:
+          container-name: kwasm-ci-${{ github.sha }}
+      - name: 'Build and run integration tests'
+        run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -C pykwasm cov-integration
+      - name: 'Tear down Docker'
+        if: always()
+        run: |
+          docker stop --time=0 kwasm-ci-${GITHUB_SHA}
