@@ -421,31 +421,22 @@ def makeBalancedAndBool(constraints: List[KInner]) -> KInner:
     # return constraints[0]
 
 def generateSymbolicFunctionCall(function:WasmFunction) -> Tuple[KApply, KApply]:
-    # TODO: Replace this with a stack properly initialized, because in
-    # real usage the arguments may be pushed at other times, too, not only
-    # before the call.
     argument_types_list = function.argumentTypesList()
     variables = makeVariables(argument_types_list)
     assert len(variables) == len(argument_types_list)
-    statements = [makePush(var, vtype) for var, vtype in zip(variables, argument_types_list)]
-    # statements.reverse()
-    statements.append(makeACall(function.address()))
+    stack = KVariable('MyStack', sort=KSort('ValStack'))
+    for var, vtype in zip(variables, argument_types_list):
+        stack = KApply(
+            '_:__WASM-DATA_ValStack_Val_ValStack',
+            ( KApply('<_>__WASM-DATA_IVal_IValType_Int', (makeType(vtype), var))
+            , stack
+            )
+        )
+    statements = [KApply('aNop'), makeACall(function.address())]
     call = makeStatementList(statements)
     constraint_list = [makeTypeConstraint(var, vtype) for var, vtype in zip(variables, argument_types_list)]
     constraint = makeBalancedAndBool(constraint_list)
-    return (call, constraint)
-
-def generateSymbolicFunctionCallNew(function:WasmFunction) -> Tuple[KApply, KApply]:
-    argument_types_list = function.argumentTypesList()
-    variables = makeVariables(argument_types_list)
-    assert len(variables) == len(argument_types_list)
-    statements = [makePush(var, vtype) for var, vtype in zip(variables, argument_types_list)]
-    # statements.reverse()
-    statements.append(makeACall(function.address()))
-    call = makeStatementList(statements)
-    constraint_list = [makeTypeConstraint(var, vtype) for var, vtype in zip(variables, argument_types_list)]
-    constraint = makeBalancedAndBool(constraint_list)
-    return (call, constraint)
+    return (call, stack, constraint)
 
 def makeRewrite(lhs:KInner, rhs:KInner):
     def makeRewriteIfNeeded(left, right):
@@ -460,10 +451,21 @@ def makeRewrite(lhs:KInner, rhs:KInner):
 
 def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
     function = functions.addrToFunction(address)
-    (call, constraint) = generateSymbolicFunctionCall(function)
+    (call, stack, constraint) = generateSymbolicFunctionCall(function)
     lhs = replaceChild(term, '<instrs>', call)
-    writeJson(makeRewrite(lhs, term), ROOT / 'tmp' / 'rewrite.json')
-    return (lhs, KClaim(body=makeRewrite(lhs, term), requires=constraint))
+    lhs = replaceChild(lhs, '<valstack>', stack)
+    rewrite = makeRewrite(lhs, term)
+    writeJson(rewrite, ROOT / 'tmp' / 'rewrite.json')
+    return (lhs, KClaim(body=rewrite, requires=constraint))
+
+def makeCTerm(term, inner, address:str, functions:Functions) -> CTerm:
+    function = functions.addrToFunction(address)
+    (call, stack, constraint) = generateSymbolicFunctionCall(function)
+    lhs = replaceChild(term, '<instrs>', call)
+    lhs = replaceChild(lhs, '<valstack>', stack)
+    rewrite = makeRewrite(lhs, term)
+    writeJson(rewrite, ROOT / 'tmp' / 'rewrite.json')
+    return (lhs, KClaim(body=rewrite, requires=constraint))
 
 def makeKProve(temp_dir: tempfile.TemporaryDirectory):
     return KProve(
@@ -516,34 +518,39 @@ def main():
     kprove = makeKProve(temp_dir)
     kcfg = KCFG.from_claim(kprove.definition, claim)
     first_node_id = kcfg.get_unique_init().id
+    node_ids = [first_node_id]
     with makeExplorer(kprove) as explorer:
-      prev_config = lhs
-      (_nextkcfg, first_node_id) = explorer.step(
-              cfgid='random-string-with-no-meaning',
-              cfg=kcfg,
-              node_id=first_node_id,
-              depth=1
-          )
-      term = kcfg.node(first_node_id).cterm.config
-      config = replaceBytes(term)
-      rewrite = makeRewrite(prev_config, config)
-      diff = push_down_rewrites(rewrite)
-      pretty = kprove.pretty_print(diff)
-      print(pretty)
-      prev_config = config
-      (_nextkcfg, second_node_id) = explorer.step(
-              cfgid='random-string-with-no-meaning',
-              cfg=kcfg,
-              node_id=first_node_id,
-              depth=1
-          )
-      term = kcfg.node(second_node_id).cterm.config
-      config = replaceBytes(term)
-      rewrite = makeRewrite(prev_config, config)
-      diff = push_down_rewrites(rewrite)
-      pretty = kprove.pretty_print(diff)
-      print(pretty)
-      print(config)
+        prev_config = lhs
+        (_nextkcfg, node_id) = explorer.step(
+                cfgid='random-string-with-no-meaning',
+                cfg=kcfg,
+                node_id=node_ids[-1],
+                depth=1
+            )
+        node_ids.append(node_id)
+        term = kcfg.node(node_ids[-1]).cterm.config
+        config = replaceBytes(term)
+        rewrite = makeRewrite(prev_config, config)
+        diff = push_down_rewrites(rewrite)
+        pretty = kprove.pretty_print(diff)
+        print(pretty)
+        for i in range(0, 3):
+            prev_config = config
+            (_nextkcfg, node_id) = explorer.step(
+                    cfgid='random-string-with-no-meaning',
+                    cfg=kcfg,
+                    node_id=node_ids[-1],
+                    depth=1
+                )
+            node_ids.append(node_id)
+            term = kcfg.node(node_ids[-1]).cterm.config
+            config = replaceBytes(term)
+            rewrite = makeRewrite(prev_config, config)
+            diff = push_down_rewrites(rewrite)
+            pretty = kprove.pretty_print(diff)
+            print(pretty)
+            print('=' * 80)
+    #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 
 
