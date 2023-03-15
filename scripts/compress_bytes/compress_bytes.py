@@ -47,7 +47,8 @@ ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
 
 ALREADY_SUMMARIZED = [
-    3  # getNumArguments, implemented builtin
+    3,  # getNumArguments, implemented builtin
+    4,  # signalError
 ]
 
 def filterBytes(term: KToken) -> KToken:
@@ -535,19 +536,26 @@ def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
     #     )
     # _LOGGER.info(f'Taking {depth} steps from node {cfgid}: {shorten_hashes(node.id)}')
     actual_depth, cterm, next_cterms = explorer.cterm_execute(node.cterm, depth=1)
+    if actual_depth == 0:
+        if len(next_cterms) < 2:
+            raise ValueError(f'Unable to take {1} steps from node, got {actual_depth} steps: {node.id}')
+        next_ids = []
+        for next_cterm in next_cterms:
+            new_node = cfg.get_or_create_node(next_cterm)
+            cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=1)
+            next_ids.append(new_node.id)
+        return next_ids
     if actual_depth != 1:
         writeJson(node.cterm.config, ROOT / 'tmp' / 'stuck.json')
         print('cterm=', cterm)
         print('cterms.len=', len(next_cterms), flush=True)
         raise ValueError(f'Unable to take {1} steps from node, got {actual_depth} steps: {node.id}')
+    if len(next_cterms) != 0:
+        raise ValueError(f'Unexpected next cterms length {len(next_cterms)}: {node.id}')
     new_node = cfg.get_or_create_node(cterm)
     # TODO: This may be other things than mlTop()
     cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=1)
-    next_ids = [new_node.id]
-    for next_cterm in next_cterms:
-        new_node = cfg.get_or_create_node(next_cterm)
-        cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=1)
-        next_ids.append(new_node.id)
+    return [new_node.id]
 
     # _LOGGER.info(f'Found new node at depth {depth} {cfgid}: {shorten_hashes((node.id, new_node.id))}')
     # if len(out_edges) == 0:
@@ -568,6 +576,7 @@ def myStepLogging(explorer:KCFGExplore, kcfg:KCFG, node_id:str):
     prev_config = replaceBytes(prev_config)
     new_node_ids = myStep(explorer = explorer, cfg=kcfg, node_id=node_id)
     first = True
+    print([node_id], '->', new_node_ids)
     for new_node_id in new_node_ids:
         new_term = kcfg.node(new_node_id).cterm.config
         config = replaceBytes(new_term)
@@ -575,8 +584,7 @@ def myStepLogging(explorer:KCFGExplore, kcfg:KCFG, node_id:str):
         function_id = getCalledFunction(config)
         if function_id is not None:
             if function_id not in ALREADY_SUMMARIZED:
-                raise ValueError(f'Function calls functions not summarized: {function_id}')
-            print('Summarized function:', function_id)
+                raise ValueError(f'Calls function not summarized: {function_id}')
 
         rewrite = makeRewrite(prev_config, config)
         diff = push_down_rewrites(rewrite)
@@ -617,14 +625,16 @@ def main():
     kcfg = KCFG.from_claim(kprove.definition, claim)
     first_node_id = kcfg.get_unique_init().id
     node_ids = [first_node_id]
+    current_idx = 0
     with makeExplorer(kprove) as explorer:
-        new_node_ids = myStep(explorer, kcfg, node_ids[-1])
+        new_node_ids = myStep(explorer, kcfg, node_ids[current_idx])
+        current_idx += 1
         assert len(new_node_ids) == 1
-        node_ids.append(new_node_ids[0])
-        for i in range(0, 30):
-            new_node_ids = myStepLogging(explorer, kcfg, node_ids[-1])
-            assert len(new_node_ids) == 1, new_node_ids
-            node_ids.append(new_node_ids[0])
+        node_ids += new_node_ids
+        for i in range(0, 100):
+            new_node_ids = myStepLogging(explorer, kcfg, node_ids[current_idx])
+            current_idx += 1
+            node_ids += new_node_ids
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 

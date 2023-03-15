@@ -15,6 +15,12 @@ module ELROND
           ...
         </instrs>
 
+  rule  <instrs>
+          (elrond_trap("\"signalError\"") ~> _:K) => elrondError()
+        </instrs>
+        <valstack> _:ValStack => .ValStack </valstack>
+        <locals> _:Map => .Map </locals>
+
   rule <instrs>
           #import(MOD, Name, #funcDesc(... id: OID, type: TIDX))
         => #func(... type: TIDX, locals: [ .ValTypes ],
