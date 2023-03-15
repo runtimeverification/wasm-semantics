@@ -29,18 +29,26 @@ from pyk.ktool.kprove import KProve
 from pyk.ktool.krun import _krun, KRunOutput
 from pyk.prelude.kbool import TRUE, andBool
 from pyk.prelude.kint import INT, intToken, leInt, ltInt
+from pyk.prelude.ml import mlTop
 
-from .kast import (replaceChild,
+from .kast import (extractRewriteParents,
                    getInner,
                    getInnerPath,
+                   kinner_top_down_fold,
                    loadTokenFromChild,
                    loadMapFromChild,
-                   loadToken)
+                   loadToken,
+                   replaceChild,
+                   )
 
 sys.setrecursionlimit(2000)
 
 ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
+
+ALREADY_SUMMARIZED = [
+    3  # getNumArguments, implemented builtin
+]
 
 def filterBytes(term: KToken) -> KToken:
     assert term.sort.name == 'Bytes'
@@ -353,6 +361,21 @@ def findFunctions(term:KInner) -> Functions:
         addr_to_def=func_addr_to_def
     )
 
+def getCalledFunction(term:KInner) -> Optional[int]:
+    instrs = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>'), (0, '<instrs>')])
+    assert instrs.arity == 1, instrs
+    assert isinstance(instrs.args[0], KSequence), instrs.args[0]
+    if not instrs.args[0].items:
+        return None
+    first = instrs.args[0].items[0]
+    assert isinstance(first, KApply), first
+    if first.label.name != 'aCall':
+        return None
+    assert first.arity == 1
+    value = first.args[0]
+    assert isinstance(value, KToken), value
+    return int(value.token)
+
 def makeApply(label:str, args: List[KInner]) -> KApply:
     return KApply(KLabel(label, []), args)
 
@@ -495,6 +518,81 @@ def free_port_on_host(host: str = 'localhost') -> int:
 def writeJson(term: KInner, output_file: Path):
     output_file.write_text(json.dumps(term.to_dict()))
 
+def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
+    node = cfg.node(node_id)
+    out_edges = cfg.edges(source_id=node.id)
+    if len(out_edges) > 0:
+        raise ValueError(
+            f'Only support stepping from nodes with 0 out edges {cfgid}: {(node.id, [e.target.id for e in out_edges])}'
+        )
+    # if len(out_edges) > 1:
+    #     raise ValueError(
+    #         f'Only support stepping from nodes with 0 or 1 out edges {cfgid}: {(node.id, [e.target.id for e in out_edges])}'
+    #     )
+    # elif len(out_edges) == 1 and not is_top(out_edges[0].condition):
+    #     raise ValueError(
+    #         f'Only allow stepping on out edges with #Top condition {cfgid}: {(node.id, shorten_hashes(out_edges[0].target.id))}'
+    #     )
+    # _LOGGER.info(f'Taking {depth} steps from node {cfgid}: {shorten_hashes(node.id)}')
+    actual_depth, cterm, next_cterms = explorer.cterm_execute(node.cterm, depth=1)
+    if actual_depth != 1:
+        writeJson(node.cterm.config, ROOT / 'tmp' / 'stuck.json')
+        print('cterm=', cterm)
+        print('cterms.len=', len(next_cterms), flush=True)
+        raise ValueError(f'Unable to take {1} steps from node, got {actual_depth} steps: {node.id}')
+    new_node = cfg.get_or_create_node(cterm)
+    # TODO: This may be other things than mlTop()
+    cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=1)
+    next_ids = [new_node.id]
+    for next_cterm in next_cterms:
+        new_node = cfg.get_or_create_node(next_cterm)
+        cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=1)
+        next_ids.append(new_node.id)
+
+    # _LOGGER.info(f'Found new node at depth {depth} {cfgid}: {shorten_hashes((node.id, new_node.id))}')
+    # if len(out_edges) == 0:
+    #     cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=depth)
+    # else:
+    #     edge = out_edges[0]
+    #     if depth > edge.depth:
+    #         raise ValueError(
+    #             f'Step depth {depth} greater than original edge depth {edge.depth} {cfgid}: {shorten_hashes((edge.source.id, edge.target.id))}'
+    #         )
+    #     cfg.remove_edge(edge.source.id, edge.target.id)
+    #     cfg.create_edge(edge.source.id, new_node.id, condition=mlTop(), depth=depth)
+    #     cfg.create_edge(new_node.id, edge.target.id, condition=mlTop(), depth=(edge.depth - depth))
+    return next_ids
+
+def myStepLogging(explorer:KCFGExplore, kcfg:KCFG, node_id:str):
+    prev_config = kcfg.node(node_id).cterm.config
+    prev_config = replaceBytes(prev_config)
+    new_node_ids = myStep(explorer = explorer, cfg=kcfg, node_id=node_id)
+    first = True
+    for new_node_id in new_node_ids:
+        new_term = kcfg.node(new_node_id).cterm.config
+        config = replaceBytes(new_term)
+
+        function_id = getCalledFunction(config)
+        if function_id is not None:
+            if function_id not in ALREADY_SUMMARIZED:
+                raise ValueError(f'Function calls functions not summarized: {function_id}')
+            print('Summarized function:', function_id)
+
+        rewrite = makeRewrite(prev_config, config)
+        diff = push_down_rewrites(rewrite)
+        if not first:
+            print('-' * 80)
+        first = False
+        # pretty = explorer.kprint.pretty_print(diff)
+        # print(pretty)
+        children = extractRewriteParents(diff)
+        for child in children:
+            pretty = explorer.kprint.pretty_print(child)
+            print(pretty)
+            print()
+    print('=' * 80, flush=True)
+    return new_node_ids
+
 def main():
     # logging.basicConfig()
     # logging.getLogger().setLevel(logging.DEBUG)
@@ -520,36 +618,13 @@ def main():
     first_node_id = kcfg.get_unique_init().id
     node_ids = [first_node_id]
     with makeExplorer(kprove) as explorer:
-        prev_config = lhs
-        (_nextkcfg, node_id) = explorer.step(
-                cfgid='random-string-with-no-meaning',
-                cfg=kcfg,
-                node_id=node_ids[-1],
-                depth=1
-            )
-        node_ids.append(node_id)
-        term = kcfg.node(node_ids[-1]).cterm.config
-        config = replaceBytes(term)
-        rewrite = makeRewrite(prev_config, config)
-        diff = push_down_rewrites(rewrite)
-        pretty = kprove.pretty_print(diff)
-        print(pretty)
-        for i in range(0, 3):
-            prev_config = config
-            (_nextkcfg, node_id) = explorer.step(
-                    cfgid='random-string-with-no-meaning',
-                    cfg=kcfg,
-                    node_id=node_ids[-1],
-                    depth=1
-                )
-            node_ids.append(node_id)
-            term = kcfg.node(node_ids[-1]).cterm.config
-            config = replaceBytes(term)
-            rewrite = makeRewrite(prev_config, config)
-            diff = push_down_rewrites(rewrite)
-            pretty = kprove.pretty_print(diff)
-            print(pretty)
-            print('=' * 80)
+        new_node_ids = myStep(explorer, kcfg, node_ids[-1])
+        assert len(new_node_ids) == 1
+        node_ids.append(new_node_ids[0])
+        for i in range(0, 30):
+            new_node_ids = myStepLogging(explorer, kcfg, node_ids[-1])
+            assert len(new_node_ids) == 1, new_node_ids
+            node_ids.append(new_node_ids[0])
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 

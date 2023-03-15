@@ -1,7 +1,19 @@
-from typing import Callable, Dict, Iterable, Optional, Tuple, TypeVar
+import operator
 
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, TypeVar
 
-from pyk.kast.inner import KApply, KInner, KToken, top_down
+from pyk.kast.inner import (
+    KAs,
+    KApply,
+    KInner,
+    KLabel,
+    KRewrite,
+    KSequence,
+    KSort,
+    KToken,
+    KVariable,
+    top_down,
+    )
 
 V = TypeVar('V')
 
@@ -63,3 +75,51 @@ def loadMapFromChild(term:KInner, value_loader:Callable[[KInner], V]) -> Dict[st
     loadMap(kdict, value_loader, retv)
     return retv
 
+def getChildren(item:KInner) -> Iterable[KInner]:
+    if isinstance(item, KApply):
+        return item.args
+    if isinstance(item, KSort):
+        return []
+    if isinstance(item, KToken):
+        return []
+    if isinstance(item, KVariable):
+        return []
+    if isinstance(item, KLabel):
+        return []
+    if isinstance(item, KAs):
+        return [item.pattern, item.alias]
+    if isinstance(item, KRewrite):
+        return [item.lhs, item.rhs]
+    if isinstance(item, KSequence):
+        return item.items
+    assert False, [item, type(item)]
+
+def kinner_top_down_fold(
+    summarizer:Callable[[KInner], Optional[V]],
+    merger:Callable[[V, V], V],
+    default:V,
+    to_fold:KInner
+) -> V:
+    summary = summarizer(to_fold)
+    if summary is not None:
+        return summary
+    children = getChildren(to_fold)
+    summaries = map(
+        lambda x: kinner_top_down_fold(summarizer, merger, default, x),
+        children
+    )
+    return fold(merger, summaries, [])
+
+def extractRewriteParents(term:KInner) -> List[KInner]:
+    def maybe_with_rewrite_child(value:KInner) -> Optional[List[KInner]]:
+        children = getChildren(value)
+        if fold(operator.or_, map(lambda x:isinstance(x, KRewrite), children), False):
+            return [value]
+        return None
+    return kinner_top_down_fold(maybe_with_rewrite_child, operator.add, [], term)
+
+def fold(folder:Callable[[V, V], V], to_fold:Iterable[V], initial:V) -> V:
+    result = initial
+    for item in reversed(list(to_fold)):
+        result = folder(item, result)
+    return result

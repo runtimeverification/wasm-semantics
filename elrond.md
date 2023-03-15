@@ -10,10 +10,15 @@ module ELROND
 
   syntax Instr ::= "elrond_trap" "(" String ")"  [klabel(elrond_trap), symbol]
 
+  rule  <instrs>
+          elrond_trap("\"getNumArguments\"") => i32.const ?_NumArguments:Int
+          ...
+        </instrs>
+
   rule <instrs>
           #import(MOD, Name, #funcDesc(... id: OID, type: TIDX))
         => #func(... type: TIDX, locals: [ .ValTypes ],
-                body: elrond_trap(#parseWasmString(Name)) .Instrs,
+                body: elrond_trap(#parseWasmString(Name)) return .Instrs,
                 metadata: #meta(... id: OID, localIds: .Map))
               ...
         </instrs>
