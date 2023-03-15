@@ -206,7 +206,7 @@ tests/binary/%.wasm: tests/binary/%.wat
 
 .PHONY: pykwasm-poetry-install
 pykwasm-poetry-install:
-	make -C pykwasm poetry-install
+	$(MAKE) -C pykwasm poetry-install
 
 tests/%.wasm.bparse: tests/%.wasm pykwasm-poetry-install
 	$(BINARY) $<
