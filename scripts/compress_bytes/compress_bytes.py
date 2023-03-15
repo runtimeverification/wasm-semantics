@@ -12,7 +12,17 @@ from typing import Dict, List, Optional, Tuple
 
 from pyk.cterm import CTerm
 # from pyk.kast import kast_term
-from pyk.kast.inner import KInner, KApply, KToken, KLabel, KRewrite, KSort, KVariable, bottom_up
+from pyk.kast.inner import (
+    KInner,
+    KApply,
+    KToken,
+    KLabel,
+    KRewrite,
+    KSequence,
+    KSort,
+    KVariable,
+    bottom_up)
+from pyk.kast.manip import push_down_rewrites
 from pyk.kast.outer import KClaim
 from pyk.kcfg import KCFG, KCFGExplore
 from pyk.ktool.kprove import KProve
@@ -29,7 +39,7 @@ from .kast import (replaceChild,
 
 sys.setrecursionlimit(2000)
 
-ROOT = Path('/mnt/data/runtime-verification/tmp/wasm-semantics')
+ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
 
 def filterBytes(term: KToken) -> KToken:
@@ -88,19 +98,18 @@ def krun(input_file: Path, output_file:Path) -> CTerm:
     )
     output_file.write_text(result.stdout)
 
-def loadJsonKrun(input_file:Path):
+def loadJsonDict(input_file:Path):
     print('Load json')
     value = input_file.read_text()
-    # result_kast = kast_term(json.loads(result.stdout), KInner)
-    result_kast = KInner.from_dict(json.loads(value)['term'])
-    return result_kast
+    return json.loads(value)
+
+def loadJsonKrun(input_file:Path):
+    value = loadJsonDict(input_file)
+    return KInner.from_dict(value['term'])
 
 def loadJson(input_file:Path):
-    print('Load json')
-    value = input_file.read_text()
-    # result_kast = kast_term(json.loads(result.stdout), KInner)
-    result_kast = KInner.from_dict(json.loads(value))
-    return result_kast
+    value = loadJsonDict(input_file)
+    return KInner.from_dict(value)
 
 def replaceBytes(term: KInner):
     term = bottom_up(filterBytesCallback, term)
@@ -372,10 +381,7 @@ def makePush(value:KInner, vtype:ValType) -> KApply:
         return makeApply('aFConst', [makeType(vtype), value])
 
 def makeStatementList(statements:List[KInner]) -> KApply:
-    retv = makeApply('.List{"listStmt"}_EmptyStmts', [])
-    for statement in reversed(statements):
-        retv = makeApply('___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs', [statement, retv])
-    return retv
+    return KSequence(statements)
 
 def makeSort(t:ValType):
     if t == ValType.I32 or t == ValType.I64:
@@ -418,7 +424,18 @@ def generateSymbolicFunctionCall(function:WasmFunction) -> Tuple[KApply, KApply]
     # TODO: Replace this with a stack properly initialized, because in
     # real usage the arguments may be pushed at other times, too, not only
     # before the call.
-    # TODO: Add type constraints
+    argument_types_list = function.argumentTypesList()
+    variables = makeVariables(argument_types_list)
+    assert len(variables) == len(argument_types_list)
+    statements = [makePush(var, vtype) for var, vtype in zip(variables, argument_types_list)]
+    # statements.reverse()
+    statements.append(makeACall(function.address()))
+    call = makeStatementList(statements)
+    constraint_list = [makeTypeConstraint(var, vtype) for var, vtype in zip(variables, argument_types_list)]
+    constraint = makeBalancedAndBool(constraint_list)
+    return (call, constraint)
+
+def generateSymbolicFunctionCallNew(function:WasmFunction) -> Tuple[KApply, KApply]:
     argument_types_list = function.argumentTypesList()
     variables = makeVariables(argument_types_list)
     assert len(variables) == len(argument_types_list)
@@ -446,7 +463,7 @@ def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
     (call, constraint) = generateSymbolicFunctionCall(function)
     lhs = replaceChild(term, '<instrs>', call)
     writeJson(makeRewrite(lhs, term), ROOT / 'tmp' / 'rewrite.json')
-    return KClaim(body=makeRewrite(lhs, term), requires=constraint)
+    return (lhs, KClaim(body=makeRewrite(lhs, term), requires=constraint))
 
 def makeKProve(temp_dir: tempfile.TemporaryDirectory):
     return KProve(
@@ -459,7 +476,8 @@ def makeKProve(temp_dir: tempfile.TemporaryDirectory):
 def makeExplorer(kprove:KProve):
     return KCFGExplore(
         kprove,
-        free_port_on_host(),
+        39425,
+        # free_port_on_host(),
         bug_report=kprove._bug_report
     )
 
@@ -476,12 +494,12 @@ def writeJson(term: KInner, output_file: Path):
     output_file.write_text(json.dumps(term.to_dict()))
 
 def main():
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
+    # logging.basicConfig()
+    # logging.getLogger().setLevel(logging.DEBUG)
 
     krun_output_file = ROOT / 'tmp' / 'krun.json'
     bytes_output_file = ROOT / 'tmp' / 'bytes.json'
-    input_file = ROOT / 'sum-to-n.wat'
+    input_file = ROOT / 'tmp' / 'sum-to-n.wat'
     if not bytes_output_file.exists():
         if not krun_output_file.exists():
             krun(input_file, krun_output_file)
@@ -493,19 +511,61 @@ def main():
         writeJson(config, bytes_output_file)
     term = loadJson(bytes_output_file)
     functions = findFunctions(term)
-    claim = makeClaim(term, '11', functions)
+    (lhs, claim) = makeClaim(term, '11', functions)
     temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
     kprove = makeKProve(temp_dir)
-    explorer = makeExplorer(kprove)
     kcfg = KCFG.from_claim(kprove.definition, claim)
     first_node_id = kcfg.get_unique_init().id
-    (_nextkcfg, new_node_id) = explorer.step(
-            cfgid='random-string-with-no-meaning',
-            cfg=kcfg,
-            node_id=first_node_id,
-            depth=1
-        )
-    print(kcfg.node(new_node_id))
+    with makeExplorer(kprove) as explorer:
+      prev_config = lhs
+      (_nextkcfg, first_node_id) = explorer.step(
+              cfgid='random-string-with-no-meaning',
+              cfg=kcfg,
+              node_id=first_node_id,
+              depth=1
+          )
+      term = kcfg.node(first_node_id).cterm.config
+      config = replaceBytes(term)
+      rewrite = makeRewrite(prev_config, config)
+      diff = push_down_rewrites(rewrite)
+      pretty = kprove.pretty_print(diff)
+      print(pretty)
+      prev_config = config
+      (_nextkcfg, second_node_id) = explorer.step(
+              cfgid='random-string-with-no-meaning',
+              cfg=kcfg,
+              node_id=first_node_id,
+              depth=1
+          )
+      term = kcfg.node(second_node_id).cterm.config
+      config = replaceBytes(term)
+      rewrite = makeRewrite(prev_config, config)
+      diff = push_down_rewrites(rewrite)
+      pretty = kprove.pretty_print(diff)
+      print(pretty)
+      print(config)
+    # d['result']['state']['term']['term'] - kore term
+    # 
+
+'''
+Python debugging of RPC responses:
+
+import compress_bytes.compress_bytes as c
+from pathlib import Path
+from pyk.ktool.kprint import KPrint
+from pyk.kore.syntax import Pattern
+
+my_kprint = KPrint(c.DEFINITION_DIR)
+
+d = c.loadJsonDict(Path(c.ROOT) / 'tmp' / 'response.log')
+
+d['result']['state']['term']['term']['args'][0]['args'][1]['args'][7]['args'][4]['args'][0]['args'][1]['args'][3]['args'][0]['value'] = '...removed-memory...'
+
+kore = Pattern.from_dict(d['result']['state']['term']['term'])
+pretty = my_kprint.kore_to_pretty(kore)
+print(pretty)
+'''
+
 
 if __name__ == '__main__':
     main()
