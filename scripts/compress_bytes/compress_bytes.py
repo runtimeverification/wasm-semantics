@@ -8,10 +8,9 @@ import json
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Tuple
 
 from pyk.cterm import CTerm
-# from pyk.kast import kast_term
 from pyk.kast.inner import (
     KInner,
     KApply,
@@ -31,25 +30,17 @@ from pyk.prelude.kbool import TRUE, andBool
 from pyk.prelude.kint import INT, intToken, leInt, ltInt
 from pyk.prelude.ml import mlTop
 
+from . import execution
+from .functions import findFunctions, Functions, WasmFunction
 from .kast import (extractRewriteParents,
-                   getInner,
-                   getInnerPath,
-                   kinner_top_down_fold,
-                   loadTokenFromChild,
-                   loadMapFromChild,
-                   loadToken,
                    replaceChild,
                    )
+from .types import (ValType)
 
 sys.setrecursionlimit(2000)
 
 ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
-
-ALREADY_SUMMARIZED = [
-    3,  # getNumArguments, implemented builtin
-    4,  # signalError
-]
 
 def filterBytes(term: KToken) -> KToken:
     assert term.sort.name == 'Bytes'
@@ -123,259 +114,6 @@ def loadJson(input_file:Path):
 def replaceBytes(term: KInner):
     term = bottom_up(filterBytesCallback, term)
     return term
-
-class ValType:
-    def __init__(self, ktype:int) -> None:
-        self.__type = ktype
-
-    def __str__(self):
-        return repr(self)
-    
-    def __repr__(self):
-        if self == ValType.I32:
-            return 'ValType.I32'
-        if self == ValType.I64:
-            return 'ValType.I64'
-        if self == ValType.F32:
-            return 'ValType.F32'
-        if self == ValType.F64:
-            return 'ValType.F64'
-
-class ValType:
-    (I32, I64, F32, F64) = (ValType(i) for i in range(0, 4))
-
-class VecType:
-    def __init__(self, types:List[ValType]) -> None:
-        self.__types = types
-
-    def types(self) -> List[ValType]:
-        return self.__types
-
-    def __str__(self):
-        return repr(self)
-    
-    def __repr__(self):
-        return f'VecType(types={repr(self.__types)})'
-
-class FuncType:
-    def __init__(self, arg_types: VecType, result_types: VecType) -> None:
-        self.__arg_types = arg_types
-        self.__result_types = result_types
-
-    def argumentTypesList(self) -> List[ValType]:
-        return self.__arg_types.types()
-
-    def __str__(self) -> str:
-        return repr(self)
-    
-    def __repr__(self) -> str:
-        return f'FuncType(arg_types={repr(self.__arg_types)}, result_types={repr(self.__result_types)})'
-
-class WasmFunction:
-    def __init__(self, name:str, ftype:FuncType, is_builtin:bool, has_instructions:bool, address:str) -> None:
-        self.__name = name
-        self.__type = ftype
-        self.__is_builtin = is_builtin
-        self.__has_instructions = has_instructions
-        self.__address = address
-
-    def argumentTypesList(self):
-        return self.__type.argumentTypesList()
-    
-    def address(self):
-        return self.__address
-
-    def __str__(self):
-        return repr(self)
-    
-    def __repr__(self):
-        return f'WasmFunction(name={repr(self.__name)}, ftype={repr(self.__type)}, is_builtin={repr(self.__is_builtin)}, has_instructions={self.__has_instructions}, address={repr(self.__address)})'
-
-def getFirstInstruction(term:KInner) -> Optional[KInner]:
-    assert isinstance(term, KApply), term
-    assert term.label.name == '<fCode>', term
-    assert term.arity == 1
-    term = term.args[0]
-    while True:
-        if not isinstance(term, KApply):
-            return term
-        if term.label.name == '.List{"listStmt"}_EmptyStmts':
-            return None
-        if not term.label.name == '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs':
-            return term
-        term = term.args[0]
-
-def isElrondTrap(term:KInner) -> bool:
-    if not isinstance(term, KApply):
-        return False
-    return term.label.name == 'elrond_trap'
-
-def loadValType(term:KInner) -> List[ValType]:
-    assert isinstance(term, KApply), term
-    if term.label.name == 'i32':
-        assert term.arity == 0, term
-        return ValType.I32
-    if term.label.name == 'i64':
-        assert term.arity == 0, term
-        return ValType.I64
-    if term.label.name == 'f32':
-        assert term.arity == 0, term
-        return ValType.F32
-    if term.label.name == 'f64':
-        assert term.arity == 0, term
-        return ValType.F64
-    assert False, term
-
-def loadVecType(term:KInner) -> VecType:
-    assert isinstance(term, KApply), term
-    assert term.label.name == 'aVecType', term
-    assert term.arity == 1, term
-    term = term.args[0]
-
-    types = []
-    while True:
-        assert isinstance(term, KApply), term
-        if term.label.name == '.List{"listValTypes"}_ValTypes':
-            assert term.arity == 0, term
-            return VecType(types)
-        if term.label.name == 'listValTypes':
-            assert term.arity == 2, term
-            types.append(loadValType(term.args[0]))
-            term = term.args[1]
-        else:
-            assert False, term
-
-def loadFunctionType(term:KInner) -> FuncType:
-    assert isinstance(term, KApply)
-    assert term.label.name == 'aFuncType', term
-    assert term.arity == 2, term
-    arg_types = loadVecType(term.args[0])
-    result_types = loadVecType(term.args[1])
-    return FuncType(arg_types, result_types)
-
-
-def loadFunctionTypeFromChild(term:KInner) -> FuncType:
-    assert isinstance(term, KApply), term
-    assert term.arity == 1
-    return loadFunctionType(term.args[0])
-
-def loadFunction(kfunc_def:KApply, loaded: Dict[str, WasmFunction]) -> None:
-    assert kfunc_def.label.name == '<funcDef>', kfunc_def
-
-    kfaddr = getInner(kfunc_def, 0, '<fAddr>')
-    assert kfaddr is not None
-    addr = loadTokenFromChild(kfaddr)
-
-    kfcode = getInner(kfunc_def, 1, '<fCode>')
-    kFirstInstruction = getFirstInstruction(kfcode)
-    if kFirstInstruction is not None:
-        is_elrond_trap = isElrondTrap(kFirstInstruction)
-        has_instructions = True
-    else:
-        is_elrond_trap = False
-        has_instructions = False
-
-    kftype = getInner(kfunc_def, 2, '<fType>')
-    function_type = loadFunctionTypeFromChild(kftype)
-
-    kfunc_id = getInnerPath(kfunc_def, [(5, '<funcMetadata>'), (0, '<funcId>')])
-    function_name = loadTokenFromChild(kfunc_id)
-
-    f = WasmFunction(
-        name = function_name,
-        ftype = function_type,
-        is_builtin = is_elrond_trap,
-        has_instructions=has_instructions,
-        address = addr
-    )
-    loaded[addr] = f
-
-def functionMapToList(term:KInner, functions:List[KInner]) -> None:
-    assert isinstance(term, KApply)
-    if term.label.name == '_FuncDefCellMap_':
-        assert term.arity == 2, term
-        functionMapToList(term.args[0], functions)
-        functionMapToList(term.args[1], functions)
-    elif term.label.name == 'FuncDefCellMapItem':
-        assert term.arity == 2, term
-        func = term.args[1]
-        assert isinstance(func, KApply), func
-        assert func.label.name == '<funcDef>', func
-        functions.append(func)
-    else:
-        assert False, [term, term.label.name]
-
-def loadFunctionsFromStore(term:KInner) -> Dict[str, WasmFunction]:
-    assert isinstance(term, KApply), term
-    assert term.label.name == '<funcs>', term
-    assert term.arity == 1
-    funcs = []
-    functionMapToList(term.args[0], funcs)
-    func_addr_to_def = {}
-    for kfunc_def in funcs:
-        assert isinstance(kfunc_def, KApply), kfunc_def
-        assert kfunc_def.label.name == '<funcDef>', kfunc_def
-
-        loadFunction(kfunc_def, func_addr_to_def)
-    return func_addr_to_def
-
-class Functions:
-    def __init__(self,
-                 name_to_id:dict[str, str],
-                 id_to_addr:dict[str, str],
-                 id_to_type:dict[str, FuncType],
-                 addr_to_def:dict[str, WasmFunction]):
-        self.__name_to_id = name_to_id
-        self.__id_to_addr = id_to_addr
-        self.__id_to_type = id_to_type
-        self.__addr_to_def = addr_to_def
-
-    def addrToFunction(self, addr:str) -> WasmFunction:
-        return self.__addr_to_def[addr]
-
-    def __str__(self):
-        return repr(self)
-    
-    def __repr__(self):
-        return f'Functions(name_to_id={repr(self.__name_to_id)}, id_to_addr={repr(self.__id_to_addr)}, id_to_type={repr(self.__id_to_type)}, addr_to_def={repr(self.__addr_to_def)})'
-
-def findFunctions(term:KInner) -> Functions:
-    kwasm = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>')])
-    assert kwasm is not None, [term.args[0].label.name, term.args[0].args[1].label.name]
-    kmodule_instances = getInner(kwasm, 5, '<moduleInstances>')
-    assert isinstance(kmodule_instances, KApply), kmodule_instances
-    assert len(kmodule_instances.args) == 1, kmodule_instances
-    kmodule_instance = getInnerPath(kmodule_instances, [(0, 'ModuleInstCellMapItem'), (1, '<moduleInst>')])
-    ktypes = getInner(kmodule_instance, 2, '<types>')
-    kfunc_addrs = getInner(kmodule_instance, 4, '<funcAddrs>')
-    kfunc_ids = getInnerPath(kmodule_instance, [(13, '<moduleMetadata>'), (2, '<funcIds>')])
-    kfuncs = getInnerPath(kwasm, [(7, '<mainStore>'), (0, '<funcs>')])
-
-    func_name_to_id = loadMapFromChild(kfunc_ids, loadToken)
-    func_id_to_addr = loadMapFromChild(kfunc_addrs, loadToken)
-    func_id_to_type = loadMapFromChild(ktypes, loadFunctionType)  # TODO: Probably not needed.
-    func_addr_to_def = loadFunctionsFromStore(kfuncs)
-    return Functions(
-        name_to_id=func_name_to_id,
-        id_to_addr=func_id_to_addr,
-        id_to_type=func_id_to_type,
-        addr_to_def=func_addr_to_def
-    )
-
-def getCalledFunction(term:KInner) -> Optional[int]:
-    instrs = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>'), (0, '<instrs>')])
-    assert instrs.arity == 1, instrs
-    assert isinstance(instrs.args[0], KSequence), instrs.args[0]
-    if not instrs.args[0].items:
-        return None
-    first = instrs.args[0].items[0]
-    assert isinstance(first, KApply), first
-    if first.label.name != 'aCall':
-        return None
-    assert first.arity == 1
-    value = first.args[0]
-    assert isinstance(value, KToken), value
-    return int(value.token)
 
 def makeApply(label:str, args: List[KInner]) -> KApply:
     return KApply(KLabel(label, []), args)
@@ -581,11 +319,6 @@ def myStepLogging(explorer:KCFGExplore, kcfg:KCFG, node_id:str):
         new_term = kcfg.node(new_node_id).cterm.config
         config = replaceBytes(new_term)
 
-        function_id = getCalledFunction(config)
-        if function_id is not None:
-            if function_id not in ALREADY_SUMMARIZED:
-                raise ValueError(f'Calls function not summarized: {function_id}')
-
         rewrite = makeRewrite(prev_config, config)
         diff = push_down_rewrites(rewrite)
         if not first:
@@ -619,6 +352,7 @@ def main():
         writeJson(config, bytes_output_file)
     term = loadJson(bytes_output_file)
     functions = findFunctions(term)
+    execution_decision = execution.ExecutionManager(functions)
     (lhs, claim) = makeClaim(term, '11', functions)
     temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
     kprove = makeKProve(temp_dir)
@@ -634,7 +368,16 @@ def main():
         for i in range(0, 100):
             new_node_ids = myStepLogging(explorer, kcfg, node_ids[current_idx])
             current_idx += 1
-            node_ids += new_node_ids
+            for node_id in new_node_ids:
+                decision = execution_decision.decideConfiguration(kcfg, node_id)
+                if isinstance(decision, execution.Finish):
+                    print([node_id], 'finished')
+                elif isinstance(decision, execution.UnimplementedElrondFunction):
+                    raise ValueError(repr(decision))
+                elif isinstance(decision, execution.UnsummarizedFunction):
+                    raise ValueError(repr(decision))
+                elif isinstance(decision, execution.Continue):
+                    node_ids.append(node_id)
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 

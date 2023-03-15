@@ -10,13 +10,15 @@ module ELROND
 
   syntax Instr ::= "elrond_trap" "(" String ")"  [klabel(elrond_trap), symbol]
 
+  syntax Error ::= "elrondError"
+
   rule  <instrs>
           elrond_trap("\"getNumArguments\"") => i32.const ?_NumArguments:Int
           ...
         </instrs>
 
   rule  <instrs>
-          (elrond_trap("\"signalError\"") ~> _:K) => elrondError()
+          (elrond_trap("\"signalError\"") ~> _:K) => elrondError
         </instrs>
         <valstack> _:ValStack => .ValStack </valstack>
         <locals> _:Map => .Map </locals>
