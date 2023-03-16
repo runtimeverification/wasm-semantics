@@ -26,9 +26,10 @@ from pyk.kast.outer import KClaim
 from pyk.kcfg import KCFG, KCFGExplore
 from pyk.ktool.kprove import KProve
 from pyk.ktool.krun import _krun, KRunOutput
+from pyk.prelude.k import GENERATED_TOP_CELL
 from pyk.prelude.kbool import TRUE, andBool
 from pyk.prelude.kint import INT, intToken, leInt, ltInt
-from pyk.prelude.ml import mlTop
+from pyk.prelude.ml import mlAnd, mlTop
 
 from . import execution
 from .functions import findFunctions, Functions, WasmFunction
@@ -114,6 +115,11 @@ def loadJson(input_file:Path):
 def replaceBytes(term: KInner):
     term = bottom_up(filterBytesCallback, term)
     return term
+
+def replaceBytesCTerm(term: CTerm) -> CTerm:
+    new_term = replaceBytes(term.config)
+    thing = mlAnd([new_term] + list(term.constraints), GENERATED_TOP_CELL)
+    return CTerm(thing)
 
 def makeApply(label:str, args: List[KInner]) -> KApply:
     return KApply(KLabel(label, []), args)
@@ -261,24 +267,14 @@ def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
     node = cfg.node(node_id)
     out_edges = cfg.edges(source_id=node.id)
     if len(out_edges) > 0:
-        raise ValueError(
-            f'Only support stepping from nodes with 0 out edges: {(node.id, [e.target.id for e in out_edges])}'
-        )
-    # if len(out_edges) > 1:
-    #     raise ValueError(
-    #         f'Only support stepping from nodes with 0 or 1 out edges {cfgid}: {(node.id, [e.target.id for e in out_edges])}'
-    #     )
-    # elif len(out_edges) == 1 and not is_top(out_edges[0].condition):
-    #     raise ValueError(
-    #         f'Only allow stepping on out edges with #Top condition {cfgid}: {(node.id, shorten_hashes(out_edges[0].target.id))}'
-    #     )
-    # _LOGGER.info(f'Taking {depth} steps from node {cfgid}: {shorten_hashes(node.id)}')
+        return [edge.target.id for edge in out_edges]
     actual_depth, cterm, next_cterms = explorer.cterm_execute(node.cterm, depth=1)
     if actual_depth == 0:
         if len(next_cterms) < 2:
             raise ValueError(f'Unable to take {1} steps from node, got {actual_depth} steps: {node.id}')
         next_ids = []
         for next_cterm in next_cterms:
+            next_cterm = replaceBytesCTerm(next_cterm)
             new_node = cfg.get_or_create_node(next_cterm)
             cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=1)
             next_ids.append(new_node.id)
@@ -290,6 +286,7 @@ def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
         raise ValueError(f'Unable to take {1} steps from node, got {actual_depth} steps: {node.id}')
     if len(next_cterms) != 0:
         raise ValueError(f'Unexpected next cterms length {len(next_cterms)}: {node.id}')
+    cterm = replaceBytesCTerm(cterm)
     new_node = cfg.get_or_create_node(cterm)
     # TODO: This may be other things than mlTop()
     cfg.create_edge(node.id, new_node.id, condition=mlTop(), depth=1)
@@ -311,13 +308,12 @@ def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
 
 def myStepLogging(explorer:KCFGExplore, kcfg:KCFG, node_id:str):
     prev_config = kcfg.node(node_id).cterm.config
-    prev_config = replaceBytes(prev_config)
+    # prev_config = replaceBytes(prev_config)
     new_node_ids = myStep(explorer = explorer, cfg=kcfg, node_id=node_id)
     first = True
     print([node_id], '->', new_node_ids)
     for new_node_id in new_node_ids:
-        new_term = kcfg.node(new_node_id).cterm.config
-        config = replaceBytes(new_term)
+        config = kcfg.node(new_node_id).cterm.config
 
         rewrite = makeRewrite(prev_config, config)
         diff = push_down_rewrites(rewrite)
@@ -334,6 +330,50 @@ def myStepLogging(explorer:KCFGExplore, kcfg:KCFG, node_id:str):
     print('=' * 80, flush=True)
     return new_node_ids
 
+def executeFunction(
+    function_addr:str,
+    term:KInner,
+    functions:Functions,
+    explorer:KCFGExplore,
+    state_path:Path
+    ) -> None:
+
+    function_state_path = state_path / 'functions'
+    function_state_path.mkdir(parents=True, exist_ok=True)
+    function_state_path = function_state_path / f'{function_addr}.json'
+
+    if (function_state_path.exists()):
+        json = function_state_path.read_text()
+        print('executeFunction.1b1', flush=True)
+        kcfg = KCFG.from_json(json)
+        print('executeFunction.1b2', flush=True)
+    else:
+        print('executeFunction.1c', flush=True)
+        (_, claim) = makeClaim(term, function_addr, functions)
+        kcfg = KCFG.from_claim(explorer.kprint.definition, claim)
+
+    execution_decision = execution.ExecutionManager(functions)
+
+    try:
+        first_node_id = kcfg.get_unique_init().id
+        node_ids = myStep(explorer, kcfg, first_node_id)
+        assert len(node_ids) == 1
+        while node_ids:
+            new_node_ids = myStepLogging(explorer, kcfg, node_ids[-1])
+            node_ids.pop()
+            for node_id in reversed(new_node_ids):
+                decision = execution_decision.decideConfiguration(kcfg, node_id)
+                if isinstance(decision, execution.Finish):
+                    print([node_id], 'finished')
+                elif isinstance(decision, execution.UnimplementedElrondFunction):
+                    raise ValueError(repr(decision))
+                elif isinstance(decision, execution.UnsummarizedFunction):
+                    raise ValueError(repr(decision))
+                elif isinstance(decision, execution.Continue):
+                    node_ids.append(node_id)
+    finally:
+        function_state_path.write_text(kcfg.to_json())
+
 def main():
     # logging.basicConfig()
     # logging.getLogger().setLevel(logging.DEBUG)
@@ -341,6 +381,7 @@ def main():
     krun_output_file = ROOT / 'tmp' / 'krun.json'
     bytes_output_file = ROOT / 'tmp' / 'bytes.json'
     input_file = ROOT / 'tmp' / 'sum-to-n.wat'
+    data_path = ROOT / 'data'
     if not bytes_output_file.exists():
         if not krun_output_file.exists():
             krun(input_file, krun_output_file)
@@ -352,32 +393,10 @@ def main():
         writeJson(config, bytes_output_file)
     term = loadJson(bytes_output_file)
     functions = findFunctions(term)
-    execution_decision = execution.ExecutionManager(functions)
-    (lhs, claim) = makeClaim(term, '11', functions)
     temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
     kprove = makeKProve(temp_dir)
-    kcfg = KCFG.from_claim(kprove.definition, claim)
-    first_node_id = kcfg.get_unique_init().id
-    node_ids = [first_node_id]
-    current_idx = 0
     with makeExplorer(kprove) as explorer:
-        new_node_ids = myStep(explorer, kcfg, node_ids[current_idx])
-        current_idx += 1
-        assert len(new_node_ids) == 1
-        node_ids += new_node_ids
-        while current_idx < len(node_ids):
-            new_node_ids = myStepLogging(explorer, kcfg, node_ids[current_idx])
-            current_idx += 1
-            for node_id in new_node_ids:
-                decision = execution_decision.decideConfiguration(kcfg, node_id)
-                if isinstance(decision, execution.Finish):
-                    print([node_id], 'finished')
-                elif isinstance(decision, execution.UnimplementedElrondFunction):
-                    raise ValueError(repr(decision))
-                elif isinstance(decision, execution.UnsummarizedFunction):
-                    raise ValueError(repr(decision))
-                elif isinstance(decision, execution.Continue):
-                    node_ids.append(node_id)
+        executeFunction('11', term, functions, explorer, data_path)
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 
