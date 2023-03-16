@@ -50,6 +50,8 @@ class ExecutionManager:
       first = getFirstInstruction(instrs)
       if first.label.name == 'aCall':
           return self.__handleCall(first)
+      if first.label.name == 'elrondError':
+          return Finish()
       return Continue()
 
   def __handleCall(self, call:KApply) -> Decision:
@@ -64,7 +66,7 @@ class ExecutionManager:
           return UnimplementedElrondFunction(id, self.__functionName(id))
       if id in self.__already_summarized:
           return Continue()
-      return UnsumarizedFunction(id, self.__functionName(id))
+      return UnsummarizedFunction(id, self.__functionName(id))
 
   def __functionName(self, id:int) -> str:
       return self.__functions.addrToFunction(str(id)).name()

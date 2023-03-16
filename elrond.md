@@ -10,7 +10,7 @@ module ELROND
 
   syntax Instr ::= "elrond_trap" "(" String ")"  [klabel(elrond_trap), symbol]
 
-  syntax Error ::= "elrondError"
+  syntax Error ::= "elrondError"  [klabel(elrondError), symbol]
 
   rule  <instrs>
           elrond_trap("\"getNumArguments\"") => i32.const ?_NumArguments:Int

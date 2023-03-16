@@ -262,7 +262,7 @@ def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
     out_edges = cfg.edges(source_id=node.id)
     if len(out_edges) > 0:
         raise ValueError(
-            f'Only support stepping from nodes with 0 out edges {cfgid}: {(node.id, [e.target.id for e in out_edges])}'
+            f'Only support stepping from nodes with 0 out edges: {(node.id, [e.target.id for e in out_edges])}'
         )
     # if len(out_edges) > 1:
     #     raise ValueError(
@@ -365,7 +365,7 @@ def main():
         current_idx += 1
         assert len(new_node_ids) == 1
         node_ids += new_node_ids
-        for i in range(0, 100):
+        while current_idx < len(node_ids):
             new_node_ids = myStepLogging(explorer, kcfg, node_ids[current_idx])
             current_idx += 1
             for node_id in new_node_ids:
