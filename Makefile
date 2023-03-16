@@ -4,6 +4,7 @@
 BUILD_DIR := .build
 DEPS_DIR  := deps
 DEFN_DIR  := $(BUILD_DIR)/defn
+SUMMARIES ?= "data/summaries"
 
 K_SUBMODULE := $(DEPS_DIR)/k
 ifneq (,$(wildcard deps/k/k-distribution/target/release/k/bin/*))
@@ -81,6 +82,8 @@ endif
 ifeq (,$(RELEASE))
     LLVM_KOMPILE_OPTS += -g
 endif
+
+KOMPILE_OPTS += -I $(SUMMARIES)
 
 KOMPILE_LLVM := kompile --backend llvm --md-selector "$(tangle_selector)" \
                 $(KOMPILE_OPTS)                                           \

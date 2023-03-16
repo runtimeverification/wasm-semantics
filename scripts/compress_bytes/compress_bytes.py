@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 import logging
+import operator
+import os
+import subprocess
 import sys
 
 from contextlib import closing
@@ -8,7 +11,7 @@ import json
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
 import tempfile
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, Iterable, List, Optional, Tuple
 
 from pyk.cterm import CTerm
 from pyk.kast.inner import (
@@ -21,9 +24,11 @@ from pyk.kast.inner import (
     KSort,
     KVariable,
     bottom_up)
-from pyk.kast.manip import push_down_rewrites
-from pyk.kast.outer import KClaim
+from pyk.cli_utils import BugReport
+from pyk.kast.manip import push_down_rewrites, ml_pred_to_bool
+from pyk.kast.outer import KAtt, KClaim, KDefinition, KFlatModule, KImport, KRequire, KRule
 from pyk.kcfg import KCFG, KCFGExplore
+from pyk.ktool.kprint import KPrint, SymbolTable
 from pyk.ktool.kprove import KProve
 from pyk.ktool.krun import _krun, KRunOutput
 from pyk.prelude.k import GENERATED_TOP_CELL, K
@@ -33,8 +38,10 @@ from pyk.prelude.ml import mlAnd, mlTop
 
 from . import execution
 from .functions import findFunctions, Functions, WasmFunction
-from .kast import (extractRewriteParents,
-                   replaceChild,
+from .kast import ( extractRewriteParents,
+                    getInner,
+                    kinner_top_down_fold,
+                    replaceChild,
                    )
 from .types import (ValType)
 
@@ -42,6 +49,69 @@ sys.setrecursionlimit(2000)
 
 ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
+GENERATED_RULE_PRIORITY = 20
+
+class MyKPrint(KPrint):
+    def __init__(
+        self,
+        definition_dir: Path,
+        use_directory: Optional[Path] = None,
+        bug_report: Optional[BugReport] = None,
+        extra_unparsing_modules: Iterable[KFlatModule] = (),
+    ) -> None:
+        super().__init__(definition_dir, use_directory, bug_report, extra_unparsing_modules)
+
+    @classmethod
+    def _patch_symbol_table(cls, symbol_table: SymbolTable) -> None:
+        symbol_table['_|->_'] = lambda c1, c2: f'({c1} |-> {c2})'
+
+
+class LazyExplorer:
+    def __init__(self, rules:List[KRule], data_folder:Path, printer:KPrint):
+        self.__rules = rules
+        self.__summary_folder = data_folder
+        self.__printer = printer
+        self.__explorer = None
+
+    def __enter__(self) -> 'LazyExplorer':
+        return self
+    
+    def __exit__(self, *_args: Any) -> None:
+        self.close()
+
+    def close(self) -> None:
+        if self.__explorer:
+            self.__explorer.close()
+
+    def get(self):
+        self.__makeSemantics()
+        temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
+        kprove = makeKProve(temp_dir)
+        self.__explorer = makeExplorer(kprove)
+
+    def printer(self):
+        return self.__printer
+
+    def __makeSemantics(self):
+        req = KRequire('elrond-impl.md')
+        im = KImport('ELROND-IMPL')
+        module = KFlatModule('SUMMARIES', sentences=[im] + self.__rules)
+        definition = KDefinition('SUMMARIES', all_modules=[module], requires=[req])
+
+        definition_text = self.__printer.pretty_print(definition)
+        definition_text = definition_text.replace('$', '$#')
+
+        self.__summary_folder.mkdir(parents=True, exist_ok=True)
+        (self.__summary_folder / 'summaries.k').write_text(definition_text)
+        my_env = os.environ.copy()
+        my_env['SUMMARIES'] = str(self.__summary_folder)
+        result = subprocess.run(
+            ['make', 'clean'], cwd=str(ROOT), env=my_env
+        )
+        result = subprocess.run(
+            ['make', 'build-haskell'], cwd=str(ROOT), env=my_env
+        )
+        assert result.returncode == 0
 
 def filterBytes(term: KToken) -> KToken:
     assert term.sort.name == 'Bytes'
@@ -210,7 +280,17 @@ def generateSymbolicFunctionCall(function:WasmFunction) -> Tuple[KApply, KApply]
     constraint = makeBalancedAndBool(constraint_list)
     return (call, stack, constraint)
 
-def makeRewrite(lhs:KInner, rhs:KInner):
+def hasQuestionmarkVariables(term:KInner) -> bool:
+    def maybe_is_questionmark_variable(term:KInner):
+        if not isinstance(term, KVariable):
+            return None
+        if term.name.startswith('?'):
+            return True
+        return False
+    assert isinstance(term, KInner)
+    return kinner_top_down_fold(maybe_is_questionmark_variable, operator.or_, False, term)
+
+def makeRewrite(lhs:KInner, rhs:KInner) -> KInner:
     def makeRewriteIfNeeded(left, right):
         if left == right:
             return left
@@ -219,7 +299,8 @@ def makeRewrite(lhs:KInner, rhs:KInner):
     assert isinstance(rhs, KApply)
     assert lhs.arity == rhs.arity, [lhs.arity, lhs.label, rhs.arity, rhs.label]
     assert lhs.label == rhs.label
-    return lhs.let(args=[makeRewriteIfNeeded(l, r) for (l, r) in zip(lhs.args, rhs.args)])
+    rw = lhs.let(args=[makeRewriteIfNeeded(l, r) for (l, r) in zip(lhs.args, rhs.args)])
+    return push_down_rewrites(rw)
 
 def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
     function = functions.addrToFunction(address)
@@ -230,16 +311,36 @@ def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
     writeJson(rewrite, ROOT / 'tmp' / 'rewrite.json')
     return (lhs, KClaim(body=rewrite, requires=constraint))
 
-def makeFinalClaim(lhs_id:str, rhs_id:str, kcfg:KCFG):
+def buildRewriteRequires(lhs_id:str, rhs_id:str, kcfg:KCFG) -> Tuple[KInner, KInner]:
     lhs_node = kcfg.node(lhs_id)
     rhs_node = kcfg.node(rhs_id)
     rewrite = makeRewrite(lhs_node.cterm.config, rhs_node.cterm.config)
+    rewrite = getInner(rewrite, 0, '<wasm-test>')
+    rewrite = getInner(rewrite, 1, '<wasm>')
     requires = [c for c in lhs_node.cterm.constraints if c != TRUE]
     for c in rhs_node.cterm.constraints:
-        if c != TRUE and c not in lhs_node.cterm.constraints:
+        if c != TRUE and c not in lhs_node.cterm.constraints and not hasQuestionmarkVariables(c):
             requires.append(c)
-    constraint = andBool(requires)
+    constraint = andBool([ml_pred_to_bool(c) for c in requires])
+    return (rewrite, constraint)
+
+# It would be tempting to use cterm.build_rule or cterm.build_claim, however,
+# we should check first if those, say, remove function definitions from the
+# configuration when calling `minimize_rule`. The rule is not valid without
+# those.
+def makeFinalClaim(lhs_id:str, rhs_id:str, kcfg:KCFG):
+    (rewrite, constraint) = buildRewriteRequires(lhs_id=lhs_id, rhs_id=rhs_id, kcfg=kcfg)
     return KClaim(body=rewrite, requires=constraint)
+
+# It would be tempting to use cterm.build_rule or cterm.build_claim, however,
+# we should check first if those, say, remove function definitions from the
+# configuration when calling `minimize_rule`. The rule is not valid without
+# those.
+def makeFinalRule(lhs_id:str, rhs_id:str, kcfg:KCFG):
+    (rewrite, constraint) = buildRewriteRequires(lhs_id=lhs_id, rhs_id=rhs_id, kcfg=kcfg)
+    att_dict = {'priority': str(GENERATED_RULE_PRIORITY)}
+    rule_att = KAtt(atts=att_dict)
+    return KRule(body=rewrite, requires=constraint, att=rule_att)
 
 def makeCTerm(term, inner, address:str, functions:Functions) -> CTerm:
     function = functions.addrToFunction(address)
@@ -278,12 +379,12 @@ def free_port_on_host(host: str = 'localhost') -> int:
 def writeJson(term: KInner, output_file: Path):
     output_file.write_text(json.dumps(term.to_dict()))
 
-def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
+def myStep(explorer:LazyExplorer, cfg:KCFG, node_id:str):
     node = cfg.node(node_id)
     out_edges = cfg.edges(source_id=node.id)
     if len(out_edges) > 0:
         return [edge.target.id for edge in out_edges]
-    actual_depth, cterm, next_cterms = explorer.cterm_execute(node.cterm, depth=1)
+    actual_depth, cterm, next_cterms = explorer.get().cterm_execute(node.cterm, depth=1)
     if actual_depth == 0:
         if len(next_cterms) < 2:
             raise ValueError(f'Unable to take {1} steps from node (next={len(next_cterms)}), got {actual_depth} steps: {node.id}')
@@ -321,25 +422,24 @@ def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
     #     cfg.create_edge(new_node.id, edge.target.id, condition=mlTop(), depth=(edge.depth - depth))
     return next_ids
 
-def myStepLogging(explorer:KCFGExplore, kcfg:KCFG, node_id:str):
+def myStepLogging(explorer:LazyExplorer, kcfg:KCFG, node_id:str):
     prev_config = kcfg.node(node_id).cterm.config
     # prev_config = replaceBytes(prev_config)
-    new_node_ids = myStep(explorer = explorer, cfg=kcfg, node_id=node_id)
+    new_node_ids = myStep(explorer=explorer, cfg=kcfg, node_id=node_id)
     first = True
     print([node_id], '->', new_node_ids)
     for new_node_id in new_node_ids:
         config = kcfg.node(new_node_id).cterm.config
 
-        rewrite = makeRewrite(prev_config, config)
-        diff = push_down_rewrites(rewrite)
+        diff = makeRewrite(prev_config, config)
         if not first:
             print('-' * 80)
         first = False
-        # pretty = explorer.kprint.pretty_print(diff)
+        # pretty = explorer.printer().pretty_print(diff)
         # print(pretty)
         children = extractRewriteParents(diff)
         for child in children:
-            pretty = explorer.kprint.pretty_print(child)
+            pretty = explorer.printer().pretty_print(child)
             print(pretty)
             print()
     print('=' * 80, flush=True)
@@ -349,9 +449,10 @@ def executeFunction(
     function_addr:str,
     term:KInner,
     functions:Functions,
-    explorer:KCFGExplore,
-    state_path:Path
-    ) -> None:
+    explorer:LazyExplorer,
+    state_path:Path,
+    execution_decision:execution.ExecutionManager,
+    ) -> List[KRule]:
 
     print('*' * 80)
     print('*' * 80)
@@ -368,9 +469,7 @@ def executeFunction(
         kcfg = KCFG.from_json(json)
     else:
         (_, claim) = makeClaim(term, function_addr, functions)
-        kcfg = KCFG.from_claim(explorer.kprint.definition, claim)
-
-    execution_decision = execution.ExecutionManager(functions)
+        kcfg = KCFG.from_claim(explorer.printer().definition, claim)
 
     try:
         first_node_id = kcfg.get_unique_init().id
@@ -396,9 +495,24 @@ def executeFunction(
                     node_ids.append(node_id)
     finally:
         function_state_path.write_text(kcfg.to_json())
-    for rhs_id in rhs_ids:
-        claim = makeFinalClaim(lhs_id, rhs_id, kcfg)
-        print(explorer.kprint.pretty_print_kas(claim))
+    return [makeFinalRule(lhs_id, rhs_id, kcfg) for rhs_id in rhs_ids]
+
+def executeFunctionWithRules(
+        function_addr:str,
+        rules:List[KRule],
+        term:KInner,
+        functions:Functions,
+        printer:KPrint,
+        state_path:Path,
+        execution_decision:execution.ExecutionManager,
+    ) -> List[KRule]:
+    with LazyExplorer(rules, state_path / 'summaries' / function_addr, printer) as explorer:
+        new_rules = executeFunction(
+            function_addr, term, functions, explorer, state_path, execution_decision
+        )
+    execution_decision.finishFunction(int(function_addr))
+    return rules + new_rules
+
 
 def main():
     # logging.basicConfig()
@@ -419,20 +533,21 @@ def main():
         writeJson(config, bytes_output_file)
     term = loadJson(bytes_output_file)
     functions = findFunctions(term)
-    temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
-    kprove = makeKProve(temp_dir)
-    with makeExplorer(kprove) as explorer:
-        executeFunction('11', term, functions, explorer, data_path)
-        executeFunction('12', term, functions, explorer, data_path)
-        executeFunction('16', term, functions, explorer, data_path)
-        # References
-        # executeFunction('15', term, functions, explorer, data_path)
-        # executeFunction('14', term, functions, explorer, data_path)
-        # executeFunction('9', term, functions, explorer, data_path)
-        # executeFunction('8', term, functions, explorer, data_path)
-        # executeFunction('10', term, functions, explorer, data_path)
+    printer = MyKPrint(DEFINITION_DIR)
+    execution_decision = execution.ExecutionManager(functions)
+
+    rules = []
+    rules = executeFunctionWithRules('11', rules, term, functions, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('12', rules, term, functions, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('16', rules, term, functions, printer, data_path, execution_decision)
+    # References
+    rules = executeFunctionWithRules('15', rules, term, functions, printer, data_path, execution_decision)
+        # executeFunctionWithRules('14', rules, term, functions, printer, data_path, execution_decision)
+        # executeFunctionWithRules('9', rules, term, functions, printer, data_path, execution_decision)
+        # executeFunctionWithRules('8', rules, term, functions, printer, data_path, execution_decision)
+        # executeFunctionWithRules('10', rules, term, functions, printer, data_path, execution_decision)
         # Loop
-        # executeFunction('13', term, functions, explorer, data_path)
+        # executeFunctionWithRules('13', rules, term, functions, printer, data_path, execution_decision)
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 

@@ -108,7 +108,7 @@ def kinner_top_down_fold(
         lambda x: kinner_top_down_fold(summarizer, merger, default, x),
         children
     )
-    return fold(merger, summaries, [])
+    return fold(merger, summaries, default)
 
 def extractRewriteParents(term:KInner) -> List[KInner]:
     def maybe_with_rewrite_child(value:KInner) -> Optional[List[KInner]]:

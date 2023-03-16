@@ -69,6 +69,9 @@ class ExecutionManager:
         if first.label.name == 'aLoop':
                 return Loop()
         return Continue()
+    
+    def finishFunction(self, function_addr:int) -> None:
+        self.__already_summarized.add(function_addr)
 
     def __handleCall(self, call:KApply) -> Decision:
         assert call.label.name == 'aCall'
