@@ -10,7 +10,8 @@ module ELROND
 
   syntax Instr ::= "elrond_trap" "(" String ")"  [klabel(elrond_trap), symbol]
 
-  syntax Error ::= "elrondError"  [klabel(elrondError), symbol]
+  syntax Instr ::= "elrondError"  [klabel(elrondError), symbol]
+  syntax Instr ::= "elrondReverted"  [klabel(elrondReverted), symbol]
 
   rule  <instrs>
           elrond_trap("\"getNumArguments\"") => i32.const ?_NumArguments:Int
@@ -18,10 +19,34 @@ module ELROND
         </instrs>
 
   rule  <instrs>
-          (elrond_trap("\"signalError\"") ~> _:K) => elrondError
+          elrond_trap("\"signalError\"") => elrondError
+          ...
         </instrs>
+
+  rule <instrs> (elrondError ~> _:K) => elrondReverted </instrs>
         <valstack> _:ValStack => .ValStack </valstack>
         <locals> _:Map => .Map </locals>
+
+  rule  <instrs>
+          elrond_trap("\"smallIntGetUnsignedArgument\"") => i64.const ?Argument:Int
+          ...
+        </instrs>
+    ensures 0 <=Int ?Argument andBool ?Argument <Int (1 <<Int 64)
+
+  rule  <instrs>
+          elrond_trap("\"smallIntGetUnsignedArgument\"") => elrondError
+          ...
+        </instrs>
+
+  rule  <instrs>
+          elrond_trap("\"checkNoPayment\"") => .K
+          ...
+        </instrs>
+
+  rule  <instrs>
+          elrond_trap("\"checkNoPayment\"") => elrondError
+          ...
+        </instrs>
 
   rule <instrs>
           #import(MOD, Name, #funcDesc(... id: OID, type: TIDX))

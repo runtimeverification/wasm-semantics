@@ -271,7 +271,7 @@ def myStep(explorer:KCFGExplore, cfg:KCFG, node_id:str):
     actual_depth, cterm, next_cterms = explorer.cterm_execute(node.cterm, depth=1)
     if actual_depth == 0:
         if len(next_cterms) < 2:
-            raise ValueError(f'Unable to take {1} steps from node, got {actual_depth} steps: {node.id}')
+            raise ValueError(f'Unable to take {1} steps from node (next={len(next_cterms)}), got {actual_depth} steps: {node.id}')
         next_ids = []
         for next_cterm in next_cterms:
             next_cterm = replaceBytesCTerm(next_cterm)
@@ -338,17 +338,20 @@ def executeFunction(
     state_path:Path
     ) -> None:
 
+    print('*' * 80)
+    print('*' * 80)
+    print('*' * 30, ' ' * 10, function_addr)
+    print('*' * 80)
+    print('*' * 80)
+
     function_state_path = state_path / 'functions'
     function_state_path.mkdir(parents=True, exist_ok=True)
     function_state_path = function_state_path / f'{function_addr}.json'
 
     if (function_state_path.exists()):
         json = function_state_path.read_text()
-        print('executeFunction.1b1', flush=True)
         kcfg = KCFG.from_json(json)
-        print('executeFunction.1b2', flush=True)
     else:
-        print('executeFunction.1c', flush=True)
         (_, claim) = makeClaim(term, function_addr, functions)
         kcfg = KCFG.from_claim(explorer.kprint.definition, claim)
 
@@ -368,6 +371,8 @@ def executeFunction(
                 elif isinstance(decision, execution.UnimplementedElrondFunction):
                     raise ValueError(repr(decision))
                 elif isinstance(decision, execution.UnsummarizedFunction):
+                    raise ValueError(repr(decision))
+                elif isinstance(decision, execution.Loop):
                     raise ValueError(repr(decision))
                 elif isinstance(decision, execution.Continue):
                     node_ids.append(node_id)
@@ -397,6 +402,16 @@ def main():
     kprove = makeKProve(temp_dir)
     with makeExplorer(kprove) as explorer:
         executeFunction('11', term, functions, explorer, data_path)
+        executeFunction('12', term, functions, explorer, data_path)
+        executeFunction('16', term, functions, explorer, data_path)
+        # References
+        # executeFunction('15', term, functions, explorer, data_path)
+        # executeFunction('14', term, functions, explorer, data_path)
+        # executeFunction('9', term, functions, explorer, data_path)
+        # executeFunction('8', term, functions, explorer, data_path)
+        # executeFunction('10', term, functions, explorer, data_path)
+        # Loop
+        # executeFunction('13', term, functions, explorer, data_path)
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 

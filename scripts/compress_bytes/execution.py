@@ -21,6 +21,9 @@ class Continue(Decision):
 class Finish(Decision):
     pass
 
+class Loop(Decision):
+    pass
+
 @dataclass(frozen=True)
 class UnimplementedElrondFunction(Decision):
     function_id: int
@@ -32,8 +35,10 @@ class UnsummarizedFunction(Decision):
     function_name: str
 
 IMPLEMENTED_ELROND_FUNCTIONS = [
-    3,  # getNumArguments, implemented builtin
+    2,  # smallIntGetUnsignedArgument
+    3,  # getNumArguments
     4,  # signalError
+    6,  # checkNoPayment
 ]
 
 class ExecutionManager:
@@ -50,8 +55,10 @@ class ExecutionManager:
       first = getFirstInstruction(instrs)
       if first.label.name == 'aCall':
           return self.__handleCall(first)
-      if first.label.name == 'elrondError':
+      if first.label.name == 'elrondReverted':
           return Finish()
+      if first.label.name == 'aLoop':
+            return Loop()
       return Continue()
 
   def __handleCall(self, call:KApply) -> Decision:
