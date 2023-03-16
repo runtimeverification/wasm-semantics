@@ -230,6 +230,17 @@ def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
     writeJson(rewrite, ROOT / 'tmp' / 'rewrite.json')
     return (lhs, KClaim(body=rewrite, requires=constraint))
 
+def makeFinalClaim(lhs_id:str, rhs_id:str, kcfg:KCFG):
+    lhs_node = kcfg.node(lhs_id)
+    rhs_node = kcfg.node(rhs_id)
+    rewrite = makeRewrite(lhs_node.cterm.config, rhs_node.cterm.config)
+    requires = [c for c in lhs_node.cterm.constraints if c != TRUE]
+    for c in rhs_node.cterm.constraints:
+        if c != TRUE and c not in lhs_node.cterm.constraints:
+            requires.append(c)
+    constraint = andBool(requires)
+    return KClaim(body=rewrite, requires=constraint)
+
 def makeCTerm(term, inner, address:str, functions:Functions) -> CTerm:
     function = functions.addrToFunction(address)
     (call, stack, constraint) = generateSymbolicFunctionCall(function)
@@ -365,12 +376,15 @@ def executeFunction(
         first_node_id = kcfg.get_unique_init().id
         node_ids = myStep(explorer, kcfg, first_node_id)
         assert len(node_ids) == 1
+        lhs_id = node_ids[0]
+        rhs_ids = []
         while node_ids:
             new_node_ids = myStepLogging(explorer, kcfg, node_ids[-1])
             node_ids.pop()
             for node_id in reversed(new_node_ids):
                 decision = execution_decision.decideConfiguration(kcfg, node_id)
                 if isinstance(decision, execution.Finish):
+                    rhs_ids.append(node_id)
                     print([node_id], 'finished')
                 elif isinstance(decision, execution.UnimplementedElrondFunction):
                     raise ValueError(repr(decision))
@@ -382,6 +396,9 @@ def executeFunction(
                     node_ids.append(node_id)
     finally:
         function_state_path.write_text(kcfg.to_json())
+    for rhs_id in rhs_ids:
+        claim = makeFinalClaim(lhs_id, rhs_id, kcfg)
+        print(explorer.kprint.pretty_print_kas(claim))
 
 def main():
     # logging.basicConfig()
