@@ -5,8 +5,10 @@ from pyk.kast.inner import (
     KApply,
     KToken,
     KSequence,
+    KVariable,
     )
 from pyk.kcfg import KCFG
+from pyk.prelude.k import K
 
 from .functions import Functions
 from .kast import (getInnerPath,
@@ -42,49 +44,55 @@ IMPLEMENTED_ELROND_FUNCTIONS = [
 ]
 
 class ExecutionManager:
-  def __init__(self, functions:Functions) -> None:
-    self.__already_summarized = set()
-    self.__functions = functions
-    pass
+    def __init__(self, functions:Functions) -> None:
+        self.__already_summarized = set()
+        self.__functions = functions
+        pass
 
-  def decideConfiguration(self, kcfg:KCFG, node_id:str) -> Decision:
-      node = kcfg.node(node_id)
-      instrs = getInstrKsequence(node.cterm.config)
-      if not instrs.items:
-          return Finish()
-      first = getFirstInstruction(instrs)
-      if first.label.name == 'aCall':
-          return self.__handleCall(first)
-      if first.label.name == 'elrondReverted':
-          return Finish()
-      if first.label.name == 'aLoop':
-            return Loop()
-      return Continue()
+    def decideConfiguration(self, kcfg:KCFG, node_id:str) -> Decision:
+        node = kcfg.node(node_id)
+        instrs = getInstrsChild(node.cterm.config)
 
-  def __handleCall(self, call:KApply) -> Decision:
-      assert call.label.name == 'aCall'
-      assert call.arity == 1
-      value = call.args[0]
-      assert isinstance(value, KToken), value
-      id = int(value.token)
-      if self.__isElrondFunction(id):
-          if id in IMPLEMENTED_ELROND_FUNCTIONS:
-              return Continue()
-          return UnimplementedElrondFunction(id, self.__functionName(id))
-      if id in self.__already_summarized:
-          return Continue()
-      return UnsummarizedFunction(id, self.__functionName(id))
+        if isinstance(instrs, KVariable):
+            assert instrs.name == 'MyOtherInstructions', instrs
+            assert instrs.sort == K, instrs
+            return Finish()
 
-  def __functionName(self, id:int) -> str:
-      return self.__functions.addrToFunction(str(id)).name()
+        assert isinstance(instrs, KSequence)
+        assert instrs.items, instrs
 
-  def __isElrondFunction(self, id:int) -> bool:
-      return self.__functions.addrToFunction(str(id)).is_builtin()
+        first = getFirstInstruction(instrs)
+        if first.label.name == 'aCall':
+            return self.__handleCall(first)
+        if first.label.name == 'elrondReverted':
+            return Finish()
+        if first.label.name == 'aLoop':
+                return Loop()
+        return Continue()
 
-def getInstrKsequence(term:KInner) -> KSequence:
+    def __handleCall(self, call:KApply) -> Decision:
+        assert call.label.name == 'aCall'
+        assert call.arity == 1
+        value = call.args[0]
+        assert isinstance(value, KToken), value
+        id = int(value.token)
+        if self.__isElrondFunction(id):
+            if id in IMPLEMENTED_ELROND_FUNCTIONS:
+                return Continue()
+            return UnimplementedElrondFunction(id, self.__functionName(id))
+        if id in self.__already_summarized:
+            return Continue()
+        return UnsummarizedFunction(id, self.__functionName(id))
+
+    def __functionName(self, id:int) -> str:
+        return self.__functions.addrToFunction(str(id)).name()
+
+    def __isElrondFunction(self, id:int) -> bool:
+        return self.__functions.addrToFunction(str(id)).is_builtin()
+
+def getInstrsChild(term:KInner) -> KInner:
     instrs = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>'), (0, '<instrs>')])
     assert instrs.arity == 1, instrs
-    assert isinstance(instrs.args[0], KSequence), instrs.args[0]
     return instrs.args[0]
 
 def getFirstInstruction(instrs:KSequence) -> KApply:

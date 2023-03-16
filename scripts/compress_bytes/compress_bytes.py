@@ -26,7 +26,7 @@ from pyk.kast.outer import KClaim
 from pyk.kcfg import KCFG, KCFGExplore
 from pyk.ktool.kprove import KProve
 from pyk.ktool.krun import _krun, KRunOutput
-from pyk.prelude.k import GENERATED_TOP_CELL
+from pyk.prelude.k import GENERATED_TOP_CELL, K
 from pyk.prelude.kbool import TRUE, andBool
 from pyk.prelude.kint import INT, intToken, leInt, ltInt
 from pyk.prelude.ml import mlAnd, mlTop
@@ -200,7 +200,11 @@ def generateSymbolicFunctionCall(function:WasmFunction) -> Tuple[KApply, KApply]
             , stack
             )
         )
-    statements = [KApply('aNop'), makeACall(function.address())]
+    statements = [
+        KApply('aNop'),
+        makeACall(function.address()),
+        KVariable('MyOtherInstructions', sort=K)
+    ]
     call = makeStatementList(statements)
     constraint_list = [makeTypeConstraint(var, vtype) for var, vtype in zip(variables, argument_types_list)]
     constraint = makeBalancedAndBool(constraint_list)
