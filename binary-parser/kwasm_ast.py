@@ -11,6 +11,7 @@ It is a mirror of the abstract syntax in the K semantics.
 from pyk.kast.inner import KSequence, KApply, KToken
 from pyk.prelude.bytes import bytesToken
 from pyk.utils import dequote_str
+
 ###########
 # KLabels #
 ###########
