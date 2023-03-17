@@ -15,7 +15,7 @@ runs:
       set -euxo pipefail
 
       TAG=runtimeverificationinc/${CONTAINER_NAME}
-      K_COMMIT=$(cut -c 2- ./deps/k_release)
+      K_COMMIT=$(cat ./deps/k_release)
 
       docker build . --tag ${TAG} --build-arg K_COMMIT=${K_COMMIT}
 
