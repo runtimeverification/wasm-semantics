@@ -33,6 +33,7 @@ from pyk.ktool.kprove import KProve
 from pyk.ktool.krun import _krun, KRunOutput
 from pyk.prelude.k import GENERATED_TOP_CELL, K
 from pyk.prelude.kbool import TRUE, andBool
+from pyk.prelude.bytes import BYTES, bytesToken
 from pyk.prelude.kint import INT, intToken, leInt, ltInt
 from pyk.prelude.ml import mlAnd, mlTop
 
@@ -84,10 +85,12 @@ class LazyExplorer:
             self.__explorer.close()
 
     def get(self):
-        self.__makeSemantics()
-        temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
-        kprove = makeKProve(temp_dir)
-        self.__explorer = makeExplorer(kprove)
+        if self.__explorer is None:
+            self.__makeSemantics()
+            temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
+            kprove = makeKProve(temp_dir)
+            self.__explorer = makeExplorer(kprove)
+        return self.__explorer
 
     def printer(self):
         return self.__printer
@@ -113,13 +116,26 @@ class LazyExplorer:
         )
         assert result.returncode == 0
 
-def filterBytes(term: KToken) -> KToken:
-    assert term.sort.name == 'Bytes'
-    bytes = term.token
-    assert bytes.startswith('b"')
-    assert bytes.endswith('"')
+def findRewrites(term:KInner) -> List[KRewrite]:
+    def maybe_rewrite(term:KInner) -> Optional[List[KRewrite]]:
+        if isinstance(term, KRewrite):
+            return [term]
+        return None
+    return kinner_top_down_fold(maybe_rewrite, operator.add, [], term)
 
-    bytes = bytes[2:-1]
+SET_BYTES_RANGE = '#setBytesRange(_,_,_)_WASM-DATA_Bytes_Bytes_Int_Bytes'
+DOT_BYTES = '.Bytes_BYTES-HOOKED_Bytes'
+
+def bytesToString(b:str) -> str:
+    assert b.startswith('b"')
+    assert b.endswith('"')
+
+    b = b[2:-1]
+    return b
+
+def filterBytes(term: KToken) -> KToken:
+    assert term.sort == BYTES
+    bytes = bytesToString(term.token)
 
     zeros = []
     start = bytes.find('\x00', 0)
@@ -144,20 +160,55 @@ def filterBytes(term: KToken) -> KToken:
     if last_end < len(bytes):
         keep.append((last_end, len(bytes)))
 
-    term = KApply(KLabel('.Bytes_BYTES-HOOKED_Bytes', []), ())
+    term = KApply(DOT_BYTES, ())
     for (start, end) in keep:
-        term = KApply (KLabel('#setBytesRange(_,_,_)_WASM-DATA_Bytes_Bytes_Int_Bytes', []),
+        term = KApply (SET_BYTES_RANGE,
                         ( term
                         , KToken(str(start), INT)
-                        , KToken(f'b"{bytes[start:end]}"', KSort('Bytes'))
+                        , bytesToken(bytes[start:end])
                         )
                       )
     return term
 
 def filterBytesCallback(term: KInner) -> KInner:
     if isinstance(term, KToken):
-        if term.sort.name == 'Bytes':
+        if term.sort == BYTES:
             return filterBytes(term)
+    return term
+
+def computeBytes(term:KInner) -> KToken:
+    if isinstance(term, KToken):
+        assert term.sort == BYTES, term
+        return term
+    assert isinstance(term, KApply)
+    if term.label.name == DOT_BYTES:
+        return bytesToken('')
+    assert term.label.name == SET_BYTES_RANGE, term
+    assert len(term.args) == 3, term
+    (inner, start, token) = term.args
+
+    inner = computeBytes(inner)
+    assert inner.sort == BYTES, inner
+    inner = bytesToString(inner.token)
+
+    assert isinstance(start, KToken), start
+    assert start.sort == INT
+    start = int(start.token)
+
+    assert isinstance(token, KToken), token
+    assert token.sort == BYTES, token
+    token = bytesToString(token.token)
+
+    if len(inner) < start + len(token):
+        inner += '\x00' * (start + len(token) - len(inner))
+    inner = inner[:start] + token + inner[start + len(token):]
+    
+    return bytesToken(inner)
+
+def unpackBytesCallback(term:KInner):
+    if isinstance(term, KApply):
+        if term.label.name == SET_BYTES_RANGE:
+            return computeBytes(term)
     return term
 
 def krun(input_file: Path, output_file:Path) -> CTerm:
@@ -184,6 +235,10 @@ def loadJson(input_file:Path):
 
 def replaceBytes(term: KInner):
     term = bottom_up(filterBytesCallback, term)
+    return term
+
+def unpackBytes(term: KInner):
+    term = bottom_up(unpackBytesCallback, term)
     return term
 
 def replaceBytesCTerm(term: CTerm) -> CTerm:
@@ -314,7 +369,9 @@ def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
 def buildRewriteRequires(lhs_id:str, rhs_id:str, kcfg:KCFG) -> Tuple[KInner, KInner]:
     lhs_node = kcfg.node(lhs_id)
     rhs_node = kcfg.node(rhs_id)
-    rewrite = makeRewrite(lhs_node.cterm.config, rhs_node.cterm.config)
+    lhs_config = unpackBytes(lhs_node.cterm.config)
+    rhs_config = unpackBytes(rhs_node.cterm.config)
+    rewrite = makeRewrite(lhs_config, rhs_config)
     rewrite = getInner(rewrite, 0, '<wasm-test>')
     rewrite = getInner(rewrite, 1, '<wasm>')
     requires = [c for c in lhs_node.cterm.constraints if c != TRUE]
@@ -338,6 +395,7 @@ def makeFinalClaim(lhs_id:str, rhs_id:str, kcfg:KCFG):
 # those.
 def makeFinalRule(lhs_id:str, rhs_id:str, kcfg:KCFG):
     (rewrite, constraint) = buildRewriteRequires(lhs_id=lhs_id, rhs_id=rhs_id, kcfg=kcfg)
+
     att_dict = {'priority': str(GENERATED_RULE_PRIORITY)}
     rule_att = KAtt(atts=att_dict)
     return KRule(body=rewrite, requires=constraint, att=rule_att)
