@@ -47,6 +47,7 @@ class ExecutionManager:
     def __init__(self, functions:Functions) -> None:
         self.__already_summarized = set()
         self.__functions = functions
+        self.__executing_addr = -1
         pass
 
     def decideConfiguration(self, kcfg:KCFG, node_id:str) -> Decision:
@@ -64,14 +65,33 @@ class ExecutionManager:
         first = getFirstInstruction(instrs)
         if first.label.name == 'aCall':
             return self.__handleCall(first)
+        if first.label.name == '(invoke_)_WASM_Instr_Int':
+            return self.__handleInvoke(first)
         if first.label.name == 'elrondReverted':
             return Finish()
         if first.label.name == 'aLoop':
                 return Loop()
         return Continue()
     
+    def startFunction(self, function_addr:int) -> None:
+        self.__executing_addr = function_addr
+
     def finishFunction(self, function_addr:int) -> None:
         self.__already_summarized.add(function_addr)
+
+    def __handleInvoke(self, invoke:KApply) -> Decision:
+        assert invoke.label.name == '(invoke_)_WASM_Instr_Int'
+        assert invoke.arity == 1
+        value = invoke.args[0]
+        assert isinstance(value, KToken), value
+        id = int(value.token)
+        if self.__isElrondFunction(id):
+            assert id in IMPLEMENTED_ELROND_FUNCTIONS
+            return Continue()
+        if id == self.__executing_addr:
+            return Continue()
+        assert id in self.__already_summarized
+        assert False, f'Claim not applied for summarized function: {id}, {self.__functionName(id)}'
 
     def __handleCall(self, call:KApply) -> Decision:
         assert call.label.name == 'aCall'

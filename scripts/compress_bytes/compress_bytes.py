@@ -362,6 +362,7 @@ def makeClaim(term:KInner, address:str, functions:Functions) -> KClaim:
     (call, stack, constraint) = generateSymbolicFunctionCall(function)
     lhs = replaceChild(term, '<instrs>', call)
     lhs = replaceChild(lhs, '<valstack>', stack)
+    lhs = replaceChild(lhs, '<mdata>', KVariable('MyMdata', sort=BYTES))
     rewrite = makeRewrite(lhs, term)
     writeJson(rewrite, ROOT / 'tmp' / 'rewrite.json')
     return (lhs, KClaim(body=rewrite, requires=constraint))
@@ -480,14 +481,16 @@ def myStep(explorer:LazyExplorer, cfg:KCFG, node_id:str):
     #     cfg.create_edge(new_node.id, edge.target.id, condition=mlTop(), depth=(edge.depth - depth))
     return next_ids
 
-def myStepLogging(explorer:LazyExplorer, kcfg:KCFG, node_id:str):
-    prev_config = kcfg.node(node_id).cterm.config
+def myStepLogging(explorer:LazyExplorer, kcfg:KCFG, node_id:str, branches:int):
+    prev_cterm = kcfg.node(node_id).cterm
+    prev_config = prev_cterm.config
     # prev_config = replaceBytes(prev_config)
     new_node_ids = myStep(explorer=explorer, cfg=kcfg, node_id=node_id)
     first = True
-    print([node_id], '->', new_node_ids)
+    print([node_id], '->', new_node_ids, f'{branches - 1} branches left')
     for new_node_id in new_node_ids:
-        config = kcfg.node(new_node_id).cterm.config
+        new_cterm = kcfg.node(new_node_id).cterm
+        config = new_cterm.config
 
         diff = makeRewrite(prev_config, config)
         if not first:
@@ -500,6 +503,11 @@ def myStepLogging(explorer:LazyExplorer, kcfg:KCFG, node_id:str):
             pretty = explorer.printer().pretty_print(child)
             print(pretty)
             print()
+
+        for c in new_cterm.constraints:
+            if c != TRUE and not c in prev_cterm.constraints:
+                pretty = explorer.printer().pretty_print(ml_pred_to_bool(c))
+                print('requires:', pretty)
     print('=' * 80, flush=True)
     return new_node_ids
 
@@ -536,7 +544,7 @@ def executeFunction(
         lhs_id = node_ids[0]
         rhs_ids = []
         while node_ids:
-            new_node_ids = myStepLogging(explorer, kcfg, node_ids[-1])
+            new_node_ids = myStepLogging(explorer, kcfg, node_ids[-1], len(node_ids))
             node_ids.pop()
             for node_id in reversed(new_node_ids):
                 decision = execution_decision.decideConfiguration(kcfg, node_id)
@@ -565,6 +573,7 @@ def executeFunctionWithRules(
         execution_decision:execution.ExecutionManager,
     ) -> List[KRule]:
     with LazyExplorer(rules, state_path / 'summaries' / function_addr, printer) as explorer:
+        execution_decision.startFunction(int(function_addr))
         new_rules = executeFunction(
             function_addr, term, functions, explorer, state_path, execution_decision
         )
@@ -598,12 +607,12 @@ def main():
     rules = executeFunctionWithRules('11', rules, term, functions, printer, data_path, execution_decision)
     rules = executeFunctionWithRules('12', rules, term, functions, printer, data_path, execution_decision)
     rules = executeFunctionWithRules('16', rules, term, functions, printer, data_path, execution_decision)
-    # References
-    rules = executeFunctionWithRules('15', rules, term, functions, printer, data_path, execution_decision)
-        # executeFunctionWithRules('14', rules, term, functions, printer, data_path, execution_decision)
-        # executeFunctionWithRules('9', rules, term, functions, printer, data_path, execution_decision)
+    # # References
+    # rules = executeFunctionWithRules('14', rules, term, functions, printer, data_path, execution_decision)
+    # rules = executeFunctionWithRules('9', rules, term, functions, printer, data_path, execution_decision)
         # executeFunctionWithRules('8', rules, term, functions, printer, data_path, execution_decision)
         # executeFunctionWithRules('10', rules, term, functions, printer, data_path, execution_decision)
+        # rules = executeFunctionWithRules('15', rules, term, functions, printer, data_path, execution_decision)
         # Loop
         # executeFunctionWithRules('13', rules, term, functions, printer, data_path, execution_decision)
     #   print(config)

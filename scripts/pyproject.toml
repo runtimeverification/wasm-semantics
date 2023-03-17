@@ -8,8 +8,8 @@ packages = [{include = "compress_bytes"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pyk = { git = "https://github.com/runtimeverification/pyk.git", tag = "v0.1.151" }
-# pyk = { path = "/mnt/data/runtime-verification/pyk", develop = true }
+# pyk = { git = "https://github.com/runtimeverification/pyk.git", tag = "v0.1.151" }
+pyk = { path = "/mnt/data/runtime-verification/pyk", develop = true }
 
 
 [build-system]

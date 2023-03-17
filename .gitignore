@@ -7,6 +7,9 @@ tmp
 .sessionCommands
 kore-rpc.tar.gz
 
+data/functions
+data/summaries/*/*
+
 *.pdf
 *.sty
 
