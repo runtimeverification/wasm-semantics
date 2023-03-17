@@ -20,22 +20,22 @@ class WasmFunction:
         self.__has_instructions = has_instructions
         self.__address = address
 
-    def argumentTypesList(self):
+    def argumentTypesList(self) -> List[ValType]:
         return self.__type.argumentTypesList()
     
-    def address(self):
+    def address(self) -> str:
         return self.__address
 
-    def name(self):
+    def name(self) -> str:
         return self.__name
 
-    def is_builtin(self):
+    def is_builtin(self) -> bool:
         return self.__is_builtin
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'WasmFunction(name={repr(self.__name)}, ftype={repr(self.__type)}, is_builtin={repr(self.__is_builtin)}, has_instructions={self.__has_instructions}, address={repr(self.__address)})'
 
 class Functions:
@@ -52,10 +52,10 @@ class Functions:
     def addrToFunction(self, addr:str) -> WasmFunction:
         return self.__addr_to_def[addr]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'Functions(name_to_id={repr(self.__name_to_id)}, id_to_addr={repr(self.__id_to_addr)}, id_to_type={repr(self.__id_to_type)}, addr_to_def={repr(self.__addr_to_def)})'
 
 
@@ -79,7 +79,7 @@ def isElrondTrap(term:KInner) -> bool:
     return term.label.name == 'elrond_trap'
 
 
-def loadValType(term:KInner) -> List[ValType]:
+def loadValType(term:KInner) -> ValType:
     assert isinstance(term, KApply), term
     if term.label.name == 'i32':
         assert term.arity == 0, term
@@ -101,7 +101,7 @@ def loadVecType(term:KInner) -> VecType:
     assert term.arity == 1, term
     term = term.args[0]
 
-    types = []
+    types:List[ValType] = []
     while True:
         assert isinstance(term, KApply), term
         if term.label.name == '.List{"listValTypes"}_ValTypes':
@@ -178,9 +178,9 @@ def loadFunctionsFromStore(term:KInner) -> Dict[str, WasmFunction]:
     assert isinstance(term, KApply), term
     assert term.label.name == '<funcs>', term
     assert term.arity == 1
-    funcs = []
+    funcs:List[KInner] = []
     functionMapToList(term.args[0], funcs)
-    func_addr_to_def = {}
+    func_addr_to_def:Dict[str, WasmFunction] = {}
     for kfunc_def in funcs:
         assert isinstance(kfunc_def, KApply), kfunc_def
         assert kfunc_def.label.name == '<funcDef>', kfunc_def
@@ -191,7 +191,6 @@ def loadFunctionsFromStore(term:KInner) -> Dict[str, WasmFunction]:
 
 def findFunctions(term:KInner) -> Functions:
     kwasm = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>')])
-    assert kwasm is not None, [term.args[0].label.name, term.args[0].args[1].label.name]
     kmodule_instances = getInner(kwasm, 5, '<moduleInstances>')
     assert isinstance(kmodule_instances, KApply), kmodule_instances
     assert len(kmodule_instances.args) == 1, kmodule_instances

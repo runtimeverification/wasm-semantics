@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import fileinput
+from typing import List
 
-def isIdentifierChar(c):
+def isIdentifierChar(c:str) -> bool:
     return c.isalpha() or c.isdigit() or c in '$#_\''
 
 class BytesCompressor:
@@ -19,12 +20,12 @@ class BytesCompressor:
     , BYTES_QUOTE
     ) = range(0, 11)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__state = BytesCompressor.START
 
-    def addLine(self, line):
+    def addLine(self, line:str) -> List[str]:
         line_chunks = []
-        def startTransition(c):
+        def startTransition(c:str) -> int:
             if c == '/':
                 return BytesCompressor.SLASH
             elif c == '"':
@@ -120,11 +121,11 @@ class BytesCompressor:
         line_chunks.append(line[start:])
         return [''.join(line_chunks)]
     
-    def end(self):
+    def end(self) -> List[str]:
         assert self.__state == BytesCompressor.START, self.__state
         return []
 
-    def __filterBytes(self, bytes, line_chunks):
+    def __filterBytes(self, bytes:str, line_chunks:List[str]) -> None:
         start = bytes.find('\\x00', 0)
         if start < 0:
             line_chunks.append('b"')
@@ -165,7 +166,7 @@ class BytesCompressor:
             line_chunks.append(bytes[start:end])
             line_chunks.append('" )')
 
-def main():
+def main() -> None:
     filter = BytesCompressor()
     for line in fileinput.input():
         for l in filter.addLine(line.rstrip()):

@@ -2,7 +2,7 @@
 
 import fileinput
 
-def main():
+def main() -> None:
     for line in fileinput.input():
         line = line.replace('$', '$#')
         print(line.rstrip())

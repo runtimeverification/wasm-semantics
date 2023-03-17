@@ -4,10 +4,10 @@ class ValType:
     def __init__(self, ktype:int) -> None:
         self.__type = ktype
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self == ValType.I32:
             return 'ValType.I32'
         if self == ValType.I64:
@@ -16,6 +16,7 @@ class ValType:
             return 'ValType.F32'
         if self == ValType.F64:
             return 'ValType.F64'
+        assert False, self
 
 class ValType:
     (I32, I64, F32, F64) = (ValType(i) for i in range(0, 4))
@@ -27,10 +28,10 @@ class VecType:
     def types(self) -> List[ValType]:
         return self.__types
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self)
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'VecType(types={repr(self.__types)})'
 
 class FuncType:

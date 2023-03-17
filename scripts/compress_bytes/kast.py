@@ -71,7 +71,7 @@ def loadMapFromChild(term:KInner, value_loader:Callable[[KInner], V]) -> Dict[st
     assert isinstance(term, KApply), term
     assert len(term.args) == 1, term
     kdict = term.args[0]
-    retv = {}
+    retv:Dict[str, V] = {}
     loadMap(kdict, value_loader, retv)
     return retv
 

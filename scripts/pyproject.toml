@@ -8,10 +8,19 @@ packages = [{include = "compress_bytes"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-# pyk = { git = "https://github.com/runtimeverification/pyk.git", tag = "v0.1.151" }
-pyk = { path = "/mnt/data/runtime-verification/pyk", develop = true }
+pyk = { git = "https://github.com/runtimeverification/pyk.git", tag = "v0.1.182" }
+# pyk = { path = "/mnt/data/runtime-verification/pyk", develop = true }
 
+[tool.poetry.group.dev.dependencies]
+mypy = "*"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "graphviz"
+ignore_missing_imports = true

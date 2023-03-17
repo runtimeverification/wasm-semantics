@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Set
 
 from pyk.kast.inner import (
     KInner,
@@ -36,6 +37,11 @@ class UnsummarizedFunction(Decision):
     function_id: int
     function_name: str
 
+@dataclass(frozen=True)
+class ClaimNotAppliedForSummarizedFunction(Decision):
+    function_id: int
+    function_name: str
+
 IMPLEMENTED_ELROND_FUNCTIONS = [
     2,  # smallIntGetUnsignedArgument
     3,  # getNumArguments
@@ -45,7 +51,7 @@ IMPLEMENTED_ELROND_FUNCTIONS = [
 
 class ExecutionManager:
     def __init__(self, functions:Functions) -> None:
-        self.__already_summarized = set()
+        self.__already_summarized:Set[int] = set()
         self.__functions = functions
         self.__executing_addr = -1
         pass
@@ -91,7 +97,7 @@ class ExecutionManager:
         if id == self.__executing_addr:
             return Continue()
         assert id in self.__already_summarized
-        assert False, f'Claim not applied for summarized function: {id}, {self.__functionName(id)}'
+        return ClaimNotAppliedForSummarizedFunction(id, self.__functionName(id))
 
     def __handleCall(self, call:KApply) -> Decision:
         assert call.label.name == 'aCall'
@@ -115,6 +121,7 @@ class ExecutionManager:
 
 def getInstrsChild(term:KInner) -> KInner:
     instrs = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>'), (0, '<instrs>')])
+    assert isinstance(instrs, KApply)
     assert instrs.arity == 1, instrs
     return instrs.args[0]
 

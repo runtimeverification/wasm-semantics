@@ -2,7 +2,7 @@
 
 import fileinput
 
-def main():
+def main() -> None:
     for line in fileinput.input():
         if '|->' in line:
             idx = 0
