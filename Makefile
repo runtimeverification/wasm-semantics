@@ -213,7 +213,10 @@ tests/%.wasm.bparse: tests/%.wasm pykwasm-poetry-install
 
 binary_parser_tests:=$(wildcard tests/binary/*.wat)
 
-test-binary-parser: $(binary_parser_tests:.wat=.wasm.bparse)
+test-binary-parser: $(binary_parser_tests:.wat=.wasm.bparse) test-kwasm-ast
+
+test-kwasm-ast: pykwasm-poetry-install
+	poetry -C pykwasm run pytest binary-parser/test_kwasm_ast.py
 
 # Analysis
 # --------
