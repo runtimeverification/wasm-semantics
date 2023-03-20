@@ -7,11 +7,12 @@ import subprocess
 import sys
 
 from contextlib import closing
+from dataclasses import dataclass
 import json
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
 import tempfile
 from pathlib import Path
-from typing import Any, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Iterable, List, Mapping, Optional, Set, Tuple
 
 from pyk.cterm import CTerm
 from pyk.kast.inner import (
@@ -26,7 +27,18 @@ from pyk.kast.inner import (
     bottom_up)
 from pyk.cli_utils import BugReport
 from pyk.kast.manip import push_down_rewrites, ml_pred_to_bool
-from pyk.kast.outer import KAtt, KClaim, KDefinition, KFlatModule, KImport, KRequire, KRule, KSentence
+from pyk.kast.outer import (
+    KAtt,
+    KClaim,
+    KDefinition,
+    KFlatModule,
+    KImport,
+    KProduction,
+    KRequire,
+    KRule,
+    KSentence,
+    KTerminal,
+    )
 from pyk.kcfg import KCFG, KCFGExplore
 from pyk.ktool.kprint import KPrint, SymbolTable
 from pyk.ktool.kprove import KProve
@@ -51,6 +63,11 @@ sys.setrecursionlimit(2000)
 ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
 DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
 GENERATED_RULE_PRIORITY = 20
+MAP = KSort('Map')
+
+@dataclass(frozen=True)
+class Identifiers:
+    sort_to_ids: Mapping[KSort, Set[KToken]]
 
 class MyKPrint(KPrint):
     def __init__(
@@ -68,8 +85,9 @@ class MyKPrint(KPrint):
 
 
 class LazyExplorer:
-    def __init__(self, rules:List[KRule], data_folder:Path, printer:KPrint):
+    def __init__(self, rules:List[KRule], identifiers:Identifiers, data_folder:Path, printer:KPrint):
         self.__rules = rules
+        self.__identifiers = identifiers
         self.__summary_folder = data_folder
         self.__printer = printer
         self.__explorer:Optional[KCFGExplore] = None
@@ -96,13 +114,29 @@ class LazyExplorer:
         return self.__printer
 
     def __makeSemantics(self) -> None:
+        identifier_sentences = [
+            KProduction(
+                sort=sort,
+                items=[KTerminal(token.token)],
+                att=KAtt({'token': ''})
+            )
+            for sort, tokens in self.__identifiers.sort_to_ids.items()
+            for token in tokens
+        ]
+        identifiers_module = KFlatModule('IDENTIFIERS', sentences=identifier_sentences)
+
         req = KRequire('elrond-impl.md')
-        im = KImport('ELROND-IMPL')
-        module = KFlatModule('SUMMARIES', sentences=self.__rules, imports=[im])
-        definition = KDefinition('SUMMARIES', all_modules=[module], requires=[req])
+        ims = [KImport('ELROND-IMPL'), KImport('IDENTIFIERS')]
+        summaries_module = KFlatModule('SUMMARIES', sentences=self.__rules, imports=ims)
+
+        definition = KDefinition(
+            'SUMMARIES',
+            all_modules=[identifiers_module, summaries_module],
+            requires=[req]
+        )
 
         definition_text = self.__printer.pretty_print(definition)
-        definition_text = definition_text.replace('$', '$#')
+        # definition_text = definition_text.replace('$', '$#')
 
         self.__summary_folder.mkdir(parents=True, exist_ok=True)
         (self.__summary_folder / 'summaries.k').write_text(definition_text)
@@ -444,6 +478,7 @@ def myStep(explorer:LazyExplorer, cfg:KCFG, node_id:str) -> List[str]:
     out_edges = cfg.edges(source_id=node.id)
     if len(out_edges) > 0:
         return [edge.target.id for edge in out_edges]
+    print('Executing!')
     actual_depth, cterm, next_cterms = explorer.get().cterm_execute(node.cterm, depth=1)
     if actual_depth == 0:
         if len(next_cterms) < 2:
@@ -526,6 +561,11 @@ def executeFunction(
         (_, claim) = makeClaim(term, function_addr, functions)
         kcfg = KCFG.from_claim(explorer.printer().definition, claim)
 
+    debug = kcfg.get_node('5ed703b43f6a926917b8babf33cfd11ccaf598f21af1ec17c54188eb85a658d8')
+    if debug:
+        kcfg.remove_edge('eeb87fa176721aa9c71454756dff6396ed12505f24ed58cb26ce0ed2c182a473', '5ed703b43f6a926917b8babf33cfd11ccaf598f21af1ec17c54188eb85a658d8')
+        kcfg.remove_node(debug.id)
+
     try:
         first_node_id = kcfg.get_unique_init().id
         node_ids = myStep(explorer, kcfg, first_node_id)
@@ -535,7 +575,7 @@ def executeFunction(
         while node_ids:
             current_node_id = node_ids[-1]
             node_ids.pop()
-            new_node_ids = myStepLogging(explorer, kcfg, current_node_id, len(node_ids))
+            new_node_ids = myStepLogging(explorer, kcfg, current_node_id, len(node_ids) + 1)
             for node_id in reversed(new_node_ids):
                 decision = execution_decision.decideConfiguration(kcfg, node_id)
                 if isinstance(decision, execution.Finish):
@@ -550,7 +590,9 @@ def executeFunction(
                 elif isinstance(decision, execution.Continue):
                     node_ids.append(node_id)
                 elif isinstance(decision, execution.ClaimNotAppliedForSummarizedFunction):
-                    printKoreCfg(current_node_id, kcfg, explorer.printer())
+                    # rule = makeFinalRule(current_node_id, node_id, kcfg)
+                    # print(explorer.printer().pretty_print(rule))
+                    # printKoreCfg(current_node_id, kcfg, explorer.printer())
                     raise ValueError(repr(decision))
                 else:
                     assert False, decision
@@ -563,11 +605,12 @@ def executeFunctionWithRules(
         rules:List[KRule],
         term:KInner,
         functions:Functions,
+        identifiers:Identifiers,
         printer:KPrint,
         state_path:Path,
         execution_decision:execution.ExecutionManager,
     ) -> List[KRule]:
-    with LazyExplorer(rules, state_path / 'summaries' / function_addr, printer) as explorer:
+    with LazyExplorer(rules, identifiers, state_path / 'summaries' / function_addr, printer) as explorer:
         execution_decision.startFunction(int(function_addr))
         new_rules = executeFunction(
             function_addr, term, functions, explorer, state_path, execution_decision
@@ -575,6 +618,24 @@ def executeFunctionWithRules(
     execution_decision.finishFunction(int(function_addr))
     return rules + new_rules
 
+def findIdentifiers(term:KInner) -> Identifiers:
+    def maybe_identifier(term_:KInner) -> Optional[Mapping[KSort, Set[KToken]]]:
+        if isinstance(term_, KToken):
+            if term_.sort.name in ['IdentifierToken']:
+                return {term_.sort : {term_}}
+        return None
+    def merge_dicts(
+            first:Mapping[KSort, Set[KToken]],
+            second:Mapping[KSort, Set[KToken]]
+        ) -> Mapping[KSort, Set[KToken]]:
+        result = dict(first)
+        for key, value in second.items():
+            if key in result:
+                result[key] |= value
+            else:
+                result[key] = value
+        return result
+    return Identifiers(kinner_top_down_fold(maybe_identifier, merge_dicts, {}, term))
 
 def main() -> None:
     # logging.basicConfig()
@@ -593,23 +654,28 @@ def main() -> None:
         # print(term.constraints)
         config = replaceBytes(term)
         writeJson(config, bytes_output_file)
+
     term = loadJson(bytes_output_file)
+    identifiers = findIdentifiers(term)
     functions = findFunctions(term)
+    term = replaceChild(term, '<exports>', KVariable('MyExports', sort=MAP))
+    # TODO: replace global data with variables.
+    
     printer = MyKPrint(DEFINITION_DIR)
     execution_decision = execution.ExecutionManager(functions)
 
     rules:List[KRule] = []
-    rules = executeFunctionWithRules('11', rules, term, functions, printer, data_path, execution_decision)
-    rules = executeFunctionWithRules('12', rules, term, functions, printer, data_path, execution_decision)
-    rules = executeFunctionWithRules('16', rules, term, functions, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('11', rules, term, functions, identifiers, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('12', rules, term, functions, identifiers, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('16', rules, term, functions, identifiers, printer, data_path, execution_decision)
     # # References
-    rules = executeFunctionWithRules('14', rules, term, functions, printer, data_path, execution_decision)
-    # rules = executeFunctionWithRules('9', rules, term, functions, printer, data_path, execution_decision)
-        # executeFunctionWithRules('8', rules, term, functions, printer, data_path, execution_decision)
-        # executeFunctionWithRules('10', rules, term, functions, printer, data_path, execution_decision)
-        # rules = executeFunctionWithRules('15', rules, term, functions, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('14', rules, term, functions, identifiers, printer, data_path, execution_decision)
+    # rules = executeFunctionWithRules('9', rules, term, functions, identifiers, printer, data_path, execution_decision)
+        # executeFunctionWithRules('8', rules, term, functions, identifiers, printer, data_path, execution_decision)
+        # executeFunctionWithRules('10', rules, term, functions, identifiers, printer, data_path, execution_decision)
+        # rules = executeFunctionWithRules('15', rules, term, functions, identifiers, printer, data_path, execution_decision)
         # Loop
-        # executeFunctionWithRules('13', rules, term, functions, printer, data_path, execution_decision)
+        # executeFunctionWithRules('13', rules, term, functions, identifiers, printer, data_path, execution_decision)
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 
