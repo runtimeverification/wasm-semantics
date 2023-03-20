@@ -61,7 +61,14 @@ from .types import (ValType)
 sys.setrecursionlimit(2000)
 
 ROOT = Path('/mnt/data/runtime-verification/wasm-semantics')
-DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
+BUILD_DIR = ROOT / '.build'
+DEFINITION_PARENT = BUILD_DIR / 'defn/haskell'
+DEFINITION_DIR = DEFINITION_PARENT / 'elrond-wasm-kompiled'
+DATA_DIR = BUILD_DIR / 'data'
+JSON_DIR = DATA_DIR / 'json'
+SUMMARIES_DIR = DATA_DIR / 'summaries'
+DEFAULT_SUMMARIES_DIR = ROOT / 'summaries'
+
 GENERATED_RULE_PRIORITY = 20
 MAP = KSort('Map')
 
@@ -143,15 +150,27 @@ class LazyExplorer:
 
         self.__summary_folder.mkdir(parents=True, exist_ok=True)
         (self.__summary_folder / 'summaries.k').write_text(definition_text)
-        my_env = os.environ.copy()
-        my_env['SUMMARIES'] = str(self.__summary_folder)
-        result = subprocess.run(
-            ['make', 'clean'], cwd=str(ROOT), env=my_env
-        )
-        result = subprocess.run(
-            ['make', 'build-haskell'], cwd=str(ROOT), env=my_env
-        )
-        assert result.returncode == 0
+
+        kompileSemantics(self.__summary_folder)
+
+def kompileSemantics(summary_folder:Optional[Path]) -> None:
+    result = subprocess.run(
+        ['rm', '-r', DEFINITION_DIR]
+    )
+    args = [ 'kompile'
+        , '--backend', 'haskell'
+        , '--md-selector', 'k'
+        , '--emit-json'
+        , '-I', str(summary_folder) if summary_folder else str(DEFAULT_SUMMARIES_DIR)
+        , '-I', str(ROOT)
+        , '--directory', str(DEFINITION_PARENT)
+        , '--main-module', 'ELROND-WASM'
+        , '--syntax-module', 'ELROND-WASM-SYNTAX'
+        , str(ROOT / 'elrond-wasm.md')
+        ]
+    print('Running:', ' '.join(args))
+    result = subprocess.run(args)
+    assert result.returncode == 0
 
 def findRewrites(term:KInner) -> List[KRewrite]:
     def maybe_rewrite(term:KInner) -> Optional[List[KRewrite]]:
@@ -263,6 +282,7 @@ def krun(input_file: Path, output_file:Path) -> None:
         definition_dir=DEFINITION_DIR,
         output=KRunOutput.JSON
     )
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     output_file.write_text(result.stdout)
 
 def loadJsonDict(input_file:Path) -> Mapping[str, Any]:
@@ -421,7 +441,7 @@ def buildRewriteRequires(lhs_id:str, rhs_id:str, kcfg:KCFG) -> Tuple[KInner, KIn
     lhs_config = unpackBytes(lhs_node.cterm.config)
     rhs_config = unpackBytes(rhs_node.cterm.config)
     rewrite = makeRewrite(lhs_config, rhs_config)
-    rewrite = getInner(rewrite, 0, '<wasm-test>')
+    rewrite = getInner(rewrite, 0, '<elrond-wasm>')
     rewrite = getInner(rewrite, 1, '<wasm>')
     requires = [c for c in lhs_node.cterm.constraints if c != TRUE]
     for c in rhs_node.cterm.constraints:
@@ -615,7 +635,7 @@ def executeFunctionWithRules(
         state_path:Path,
         execution_decision:execution.ExecutionManager,
     ) -> List[KRule]:
-    with LazyExplorer(rules, identifiers, state_path / 'summaries' / function_addr, printer) as explorer:
+    with LazyExplorer(rules, identifiers, SUMMARIES_DIR / function_addr, printer) as explorer:
         execution_decision.startFunction(int(function_addr))
         new_rules = executeFunction(
             function_addr, term, functions, explorer, state_path, execution_decision
@@ -648,10 +668,11 @@ def main() -> None:
     # logging.basicConfig()
     # logging.getLogger().setLevel(logging.DEBUG)
 
-    krun_output_file = ROOT / 'tmp' / 'krun.json'
-    bytes_output_file = ROOT / 'tmp' / 'bytes.json'
+    kompileSemantics(None)
+
+    krun_output_file = JSON_DIR / 'krun.json'
+    bytes_output_file = JSON_DIR / 'bytes.json'
     input_file = ROOT / 'tmp' / 'sum-to-n.wat'
-    data_path = ROOT / 'data'
     if not bytes_output_file.exists():
         if not krun_output_file.exists():
             krun(input_file, krun_output_file)
@@ -674,17 +695,17 @@ def main() -> None:
     execution_decision = execution.ExecutionManager(functions)
 
     rules:List[KRule] = []
-    rules = executeFunctionWithRules('11', rules, term, functions, identifiers, printer, data_path, execution_decision)
-    rules = executeFunctionWithRules('12', rules, term, functions, identifiers, printer, data_path, execution_decision)
-    rules = executeFunctionWithRules('16', rules, term, functions, identifiers, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('11', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
+    rules = executeFunctionWithRules('12', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
+    rules = executeFunctionWithRules('16', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
     # # References
-    rules = executeFunctionWithRules('14', rules, term, functions, identifiers, printer, data_path, execution_decision)
-    rules = executeFunctionWithRules('9', rules, term, functions, identifiers, printer, data_path, execution_decision)
-        # executeFunctionWithRules('8', rules, term, functions, identifiers, printer, data_path, execution_decision)
-        # executeFunctionWithRules('10', rules, term, functions, identifiers, printer, data_path, execution_decision)
-        # rules = executeFunctionWithRules('15', rules, term, functions, identifiers, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('14', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
+    rules = executeFunctionWithRules('9', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
+        # executeFunctionWithRules('8', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
+        # executeFunctionWithRules('10', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
+        # rules = executeFunctionWithRules('15', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
         # Loop
-        # executeFunctionWithRules('13', rules, term, functions, identifiers, printer, data_path, execution_decision)
+        # executeFunctionWithRules('13', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
     #   print(config)
     # d['result']['state']['term']['term'] - kore term
     # 

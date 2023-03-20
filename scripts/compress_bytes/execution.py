@@ -120,7 +120,7 @@ class ExecutionManager:
         return self.__functions.addrToFunction(str(id)).is_builtin()
 
 def getInstrsChild(term:KInner) -> KInner:
-    instrs = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>'), (0, '<instrs>')])
+    instrs = getInnerPath(term, [(0, '<elrond-wasm>'), (1, '<wasm>'), (0, '<instrs>')])
     assert isinstance(instrs, KApply)
     assert instrs.arity == 1, instrs
     return instrs.args[0]

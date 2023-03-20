@@ -86,7 +86,6 @@ module WASM-TEST
     imports WASM-REFERENCE-INTERPRETER-SYNTAX
     imports WASM-AUXIL
     imports WASM-TEXT
-    imports ELROND
 ```
 
 Configuration

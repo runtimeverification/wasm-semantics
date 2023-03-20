@@ -1,8 +1,13 @@
 ```k
+require "elrond-configuration.md"
 require "wasm-text.md"
 
 module ELROND-IMPL
+  imports ELROND-CONFIGURATION
   imports WASM-TEXT
+
+  syntax Intw ::= wrap(Int)
+  syntax Bytesw ::= wrap(Bytes)
 
   syntax Instr ::= "elrond_trap" "(" String ")"  [klabel(elrond_trap), symbol]
 
@@ -43,6 +48,25 @@ module ELROND-IMPL
           elrond_trap("\"checkNoPayment\"") => elrondError
           ...
         </instrs>
+
+  rule  <wasm>
+            <instrs>
+              elrond_trap("\"mBufferSetBytes\"") => .K
+              ...
+            </instrs>
+            <valstack>
+                <i32> Len:Int : <i32> Ptr:Int : <i32> Handle:Int : .ValStack
+            </valstack>
+            <mdata> Mem:Bytes </mdata>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                M:MapIntwToBytesw
+                => M[wrap(Handle) <- wrap(substrBytes(Mem, Ptr, Ptr +Int Len))]
+            </buffers>
+        </elrond>
+    requires #Ceil(substrBytes (Mem, Ptr, Ptr +Int Len))
 
   rule <instrs>
           #import(MOD, Name, #funcDesc(... id: OID, type: TIDX))

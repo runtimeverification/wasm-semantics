@@ -190,7 +190,7 @@ def loadFunctionsFromStore(term:KInner) -> Dict[str, WasmFunction]:
 
 
 def findFunctions(term:KInner) -> Functions:
-    kwasm = getInnerPath(term, [(0, '<wasm-test>'), (1, '<wasm>')])
+    kwasm = getInnerPath(term, [(0, '<elrond-wasm>'), (1, '<wasm>')])
     kmodule_instances = getInner(kwasm, 5, '<moduleInstances>')
     assert isinstance(kmodule_instances, KApply), kmodule_instances
     assert len(kmodule_instances.args) == 1, kmodule_instances
