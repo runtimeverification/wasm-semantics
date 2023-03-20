@@ -65,6 +65,8 @@ DEFINITION_DIR = ROOT / '.build/defn/haskell/test-kompiled'
 GENERATED_RULE_PRIORITY = 20
 MAP = KSort('Map')
 
+DEBUG_ID = '' # 'c61765c6271ee4683c48d3b4450abbba1ce4c38e6b18d8c3d0a34c1b09c50cbb'
+
 @dataclass(frozen=True)
 class Identifiers:
     sort_to_ids: Mapping[KSort, Set[KToken]]
@@ -104,7 +106,8 @@ class LazyExplorer:
 
     def get(self) -> KCFGExplore:
         if self.__explorer is None:
-            self.__makeSemantics()
+            if not DEBUG_ID:
+                self.__makeSemantics()
             temp_dir = tempfile.TemporaryDirectory(prefix='kprove')
             kprove = makeKProve(temp_dir)
             self.__explorer = makeExplorer(kprove)
@@ -407,6 +410,7 @@ def makeClaim(term:KInner, address:str, functions:Functions) -> Tuple[KInner, KC
     lhs = replaceChild(term, '<instrs>', call)
     lhs = replaceChild(lhs, '<valstack>', stack)
     lhs = replaceChild(lhs, '<mdata>', KVariable('MyMdata', sort=BYTES))
+    lhs = replaceChild(lhs, '<locals>', KVariable('MyLocals', sort=MAP))
     rewrite = makeRewrite(lhs, term)
     writeJson(rewrite, ROOT / 'tmp' / 'rewrite.json')
     return (lhs, KClaim(body=rewrite, requires=constraint))
@@ -561,10 +565,11 @@ def executeFunction(
         (_, claim) = makeClaim(term, function_addr, functions)
         kcfg = KCFG.from_claim(explorer.printer().definition, claim)
 
-    debug = kcfg.get_node('5ed703b43f6a926917b8babf33cfd11ccaf598f21af1ec17c54188eb85a658d8')
+    debug = kcfg.get_node(DEBUG_ID)
     if debug:
-        kcfg.remove_edge('eeb87fa176721aa9c71454756dff6396ed12505f24ed58cb26ce0ed2c182a473', '5ed703b43f6a926917b8babf33cfd11ccaf598f21af1ec17c54188eb85a658d8')
-        kcfg.remove_node(debug.id)
+        for e in kcfg.edges(source_id = debug.id):
+            kcfg.remove_edge(e.source.id, e.target.id)
+            kcfg.remove_node(e.target.id)
 
     try:
         first_node_id = kcfg.get_unique_init().id
@@ -616,6 +621,8 @@ def executeFunctionWithRules(
             function_addr, term, functions, explorer, state_path, execution_decision
         )
     execution_decision.finishFunction(int(function_addr))
+    for r in new_rules:
+        assert '"callBack' not in str(r)
     return rules + new_rules
 
 def findIdentifiers(term:KInner) -> Identifiers:
@@ -658,7 +665,9 @@ def main() -> None:
     term = loadJson(bytes_output_file)
     identifiers = findIdentifiers(term)
     functions = findFunctions(term)
+    assert '"callBack' in str(term), [str(term)]
     term = replaceChild(term, '<exports>', KVariable('MyExports', sort=MAP))
+    assert not '"callBack' in str(term)
     # TODO: replace global data with variables.
     
     printer = MyKPrint(DEFINITION_DIR)
@@ -670,7 +679,7 @@ def main() -> None:
     rules = executeFunctionWithRules('16', rules, term, functions, identifiers, printer, data_path, execution_decision)
     # # References
     rules = executeFunctionWithRules('14', rules, term, functions, identifiers, printer, data_path, execution_decision)
-    # rules = executeFunctionWithRules('9', rules, term, functions, identifiers, printer, data_path, execution_decision)
+    rules = executeFunctionWithRules('9', rules, term, functions, identifiers, printer, data_path, execution_decision)
         # executeFunctionWithRules('8', rules, term, functions, identifiers, printer, data_path, execution_decision)
         # executeFunctionWithRules('10', rules, term, functions, identifiers, printer, data_path, execution_decision)
         # rules = executeFunctionWithRules('15', rules, term, functions, identifiers, printer, data_path, execution_decision)
