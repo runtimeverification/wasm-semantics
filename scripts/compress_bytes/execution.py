@@ -46,6 +46,7 @@ IMPLEMENTED_ELROND_FUNCTIONS = [
     2,  # smallIntGetUnsignedArgument
     3,  # getNumArguments
     4,  # signalError
+    5,  # mBufferSetBytes
     6,  # checkNoPayment
 ]
 

@@ -54,9 +54,12 @@ module ELROND-IMPL
               elrond_trap("\"mBufferSetBytes\"") => .K
               ...
             </instrs>
-            <valstack>
-                <i32> Len:Int : <i32> Ptr:Int : <i32> Handle:Int : .ValStack
-            </valstack>
+            <locals>
+                (0 |-> <i32> Handle:Int)
+                (1 |-> <i32> Ptr:Int)
+                (2 |-> <i32> Len:Int)
+            </locals>
+            <valstack> S:ValStack => <i32> ?_MBufferSetBytesResult:Int : S </valstack>
             <mdata> Mem:Bytes </mdata>
             ...
         </wasm>
@@ -66,7 +69,7 @@ module ELROND-IMPL
                 => M[wrap(Handle) <- wrap(substrBytes(Mem, Ptr, Ptr +Int Len))]
             </buffers>
         </elrond>
-    requires #Ceil(substrBytes (Mem, Ptr, Ptr +Int Len))
+    requires true #And #Ceil(substrBytes(Mem, Ptr, Ptr +Int Len))
 
   rule <instrs>
           #import(MOD, Name, #funcDesc(... id: OID, type: TIDX))
@@ -78,7 +81,6 @@ module ELROND-IMPL
     requires MOD ==K #token("\"env\"", "WasmStringToken")
 
   // syntax IdentifierToken ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
-  syntax IdentifierToken ::= r"\\$#[0-9a-zA-Z!$#%&'*+/<>?_`|~=:\\@^.-]+" [token]
   // syntax  ::= "$__stack_pointer" [token]
 endmodule
 ```

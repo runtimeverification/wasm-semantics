@@ -42,6 +42,9 @@ module ELROND-LEMMAS
   rule lengthBytes(padRightBytes(B:Bytes, Length:Int, _Value:Int))
       => maxInt(lengthBytes(B:Bytes), Length:Int)
       [simplification]
+  rule lengthBytes(replaceAtBytes(Dest:Bytes, _Index:Int, _Src:Bytes) #as _Ceil)
+      => lengthBytes(Dest)
+      [simplification]
   rule 0 <=Int lengthBytes(_:Bytes) => true  [simplification]
 
   rule A:Int <=Int maxInt(B:Int, C:Int) => true

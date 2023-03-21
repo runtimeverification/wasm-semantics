@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import logging
 import operator
-import os
 import subprocess
 import sys
 
@@ -36,7 +34,6 @@ from pyk.kast.outer import (
     KProduction,
     KRequire,
     KRule,
-    KSentence,
     KTerminal,
     )
 from pyk.kcfg import KCFG, KCFGExplore
@@ -168,7 +165,7 @@ def kompileSemantics(summary_folder:Optional[Path]) -> None:
         , '--syntax-module', 'ELROND-WASM-SYNTAX'
         , str(ROOT / 'elrond-wasm.md')
         ]
-    print('Running:', ' '.join(args))
+    print('Running:', ' '.join(args), flush=True)
     result = subprocess.run(args)
     assert result.returncode == 0
 
@@ -193,16 +190,20 @@ def filterBytes(term: KToken) -> KInner:
     assert term.sort == BYTES
     bytes = bytesToString(term.token)
 
+    zero = '\x00'
     zeros = []
-    start = bytes.find('\x00', 0)
+    start = bytes.find(zero, 0)
     if start < 0:
         return term
     while start >= 0:
-        idx = start + 1
-        while bytes[idx] == '\x00':
-            idx += 1
+        idx = start
+        next = bytes.find(zero, idx + 1)
+        # TODO: Revert this to the previous version.
+        while next - idx == len(zero):
+            idx = next
+            next = bytes.find(zero, idx + 1)
         zeros.append((start, idx))
-        start = bytes.find('\x00', idx)
+        start = next
     zeros = [(start, end) for (start, end) in zeros if end - start > 100]
     if not zeros:
         return term
@@ -219,7 +220,7 @@ def filterBytes(term: KToken) -> KInner:
     new_term = KApply(DOT_BYTES, ())
     for (start, end) in keep:
         new_term = KApply (SET_BYTES_RANGE,
-                        ( term
+                        ( new_term
                         , KToken(str(start), INT)
                         , bytesToken(bytes[start:end])
                         )
@@ -229,7 +230,13 @@ def filterBytes(term: KToken) -> KInner:
 def filterBytesCallback(term: KInner) -> KInner:
     if isinstance(term, KToken):
         if term.sort == BYTES:
-            return filterBytes(term)
+            term = filterBytes(term)
+            s = str(term)
+            pos = s.find(('\\x00' * 100))
+            pos -= 100
+            if pos < 0:
+                pos = 0
+            return term
     return term
 
 def computeBytes(term:KInner) -> KToken:
@@ -286,7 +293,7 @@ def krun(input_file: Path, output_file:Path) -> None:
     output_file.write_text(result.stdout)
 
 def loadJsonDict(input_file:Path) -> Mapping[str, Any]:
-    print('Load json')
+    print('Load json', flush=True)
     value = input_file.read_text()
     return json.loads(value)
 
@@ -502,10 +509,11 @@ def myStep(explorer:LazyExplorer, cfg:KCFG, node_id:str) -> List[str]:
     out_edges = cfg.edges(source_id=node.id)
     if len(out_edges) > 0:
         return [edge.target.id for edge in out_edges]
-    print('Executing!')
+    print('Executing!', flush=True)
     actual_depth, cterm, next_cterms = explorer.get().cterm_execute(node.cterm, depth=1)
     if actual_depth == 0:
         if len(next_cterms) < 2:
+            print(explorer.printer().pretty_print(node.cterm.config))
             raise ValueError(f'Unable to take {1} steps from node (next={len(next_cterms)}), got {actual_depth} steps: {node.id}')
         next_ids = []
         for next_cterm in next_cterms:
@@ -533,7 +541,7 @@ def myStepLogging(explorer:LazyExplorer, kcfg:KCFG, node_id:str, branches:int) -
     # prev_config = replaceBytes(prev_config)
     new_node_ids = myStep(explorer=explorer, cfg=kcfg, node_id=node_id)
     first = True
-    print([node_id], '->', new_node_ids, f'{branches - 1} branches left')
+    print([node_id], '->', new_node_ids, f'{branches - 1} branches left', flush=True)
     for new_node_id in new_node_ids:
         new_cterm = kcfg.node(new_node_id).cterm
         config = new_cterm.config
@@ -570,9 +578,9 @@ def executeFunction(
 
     print('*' * 80)
     print('*' * 80)
-    print('*' * 30, ' ' * 10, function_addr)
+    print('*' * 26, ' ' * 10, function_addr)
     print('*' * 80)
-    print('*' * 80)
+    print('*' * 80, flush=True)
 
     function_state_path = state_path / 'functions'
     function_state_path.mkdir(parents=True, exist_ok=True)
@@ -605,7 +613,7 @@ def executeFunction(
                 decision = execution_decision.decideConfiguration(kcfg, node_id)
                 if isinstance(decision, execution.Finish):
                     rhs_ids.append(node_id)
-                    print([node_id], 'finished')
+                    print([node_id], 'finished', flush=True)
                 elif isinstance(decision, execution.UnimplementedElrondFunction):
                     raise ValueError(repr(decision))
                 elif isinstance(decision, execution.UnsummarizedFunction):
