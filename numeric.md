@@ -144,20 +144,14 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
     rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N =/=Int 0
 ```
 
-Before we implement the rule for float point numbers, we first need to define 2 helper functions.
+Before we implement the rule for float point numbers, we first need to define a helper function.
 
 - `#isInfinityOrNaN` judges whether a `float` is infinity or NaN.
-- `truncFloat` truncates a `float` by keeping its integer part and discards its fractional part.
 
 ```k
     syntax Bool ::= #isInfinityOrNaN ( Float ) [function]
  // -----------------------------------------------------
     rule #isInfinityOrNaN ( F ) => (isNaN(F) orBool isInfinite(F))
-
-    syntax Float ::= truncFloat ( Float ) [function]
- // ------------------------------------------------
-    rule truncFloat ( F ) => floorFloat (F) requires notBool signFloat(F)
-    rule truncFloat ( F ) => ceilFloat  (F) requires         signFloat(F)
 ```
 
 #### Unary Operators for Floats

@@ -24,7 +24,7 @@ endif
 PATH := $(K_BIN):$(PATH)
 export PATH
 
-PYK_PATH             := $(K_LIB)
+PYK_PATH             := $(abspath $(K_SUBMODULE)/pyk/src/)
 PYWASM_PATH          := ./deps/py-wasm
 
 PYTHONPATH := $(PYK_PATH)
@@ -197,17 +197,26 @@ test-prove: $(proof_tests:=.prove)
 
 ### Binary Parser Test
 
-BINARY:=python3 binary-parser/test.py
+# TODO pyk is not globally installed. use the poetry-installed pyk
+# until binary-parser is migrated to pykwasm
+BINARY:=poetry -C pykwasm run python3 binary-parser/test.py
 
 tests/binary/%.wasm: tests/binary/%.wat
 	wat2wasm $< --output=$@
 
-tests/%.wasm.bparse: tests/%.wasm
+.PHONY: pykwasm-poetry-install
+pykwasm-poetry-install:
+	$(MAKE) -C pykwasm poetry-install
+
+tests/%.wasm.bparse: tests/%.wasm pykwasm-poetry-install
 	$(BINARY) $<
 
 binary_parser_tests:=$(wildcard tests/binary/*.wat)
 
-test-binary-parser: $(binary_parser_tests:.wat=.wasm.bparse)
+test-binary-parser: $(binary_parser_tests:.wat=.wasm.bparse) test-kwasm-ast
+
+test-kwasm-ast: pykwasm-poetry-install
+	poetry -C pykwasm run pytest binary-parser/test_kwasm_ast.py
 
 # Analysis
 # --------

@@ -33,9 +33,9 @@ module WASM-REFERENCE-INTERPRETER-SYNTAX
  // ----------------------------------------------------
 
     syntax DefnStrings ::= List{WasmString, ""}
-    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")"
-                        | "(" "module" OptionalId "quote"  DefnStrings ")"
- // ----------------------------------------------------------------------
+    syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")" [macro]
+                        | "(" "module" OptionalId "quote"  DefnStrings ")" [macro]
+ // ------------------------------------------------------------------------------
 ```
 
 Assertions for KWasm tests
@@ -217,9 +217,9 @@ They are not defined in the official specification.
 In order to parse the conformance test cases, we handle these declarations here and just reduce them to the empty module.
 
 ```k
-    rule ( module OID binary _DS ) => ( module OID .Defns ) [macro]
+    rule ( module OID binary _DS ) => ( module OID .Defns )
 
-    rule ( module OID quote _DS ) => ( module OID .Defns ) [macro]
+    rule ( module OID quote _DS ) => ( module OID .Defns )
 ```
 
 The conformance tests contain imports of the `"spectest"` module.

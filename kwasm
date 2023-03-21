@@ -37,7 +37,7 @@ preprocess() {
     tmp_dir="$(mktemp -d)"
     tmp_input="$tmp_dir/$(basename $run_file))"
     touch "$tmp_input"
-    python "$this_script_dir/preprocessor.py" "$run_file" > "$tmp_input"
+    python3 "$this_script_dir/preprocessor.py" "$run_file" > "$tmp_input"
     run_file="$tmp_input"
 }
 
@@ -81,7 +81,7 @@ run_prove() {
     ! $repl       || additional_proof_args+=(--debugger)
     ! $bug_report || additional_proof_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
 
-    kprove --directory "$backend_dir" "$run_file" --def-module "$def_module" "${additional_proof_args[@]}" "$@"
+    kprove-legacy --directory "$backend_dir" -I "$kwasm_dir" "$run_file" --def-module "$def_module" "${additional_proof_args[@]}" "$@"
 }
 
 # Main
