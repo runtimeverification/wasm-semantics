@@ -43,6 +43,8 @@ class ClaimNotAppliedForSummarizedFunction(Decision):
     function_name: str
 
 IMPLEMENTED_ELROND_FUNCTIONS = [
+    0,  # mBufferAppendBytes
+    1,  # managedSignalError
     2,  # smallIntGetUnsignedArgument
     3,  # getNumArguments
     4,  # signalError

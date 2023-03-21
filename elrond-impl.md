@@ -5,9 +5,15 @@ require "wasm-text.md"
 module ELROND-IMPL
   imports ELROND-CONFIGURATION
   imports WASM-TEXT
+  imports MAP-INTW-TO-BYTESW
 
-  syntax Intw ::= wrap(Int)
+  syntax Intw ::= wrap(Int) | wrapI(Int)
+  syntax Int ::= unwrap(Intw) [function, total]
+  rule unwrap(wrap(V:Int)) => V
+
   syntax Bytesw ::= wrap(Bytes)
+  syntax Bytes ::= unwrap(Bytesw) [function, total]
+  rule unwrap(wrap(V:Bytes)) => V
 
   syntax Instr ::= "elrond_trap" "(" String ")"  [klabel(elrond_trap), symbol]
 
@@ -21,6 +27,11 @@ module ELROND-IMPL
 
   rule  <instrs>
           elrond_trap("\"signalError\"") => elrondError
+          ...
+        </instrs>
+
+  rule  <instrs>
+          elrond_trap("\"managedSignalError\"") => elrondError
           ...
         </instrs>
 
@@ -51,7 +62,7 @@ module ELROND-IMPL
 
   rule  <wasm>
             <instrs>
-              elrond_trap("\"mBufferSetBytes\"") => .K
+              elrond_trap("\"mBufferSetBytes\"") => i32.const ?_MBufferSetBytesResult:Int
               ...
             </instrs>
             <locals>
@@ -59,7 +70,6 @@ module ELROND-IMPL
                 (1 |-> <i32> Ptr:Int)
                 (2 |-> <i32> Len:Int)
             </locals>
-            <valstack> S:ValStack => <i32> ?_MBufferSetBytesResult:Int : S </valstack>
             <mdata> Mem:Bytes </mdata>
             ...
         </wasm>
@@ -67,6 +77,32 @@ module ELROND-IMPL
             <buffers>
                 M:MapIntwToBytesw
                 => M[wrap(Handle) <- wrap(substrBytes(Mem, Ptr, Ptr +Int Len))]
+            </buffers>
+        </elrond>
+    requires true #And #Ceil(substrBytes(Mem, Ptr, Ptr +Int Len))
+
+  rule  <wasm>
+            <instrs>
+              elrond_trap("\"mBufferAppendBytes\"") => i32.const ?_MBufferAppendBytesResult:Int
+              ...
+            </instrs>
+            <locals>
+                (0 |-> <i32> Handle:Int)
+                (1 |-> <i32> Ptr:Int)
+                (2 |-> <i32> Len:Int)
+            </locals>
+            <mdata> Mem:Bytes </mdata>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                M:MapIntwToBytesw
+                => M[ wrap(Handle)
+                    <-  wrap
+                        ( unwrap(M [ wrap(Handle) ] orDefault wrap(.Bytes))
+                          +Bytes substrBytes(Mem, Ptr, Ptr +Int Len)
+                        )
+                    ]
             </buffers>
         </elrond>
     requires true #And #Ceil(substrBytes(Mem, Ptr, Ptr +Int Len))

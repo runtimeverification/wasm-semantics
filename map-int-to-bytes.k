@@ -34,6 +34,10 @@ module MAP-INTW-TO-BYTESW
                  [ function, total, hook(MAP.lookupOrDefault),
                    klabel(MapIntwToBytesw:lookupOrDefault)
                  ]
+  syntax Bytesw ::= stuff(MapIntwToBytesw, Intw, Bytesw)
+                 [ function, total, hook(MAP.lookupOrDefault),
+                   klabel(MapIntwToBytesw:lookupOrDefault)
+                 ]
   syntax MapIntwToBytesw ::= MapIntwToBytesw "[" key: Intw "<-" value: Bytesw "]"
                  [ function, total, klabel(MapIntwToBytesw:update), symbol,
                    hook(MAP.update), prefer

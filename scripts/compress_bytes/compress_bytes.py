@@ -709,7 +709,7 @@ def main() -> None:
     # # References
     rules = executeFunctionWithRules('14', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
     rules = executeFunctionWithRules('9', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
-        # executeFunctionWithRules('8', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
+    rules = executeFunctionWithRules('8', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
         # executeFunctionWithRules('10', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
         # rules = executeFunctionWithRules('15', rules, term, functions, identifiers, printer, JSON_DIR, execution_decision)
         # Loop
