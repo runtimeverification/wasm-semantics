@@ -695,7 +695,7 @@ def executeFunctions(
         if len(postponed_functions) == len(unprocessed_functions):
             raise ValueError(f'Cannot summarize {unprocessed_functions}, postponed={postponed_functions}, unprocessable={unprocessed_functions}, processed={processed_functions}')
         unprocessed_functions = postponed_functions
-    print(f'unprocessed={unprocessed_functions}, postponed={postponed_functions}, unprocessable={unprocessed_functions}, processed={processed_functions}')
+    print(f'unprocessed={unprocessed_functions}, unprocessable={unprocessed_functions}, processed={processed_functions}')
 
 
 def findIdentifiers(term:KInner) -> Identifiers:
@@ -717,6 +717,42 @@ def findIdentifiers(term:KInner) -> Identifiers:
         return result
     return Identifiers(kinner_top_down_fold(maybe_identifier, merge_dicts, {}, term))
 
+class VariablesForGlobals:
+    def __init__(self) -> None:
+        self.__next_index = 0
+
+    def __replaceGlobal(term:KInner):
+        if not isinstance(term, KApply):
+            return term
+        if term.label.name != 'globalInst':
+            return term
+        assert term.arity == 3, term
+        gmut = term.args[2]
+        assert isinstance(gmut, KApply), gmut
+        assert gmut.name == 'gMut', gmut
+        assert gmut.arity == 1, term
+        mutability = gmut.args[0]
+        assert isinstance(mutability, KApply), mutability
+        if mutability.name == 'const':
+            return term
+        assert mutability.name == 'var', mutability
+        
+        gvalue = term.args[1]
+        assert isinstance(gvalue, KApply), gvalue
+        assert gvalue.name == '<gValue>', gvalue
+        assert gvalue.arity == 1, gvalue
+
+        typed_value = gvalue.args[0]
+        assert isinstance(value, KApply), typed_value
+        assert typed_value.name == 'stuff', typed_value
+        assert typed_value.arity == 2, typed_value
+
+        variable = KVariable(f'MyGlobal{self.__next_index}', sort=INT)
+
+        return replaceChild(term, '<>')
+
+def replaceGlobalsWithVariables(term:KInner):
+    return term
 
 def runForInput(input_file:Path, short_name:str) -> None:
     kompileSemantics(None)
@@ -740,6 +776,8 @@ def runForInput(input_file:Path, short_name:str) -> None:
     assert '"callBack' in str(term), [str(term)]
     term = replaceChild(term, '<exports>', KVariable('MyExports', sort=MAP))
     assert not '"callBack' in str(term)
+    term = replaceChild(term, '<caller>', KVariable('MyCaller', sort=MAP))
+    replaceGlobalsWithVariables(term)
     # TODO: replace global data with variables.
     
     printer = MyKPrint(DEFINITION_DIR)

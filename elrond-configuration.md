@@ -9,6 +9,7 @@ module ELROND-CONFIGURATION
     configuration
         <elrond>
             <buffers>.MapIntwToBytesw</buffers>
+            <caller>.Bytes</caller>
         </elrond>
 endmodule
 ```

@@ -78,6 +78,7 @@ module ELROND-IMPL
                 M:MapIntwToBytesw
                 => M[wrap(Handle) <- wrap(substrBytes(Mem, Ptr, Ptr +Int Len))]
             </buffers>
+            ...
         </elrond>
     requires true #And #Ceil(substrBytes(Mem, Ptr, Ptr +Int Len))
 
@@ -104,8 +105,87 @@ module ELROND-IMPL
                         )
                     ]
             </buffers>
+            ...
         </elrond>
     requires true #And #Ceil(substrBytes(Mem, Ptr, Ptr +Int Len))
+
+  rule  <wasm>
+            <instrs>
+              elrond_trap("\"mBufferAppend\"") => i32.const ?_MBufferAppendBytesResult:Int
+              ...
+            </instrs>
+            <locals>
+                (0 |-> <i32> HandleAccumulator:Int)
+                (1 |-> <i32> HandleData:Int)
+            </locals>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                M:MapIntwToBytesw
+                => M[ wrap(HandleAccumulator)
+                    <-  wrap
+                        ( unwrap(M [ wrap(HandleAccumulator) ] orDefault wrap(.Bytes))
+                          +Bytes unwrap(M [ wrap(HandleData) ] orDefault wrap(.Bytes))
+                        )
+                    ]
+            </buffers>
+            ...
+        </elrond>
+
+  rule  <wasm>
+            <instrs>
+              elrond_trap("\"mBufferNew\"") => i32.const ?NewHandle:Int
+              ...
+            </instrs>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                M:MapIntwToBytesw
+                => M[ wrap(?NewHandle) <- wrap(.Bytes)]
+            </buffers>
+            ...
+        </elrond>
+      ensures notBool wrap(?NewHandle) in_keys(M)
+
+  rule  <wasm>
+            <instrs>
+              // TODO: Should append to the returned result, or something like that.
+              elrond_trap("\"mBufferFinish\"") => i32.const ?_MBufferFinishResult:Int
+              ...
+            </instrs>
+            <locals>
+                (0 |-> <i32> _Handle:Int)
+            </locals>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                _M:MapIntwToBytesw
+            </buffers>
+            ...
+        </elrond>
+
+  rule  <wasm>
+            <instrs>
+              // TODO: Should append to the returned result, or something like that.
+              elrond_trap("\"managedCaller\"") => .K
+              ...
+            </instrs>
+            <locals>
+                (0 |-> <i32> Handle:Int)
+            </locals>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                M:MapIntwToBytesw => M[wrap(Handle) <- wrap(Caller)]
+            </buffers>
+            <caller>
+                Caller:Bytes
+            </caller>
+        </elrond>
 
   rule <instrs>
           #import(MOD, Name, #funcDesc(... id: OID, type: TIDX))
@@ -115,6 +195,55 @@ module ELROND-IMPL
               ...
         </instrs>
     requires MOD ==K #token("\"env\"", "WasmStringToken")
+
+  rule  <wasm>
+            <instrs>
+              elrond_trap("\"bigIntSetInt64\"") => .K
+              ...
+            </instrs>
+            <locals>
+                (0 |-> <i32> Handle:Int)
+                (1 |-> <i64> Value:Int)
+            </locals>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                M:MapIntwToBytesw
+                => M[ wrap(Handle)
+                    <-  wrap(Int2Bytes(Value, LE, Signed))
+                    ]
+            </buffers>
+            ...
+        </elrond>
+
+  rule  <wasm>
+            <instrs>
+              elrond_trap("\"bigIntAdd\"") => .K
+              ...
+            </instrs>
+            <locals>
+                (0 |-> <i32> HandleDest:Int)
+                (1 |-> <i32> Handle1:Int)
+                (2 |-> <i32> Handle2:Int)
+            </locals>
+            ...
+        </wasm>
+        <elrond>
+            <buffers>
+                M:MapIntwToBytesw
+                => M[ wrap(HandleDest)
+                    <-  wrap
+                        ( Int2Bytes
+                          ( Bytes2Int(unwrap(M[wrap(Handle1)] orDefault wrap(.Bytes)), LE, Signed)
+                            +Int Bytes2Int(unwrap(M[wrap(Handle2)] orDefault wrap(.Bytes)), LE, Signed)
+                          , LE, Signed
+                          )
+                        )
+                    ]
+            </buffers>
+            ...
+        </elrond>
 
   // syntax IdentifierToken ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
   // syntax  ::= "$__stack_pointer" [token]

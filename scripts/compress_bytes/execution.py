@@ -42,15 +42,20 @@ class ClaimNotAppliedForSummarizedFunction(Decision):
     function_id: int
     function_name: str
 
-IMPLEMENTED_ELROND_FUNCTIONS = [
-    0,  # mBufferAppendBytes
-    1,  # managedSignalError
-    2,  # smallIntGetUnsignedArgument
-    3,  # getNumArguments
-    4,  # signalError
-    5,  # mBufferSetBytes
-    6,  # checkNoPayment
-]
+IMPLEMENTED_ELROND_FUNCTIONS = {
+    '$bigIntAdd',
+    '$bigIntSetInt64',
+    '$checkNoPayment',
+    '$getNumArguments',
+    '$managedSignalError',
+    '$mBufferAppend'
+    '$mBufferAppendBytes',
+    '$mBufferFinish',
+    '$mBufferNew',
+    '$mBufferSetBytes',
+    '$smallIntGetUnsignedArgument',
+    '$signalError',
+}
 
 class ExecutionManager:
     def __init__(self, functions:Functions) -> None:
@@ -95,7 +100,7 @@ class ExecutionManager:
         assert isinstance(value, KToken), value
         id = int(value.token)
         if self.__isElrondFunction(id):
-            assert id in IMPLEMENTED_ELROND_FUNCTIONS
+            assert self.__functionName(id) in IMPLEMENTED_ELROND_FUNCTIONS
             return Continue()
         if id == self.__executing_addr:
             return Continue()
@@ -109,7 +114,7 @@ class ExecutionManager:
         assert isinstance(value, KToken), value
         id = int(value.token)
         if self.__isElrondFunction(id):
-            if id in IMPLEMENTED_ELROND_FUNCTIONS:
+            if self.__functionName(id) in IMPLEMENTED_ELROND_FUNCTIONS:
                 return Continue()
             return UnimplementedElrondFunction(id, self.__functionName(id))
         if id in self.__already_summarized:
