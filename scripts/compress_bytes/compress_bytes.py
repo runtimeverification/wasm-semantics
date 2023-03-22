@@ -617,9 +617,9 @@ def executeFunction(
                 elif isinstance(decision, execution.UnimplementedElrondFunction):
                     raise ValueError(repr(decision))
                 elif isinstance(decision, execution.UnsummarizedFunction):
-                    raise ValueError(repr(decision))
+                    return decision
                 elif isinstance(decision, execution.Loop):
-                    raise ValueError(repr(decision))
+                    return decision
                 elif isinstance(decision, execution.Continue):
                     node_ids.append(node_id)
                 elif isinstance(decision, execution.ClaimNotAppliedForSummarizedFunction):
@@ -630,6 +630,7 @@ def executeFunction(
                 else:
                     assert False, decision
     finally:
+        function_state_path.parent.mkdir(parents=True, exist_ok=True)
         function_state_path.write_text(kcfg.to_json())
     return [makeFinalRule(lhs_id, rhs_id, kcfg) for rhs_id in rhs_ids]
 
@@ -648,10 +649,54 @@ def executeFunctionWithRules(
         new_rules = executeFunction(
             function_addr, term, functions, explorer, state_path, execution_decision
         )
+        if isinstance(new_rules, execution.UnsummarizedFunction):
+            raise ValueError(repr(new_rules))
+        if isinstance(new_rules, execution.Loop):
+            raise ValueError(repr(new_rules))
+        assert isinstance(new_rules, list)
     execution_decision.finishFunction(int(function_addr))
     for r in new_rules:
         assert '"callBack' not in str(r)
     return rules + new_rules
+
+def executeFunctions(
+        term:KInner,
+        functions:Functions,
+        identifiers:Identifiers,
+        printer:KPrint,
+        state_path:Path,
+        execution_decision:execution.ExecutionManager,
+    ) -> None:
+    rules:List[KRule] = []
+    unprocessed_functions:List[str] = [
+        addr
+            for addr in functions.addrs()
+            if not functions.addrToFunction(addr).is_builtin()
+    ]
+    not_processable: List[str] = []
+    processed_functions: List[str] = []
+    while unprocessed_functions:
+        postponed_functions:List[str] = []
+        for function_addr in unprocessed_functions:
+            with LazyExplorer(rules, identifiers, SUMMARIES_DIR / function_addr, printer) as explorer:
+                execution_decision.startFunction(int(function_addr))
+                new_rules = executeFunction(
+                    function_addr, term, functions, explorer, state_path, execution_decision
+                )
+                if isinstance(new_rules, execution.UnsummarizedFunction):
+                    postponed_functions.append(function_addr)
+                elif isinstance(new_rules, execution.Loop):
+                    not_processable.append(function_addr)
+                else:
+                    assert isinstance(new_rules, list)
+                    processed_functions.append(function_addr)
+                    execution_decision.finishFunction(int(function_addr))
+                    rules += new_rules
+        if len(postponed_functions) == len(unprocessed_functions):
+            raise ValueError(f'Cannot summarize {unprocessed_functions}, postponed={postponed_functions}, unprocessable={unprocessed_functions}, processed={processed_functions}')
+        unprocessed_functions = postponed_functions
+    print(f'unprocessed={unprocessed_functions}, postponed={postponed_functions}, unprocessable={unprocessed_functions}, processed={processed_functions}')
+
 
 def findIdentifiers(term:KInner) -> Identifiers:
     def maybe_identifier(term_:KInner) -> Optional[Mapping[KSort, Set[KToken]]]:
@@ -672,7 +717,39 @@ def findIdentifiers(term:KInner) -> Identifiers:
         return result
     return Identifiers(kinner_top_down_fold(maybe_identifier, merge_dicts, {}, term))
 
+
+def runForInput(input_file:Path, short_name:str) -> None:
+    kompileSemantics(None)
+
+    json_dir = JSON_DIR / short_name
+    krun_output_file = json_dir / 'krun.json'
+    bytes_output_file = json_dir / 'bytes.json'
+    if not bytes_output_file.exists():
+        if not krun_output_file.exists():
+            krun(input_file, krun_output_file)
+        term = loadJsonKrun(krun_output_file)
+        # TODO: Replace the config in the term
+        # assert not term.constraints
+        # print(term.constraints)
+        config = replaceBytes(term)
+        writeJson(config, bytes_output_file)
+
+    term = loadJson(bytes_output_file)
+    identifiers = findIdentifiers(term)
+    functions = findFunctions(term)
+    assert '"callBack' in str(term), [str(term)]
+    term = replaceChild(term, '<exports>', KVariable('MyExports', sort=MAP))
+    assert not '"callBack' in str(term)
+    # TODO: replace global data with variables.
+    
+    printer = MyKPrint(DEFINITION_DIR)
+    execution_decision = execution.ExecutionManager(functions)
+
+    executeFunctions(term, functions, identifiers, printer, json_dir, execution_decision)
+
 def main() -> None:
+    runForInput(ROOT / 'tmp' / 'sum-to-n.wat', 'sum-to-n')
+    return
     # logging.basicConfig()
     # logging.getLogger().setLevel(logging.DEBUG)
 

@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from pyk.kast.inner import (
     KInner,
@@ -51,6 +51,9 @@ class Functions:
 
     def addrToFunction(self, addr:str) -> WasmFunction:
         return self.__addr_to_def[addr]
+
+    def addrs(self) -> Iterable[str]:
+        return self.__addr_to_def.keys()
 
     def __str__(self) -> str:
         return repr(self)
