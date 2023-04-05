@@ -49,10 +49,32 @@ jobs:
         run: |
           docker stop --time=0 kwasm-ci-pykwasm-${GITHUB_SHA}
 
-  semantics-tests:
+  parse-tests:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
-    name: 'Integration Tests'
+    name: 'Parser Tests'
     runs-on: [self-hosted, linux, normal]
+    timeout-minutes: 45
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+      - name: 'Set up Docker'
+        uses: ./.github/actions/with-docker
+        with:
+          container-name: kwasm-ci-${{ github.sha }}
+      - name: 'Binary parse'
+        run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -j8 test-binary-parser
+      - name: 'Conformance parse'
+        run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -j8 test-conformance-parse
+      - name: 'Tear down Docker'
+        if: always()
+        run: |
+          docker stop --time=0 kwasm-ci-${GITHUB_SHA}
+
+  conformance-tests:
+    needs: [pykwasm-unit-tests, pykwasm-integration-tests]
+    name: 'Conformance Tests'
+    runs-on: [self-hosted, linux, normal]
+    timeout-minutes: 45
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -62,12 +84,25 @@ jobs:
           container-name: kwasm-ci-${{ github.sha }}
       - name: 'Simple tests'
         run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -j8 test-simple
-      - name: 'Binary parse'
-        run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -j8 test-binary-parser
-      - name: 'Conformance parse'
-        run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -j8 test-conformance-parse
       - name: 'Conformance run'
         run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -j8 test-conformance-supported
+      - name: 'Tear down Docker'
+        if: always()
+        run: |
+          docker stop --time=0 kwasm-ci-${GITHUB_SHA}
+
+  prove-tests:
+    needs: [pykwasm-unit-tests, pykwasm-integration-tests]
+    name: 'Prover Tests'
+    runs-on: [self-hosted, linux, normal]
+    timeout-minutes: 45
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+      - name: 'Set up Docker'
+        uses: ./.github/actions/with-docker
+        with:
+          container-name: kwasm-ci-${{ github.sha }}
       - name: 'Prove'
         run: docker exec -u user kwasm-ci-${GITHUB_SHA} make -j8 test-prove
       - name: 'Tear down Docker'
