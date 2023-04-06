@@ -7,10 +7,6 @@ pipeline {
   }
   options { ansiColor('xterm') }
   stages {
-    stage('Init title') {
-      when { changeRequest() }
-      steps { script { currentBuild.displayName = "PR ${env.CHANGE_ID}: ${env.CHANGE_TITLE}" } }
-    }
     stage('Master Release') {
       when { branch 'master' }
       environment { LONG_REV = """${sh(returnStdout: true, script: 'git rev-parse HEAD').trim()}""" }
