@@ -63,6 +63,8 @@ jobs:
         uses: ./.github/actions/with-docker
         with:
           container-name: kwasm-ci-parse-${{ github.sha }}
+      - name: 'Build LLVM Backend and pykwasm'
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm pykwasm-poetry-install
       - name: 'Binary parse'
         run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j8 test-binary-parser
       - name: 'Conformance parse'
@@ -86,6 +88,8 @@ jobs:
         uses: ./.github/actions/with-docker
         with:
           container-name: kwasm-ci-conformance-${{ github.sha }}
+      - name: 'Build LLVM Backend'
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm
       - name: 'Simple tests'
         run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j8 test-simple
       - name: 'Conformance run'
@@ -109,6 +113,8 @@ jobs:
         uses: ./.github/actions/with-docker
         with:
           container-name: kwasm-ci-prove-${{ github.sha }}
+      - name: 'Build Haskell Backend'
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-haskell
       - name: 'Prove'
         run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} make -j8 test-prove
       - name: 'Tear down Docker'
