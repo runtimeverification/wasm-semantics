@@ -66,7 +66,7 @@ jobs:
       - name: 'Build LLVM Backend and pykwasm'
         run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm pykwasm-poetry-install
       - name: 'Binary parse'
-        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j6 test-binary-parser
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j6 TEST_CONCRETE_BACKEND=llvm test-binary-parser
       - name: 'Conformance parse'
         run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j6 test-conformance-parse
       - name: 'Tear down Docker'
@@ -91,9 +91,9 @@ jobs:
       - name: 'Build LLVM Backend'
         run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j2 build-llvm
       - name: 'Simple tests'
-        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j6 test-simple
+        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j6 TEST_CONCRETE_BACKEND=llvm test-simple
       - name: 'Conformance run'
-        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j6 test-conformance-supported
+        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j6 TEST_CONCRETE_BACKEND=llvm test-conformance-supported
       - name: 'Tear down Docker'
         if: always()
         run: |
