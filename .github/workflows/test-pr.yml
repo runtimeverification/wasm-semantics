@@ -53,7 +53,7 @@ jobs:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
     name: 'Parser Tests'
     runs-on: [self-hosted, linux, normal]
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -68,7 +68,7 @@ jobs:
       - name: 'Binary parse'
         run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j6 TEST_CONCRETE_BACKEND=llvm test-binary-parser
       - name: 'Conformance parse'
-        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j6 test-conformance-parse
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j4 test-conformance-parse
       - name: 'Tear down Docker'
         if: always()
         run: |
@@ -78,7 +78,7 @@ jobs:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
     name: 'Conformance Tests'
     runs-on: [self-hosted, linux, normal]
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -103,7 +103,7 @@ jobs:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
     name: 'Prover Tests'
     runs-on: [self-hosted, linux, normal]
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
