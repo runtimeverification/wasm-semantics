@@ -70,7 +70,8 @@ def KString(value : str):
 
 def KBytes(bs : bytes):
     # Change from python bytes repr to bytes repr in K.
-    return bytesToken(dequote_str(str(bs))[2:-1])
+    bs_str = ''.join(chr(b) for b in bs) 
+    return bytesToken(bs_str)
 
 ###########
 # Strings #
