@@ -10,7 +10,7 @@ It is a mirror of the abstract syntax in the K semantics.
 
 from pyk.kast.inner import KSequence, KApply, KToken
 from pyk.prelude.bytes import bytesToken
-from pyk.utils import dequote_str
+from pyk.dequote import dequote_str
 
 ###########
 # KLabels #
@@ -70,7 +70,8 @@ def KString(value : str):
 
 def KBytes(bs : bytes):
     # Change from python bytes repr to bytes repr in K.
-    return bytesToken(dequote_str(str(bs))[2:-1])
+    bs_str = ''.join(chr(b) for b in bs) 
+    return bytesToken(bs_str)
 
 ###########
 # Strings #
