@@ -847,7 +847,7 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyk"
-version = "0.1.301"
+version = "0.1.318"
 description = ""
 category = "main"
 optional = false
@@ -868,8 +868,8 @@ tomli = "^2.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/pyk.git"
-reference = "v0.1.301"
-resolved_reference = "36a4de2fd4cf0f5db30ef75d4b9a4ca5487433f7"
+reference = "v0.1.318"
+resolved_reference = "174ce21c9db64216666b404add4aefaad3e82fa9"
 
 [[package]]
 name = "pyperclip"
@@ -1040,14 +1040,14 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.6.2"
+version = "4.6.3"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typing_extensions-4.6.2-py3-none-any.whl", hash = "sha256:3a8b36f13dd5fdc5d1b16fe317f5668545de77fa0b8e02006381fd49d731ab98"},
-    {file = "typing_extensions-4.6.2.tar.gz", hash = "sha256:06006244c70ac8ee83fa8282cb188f697b8db25bc8b4df07be1873c43897060c"},
+    {file = "typing_extensions-4.6.3-py3-none-any.whl", hash = "sha256:88a4153d8505aabbb4e13aacb7c486c2b4a33ca3b3f807914a9b4c844c471c26"},
+    {file = "typing_extensions-4.6.3.tar.gz", hash = "sha256:d91d5919357fe7f681a9f2b5b4cb2a5f1ef0a1e9f59c4d8ff0d3491e05c0ffd5"},
 ]
 
 [[package]]
@@ -1081,4 +1081,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "eb31f1ae32d29f9a5e5335a912592311f20542917a071c4e880741cc1f4ba555"
+content-hash = "4b016538d89aa65924a9b82289b4dd815d4dc013e8bdb06a5ff000ff60b9dc36"
