@@ -105,7 +105,8 @@ $(llvm_kompiled): $(llvm_files)
 	$(KOMPILE_LLVM) $(llvm_main_file).md      \
 	    --directory $(llvm_dir) -I $(CURDIR)  \
 	    --main-module $(llvm_main_module)     \
-	    --syntax-module $(llvm_syntax_module)
+	    --syntax-module $(llvm_syntax_module) \
+	    --emit-json
 
 ### Haskell
 
