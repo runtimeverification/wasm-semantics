@@ -1,18 +1,7 @@
 requires "kwasm-lemmas.md"
 
-module FUNCTIONS-LEMMAS
-    imports KWASM-LEMMAS
-
-    syntax KItem ::= run ( Step ) | done ( Step )
- // ---------------------------------------------
-    rule <instrs> run ( S ) => done ( S ) ... </instrs>
-
-    syntax Step ::= Bytes | Int
- // ---------------------------
-endmodule
-
 module FUNCTIONS-SPEC
-    imports FUNCTIONS-LEMMAS
+    imports KWASM-LEMMAS
 
     claim <instrs> run ( #wrap(2, #getRange(BM, ADDR, 4)) ) => done ( #getRange(BM, ADDR, 2) ) ... </instrs> requires 0 <=Int ADDR
 

@@ -51,7 +51,7 @@ run_krun() {
     ! $bug_report || additional_run_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
 
     preprocess
-    krun --directory "$backend_dir" "$run_file" "${additional_run_args[@]}" "$@"
+    krun --definition "$backend_dir/test-kompiled" "$run_file" "${additional_run_args[@]}" "$@"
 }
 
 run_krun_legacy() {
@@ -81,7 +81,7 @@ run_prove() {
     ! $repl       || additional_proof_args+=(--debugger)
     ! $bug_report || additional_proof_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
 
-    kprove-legacy --directory "$backend_dir" -I "$kwasm_dir" "$run_file" --def-module "$def_module" "${additional_proof_args[@]}" "$@"
+    kprove --definition "$backend_dir/$def_module-kompiled" -I "$kwasm_dir" "$run_file" "${additional_proof_args[@]}" "$@"
 }
 
 # Main
@@ -92,7 +92,7 @@ usage() {
     usage: $0 run        [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
            $0 run-legacy [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
            $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <def_module> <K args>*
+           $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <axioms_file> <K args>*
 
            $0 [help|--help|version|--version]
 
@@ -108,7 +108,7 @@ usage() {
              <spec> is a K specification to be proved.
              <K args> are any arguments you want to pass to K when executing/proving.
              <output format> is the format for Kast to output the term in.
-             <def_module> is the module to take as axioms for verification.
+             <axioms_file> is the file name (without extension) to take as axioms for verification.
 "
 }
 
