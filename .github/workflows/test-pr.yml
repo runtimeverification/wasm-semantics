@@ -114,7 +114,7 @@ jobs:
         with:
           container-name: kwasm-ci-prove-${{ github.sha }}
       - name: 'Build Haskell Backend'
-        run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} make -j2 build-haskell
+        run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} make -j2 build-haskell build-wrc20
       - name: 'Prove'
         run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} make -j6 test-prove
       - name: 'Tear down Docker'

@@ -40,14 +40,20 @@ To run proofs, you can similarly use `./kwasm`, but must specify the module to u
 For example, to prove the specification `tests/proofs/simple-arithmetic-spec.k`:
 
 ```sh
-./kwasm prove tests/proofs/simple-arithmetic-spec.k KWASM-LEMMAS
+./kwasm prove tests/proofs/simple-arithmetic-spec.k kwasm-lemmas
+```
+
+To prove WRC-20 specifications:
+
+```sh
+./kwasm prove tests/proofs/wrc20-spec.k wrc20
 ```
 
 You can optionally override the default backend using the `--backend BACKEND` flag:
 
 ```sh
 ./kwasm run   --backend llvm    tests/simple/arithmetic.wast
-./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k KWASM-LEMMAS
+./kwasm prove --backend haskell tests/proofs/simple-arithmetic-spec.k kwasm-lemmas
 ```
 
 Installing/Building

@@ -70,7 +70,7 @@ SOURCE_FILES       := data         \
 EXTRA_SOURCE_FILES :=
 ALL_SOURCE_FILES   := $(patsubst %, %.md, $(SOURCE_FILES)) $(EXTRA_SOURCE_FILES)
 
-build: build-llvm build-haskell
+build: build-llvm build-haskell build-wrc20
 
 ifneq (,$(RELEASE))
     KOMPILE_OPTS += -O2
