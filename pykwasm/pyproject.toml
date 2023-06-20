@@ -14,7 +14,7 @@ authors = [
 python = "^3.10"
 cytoolz = "^0.12.1"
 numpy = "^1.24.2"
-pyk = { git = "https://github.com/runtimeverification/pyk.git", tag="v0.1.342" }
+pyk = { git = "https://github.com/runtimeverification/pyk.git", tag="v0.1.343" }
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "*"
