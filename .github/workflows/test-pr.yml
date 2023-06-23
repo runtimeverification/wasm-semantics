@@ -75,7 +75,7 @@ jobs:
           docker stop --time=0 kwasm-ci-parse-${GITHUB_SHA}
 
   conformance-tests:
-    needs: [pykwasm-unit-tests, pykwasm-integration-tests]
+    needs: [parse-tests]
     name: 'Conformance Tests'
     runs-on: [self-hosted, linux, normal]
     timeout-minutes: 18
