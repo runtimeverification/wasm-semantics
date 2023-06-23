@@ -144,7 +144,7 @@ endmodule
 ------------------
 
 ```k
-module WASM-DATA
+module WASM-DATA-COMMON
     imports WASM-DATA-COMMON-SYNTAX
 
     imports INT
@@ -347,8 +347,7 @@ The `#get` function extracts the underlying K integer from a WASM `IVal`.
 
     syntax Int ::= #wrap ( Int , Int ) [function, total]
  // ---------------------------------------------------------
-    rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1) requires         0 <Int WIDTH
-    rule                   #wrap(WIDTH, _N) => 0                                        requires notBool 0 <Int WIDTH
+    rule #wrap(WIDTH, _N) => 0      requires notBool 0 <Int WIDTH
 
     syntax Int ::= #get( IVal ) [function, total]
  // --------------------------------------------------
@@ -568,11 +567,9 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 
     syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, total, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
-    rule                       #setRange(BM, ADDR, VAL, WIDTH) => BM
+    rule #setRange(BM, ADDR, VAL, WIDTH) => BM
       requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
 
-    rule [setRange-Positive] : #setRange(BM, ADDR, VAL, WIDTH) => #setBytesRange(BM, ADDR, Int2Bytes(WIDTH, VAL, LE))
-      requires          0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
 ```
 
 - `#getBytesRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START` (padding with zeros as needed).
@@ -594,13 +591,55 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 
     syntax Int ::= #getRange(Bytes, Int, Int) [function, total, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
-    rule                       #getRange( _, ADDR, WIDTH) => 0
+    rule #getRange( _, ADDR, WIDTH) => 0
       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
 
-    rule [getRange-Positive] : #getRange(BM, ADDR, WIDTH) => Bytes2Int(#getBytesRange(BM, ADDR, WIDTH), LE, Unsigned)
-      requires          0 <Int WIDTH andBool 0 <=Int ADDR
 ```
 
 ```k
+endmodule
+```
+
+```k
+module WASM-DATA-CONCRETE  [concrete]
+   imports WASM-DATA-COMMON
+
+   rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1)
+      requires 0 <Int WIDTH
+   
+   rule [setRange-Positive] : #setRange(BM, ADDR, VAL, WIDTH)
+      => #setBytesRange(BM, ADDR, Int2Bytes(WIDTH, VAL, LE))
+      requires 0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
+
+   rule [getRange-Positive] : #getRange(BM, ADDR, WIDTH)
+      => Bytes2Int(#getBytesRange(BM, ADDR, WIDTH), LE, Unsigned)
+      requires 0 <Int WIDTH andBool 0 <=Int ADDR
+
+endmodule
+
+module WASM-DATA-SYMBOLIC  [symbolic]
+   imports WASM-DATA-COMMON
+
+   rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1)
+      requires 0 <Int WIDTH
+      [concrete,simplification]
+
+   rule [setRange-Positive] : #setRange(BM, ADDR, VAL, WIDTH) 
+      => #setBytesRange(BM, ADDR, Int2Bytes(WIDTH, VAL, LE))
+      requires 0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR
+      [concrete,simplification]
+
+   rule [getRange-Positive] : #getRange(BM, ADDR, WIDTH)
+      => Bytes2Int(#getBytesRange(BM, ADDR, WIDTH), LE, Unsigned)
+      requires 0 <Int WIDTH andBool 0 <=Int ADDR
+      [concrete,simplification]
+   
+endmodule
+```
+
+```k
+module WASM-DATA
+   imports WASM-DATA-CONCRETE
+   imports WASM-DATA-SYMBOLIC
 endmodule
 ```

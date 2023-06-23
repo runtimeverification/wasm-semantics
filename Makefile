@@ -123,8 +123,7 @@ $(haskell_kompiled): $(haskell_files)
 	$(KOMPILE_HASKELL) $(haskell_main_file).md   \
 	    --output-definition $(haskell_dir) -I $(CURDIR)  \
 	    --main-module $(haskell_main_module)     \
-	    --syntax-module $(haskell_syntax_module) \
-	    --concrete-rules WASM-DATA.wrap-Positive,WASM-DATA.setRange-Positive,WASM-DATA.getRange-Positive
+	    --syntax-module $(haskell_syntax_module)
 
 ### WRC-20 Verification
 
@@ -141,9 +140,7 @@ $(wrc20_kompiled): $(wrc20_files)
 	$(KOMPILE_HASKELL) $(wrc20_main_file).md   \
 	    --output-definition $(wrc20_dir) -I $(CURDIR)  \
 	    --main-module $(wrc20_main_module)     \
-	    --syntax-module $(wrc20_syntax_module) \
-	    --concrete-rules WASM-DATA.wrap-Positive,WASM-DATA.setRange-Positive,WASM-DATA.getRange-Positive
-
+	    --syntax-module $(wrc20_syntax_module)
 
 # Testing
 # -------
