@@ -1,41 +1,39 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
 import wasm2kast
-import json
-import pyk
+from pyk.ktool.krun import KRun
+from pyk.kast.inner import KInner, KSort, KSequence, Subst
+from pyk.kast.manip import split_config_from
 import sys
-import subprocess
-import tempfile
 
-WASM_definition_llvm_no_coverage_dir = '.build/defn/llvm'
+WASM_definition_llvm_no_coverage_dir = Path('.build/defn/llvm/test-kompiled')
+
 
 def config_to_kast_term(config):
     return { 'format' : 'KAST', 'version': 2, 'term': config.to_dict() }
 
-def run_module(parsed_module):
-    input_json = config_to_kast_term(parsed_module)
-    krun_args = [ '--term', '--debug']
+def run_module(parsed_module: KInner):
 
-    with tempfile.NamedTemporaryFile(mode = 'w') as tempf:
-        tempf.write(json.dumps(input_json))
-        tempf.flush()
+    try:
+      krun = KRun(WASM_definition_llvm_no_coverage_dir)
+      
+      # Create an initial config
+      config_kast = krun.definition.init_config(KSort('GeneratedTopCell'))
 
-        command = ['krun-legacy', '--directory',
-                WASM_definition_llvm_no_coverage_dir, '--term', tempf.name,
-                '--parser', 'cat', '--output', 'json']
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate(input=None)
-        rc = process.returncode
+      # Embed parsed_module to <k>
+      symbolic_config, init_subst = split_config_from(config_kast)
+      init_subst['K_CELL'] = KSequence(parsed_module)
+      config_with_module = Subst(init_subst)(symbolic_config)
+      
+      # Convert the config to kore
+      config_kore = krun.kast_to_kore(config_with_module, KSort('GeneratedTopCell'))
 
-        if rc != 0:
-            raise Exception(f'Received error while running: {str(stderr)}')
-
-def pykPrettyPrint(module):
-    WASM_definition_llvm_no_coverage_dir = '.build/defn/llvm'
-    WASM_definition_main_file = 'test'
-    WASM_definition_llvm_no_coverage = pyk.readKastTerm(WASM_definition_llvm_no_coverage_dir + '/' + WASM_definition_main_file + '-kompiled/compiled.json')
-    WASM_symbols_llvm_no_coverage = pyk.buildSymbolTable(WASM_definition_llvm_no_coverage)
-    print(pyk.prettyPrintKast(module, WASM_symbols_llvm_no_coverage))
+      # Run the config
+      krun.run_kore_term(config_kore)
+  
+    except Exception as e:
+        raise Exception(f'Received error while running') from e
 
 sys.setrecursionlimit(1500000000)
 

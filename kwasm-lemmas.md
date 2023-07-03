@@ -5,6 +5,8 @@ These lemmas aid in verifying WebAssembly programs behavior.
 They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k
+requires "wasm-text.md"
+
 module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
     imports BYTES-KORE
@@ -337,6 +339,17 @@ Arithmetic over `#getRange`:
        andBool 0  <Int WIDTH
        andBool WIDTH1 *Int 8 ==Int SHIFT
       [simplification]
+```
+
+## Functional Tests
+
+```k
+    syntax KItem ::= run ( Step ) | done ( Step )
+ // ---------------------------------------------
+    rule <instrs> run ( S ) => done ( S ) ... </instrs>
+
+    syntax Step ::= Bytes | Int
+ // ---------------------------
 ```
 
 ```k
