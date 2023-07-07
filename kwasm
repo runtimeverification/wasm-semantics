@@ -45,13 +45,15 @@ preprocess() {
 # -------
 
 run_krun() {
-    local additional_run_args
+    local additional_run_args main_file
+
+    main_file="${KWASM_MAIN_FILE:-test}"
 
     additional_run_args=()
     ! $bug_report || additional_run_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
 
     preprocess
-    krun --definition "$backend_dir/test-kompiled" "$run_file" "${additional_run_args[@]}" "$@"
+    krun --definition "$backend_dir/$main_file-kompiled" "$run_file" "${additional_run_args[@]}" "$@"
 }
 
 run_kast() {
