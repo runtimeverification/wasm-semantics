@@ -6,7 +6,8 @@ This library provides a translation from the Wasm binary format to Kast.
 
 import sys
 import json
-import kwasm_ast as a
+from typing import IO
+from pykwasm import kwasm_ast as a
 
 from wasm.parsers.module import parse_module, Module
 from wasm.datatypes import ValType, TypeIdx, FunctionType, Function, Table, TableType, Memory, MemoryType, Limits, Global, GlobalType, Mutability, ElementSegment, DataSegment, StartFunction, Import, Export
@@ -21,7 +22,7 @@ def main():
     infile.close()
     return module
 
-def wasm2kast(wasm_bytes : bytes, filename=None) -> dict:
+def wasm2kast(wasm_bytes : IO[bytes], filename=None) -> dict:
     """Returns a dictionary representing the Kast JSON."""
     ast = parse_module(wasm_bytes)
     return ast2kast(ast, filename=filename)
@@ -259,10 +260,3 @@ def global_type(t : GlobalType):
     if t.mut is Mutability.const:
         return a.global_type(a.MUT_CONST, vt)
     return a.global_type(a.MUT_VAR, vt)
-
-########
-# Main #
-########
-
-if __name__ == "__main__":
-    main()
