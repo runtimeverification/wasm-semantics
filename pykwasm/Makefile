@@ -22,8 +22,6 @@ poetry-install:
 
 # Tests
 
-TEST_ARGS :=
-
 test: test-all
 
 test-all: poetry-install
@@ -33,7 +31,7 @@ test-unit: poetry-install
 	$(POETRY_RUN) pytest src/tests/unit --maxfail=1 --verbose $(TEST_ARGS)
 
 test-integration: poetry-install
-	$(POETRY_RUN) pytest src/tests/integration --maxfail=1 --verbose --durations=0 --numprocesses=4 --dist=worksteal $(TEST_ARGS)
+	$(POETRY_RUN) pytest src/tests/integration -rs --maxfail=1 --verbose --durations=0 --numprocesses=4 --dist=worksteal $(TEST_ARGS)
 
 
 # Coverage
@@ -75,7 +73,7 @@ isort: poetry-install
 	$(POETRY_RUN) isort src
 
 check-isort: poetry-install
-	$(POETRY_RUN) isort --check src
+	$(POETRY_RUN) isort --check src --diff
 
 black: poetry-install
 	$(POETRY_RUN) black src

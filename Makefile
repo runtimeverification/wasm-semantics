@@ -32,7 +32,7 @@ export PYTHONPATH
 
 .PHONY: all clean deps                                                     \
         build build-llvm build-haskell build-wrc20                         \
-        test test-execution test-simple test-prove test-binary-parser      \
+        test test-execution test-simple test-prove                         \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
@@ -151,7 +151,7 @@ CHECK := git --no-pager diff --no-index --ignore-all-space -R
 TEST_CONCRETE_BACKEND := llvm
 TEST_SYMBOLIC_BACKEND := haskell
 
-test: test-execution test-prove test-binary-parser
+test: test-execution test-prove
 
 # Generic Test Harnesses
 
@@ -205,29 +205,6 @@ test-conformance: test-conformance-parse test-conformance-supported
 proof_tests:=$(wildcard tests/proofs/*-spec.k)
 
 test-prove: $(proof_tests:=.prove)
-
-### Binary Parser Test
-
-# TODO pyk is not globally installed. use the poetry-installed pyk
-# until binary-parser is migrated to pykwasm
-BINARY:=poetry -C pykwasm run python3 binary-parser/test.py
-
-tests/binary/%.wasm: tests/binary/%.wat
-	wat2wasm $< --output=$@
-
-.PHONY: pykwasm-poetry-install
-pykwasm-poetry-install:
-	$(MAKE) -C pykwasm poetry-install
-
-tests/%.wasm.bparse: tests/%.wasm pykwasm-poetry-install
-	$(BINARY) $<
-
-binary_parser_tests:=$(wildcard tests/binary/*.wat)
-
-test-binary-parser: $(binary_parser_tests:.wat=.wasm.bparse) test-kwasm-ast
-
-test-kwasm-ast: pykwasm-poetry-install
-	poetry -C pykwasm run pytest binary-parser/test_kwasm_ast.py
 
 # Analysis
 # --------
