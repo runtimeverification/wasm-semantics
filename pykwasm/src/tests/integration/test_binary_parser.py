@@ -22,9 +22,9 @@ def test_wasm2kast(krun_llvm: KRun, wat_path: Path) -> None:
     wat2wasm_cmd = ['wat2wasm', str(wat_path), '--output=/dev/stdout']
     proc_res = run(wat2wasm_cmd, check=True, capture_output=True)
     wasm_file = BytesIO(proc_res.stdout)
-    
+
     assert not proc_res.returncode
-    
+
     # When
     module = wasm2kast(wasm_file)
 
