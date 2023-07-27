@@ -5,5 +5,5 @@ extend-ignore = B950,E,W1,W2,W3,W4,W5
 per-file-ignores =
     */__init__.py: F401
     # TODO fix these warnings
-    src/pykwasm/kwasm_ast.py: N802, F401
-    src/pykwasm/wasm2kast.py: N806, F401, Q000, F841
+    src/pykwasm/kwasm_ast.py: N802
+    src/pykwasm/wasm2kast.py: N806

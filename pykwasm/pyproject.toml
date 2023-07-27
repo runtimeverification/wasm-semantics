@@ -34,6 +34,7 @@ pytest-xdist = "*"
 [tool.isort]
 profile = "black"
 line_length = 120
+skip=["wasm"]
 
 [tool.autoflake]
 recursive = true
