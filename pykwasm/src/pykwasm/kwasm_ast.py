@@ -8,6 +8,8 @@ This library provides a convenient interface to create KWasm programs in Kast fo
 It is a mirror of the abstract syntax in the K semantics.
 """
 
+from typing import Iterable, Optional
+
 from pyk.kast.inner import KApply, KInner, KToken
 from pyk.prelude.bytes import bytesToken
 
@@ -59,19 +61,19 @@ INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
 ###################
 
 
-def KInt(value: int):
+def KInt(value: int) -> KToken:
     return KToken(str(value), 'Int')
 
 
-def KFloat(value: float):
+def KFloat(value: float) -> KToken:
     return KToken(str(value), 'Float')
 
 
-def KString(value: str):
+def KString(value: str | None) -> KToken:
     return KToken('"%s"' % value, 'String')
 
 
-def KBytes(bs: bytes):
+def KBytes(bs: bytes) -> KToken:
     return bytesToken(bs)
 
 
@@ -80,7 +82,7 @@ def KBytes(bs: bytes):
 ###########
 
 
-def wasm_string(s: str):
+def wasm_string(s: str) -> KToken:
     return KToken('\"%s\"' % s, 'WasmStringToken')
 
 
@@ -89,7 +91,7 @@ def wasm_string(s: str):
 #########
 
 
-def KNamedList(klabel, empty_klabel, items):
+def KNamedList(klabel: str, empty_klabel: str, items: list[KInner]) -> KInner:
     tail = KApply(empty_klabel, [])
     while not items == []:
         last = items.pop()
@@ -97,20 +99,20 @@ def KNamedList(klabel, empty_klabel, items):
     return tail
 
 
-def defns(items):
+def defns(items: list[KInner]) -> KInner:
     return KNamedList(DEFNS, EMPTY_STMTS, items)
 
 
-def instrs(items):
+def instrs(items: list[KInner]) -> KInner:
     return KNamedList(INSTRS, EMPTY_STMTS, items)
 
 
-def val_types(items):
+def val_types(items: list[KInner]) -> KInner:
     return KNamedList(VAL_TYPES, VAL_TYPES_NIL, items)
 
 
-def ints(iis: [int]):
-    kis = [KInt(x) for x in iis]
+def ints(iis: Iterable[int]) -> KInner:
+    kis: list[KInner] = [KInt(x) for x in iis]
     return KNamedList(INTS, INTS_NIL, kis)
 
 
@@ -138,15 +140,15 @@ MUT_CONST = KApply('mutConst', [])
 MUT_VAR = KApply('mutVar', [])
 
 
-def vec_type(valtypes):
+def vec_type(valtypes: KInner) -> KInner:
     return KApply(VEC_TYPE, [valtypes])
 
 
-def func_type(params, results):
+def func_type(params: KInner, results: KInner) -> KInner:
     return KApply(FUNC_TYPE, [params, results])
 
 
-def limits(tup):
+def limits(tup: tuple[int, int]) -> KInner:
     i = tup[0]
     j = tup[1]
     if j is None:
@@ -154,7 +156,7 @@ def limits(tup):
     return KApply('limitsMinMax', [KInt(i), KInt(j)])
 
 
-def global_type(mut, valtype):
+def global_type(mut: KInner, valtype: KInner) -> KInner:
     return KApply(GLOBAL_TYPE, [mut, valtype])
 
 
@@ -170,38 +172,38 @@ NOP = KApply('aNop', [])
 UNREACHABLE = KApply('aUnreachable', [])
 
 
-def BLOCK(vec_type, instrs, block_info):
+def BLOCK(vec_type: KInner, instrs: KInner, block_info: KInner) -> KInner:
     return KApply('aBlock', [vec_type, instrs, block_info])
 
 
-def IF(vec_type, then_instrs, else_instrs, block_info):
+def IF(vec_type: KInner, then_instrs: KInner, else_instrs: KInner, block_info: KInner) -> KInner:
     return KApply('aIf', [vec_type, then_instrs, else_instrs, block_info])
 
 
-def LOOP(vec_type, instrs, block_info):
+def LOOP(vec_type: KInner, instrs: KInner, block_info: KInner) -> KInner:
     return KApply('aLoop', [vec_type, instrs, block_info])
 
 
 RETURN = KApply('aReturn', [])
 
 
-def BR(idx: int):
+def BR(idx: int) -> KInner:
     return KApply('aBr', [KInt(idx)])
 
 
-def BR_IF(idx: int):
+def BR_IF(idx: int) -> KInner:
     return KApply('aBr_if', [KInt(idx)])
 
 
-def BR_TABLE(idxs: [int], default):
+def BR_TABLE(idxs: tuple[int, ...], default: int) -> KInner:
     return KApply('aBr_table', [ints(idxs + (default,))])
 
 
-def CALL(function_idx: int):
+def CALL(function_idx: int) -> KInner:
     return KApply('aCall', [KInt(function_idx)])
 
 
-def CALL_INDIRECT(type_idx: int):
+def CALL_INDIRECT(type_idx: int) -> KInner:
     return KApply('aCall_indirect', [KInt(type_idx)])
 
 
@@ -379,19 +381,19 @@ I64_TRUNC_S_F64 = KApply('aCvtOp', [i64, KApply('aTrunc_f64_s', [])])
 #########
 
 
-def F32_CONST(f: float):
+def F32_CONST(f: float) -> KInner:
     return KApply('aFConst', [f32, KFloat(f)])
 
 
-def F64_CONST(f: float):
+def F64_CONST(f: float) -> KInner:
     return KApply('aFConst', [f64, KFloat(f)])
 
 
-def I32_CONST(i: int):
+def I32_CONST(i: int) -> KInner:
     return KApply('aIConst', [i32, KInt(i)])
 
 
-def I64_CONST(i: int):
+def I64_CONST(i: int) -> KInner:
     return KApply('aIConst', [i64, KInt(i)])
 
 
@@ -400,95 +402,95 @@ def I64_CONST(i: int):
 #######################
 
 
-def F32_STORE(offset: int):
+def F32_STORE(offset: int) -> KInner:
     return KApply('aStore', [f32, KApply('storeOpStore', []), KInt(offset)])
 
 
-def F64_STORE(offset: int):
+def F64_STORE(offset: int) -> KInner:
     return KApply('aStore', [f64, KApply('storeOpStore', []), KInt(offset)])
 
 
-def I32_STORE(offset: int):
+def I32_STORE(offset: int) -> KInner:
     return KApply('aStore', [i32, KApply('storeOpStore', []), KInt(offset)])
 
 
-def I64_STORE(offset: int):
+def I64_STORE(offset: int) -> KInner:
     return KApply('aStore', [i64, KApply('storeOpStore', []), KInt(offset)])
 
 
-def I32_STORE8(offset: int):
+def I32_STORE8(offset: int) -> KInner:
     return KApply('aStore', [i32, KApply('storeOpStore8', []), KInt(offset)])
 
 
-def I64_STORE8(offset: int):
+def I64_STORE8(offset: int) -> KInner:
     return KApply('aStore', [i64, KApply('storeOpStore8', []), KInt(offset)])
 
 
-def I32_STORE16(offset: int):
+def I32_STORE16(offset: int) -> KInner:
     return KApply('aStore', [i32, KApply('storeOpStore16', []), KInt(offset)])
 
 
-def I64_STORE16(offset: int):
+def I64_STORE16(offset: int) -> KInner:
     return KApply('aStore', [i64, KApply('storeOpStore16', []), KInt(offset)])
 
 
-def I64_STORE32(offset: int):
+def I64_STORE32(offset: int) -> KInner:
     return KApply('aStore', [i64, KApply('storeOpStore32', []), KInt(offset)])
 
 
-def F32_LOAD(offset: int):
+def F32_LOAD(offset: int) -> KInner:
     return KApply('aLoad', [f32, KApply('loadOpLoad', []), KInt(offset)])
 
 
-def F64_LOAD(offset: int):
+def F64_LOAD(offset: int) -> KInner:
     return KApply('aLoad', [f64, KApply('loadOpLoad', []), KInt(offset)])
 
 
-def I32_LOAD(offset: int):
+def I32_LOAD(offset: int) -> KInner:
     return KApply('aLoad', [i32, KApply('loadOpLoad', []), KInt(offset)])
 
 
-def I64_LOAD(offset: int):
+def I64_LOAD(offset: int) -> KInner:
     return KApply('aLoad', [i64, KApply('loadOpLoad', []), KInt(offset)])
 
 
-def I32_LOAD16_S(offset: int):
+def I32_LOAD16_S(offset: int) -> KInner:
     return KApply('aLoad', [i32, KApply('loadOpLoad16_s', []), KInt(offset)])
 
 
-def I32_LOAD16_U(offset: int):
+def I32_LOAD16_U(offset: int) -> KInner:
     return KApply('aLoad', [i32, KApply('loadOpLoad16_u', []), KInt(offset)])
 
 
-def I64_LOAD16_S(offset: int):
+def I64_LOAD16_S(offset: int) -> KInner:
     return KApply('aLoad', [i64, KApply('loadOpLoad16_s', []), KInt(offset)])
 
 
-def I64_LOAD16_U(offset: int):
+def I64_LOAD16_U(offset: int) -> KInner:
     return KApply('aLoad', [i64, KApply('loadOpLoad16_u', []), KInt(offset)])
 
 
-def I32_LOAD8_S(offset: int):
+def I32_LOAD8_S(offset: int) -> KInner:
     return KApply('aLoad', [i32, KApply('loadOpLoad8_s', []), KInt(offset)])
 
 
-def I32_LOAD8_U(offset: int):
+def I32_LOAD8_U(offset: int) -> KInner:
     return KApply('aLoad', [i32, KApply('loadOpLoad8_u', []), KInt(offset)])
 
 
-def I64_LOAD8_S(offset: int):
+def I64_LOAD8_S(offset: int) -> KInner:
     return KApply('aLoad', [i64, KApply('loadOpLoad8_s', []), KInt(offset)])
 
 
-def I64_LOAD8_U(offset: int):
+def I64_LOAD8_U(offset: int) -> KInner:
     return KApply('aLoad', [i64, KApply('loadOpLoad8_u', []), KInt(offset)])
 
 
-def I64_LOAD32_U(offset: int):
+def I64_LOAD32_U(offset: int) -> KInner:
     return KApply('aLoad', [i64, KApply('loadOpLoad32_u', []), KInt(offset)])
 
 
-def I64_LOAD32_S(offset: int):
+def I64_LOAD32_S(offset: int) -> KInner:
     return KApply('aLoad', [i64, KApply('loadOpLoad32_s', []), KInt(offset)])
 
 
@@ -500,11 +502,11 @@ MEMORY_SIZE = KApply('aSize', [])
 #######################
 
 
-def GET_GLOBAL(idx: int):
+def GET_GLOBAL(idx: int) -> KInner:
     return KApply('aGlobal.get', [KInt(idx)])
 
 
-def SET_GLOBAL(idx: int):
+def SET_GLOBAL(idx: int) -> KInner:
     return KApply('aGlobal.set', [KInt(idx)])
 
 
@@ -513,15 +515,15 @@ def SET_GLOBAL(idx: int):
 ######################
 
 
-def GET_LOCAL(idx: int):
+def GET_LOCAL(idx: int) -> KInner:
     return KApply('aLocal.get', [KInt(idx)])
 
 
-def SET_LOCAL(idx: int):
+def SET_LOCAL(idx: int) -> KInner:
     return KApply('aLocal.set', [KInt(idx)])
 
 
-def TEE_LOCAL(idx: int):
+def TEE_LOCAL(idx: int) -> KInner:
     return KApply('aLocal.tee', [KInt(idx)])
 
 
@@ -530,19 +532,19 @@ def TEE_LOCAL(idx: int):
 #######################
 
 
-def func_desc(type: int, id=EMPTY_ID):
+def func_desc(type: int, id: KInner = EMPTY_ID) -> KInner:
     return KApply(FUNC_DESC, [id, KInt(type)])
 
 
-def global_desc(global_type, id=EMPTY_ID):
+def global_desc(global_type: KInner, id: KInner = EMPTY_ID) -> KInner:
     return KApply(GLOBAL_DESC, [id, global_type])
 
 
-def table_desc(lim, id=EMPTY_ID):
+def table_desc(lim: tuple[int, int], id: KInner = EMPTY_ID) -> KInner:
     return KApply(TABLE_DESC, [id, limits(lim)])
 
 
-def memory_desc(lim, id=EMPTY_ID):
+def memory_desc(lim: tuple[int, int], id: KInner = EMPTY_ID) -> KInner:
     return KApply(MEMORY_DESC, [id, limits(lim)])
 
 
@@ -551,47 +553,47 @@ def memory_desc(lim, id=EMPTY_ID):
 ################
 
 
-def type(func_type, metadata=EMPTY_ID):
+def type(func_type: KInner, metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(TYPE, [func_type, metadata])
 
 
-def func(type, locals, body, metadata=EMPTY_FUNC_METADATA):
+def func(type: KInner, locals: KInner, body: KInner, metadata: KInner = EMPTY_FUNC_METADATA) -> KInner:
     return KApply(FUNC, [type, locals, body, metadata])
 
 
-def table(lim, metadata=EMPTY_ID):
+def table(lim: tuple[int, int], metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(TABLE, [limits(lim), metadata])
 
 
-def memory(lim, metadata=EMPTY_ID):
+def memory(lim: tuple[int, int], metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(MEMORY, [limits(lim), metadata])
 
 
-def glob(type, init, metadata=EMPTY_ID):
+def glob(type: KInner, init: KInner, metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(GLOBAL, [type, init, metadata])
 
 
-def elem(table_idx: int, offset, init: [int]):
+def elem(table_idx: int, offset: KInner, init: Iterable[int]) -> KInner:
     return KApply(ELEM, [KInt(table_idx), offset, ints(init)])
 
 
-def data(memory_idx: int, offset, data: bytes):
+def data(memory_idx: int, offset: KInner, data: bytes) -> KInner:
     return KApply(DATA, [KInt(memory_idx), offset, KBytes(data)])
 
 
-def start(start_idx: int):
+def start(start_idx: int) -> KInner:
     return KApply(START, [KInt(start_idx)])
 
 
-def imp(mod_name, name, import_desc):
+def imp(mod_name: KInner, name: KInner, import_desc: KInner) -> KInner:
     return KApply(IMPORT, [mod_name, name, import_desc])
 
 
-def export(name, index):
+def export(name: KInner, index: int) -> KInner:
     return KApply(EXPORT, [name, KInt(index)])
 
 
-def module_metadata(mid=None, fids=None, filename=None):
+def module_metadata(mid: None = None, fids: None = None, filename: Optional[str] = None) -> KInner:
     # TODO: Implement module id and function ids metadata transformation.
     kfilename = EMPTY_OPT_STRING if filename is None else KString(filename)
     return KApply(MODULE_METADATA, [EMPTY_ID, EMPTY_MAP, kfilename])
@@ -601,17 +603,17 @@ EMPTY_MODULE_METADATA = module_metadata()
 
 
 def module(
-    types=EMPTY_DEFNS,
-    funcs=EMPTY_DEFNS,
-    tables=EMPTY_DEFNS,
-    mems=EMPTY_DEFNS,
-    globs=EMPTY_DEFNS,
-    elem=EMPTY_DEFNS,
-    data=EMPTY_DEFNS,
-    start=EMPTY_DEFNS,
-    imports=EMPTY_DEFNS,
-    exports=EMPTY_DEFNS,
-    metadata=EMPTY_MODULE_METADATA,
+    types: KInner = EMPTY_DEFNS,
+    funcs: KInner = EMPTY_DEFNS,
+    tables: KInner = EMPTY_DEFNS,
+    mems: KInner = EMPTY_DEFNS,
+    globs: KInner = EMPTY_DEFNS,
+    elem: KInner = EMPTY_DEFNS,
+    data: KInner = EMPTY_DEFNS,
+    start: KInner = EMPTY_DEFNS,
+    imports: KInner = EMPTY_DEFNS,
+    exports: KInner = EMPTY_DEFNS,
+    metadata: KInner = EMPTY_MODULE_METADATA,
 ) -> KInner:
     """Construct a Kast of a module."""
     return KApply(MODULE, [types, funcs, tables, mems, globs, elem, data, start, imports, exports, metadata])

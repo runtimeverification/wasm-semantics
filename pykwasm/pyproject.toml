@@ -52,7 +52,6 @@ skip-string-normalization = true
 disallow_untyped_defs = true
 # TODO fix type errors
 exclude = [
-    'src/pykwasm/kwasm_ast\.py',
     'src/pykwasm/wasm2kast\.py',
     'src/wasm/*',
 ]
