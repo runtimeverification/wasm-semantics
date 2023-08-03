@@ -1,0 +1,12 @@
+[project]
+name = "wasm-semantics"
+version = "1.0.0"
+source = "."
+
+[targets.llvm]
+main-file = 'wasm.md'
+backend='llvm'
+
+[targets.haskell]
+main-file = 'wasm.md'
+backend='haskell'
