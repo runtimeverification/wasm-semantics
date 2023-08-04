@@ -4,9 +4,9 @@ version = "1.0.0"
 source = "."
 
 [targets.llvm]
-main-file = 'wasm.md'
+main-file = 'test.md'
 backend='llvm'
 
 [targets.haskell]
-main-file = 'wasm.md'
+main-file = 'kwasm-lemmas.md'
 backend='haskell'
