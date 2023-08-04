@@ -29,8 +29,8 @@ RUN groupadd -g $GROUP_ID user && useradd -m -u $USER_ID -s /bin/sh -g user user
 USER user:user
 WORKDIR /home/user
 
-RUN pip3 install   \
-           cytoolz \
+RUN pip3 install --user  \
+           cytoolz       \
            numpy
 
 RUN    git clone 'https://github.com/WebAssembly/wabt' --branch 1.0.13 --recurse-submodules wabt \
