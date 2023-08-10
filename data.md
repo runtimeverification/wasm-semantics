@@ -223,7 +223,7 @@ In some cases, an integer is optional, such as when either giving or omitting th
 The sort `OptionalInt` provides this potentially "undefined" `Int`.
 
 ```k
-    syntax OptionalInt ::= Int | ".Int"
+    syntax OptionalInt ::= Int | ".Int"  [klabel(.Int), symbol]
  // -----------------------------------
 ```
 
@@ -409,8 +409,8 @@ WebAssembly is a stack-machine, so here we provide the stack to operate over.
 Operator `_++_` implements an append operator for sort `ValStack`.
 
 ```k
-    syntax ValStack ::= ".ValStack"
-                      | Val      ":"  ValStack
+    syntax ValStack ::= ".ValStack"            [klabel(.ValStack), symbol]
+                      | Val      ":"  ValStack [klabel(concatValStack), symbol]
                       | ValStack "++" ValStack [function, total]
  // -----------------------------------------------------------------
     rule .ValStack       ++ VALSTACK' => VALSTACK'
