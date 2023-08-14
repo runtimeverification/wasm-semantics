@@ -8,8 +8,6 @@ import sys
 from typing import IO, Iterable
 
 from pyk.kast.inner import KInner
-
-from pykwasm import kwasm_ast as a
 from wasm.datatypes import (
     DataSegment,
     ElementSegment,
@@ -32,6 +30,8 @@ from wasm.datatypes import (
 )
 from wasm.opcodes import BinaryOpcode
 from wasm.parsers import parse_module
+
+from pykwasm import kwasm_ast as a
 
 
 def main():
