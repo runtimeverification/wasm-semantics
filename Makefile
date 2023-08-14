@@ -4,6 +4,7 @@
 BUILD_DIR := .build
 DEPS_DIR  := deps
 DEFN_DIR  := $(BUILD_DIR)/defn
+K_INCLUDE_DIR ?= $(CURDIR)
 
 K_SUBMODULE := $(DEPS_DIR)/k
 ifneq (,$(wildcard deps/k/k-distribution/target/release/k/bin/*))
@@ -103,7 +104,7 @@ build-llvm: $(llvm_kompiled)
 
 $(llvm_kompiled): $(llvm_files)
 	$(KOMPILE_LLVM) $(llvm_main_file).md      \
-	    --output-definition $(llvm_dir) -I $(CURDIR)  \
+	    --output-definition $(llvm_dir) -I $(K_INCLUDE_DIR)  \
 	    --main-module $(llvm_main_module)     \
 	    --syntax-module $(llvm_syntax_module) \
 	    --emit-json
@@ -121,7 +122,7 @@ build-haskell: $(haskell_kompiled)
 
 $(haskell_kompiled): $(haskell_files)
 	$(KOMPILE_HASKELL) $(haskell_main_file).md   \
-	    --output-definition $(haskell_dir) -I $(CURDIR)  \
+	    --output-definition $(haskell_dir) -I $(K_INCLUDE_DIR)  \
 	    --main-module $(haskell_main_module)     \
 	    --syntax-module $(haskell_syntax_module)
 
@@ -138,7 +139,7 @@ build-wrc20: $(wrc20_kompiled)
 
 $(wrc20_kompiled): $(wrc20_files)
 	$(KOMPILE_HASKELL) $(wrc20_main_file).md   \
-	    --output-definition $(wrc20_dir) -I $(CURDIR)  \
+	    --output-definition $(wrc20_dir) -I $(K_INCLUDE_DIR)  \
 	    --main-module $(wrc20_main_module)     \
 	    --syntax-module $(wrc20_syntax_module)
 

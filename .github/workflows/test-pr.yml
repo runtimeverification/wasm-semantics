@@ -61,7 +61,7 @@ jobs:
   parse-tests:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
     name: 'Parser Tests'
-    runs-on: [self-hosted, linux, normal]
+    runs-on: [self-hosted, linux, huge]
     timeout-minutes: 18
     steps:
       - name: 'Check out code'
