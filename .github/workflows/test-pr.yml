@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
+        with:    
+          submodules: recursive
       - name: 'Install Poetry'
         uses: Gr1N/setup-poetry@v8
       - name: 'Build and run code quality checks'
@@ -26,6 +28,8 @@ jobs:
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
+        with:    
+          submodules: recursive
       - name: 'Install Poetry'
         uses: Gr1N/setup-poetry@v8
       - name: 'Build and run unit tests'
@@ -38,16 +42,21 @@ jobs:
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
+        with:    
+          submodules: recursive
       - name: 'Set up Docker'
         uses: ./.github/actions/with-docker
         with:
-          container-name: kwasm-ci-pykwasm-${{ github.sha }}
+          container-name: kwasm-ci-integration-${{ github.sha }}
+      - name: 'Build LLVM Backend and pykwasm'
+        run: docker exec -u user kwasm-ci-integration-${GITHUB_SHA} make -j2 build-llvm
       - name: 'Build and run integration tests'
-        run: docker exec -u user kwasm-ci-pykwasm-${GITHUB_SHA} make -C pykwasm cov-integration
+        run: docker exec -u user kwasm-ci-integration-${GITHUB_SHA} make -C pykwasm cov-integration \
+                 TEST_ARGS='--llvm-dir ../.build/defn/llvm/test-kompiled'
       - name: 'Tear down Docker'
         if: always()
         run: |
-          docker stop --time=0 kwasm-ci-pykwasm-${GITHUB_SHA}
+          docker stop --time=0 kwasm-ci-integration-${GITHUB_SHA}
 
   parse-tests:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
@@ -64,9 +73,7 @@ jobs:
         with:
           container-name: kwasm-ci-parse-${{ github.sha }}
       - name: 'Build LLVM Backend and pykwasm'
-        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm pykwasm-poetry-install
-      - name: 'Binary parse'
-        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 TEST_CONCRETE_BACKEND=llvm test-binary-parser
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm
       - name: 'Conformance parse'
         run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 test-conformance-parse
       - name: 'Tear down Docker'
