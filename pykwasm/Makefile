@@ -22,8 +22,6 @@ poetry-install:
 
 # Tests
 
-TEST_ARGS :=
-
 test: test-all
 
 test-all: poetry-install
