@@ -46,7 +46,7 @@ def run_module(krun: KRun, parsed_module: KInner) -> None:
         config_kore = krun.kast_to_kore(config_with_module, KSort('GeneratedTopCell'))
 
         # Run the config
-        krun.run_kore_term(config_kore)
+        krun.run_pattern(config_kore)
 
     except Exception as e:
         raise Exception('Received error while running') from e
