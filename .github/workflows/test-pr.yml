@@ -61,7 +61,7 @@ jobs:
   parse-tests:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
     name: 'Parser Tests'
-    runs-on: [self-hosted, linux, huge]
+    runs-on: [self-hosted, linux, normal]
     timeout-minutes: 18
     steps:
       - name: 'Check out code'
@@ -75,7 +75,7 @@ jobs:
       - name: 'Build LLVM Backend and pykwasm'
         run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm
       - name: 'Conformance parse'
-        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 test-conformance-parse
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make test-conformance-parse
       - name: 'Tear down Docker'
         if: always()
         run: |
