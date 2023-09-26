@@ -532,11 +532,13 @@ The `*_local` instructions are defined here.
 
     rule <instrs> #local.set(I) => . ... </instrs>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... I |-> (_ => VALUE) ... </locals>
+         <locals> LOCALS => LOCALS[I <- VALUE] </locals>
+        requires I in_keys(LOCALS)
 
     rule <instrs> #local.tee(I) => . ... </instrs>
          <valstack> VALUE : _VALSTACK </valstack>
-         <locals> ... I |-> (_ => VALUE) ... </locals>
+         <locals> LOCALS => LOCALS[I <- VALUE] </locals>
+        requires I in_keys(LOCALS)
 ```
 
 ### Globals
