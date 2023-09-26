@@ -183,7 +183,7 @@ module WASM
             <exports>     .Map         </exports>
             <types>       .Map         </types>
             <nextTypeIdx> 0            </nextTypeIdx>
-            <funcAddrs>   .Map         </funcAddrs>
+            <funcAddrs>   .MapIntToInt </funcAddrs>
             <nextFuncIdx> 0            </nextFuncIdx>
             <tabIds>      .Map         </tabIds>
             <tabAddrs>    .Map         </tabAddrs>
@@ -698,7 +698,7 @@ The importing and exporting parts of specifications are dealt with in the respec
            <modIdx> CUR </modIdx>
            <types>  ... TYPIDX |-> TYPE ... </types>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-           <funcAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </funcAddrs>
+           <funcAddrs> ADDRS => ADDRS {{ NEXTIDX <- NEXTADDR }} </funcAddrs>
            ...
          </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
@@ -783,7 +783,7 @@ The `#take` function will return the parameter stack in the reversed order, then
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
            ...
          </moduleInst>
 ```
@@ -1145,7 +1145,7 @@ A table index is optional and will be default to zero.
 
     syntax ElemDefn ::= #elem(index : Int, offset : Instrs, elemSegment : Ints) [klabel(aElemDefn), symbol]
                       | "elem" "{" Int        Ints "}"
-    syntax Stmt ::= #initElements ( Int, Int, Map, Ints )
+    syntax Stmt ::= #initElements ( Int, Int, MapIntToInt, Ints )
  // -----------------------------------------------------
     rule <instrs> #elem(TABIDX, IS, ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
@@ -1163,7 +1163,7 @@ A table index is optional and will be default to zero.
     rule <instrs> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </instrs>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- FADDRS[E] ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- FADDRS{{E}} ] </tdata>
            ...
          </tabInst>
 ```
@@ -1212,7 +1212,7 @@ The `start` component of a module declares the function index of a `start functi
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
            ...
          </moduleInst>
 ```
@@ -1255,14 +1255,14 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <types> TYPES </types>
-           <funcAddrs> FS => FS [NEXT <- ADDR] </funcAddrs>
+           <funcAddrs> FS => FS {{ NEXT <- ADDR }} </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcAddrs> ... IDX |-> ADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(ADDR) ... </funcAddrs>
            <exports>   ... NAME |-> IDX ... </exports>
            ...
          </moduleInst>

@@ -168,7 +168,7 @@ We allow 2 kinds of actions:
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... ENAME |-> IDX ... </exports>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
            ...
          </moduleInst>
 
@@ -380,7 +380,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
            ...
          </moduleInst>
          <funcs>
