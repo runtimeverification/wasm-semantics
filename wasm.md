@@ -1388,7 +1388,8 @@ A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    rule <instrs> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
+    rule [newModule]:
+         <instrs> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
                          metadata: #meta(... id: OID, funcIds: FIDS, filename: FILE))
                => sequenceDefns(TS)
                ~> sequenceDefns(IS)

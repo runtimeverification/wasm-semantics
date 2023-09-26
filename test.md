@@ -494,7 +494,8 @@ These assertions act on the last module defined.
 ```k
     syntax Assertion ::= "#assertNamedModule" Identifier WasmString
  // ---------------------------------------------------------------
-    rule <instrs> #assertNamedModule NAME _S => . ... </instrs>
+    rule [assertNamedModule]:
+         <instrs> #assertNamedModule NAME _S => . ... </instrs>
          <moduleIds> ... NAME |-> IDX ... </moduleIds>
          <moduleInstances>
            <moduleInst>
