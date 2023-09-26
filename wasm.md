@@ -271,9 +271,9 @@ Instructions
 ### Sequencing
 
 ```k
-    syntax K ::= sequenceStmts  ( Stmts  ) [function]
-               | sequenceDefns  ( Defns  ) [function]
-               | sequenceInstrs ( Instrs ) [function]
+    syntax K ::= sequenceStmts  ( Stmts  ) [function, total]
+               | sequenceDefns  ( Defns  ) [function, total]
+               | sequenceInstrs ( Instrs ) [function, total]
  // -------------------------------------------------
     rule sequenceStmts(.Stmts) => .
     rule sequenceStmts(S SS  ) => S ~> sequenceStmts(SS)
@@ -1109,7 +1109,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
       requires notBool DET
         orBool notBool #growthAllowed(SIZE +Int N, MAX)
 
-    syntax Bool ::= #growthAllowed(Int, OptionalInt) [function]
+    syntax Bool ::= #growthAllowed(Int, OptionalInt) [function, total]
  // -----------------------------------------------------------
     rule #growthAllowed(SIZE, .Int ) => SIZE <=Int #maxMemorySize()
     rule #growthAllowed(SIZE, I:Int) => #growthAllowed(SIZE, .Int) andBool SIZE <=Int I
@@ -1120,9 +1120,9 @@ Incidentally, the page size is 2^16 bytes.
 The maximum of table size is 2^32 bytes.
 
 ```k
-    syntax Int ::= #pageSize()      [function]
-    syntax Int ::= #maxMemorySize() [function]
-    syntax Int ::= #maxTableSize()  [function]
+    syntax Int ::= #pageSize()      [function, total]
+    syntax Int ::= #maxMemorySize() [function, total]
+    syntax Int ::= #maxTableSize()  [function, total]
  // ------------------------------------------
     rule #pageSize()      => 65536
     rule #maxMemorySize() => 65536
