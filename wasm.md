@@ -179,24 +179,24 @@ module WASM
         <moduleIds> .Map </moduleIds>
         <moduleInstances>
           <moduleInst multiplicity="*" type="Map">
-            <modIdx>      0    </modIdx>
-            <exports>     .Map </exports>
-            <types>       .Map </types>
-            <nextTypeIdx> 0    </nextTypeIdx>
-            <funcAddrs>   .Map </funcAddrs>
-            <nextFuncIdx> 0    </nextFuncIdx>
-            <tabIds>      .Map </tabIds>
-            <tabAddrs>    .Map </tabAddrs>
-            <memIds>      .Map </memIds>
-            <memAddrs>    .Map </memAddrs>
-            <globIds>     .Map </globIds>
-            <globalAddrs> .Map </globalAddrs>
-            <nextGlobIdx> 0    </nextGlobIdx>
+            <modIdx>      0            </modIdx>
+            <exports>     .Map         </exports>
+            <types>       .Map         </types>
+            <nextTypeIdx> 0            </nextTypeIdx>
+            <funcAddrs>   .Map         </funcAddrs>
+            <nextFuncIdx> 0            </nextFuncIdx>
+            <tabIds>      .Map         </tabIds>
+            <tabAddrs>    .Map         </tabAddrs>
+            <memIds>      .Map         </memIds>
+            <memAddrs>    .MapIntToInt </memAddrs>
+            <globIds>     .Map         </globIds>
+            <globalAddrs> .Map         </globalAddrs>
+            <nextGlobIdx> 0            </nextGlobIdx>
             <moduleMetadata>
               <moduleFileName> .String </moduleFileName>
-              <moduleId>              </moduleId>
-              <funcIds>        .Map   </funcIds>
-              <typeIds>        .Map   </typeIds>
+              <moduleId>               </moduleId>
+              <funcIds>        .Map    </funcIds>
+              <typeIds>        .Map    </typeIds>
             </moduleMetadata>
           </moduleInst>
         </moduleInstances>
@@ -930,7 +930,7 @@ The importing and exporting parts of specifications are dealt with in the respec
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
-           <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
+           <memAddrs> .MapIntToInt => (wrap(0) Int2Int|-> wrap(NEXTADDR)) </memAddrs>
            ...
          </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
@@ -964,7 +964,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -979,7 +979,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1022,7 +1022,7 @@ Sort `Signedness` is defined in module `BYTES`.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1037,7 +1037,7 @@ Sort `Signedness` is defined in module `BYTES`.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1058,7 +1058,7 @@ The `size` operation returns the size of the memory, measured in pages.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1084,7 +1084,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1100,7 +1100,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1186,7 +1186,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> MEMIDX |-> ADDR </memAddrs>
+           <memAddrs> wrap(MEMIDX) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1302,14 +1302,14 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
-           <memAddrs> .Map => 0 |-> ADDR </memAddrs>
+           <memAddrs> .MapIntToInt => wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
-           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
+           <memAddrs> ... wrap(#ContextLookup(IDS' , TFIDX)) Int2Int|-> wrap(ADDR) ... </memAddrs>
            <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>

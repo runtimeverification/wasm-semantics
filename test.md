@@ -450,7 +450,7 @@ This checks that the last allocated memory has the given size and max value.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS </memIds>
-           <memAddrs> #ContextLookup(IDS, TFIDX) |-> ADDR </memAddrs>
+           <memAddrs> wrap(#ContextLookup(IDS, TFIDX)) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <mems>
@@ -472,7 +472,7 @@ This checks that the last allocated memory has the given size and max value.
     rule <instrs> #assertMemoryData MODIDX (KEY , VAL) _MSG => . ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <mems>
