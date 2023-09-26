@@ -184,9 +184,17 @@ There are 7 unary operators for floats: `abs`, `neg`, `sqrt`, `floor`, `ceil`, `
 A `*BinOp` operator always produces a result of the same type as its operands.
 
 ```k
-    syntax Val ::= IValType "." IBinOp Int   Int   [klabel(intBinOp)  , function]
-                 | FValType "." FBinOp Float Float [klabel(floatBinOp), function]
+    syntax Val ::= IValType "." IBinOp Int   Int   [klabel(intBinOp)  , symbol, function, total]
+                 | FValType "." FBinOp Float Float [klabel(floatBinOp), symbol, function]
  // -----------------------------------------------------------------------------
+```
+
+Make intBinOp total
+
+```k
+
+rule _:IValType . _:IBinOp _:Int _:Int => undefined [owise]
+
 ```
 
 #### Binary Operators for Integers
@@ -220,6 +228,7 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 
     rule ITYPE . div_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
       requires I2 =/=Int 0
+       andBool definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
        andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
 
     rule _ITYPE . div_s _I1 I2 => undefined
@@ -231,6 +240,7 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 
     rule ITYPE . rem_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
       requires I2 =/=Int 0
+       andBool definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
 
     rule _ITYPE . rem_s _I1 I2 => undefined
       requires I2 ==Int 0
@@ -261,6 +271,7 @@ Careful attention is made for the signed version `shr_s`.
     rule ITYPE . shr_u I1 I2 =>       < ITYPE > I1 >>Int (I2 %Int #width(ITYPE))
 
     rule ITYPE . shr_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) >>Int (I2 %Int #width(ITYPE)))
+      requires definedSigned(ITYPE, I1)
 ```
 
 - `rotl` returns the result of rotating the first operand left by k bits, in which k is the second operand modulo N.
