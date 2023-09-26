@@ -3,6 +3,7 @@ WebAssembly State and Semantics
 
 ```k
 require "data.md"
+require "data/map-int-to-int.k"
 require "numeric.md"
 
 module WASM-SYNTAX
@@ -156,6 +157,8 @@ Semantics
 
 ```k
 module WASM
+    imports MAP-INT-TO-INT
+    imports MAP-INT-TO-INT-PRIMITIVE
     imports WASM-COMMON-SYNTAX
     imports WASM-DATA
     imports WASM-NUMERIC
