@@ -1004,8 +1004,8 @@ Sort `Signedness` is defined in module `BYTES`.
 ```k
     syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
                    | "load" "{" IValType Int Int Signedness"}"
+                   | "load" "{" IValType Int Int Signedness Int"}"
                    | "load" "{" IValType Int Int Signedness Bytes"}"
-                   | "load" "{" IValType Int Int Signedness"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
     rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
@@ -1019,13 +1019,16 @@ Sort `Signedness` is defined in module `BYTES`.
     rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </instrs>
     rule <instrs> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </instrs>
 
-    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN (MEMADDRS{{0}} orDefault 0)} ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
+      requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+
+    rule <instrs> load { ITYPE WIDTH EA SIGN ADDR:Int} => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1034,13 +1037,7 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { _ WIDTH EA _ } => trap ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
-           ...
-         </moduleInst>
+    rule <instrs> load { _ WIDTH EA _ ADDR:Int} => trap ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1048,8 +1045,8 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { ITYPE WIDTH EA   Signed DATA } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
-    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:Bytes } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:Bytes } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
