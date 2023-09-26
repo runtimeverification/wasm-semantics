@@ -959,17 +959,21 @@ The value is encoded as bytes and stored at the "effective address", which is th
                    | IValType "." StoreOp Int Int
  //                | FValType "." StoreOp Int Float
                    | "store" "{" Int Int Number "}"
+                   | "store" "{" Int Int Number Int "}"
  // -----------------------------------------------
     rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> store { WIDTH EA VAL } => . ... </instrs>
+    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL (MEMADDRS{{0}} orDefault 0) } ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
+         requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+
+    rule <instrs> store { WIDTH EA VAL ADDR } => . ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -978,13 +982,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          </memInst>
          requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
-    rule <instrs> store { WIDTH  EA  _ } => trap ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
-           ...
-         </moduleInst>
+    rule <instrs> store { WIDTH  EA  _ ADDR } => trap ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
