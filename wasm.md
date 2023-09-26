@@ -781,13 +781,14 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```k
     syntax Instr ::= #call(Int) [klabel(aCall), symbol]
  // ---------------------------------------------------
-    rule <instrs> #call(IDX) => ( invoke FADDR ) ... </instrs>
+    rule <instrs> #call(IDX) => ( invoke FUNCADDRS {{ IDX }} orDefault 0 ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
+           <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
+        requires IDX in_keys {{ FUNCADDRS }}
 ```
 
 ```k
