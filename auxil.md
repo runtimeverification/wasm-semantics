@@ -15,23 +15,23 @@ module WASM-AUXIL
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
     rule [clearConfig]:
-         <instrs> #clearConfig => . ...     </instrs>
-         <curModIdx>         _ => .Int      </curModIdx>
-         <valstack>          _ => .ValStack </valstack>
-         <locals>            _ => .Map      </locals>
-         <moduleInstances>   _ => .Bag      </moduleInstances>
-         <moduleIds>         _ => .Map      </moduleIds>
-         <nextModuleIdx>     _ => 0         </nextModuleIdx>
-         <moduleRegistry>    _ => .Map      </moduleRegistry>
+         <instrs> #clearConfig => . ...        </instrs>
+         <curModIdx>         _ => .Int         </curModIdx>
+         <valstack>          _ => .ValStack    </valstack>
+         <locals>            _ => .MapIntToVal </locals>
+         <moduleInstances>   _ => .Bag         </moduleInstances>
+         <moduleIds>         _ => .Map         </moduleIds>
+         <nextModuleIdx>     _ => 0            </nextModuleIdx>
+         <moduleRegistry>    _ => .Map         </moduleRegistry>
          <mainStore>
-           <nextFuncAddr>    _ => 0         </nextFuncAddr>
-           <funcs>           _ => .Bag      </funcs>
-           <nextTabAddr>     _ => 0         </nextTabAddr>
-           <tabs>            _ => .Bag      </tabs>
-           <nextMemAddr>     _ => 0         </nextMemAddr>
-           <mems>            _ => .Bag      </mems>
-           <nextGlobAddr>    _ => 0         </nextGlobAddr>
-           <globals>         _ => .Bag      </globals>
+           <nextFuncAddr>    _ => 0            </nextFuncAddr>
+           <funcs>           _ => .Bag         </funcs>
+           <nextTabAddr>     _ => 0            </nextTabAddr>
+           <tabs>            _ => .Bag         </tabs>
+           <nextMemAddr>     _ => 0            </nextMemAddr>
+           <mems>            _ => .Bag         </mems>
+           <nextGlobAddr>    _ => 0            </nextGlobAddr>
+           <globals>         _ => .Bag         </globals>
          </mainStore>
 
 endmodule

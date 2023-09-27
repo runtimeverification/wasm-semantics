@@ -5,6 +5,6 @@ module LOCALS-SPEC
 
     claim <instrs> #local.get(X) ~> #local.set(X) => . ... </instrs>
           <locals>
-            X |-> < _ITYPE > (VAL => VAL)
+            wrap(X) |-> < _ITYPE > (VAL => VAL)
           </locals>
 endmodule

@@ -322,8 +322,9 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
     syntax Assertion ::= "#assertLocal"  Int   Val WasmString
                        | "#assertGlobal" Index Val WasmString
  // ---------------------------------------------------------
-    rule <instrs> #assertLocal INDEX VALUE _ => . ... </instrs>
-         <locals> ... INDEX |-> VALUE ... </locals>
+    rule <instrs> #assertLocal INDEX (LOCALS{{INDEX}} orDefault undefined) _ => . ... </instrs>
+         <locals> LOCALS </locals>
+        requires INDEX in_keys{{LOCALS}}
 
     rule <instrs> #assertGlobal TFIDX VALUE _ => . ... </instrs>
          <curModIdx> CUR </curModIdx>

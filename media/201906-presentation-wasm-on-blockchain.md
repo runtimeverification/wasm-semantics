@@ -175,9 +175,9 @@ K Specifications: Configuration
 Tell K about the structure of your execution state.
 
 ```k
-    configuration <k>        $PGM:Instrs </k>
-                  <valstack> .ValStack   </valstack>
-                  <locals>   .Map        </locals>
+    configuration <k>        $PGM:Instrs  </k>
+                  <valstack> .ValStack    </valstack>
+                  <locals>   .MapIntToVal </locals>
 ```
 
 . . .

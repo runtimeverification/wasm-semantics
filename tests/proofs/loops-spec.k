@@ -29,8 +29,8 @@ module LOOPS-SPEC
           </instrs>
           <valstack> _ => STACK </valstack>
           <locals>
-            0 |-> < ITYPE > (I => 0)
-            1 |-> < ITYPE > (X => X +Int ((I *Int (I +Int 1)) /Int 2))
+            wrap(0) |-> < ITYPE > (I => 0)
+            wrap(1) |-> < ITYPE > (X => X +Int ((I *Int (I +Int 1)) /Int 2))
           </locals>
        requires #inUnsignedRange(ITYPE, I)
         andBool I >Int 0
@@ -60,8 +60,8 @@ module LOOPS-SPEC
            ...
           </instrs>
           <locals>
-            0 |-> < ITYPE > (N => 0)
-            1 |-> < ITYPE > (0 => (N *Int (N +Int 1)) /Int 2)
+            wrap(0) |-> < ITYPE > (N => 0)
+            wrap(1) |-> < ITYPE > (0 => (N *Int (N +Int 1)) /Int 2)
           </locals>
        requires #inUnsignedRange(ITYPE, N)
         andBool N >Int 0

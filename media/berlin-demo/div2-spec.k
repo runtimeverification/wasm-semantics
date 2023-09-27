@@ -19,8 +19,8 @@ module DIV2-SPEC
              => .
            </k>
            <locals>
-            0 |-> < i32 > (X => X')
-            1 |-> < i32 > Y
+            wrap(0) |-> < i32 > (X => X')
+            wrap(1) |-> < i32 > Y
            </locals>
            requires #inUnsignedRange(i32, X)
             andBool #inUnsignedRange(i32, Y)

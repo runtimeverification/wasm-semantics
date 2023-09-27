@@ -14,8 +14,8 @@ module DIV1-SPEC
              => .
            </k>
            <locals>
-            0 |-> < i32 > (X => X')
-            1 |-> < i32 > Y
+            wrap(0) |-> < i32 > (X => X')
+            wrap(1) |-> < i32 > Y
            </locals>
            // We must specify that X and Y fulfill the invariant for locals to
            // be in the unsigned range. Otherwise, X and Y can be *any* integers.
