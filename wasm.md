@@ -3,6 +3,7 @@ WebAssembly State and Semantics
 
 ```k
 require "data.md"
+require "data/map-int-to-int.k"
 require "numeric.md"
 
 module WASM-SYNTAX
@@ -156,6 +157,8 @@ Semantics
 
 ```k
 module WASM
+    imports MAP-INT-TO-INT
+    imports MAP-INT-TO-INT-PRIMITIVE
     imports WASM-COMMON-SYNTAX
     imports WASM-DATA
     imports WASM-NUMERIC
@@ -176,24 +179,24 @@ module WASM
         <moduleIds> .Map </moduleIds>
         <moduleInstances>
           <moduleInst multiplicity="*" type="Map">
-            <modIdx>      0    </modIdx>
-            <exports>     .Map </exports>
-            <types>       .Map </types>
-            <nextTypeIdx> 0    </nextTypeIdx>
-            <funcAddrs>   .Map </funcAddrs>
-            <nextFuncIdx> 0    </nextFuncIdx>
-            <tabIds>      .Map </tabIds>
-            <tabAddrs>    .Map </tabAddrs>
-            <memIds>      .Map </memIds>
-            <memAddrs>    .Map </memAddrs>
-            <globIds>     .Map </globIds>
-            <globalAddrs> .Map </globalAddrs>
-            <nextGlobIdx> 0    </nextGlobIdx>
+            <modIdx>      0            </modIdx>
+            <exports>     .Map         </exports>
+            <types>       .Map         </types>
+            <nextTypeIdx> 0            </nextTypeIdx>
+            <funcAddrs>   .MapIntToInt </funcAddrs>
+            <nextFuncIdx> 0            </nextFuncIdx>
+            <tabIds>      .Map         </tabIds>
+            <tabAddrs>    .Map         </tabAddrs>
+            <memIds>      .Map         </memIds>
+            <memAddrs>    .MapIntToInt </memAddrs>
+            <globIds>     .Map         </globIds>
+            <globalAddrs> .Map         </globalAddrs>
+            <nextGlobIdx> 0            </nextGlobIdx>
             <moduleMetadata>
               <moduleFileName> .String </moduleFileName>
-              <moduleId>              </moduleId>
-              <funcIds>        .Map   </funcIds>
-              <typeIds>        .Map   </typeIds>
+              <moduleId>               </moduleId>
+              <funcIds>        .Map    </funcIds>
+              <typeIds>        .Map    </typeIds>
             </moduleMetadata>
           </moduleInst>
         </moduleInstances>
@@ -271,9 +274,9 @@ Instructions
 ### Sequencing
 
 ```k
-    syntax K ::= sequenceStmts  ( Stmts  ) [function]
-               | sequenceDefns  ( Defns  ) [function]
-               | sequenceInstrs ( Instrs ) [function]
+    syntax K ::= sequenceStmts  ( Stmts  ) [function, total]
+               | sequenceDefns  ( Defns  ) [function, total]
+               | sequenceInstrs ( Instrs ) [function, total]
  // -------------------------------------------------
     rule sequenceStmts(.Stmts) => .
     rule sequenceStmts(S SS  ) => S ~> sequenceStmts(SS)
@@ -529,11 +532,13 @@ The `*_local` instructions are defined here.
 
     rule <instrs> #local.set(I) => . ... </instrs>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> ... I |-> (_ => VALUE) ... </locals>
+         <locals> LOCALS => LOCALS[I <- VALUE] </locals>
+        requires I in_keys(LOCALS)
 
     rule <instrs> #local.tee(I) => . ... </instrs>
          <valstack> VALUE : _VALSTACK </valstack>
-         <locals> ... I |-> (_ => VALUE) ... </locals>
+         <locals> LOCALS => LOCALS[I <- VALUE] </locals>
+        requires I in_keys(LOCALS)
 ```
 
 ### Globals
@@ -695,7 +700,7 @@ The importing and exporting parts of specifications are dealt with in the respec
            <modIdx> CUR </modIdx>
            <types>  ... TYPIDX |-> TYPE ... </types>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-           <funcAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </funcAddrs>
+           <funcAddrs> ADDRS => ADDRS {{ NEXTIDX <- NEXTADDR }} </funcAddrs>
            ...
          </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
@@ -776,13 +781,14 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```k
     syntax Instr ::= #call(Int) [klabel(aCall), symbol]
  // ---------------------------------------------------
-    rule <instrs> #call(IDX) => ( invoke FADDR ) ... </instrs>
+    rule <instrs> #call(IDX) => ( invoke FUNCADDRS {{ IDX }} orDefault 0 ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
+        requires IDX in_keys {{ FUNCADDRS }}
 ```
 
 ```k
@@ -927,7 +933,7 @@ The importing and exporting parts of specifications are dealt with in the respec
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
-           <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
+           <memAddrs> .MapIntToInt => (wrap(0) Int2Int|-> wrap(NEXTADDR)) </memAddrs>
            ...
          </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
@@ -953,17 +959,21 @@ The value is encoded as bytes and stored at the "effective address", which is th
                    | IValType "." StoreOp Int Int
  //                | FValType "." StoreOp Int Float
                    | "store" "{" Int Int Number "}"
+                   | "store" "{" Int Int Number Int "}"
  // -----------------------------------------------
     rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> store { WIDTH EA VAL } => . ... </instrs>
+    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL (MEMADDRS{{0}} orDefault 0) } ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
+         requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+
+    rule <instrs> store { WIDTH EA VAL ADDR } => . ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -972,13 +982,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
          </memInst>
          requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
-    rule <instrs> store { WIDTH  EA  _ } => trap ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
+    rule <instrs> store { WIDTH  EA  _ ADDR } => trap ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1000,8 +1004,8 @@ Sort `Signedness` is defined in module `BYTES`.
 ```k
     syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
                    | "load" "{" IValType Int Int Signedness"}"
+                   | "load" "{" IValType Int Int Signedness Int"}"
                    | "load" "{" IValType Int Int Signedness Bytes"}"
-                   | "load" "{" IValType Int Int Signedness"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
     rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
@@ -1015,13 +1019,16 @@ Sort `Signedness` is defined in module `BYTES`.
     rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </instrs>
     rule <instrs> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </instrs>
 
-    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN (MEMADDRS{{0}} orDefault 0)} ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
+      requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+
+    rule <instrs> load { ITYPE WIDTH EA SIGN ADDR:Int} => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1030,13 +1037,7 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { _ WIDTH EA _ } => trap ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
-           ...
-         </moduleInst>
+    rule <instrs> load { _ WIDTH EA _ ADDR:Int} => trap ... </instrs>
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
@@ -1044,8 +1045,8 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { ITYPE WIDTH EA   Signed DATA } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
-    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:Bytes } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:Bytes } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
@@ -1055,7 +1056,7 @@ The `size` operation returns the size of the memory, measured in pages.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1081,7 +1082,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1097,7 +1098,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1109,7 +1110,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
       requires notBool DET
         orBool notBool #growthAllowed(SIZE +Int N, MAX)
 
-    syntax Bool ::= #growthAllowed(Int, OptionalInt) [function]
+    syntax Bool ::= #growthAllowed(Int, OptionalInt) [function, total]
  // -----------------------------------------------------------
     rule #growthAllowed(SIZE, .Int ) => SIZE <=Int #maxMemorySize()
     rule #growthAllowed(SIZE, I:Int) => #growthAllowed(SIZE, .Int) andBool SIZE <=Int I
@@ -1120,9 +1121,9 @@ Incidentally, the page size is 2^16 bytes.
 The maximum of table size is 2^32 bytes.
 
 ```k
-    syntax Int ::= #pageSize()      [function]
-    syntax Int ::= #maxMemorySize() [function]
-    syntax Int ::= #maxTableSize()  [function]
+    syntax Int ::= #pageSize()      [function, total]
+    syntax Int ::= #maxMemorySize() [function, total]
+    syntax Int ::= #maxTableSize()  [function, total]
  // ------------------------------------------
     rule #pageSize()      => 65536
     rule #maxMemorySize() => 65536
@@ -1142,7 +1143,7 @@ A table index is optional and will be default to zero.
 
     syntax ElemDefn ::= #elem(index : Int, offset : Instrs, elemSegment : Ints) [klabel(aElemDefn), symbol]
                       | "elem" "{" Int        Ints "}"
-    syntax Stmt ::= #initElements ( Int, Int, Map, Ints )
+    syntax Stmt ::= #initElements ( Int, Int, MapIntToInt, Ints )
  // -----------------------------------------------------
     rule <instrs> #elem(TABIDX, IS, ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
@@ -1160,7 +1161,7 @@ A table index is optional and will be default to zero.
     rule <instrs> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </instrs>
          <tabInst>
            <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- FADDRS[E] ] </tdata>
+           <tdata> DATA => DATA [ OFFSET <- FADDRS{{E}} ] </tdata>
            ...
          </tabInst>
 ```
@@ -1183,7 +1184,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> MEMIDX |-> ADDR </memAddrs>
+           <memAddrs> wrap(MEMIDX) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1209,7 +1210,7 @@ The `start` component of a module declares the function index of a `start functi
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
            ...
          </moduleInst>
 ```
@@ -1252,14 +1253,14 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <types> TYPES </types>
-           <funcAddrs> FS => FS [NEXT <- ADDR] </funcAddrs>
+           <funcAddrs> FS => FS {{ NEXT <- ADDR }} </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <funcAddrs> ... IDX |-> ADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(ADDR) ... </funcAddrs>
            <exports>   ... NAME |-> IDX ... </exports>
            ...
          </moduleInst>
@@ -1299,14 +1300,14 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
-           <memAddrs> .Map => 0 |-> ADDR </memAddrs>
+           <memAddrs> .MapIntToInt => wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
-           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
+           <memAddrs> ... wrap(#ContextLookup(IDS' , TFIDX)) Int2Int|-> wrap(ADDR) ... </memAddrs>
            <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
@@ -1388,7 +1389,8 @@ A new module instance gets allocated.
 Then, the surrounding `module` tag is discarded, and the definitions are executed, putting them into the module currently being defined.
 
 ```k
-    rule <instrs> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
+    rule [newModule]:
+         <instrs> #module(... types: TS, funcs: FS, tables: TABS, mems: MS, globals: GS, elem: EL, data: DAT, start: S,  importDefns: IS, exports: ES,
                          metadata: #meta(... id: OID, funcIds: FIDS, filename: FILE))
                => sequenceDefns(TS)
                ~> sequenceDefns(IS)

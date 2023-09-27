@@ -104,7 +104,7 @@ endmodule
     <spuriousMemoryFail> false </spuriousMemoryFail>
 
     rule <k> (( memory ) ~> ELSE) => ELSE </k>
-         <memAddrs> .Map => 0 |-> NEXT </memAddrs>
+         <memAddrs> .MapIntToInt => wrap(0) Int2Int|-> wrap(NEXT) </memAddrs>
          <nextMemAddr> NEXT => NEXT +Int 1 </nextMemAddr>
          <mems>
            (.Bag =>
@@ -118,7 +118,7 @@ endmodule
     syntax Instr ::= "(" "memory.size" ")"
  // --------------------------------------
     rule <k> ( memory.size ) => ( i32.const SZ ) ... </k>
-         <memAddrs> 0 |-> A </memAddrs>
+         <memAddrs> wrap(0) Int2Int|-> wrap(A) </memAddrs>
          <memInst>
            <memAddr> A  </memAddr>
            <memSize> SZ </memSize>
@@ -131,7 +131,7 @@ endmodule
     rule <k> (memory.grow I:Instr) => I ~> (memory.grow) ... </k>
     rule <k> (memory.grow) => (i32.const SZ) ... </k>
          <stack> < i32 > V : S => S </stack>
-         <memAddrs> 0 |-> A </memAddrs>
+         <memAddrs> wrap(0) Int2Int|-> wrap(A) </memAddrs>
          <memInst>
            <memAddr> A </memAddr>
            <memSize> SZ => SZ +Int V </memSize>

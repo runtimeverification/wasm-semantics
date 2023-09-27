@@ -14,7 +14,8 @@ module WASM-AUXIL
 
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
-    rule <instrs> #clearConfig => . ...     </instrs>
+    rule [clearConfig]:
+         <instrs> #clearConfig => . ...     </instrs>
          <curModIdx>         _ => .Int      </curModIdx>
          <valstack>          _ => .ValStack </valstack>
          <locals>            _ => .Map      </locals>

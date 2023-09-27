@@ -184,9 +184,17 @@ There are 7 unary operators for floats: `abs`, `neg`, `sqrt`, `floor`, `ceil`, `
 A `*BinOp` operator always produces a result of the same type as its operands.
 
 ```k
-    syntax Val ::= IValType "." IBinOp Int   Int   [klabel(intBinOp)  , function]
-                 | FValType "." FBinOp Float Float [klabel(floatBinOp), function]
+    syntax Val ::= IValType "." IBinOp Int   Int   [klabel(intBinOp)  , symbol, function, total]
+                 | FValType "." FBinOp Float Float [klabel(floatBinOp), symbol, function]
  // -----------------------------------------------------------------------------
+```
+
+Make intBinOp total
+
+```k
+
+rule _:IValType . _:IBinOp _:Int _:Int => undefined [owise]
+
 ```
 
 #### Binary Operators for Integers
@@ -220,6 +228,7 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 
     rule ITYPE . div_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) /Int #signed(ITYPE, I2))
       requires I2 =/=Int 0
+       andBool definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
        andBool #signed(ITYPE, I1) /Int #signed(ITYPE, I2) =/=Int #pow1(ITYPE)
 
     rule _ITYPE . div_s _I1 I2 => undefined
@@ -231,6 +240,7 @@ There are 12 binary operators for integers: `add`, `sub`, `mul`, `div_sx`, `rem_
 
     rule ITYPE . rem_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) %Int #signed(ITYPE, I2))
       requires I2 =/=Int 0
+       andBool definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
 
     rule _ITYPE . rem_s _I1 I2 => undefined
       requires I2 ==Int 0
@@ -261,6 +271,7 @@ Careful attention is made for the signed version `shr_s`.
     rule ITYPE . shr_u I1 I2 =>       < ITYPE > I1 >>Int (I2 %Int #width(ITYPE))
 
     rule ITYPE . shr_s I1 I2 => < ITYPE > #unsigned(ITYPE, #signed(ITYPE, I1) >>Int (I2 %Int #width(ITYPE)))
+      requires definedSigned(ITYPE, I1)
 ```
 
 - `rotl` returns the result of rotating the first operand left by k bits, in which k is the second operand modulo N.
@@ -321,9 +332,17 @@ There is no test operation for float numbers.
 Relationship Operators consume two operands and produce a bool, which is an `i32` value.
 
 ```k
-    syntax Val ::= IValType "." IRelOp Int   Int   [klabel(intRelOp)  , function]
-                 | FValType "." FRelOp Float Float [klabel(floatRelOp), function]
+    syntax Val ::= IValType "." IRelOp Int   Int   [klabel(intRelOp)  , symbol, function, total]
+                 | FValType "." FRelOp Float Float [klabel(floatRelOp), symbol, function]
  // -----------------------------------------------------------------------------
+```
+
+Make intRelOp total.
+
+```k
+
+rule _:IValType . _:IRelOp _:Int _:Int => undefined  [owise]
+
 ```
 
 ### Relationship Operators for Integers
@@ -346,7 +365,9 @@ There are 6 relationship operators for integers: `eq`, `ne`, `lt_sx`, `gt_sx`, `
     rule _     . gt_u I1 I2 => < i32 > #bool(I1 >Int I2)
 
     rule ITYPE . lt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <Int #signed(ITYPE, I2))
+      requires definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
     rule ITYPE . gt_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >Int #signed(ITYPE, I2))
+      requires definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
 ```
 
 - `le_sx` returns 1 if the first oprand is less than or equal to the second opeand, 0 otherwise.
@@ -357,7 +378,9 @@ There are 6 relationship operators for integers: `eq`, `ne`, `lt_sx`, `gt_sx`, `
     rule _     . ge_u I1 I2 => < i32 > #bool(I1 >=Int I2)
 
     rule ITYPE . le_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) <=Int #signed(ITYPE, I2))
+      requires definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
     rule ITYPE . ge_s I1 I2 => < i32 > #bool(#signed(ITYPE, I1) >=Int #signed(ITYPE, I2))
+      requires definedSigned(ITYPE, I1) andBool definedSigned(ITYPE, I2)
 ```
 
 ### Relationship Operators for Floats
