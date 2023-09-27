@@ -7,7 +7,7 @@ module MEMORY-SPEC
           <curModIdx> CUR </curModIdx>
           <moduleInst>
             <modIdx> CUR </modIdx>
-            <memAddrs> 0 |-> MEMADDR </memAddrs>
+            <memAddrs> wrap(0) Int2Int|-> wrap(MEMADDR) </memAddrs>
             ...
           </moduleInst>
           <memInst>
@@ -24,7 +24,7 @@ module MEMORY-SPEC
           <curModIdx> CUR </curModIdx>
           <moduleInst>
             <modIdx> CUR </modIdx>
-            <memAddrs> 0 |-> MEMADDR </memAddrs>
+            <memAddrs> wrap(0) Int2Int|-> wrap(MEMADDR) </memAddrs>
             ...
           </moduleInst>
           <memInst>

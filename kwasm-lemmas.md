@@ -11,6 +11,7 @@ module KWASM-LEMMAS [symbolic]
     imports WASM-TEXT
     imports BYTES-KORE
     imports INT-SYMBOLIC
+    imports MAP-SYMBOLIC
 ```
 
 Basic logic

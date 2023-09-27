@@ -168,7 +168,7 @@ We allow 2 kinds of actions:
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... ENAME |-> IDX ... </exports>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
            ...
          </moduleInst>
 
@@ -380,7 +380,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... IDX |-> FADDR ... </funcAddrs>
+           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
            ...
          </moduleInst>
          <funcs>
@@ -450,7 +450,7 @@ This checks that the last allocated memory has the given size and max value.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS </memIds>
-           <memAddrs> #ContextLookup(IDS, TFIDX) |-> ADDR </memAddrs>
+           <memAddrs> wrap(#ContextLookup(IDS, TFIDX)) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <mems>
@@ -472,7 +472,7 @@ This checks that the last allocated memory has the given size and max value.
     rule <instrs> #assertMemoryData MODIDX (KEY , VAL) _MSG => . ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
            ...
          </moduleInst>
          <mems>
@@ -494,7 +494,8 @@ These assertions act on the last module defined.
 ```k
     syntax Assertion ::= "#assertNamedModule" Identifier WasmString
  // ---------------------------------------------------------------
-    rule <instrs> #assertNamedModule NAME _S => . ... </instrs>
+    rule [assertNamedModule]:
+         <instrs> #assertNamedModule NAME _S => . ... </instrs>
          <moduleIds> ... NAME |-> IDX ... </moduleIds>
          <moduleInstances>
            <moduleInst>
