@@ -627,11 +627,6 @@ endmodule
 module WASM-DATA-CONCRETE  [concrete]
    imports WASM-DATA-COMMON
 
-   syntax Int ::= #signedTotal ( IValType , Int)  [function, total, klabel(#signedTotal), symbol, smtlib(signedTotal)]
-
-   rule #signedTotal ( TYPE:IValType , VAL:Int) => #signed(TYPE, VAL)
-      requires definedSigned(TYPE, VAL)
-
    rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1)
       requires 0 <Int WIDTH
    
