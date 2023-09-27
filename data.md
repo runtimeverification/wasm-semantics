@@ -152,6 +152,8 @@ module WASM-DATA-COMMON
     imports STRING
     imports LIST
     imports MAP
+    imports MAP-INT-TO-VAL
+    imports MAP-INT-TO-VAL-PRIMITIVE
     imports FLOAT
     imports BYTES
     imports K-EQUAL
@@ -412,6 +414,60 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
           #And #Ceil(@Arg0))
           #And #Ceil(@Arg1))
         [simplification]
+
+```
+
+#### Val getters
+
+```k
+
+    syntax Int  ::= getI32ValOr0(Val)  [function, total]
+                  | getI64ValOr0(Val)  [function, total]
+
+    rule getI32ValOr0(<i32> V:Int) => V
+    rule getI32ValOr0(_:Val) => 0  [owise]
+
+    rule getI64ValOr0(<i64> V:Int) => V
+    rule getI64ValOr0(_:Val) => 0  [owise]
+
+    syntax Bool ::= isIntWithType(Val, ValType)  [function, total]
+    rule isIntWithType(<T> _:Int, T:ValType) => true
+    rule isIntWithType(_:Val, _:ValType) => false [owise]
+
+```
+
+#### Int -> Val map operations
+
+mapInt2ValHasValues checks that the map has entries with the provided types,
+numbered consecutively from 0, and only those entries.
+This means that the keys are exactly 0, 1, ..., N - 1.
+
+```k
+
+    syntax Bool ::= mapInt2ValHasValues(MapIntToVal, ValTypes)  [function, total]
+                  | #mapInt2ValHasValues(MapIntToVal, Int, ValTypes)  [function, total]
+    rule mapInt2ValHasValues(M:MapIntToVal, VTs:ValTypes)
+        => size(M) ==Int lengthValTypes(VTs) andBool #mapInt2ValHasValues(M, 0, VTs)
+    rule #mapInt2ValHasValues(M:MapIntToVal, N:Int, VT VTs)
+        => N in_keys{{M}}
+          andBool isIntWithType(M{{N}} orDefault undefined, VT)
+          andBool #mapInt2ValHasValues(M, N +Int 1, VTs)
+      requires 0 <=Int N
+    rule #mapInt2ValHasValues(_:MapIntToVal, _:Int, _:ValTypes) => true  [owise]
+
+```
+
+get<ValType>FromMapOr0 extract the int form the provided key if the value has
+ValType. Returns 0 otherwise.
+
+```k
+
+    syntax Int  ::= getI32FromMapOr0(MapIntToVal, Int)  [function, total]
+                  | getI64FromMapOr0(MapIntToVal, Int)  [function, total]
+    rule getI32FromMapOr0(M:MapIntToVal, N:Int)
+        => getI32ValOr0(M{{N}} orDefault undefined)
+    rule getI64FromMapOr0(M:MapIntToVal, N:Int)
+        => getI64ValOr0(M{{N}} orDefault undefined)
 
 ```
 

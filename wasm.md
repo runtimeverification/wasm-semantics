@@ -4,6 +4,7 @@ WebAssembly State and Semantics
 ```k
 require "data.md"
 require "data/map-int-to-int.k"
+require "data/map-int-to-val.k"
 require "numeric.md"
 
 module WASM-SYNTAX
