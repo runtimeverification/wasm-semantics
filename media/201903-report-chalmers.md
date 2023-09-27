@@ -800,7 +800,7 @@ This is the full definition of the `(memory.grow)` operation:
                    #then SIZE
                    #else -1
                  #fi ... </k>
-         <memAddrs> 0 |-> ADDR </memAddrs>
+         <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
          <memInst>
            <memAddr> ADDR  </memAddr>
            <mmax>    MAX  </mmax>

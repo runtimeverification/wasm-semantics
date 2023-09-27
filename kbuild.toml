@@ -5,6 +5,7 @@ source = "."
 
 [targets.llvm]
 main-file = 'test.md'
+main-module = 'WASM-TEST'
 backend='llvm'
 
 [targets.haskell]

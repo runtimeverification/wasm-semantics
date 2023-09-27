@@ -2,14 +2,14 @@ module MEMORY-SPEC
   imports WASM
 
   rule <k> ( memory.size ) => (i32.const SZ) ... </k>
-      <memAddrs> 0 |-> A </memAddrs>
+      <memAddrs> wrap(0) Int2Int|-> wrap(A) </memAddrs>
       <memInst>
         <memAddr> A </memAddr>
         <memSize> SZ </memSize>
       </memInst>
 
   rule <k> (memory.grow (i32.const X)) => (i32.const SZ) ...</k>
-      <memAddrs> 0 |-> A </memAddrs>
+      <memAddrs> wrap(0) Int2Int|-> wrap(A) </memAddrs>
       <memInst>
         <memAddr> A </memAddr>
         <memSize> SZ => (SZ +Int X) </memSize>
@@ -21,7 +21,7 @@ module MEMORY-SPEC
       andBool SZ >=Int 0
 
   rule <k> (memory.grow (i32.const X)) => (i32.const -1) ...</k>
-      <memAddrs> 0 |-> A </memAddrs>
+      <memAddrs> wrap(0) Int2Int|-> wrap(A) </memAddrs>
       <memInst>
         <memAddr> A </memAddr>
         <memSize> SZ </memSize>

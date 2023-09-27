@@ -378,6 +378,10 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
     syntax Int ::= #signed      ( IValType , Int ) [function]
                  | #unsigned    ( IValType , Int ) [function]
                  | #signedWidth ( Int      , Int ) [function]
+
+    syntax Bool ::= definedSigned  ( IValType, Int )  [function, total]
+                  | definedUnsigned( IValType, Int )  [function, total]
+
  // ---------------------------------------------------------
     rule #signed(ITYPE, N) => N                  requires 0            <=Int N andBool N <Int #pow1(ITYPE)
     rule #signed(ITYPE, N) => N -Int #pow(ITYPE) requires #pow1(ITYPE) <=Int N andBool N <Int #pow (ITYPE)
@@ -390,6 +394,25 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
     rule #signedWidth(2, N) => N            requires 0     <=Int N andBool N <Int 32768
     rule #signedWidth(2, N) => N -Int 65536 requires 32768 <=Int N andBool N <Int 65536
     rule #signedWidth(4, N) => #signed(i32, N)
+
+    rule definedSigned(T:IValType, N:Int) => 0 <=Int N andBool N <Int #pow(T)
+
+    rule #Ceil(#signed(@Arg0:IValType, @Arg1:Int))
+        =>  (({ definedSigned(@Arg0, @Arg1)  #Equals true }
+          #And #Ceil(@Arg0))
+          #And #Ceil(@Arg1))
+        [simplification]
+
+    // Should this use `N <Int #pow1(T)`? If the argument is always signed, then
+    // it should, otherwise it may be better as below.
+    rule definedUnsigned(T:IValType, N:Int) => 0 -Int #pow1(T) <=Int N andBool N <Int #pow(T)
+
+    rule #Ceil(#unsigned(@Arg0:IValType, @Arg1:Int))
+        =>  (({ definedUnsigned(@Arg0, @Arg1)  #Equals true }
+          #And #Ceil(@Arg0))
+          #And #Ceil(@Arg1))
+        [simplification]
+
 ```
 
 #### Boolean Interpretation
@@ -619,6 +642,24 @@ endmodule
 
 module WASM-DATA-SYMBOLIC  [symbolic]
    imports WASM-DATA-COMMON
+
+   syntax Int ::= #signedTotal ( IValType , Int)  [function, total, klabel(#signedTotal), symbol, no-evaluators, smtlib(signedTotal)]
+
+   rule #signedTotal(Arg0:IValType, Arg1:Int)
+      => #signed(Arg0, Arg1)
+      requires definedSigned(Arg0, Arg1)
+      [concrete, simplification]
+
+   rule #signed(Arg0:IValType, Arg1:Int)
+      => #signedTotal(Arg0, Arg1)
+      requires definedSigned(Arg0, Arg1)
+      [symbolic(Arg0), simplification]
+
+   rule #signed(Arg0:IValType, Arg1:Int)
+      => #signedTotal(Arg0, Arg1)
+      requires definedSigned(Arg0, Arg1)
+      [symbolic(Arg1), simplification]
+
 
    rule [wrap-Positive] : #wrap(WIDTH,  N) => N &Int ((1 <<Int (WIDTH *Int 8)) -Int 1)
       requires 0 <Int WIDTH
