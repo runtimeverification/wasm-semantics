@@ -12,4 +12,5 @@ imports.wast
 left-to-right.wast
 memory_redundancy.wast
 memory_trap.wast
+names.wast
 traps.wast
