@@ -886,7 +886,7 @@ plugins = ["importlib-metadata"]
 
 [[package]]
 name = "pyk"
-version = "0.1.464"
+version = "0.1.465"
 description = ""
 category = "main"
 optional = false
@@ -907,8 +907,8 @@ tomli = "^2.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/pyk.git"
-reference = "v0.1.464"
-resolved_reference = "2fed3dc522fea78bcd9c92518da8fdcabdc6b479"
+reference = "v0.1.465"
+resolved_reference = "9b610d23ffaa6e11ebeda19f6fd156cb5d879940"
 
 [[package]]
 name = "pyperclip"
@@ -1136,4 +1136,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "38d93bb48abf7afd111db901609aa0151beda86922285a1a340f6d1d46bf8300"
+content-hash = "646de333400fe8c763607f17c9766927eab8e95c9fe31396f4020f506e2746fd"
