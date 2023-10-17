@@ -3,6 +3,7 @@ WebAssembly State and Semantics
 
 ```k
 require "data.md"
+require "data/mutable-bytes.k"
 require "data/map-int-to-int.k"
 require "numeric.md"
 
@@ -159,6 +160,7 @@ Semantics
 module WASM
     imports MAP-INT-TO-INT
     imports MAP-INT-TO-INT-PRIMITIVE
+    imports MUTABLE-BYTES
     imports WASM-COMMON-SYNTAX
     imports WASM-DATA
     imports WASM-NUMERIC
@@ -230,7 +232,7 @@ module WASM
               <mAddr> 0      </mAddr>
               <mmax>  .Int   </mmax>
               <msize> 0      </msize>
-              <mdata> .Bytes </mdata>
+              <mdata> .MutableBytes </mdata>
             </memInst>
           </mems>
           <nextMemAddr> 0 </nextMemAddr>
@@ -1005,7 +1007,7 @@ Sort `Signedness` is defined in module `BYTES`.
     syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
                    | "load" "{" IValType Int Int Signedness"}"
                    | "load" "{" IValType Int Int Signedness Int"}"
-                   | "load" "{" IValType Int Int Signedness Bytes"}"
+                   | "load" "{" IValType Int Int Signedness MutableBytes"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
     rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
@@ -1045,8 +1047,8 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:Bytes } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
-    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:Bytes } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:MutableBytes } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:MutableBytes } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
 ```
 
 The `size` operation returns the size of the memory, measured in pages.

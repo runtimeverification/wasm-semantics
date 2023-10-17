@@ -155,6 +155,7 @@ module WASM-DATA-COMMON
     imports FLOAT
     imports BYTES
     imports K-EQUAL
+    imports MUTABLE-BYTES-SYNTAX
 ```
 
 ### Identifiers
@@ -580,15 +581,15 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 - `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax Bytes ::= #setBytesRange ( Bytes , Int , Bytes ) [function, total]
+    syntax MutableBytes ::= #setBytesRange ( MutableBytes , Int , Bytes ) [function, total]
  // ------------------------------------------------------------------------------
-    rule #setBytesRange(BM, START, BS) => replaceAtBytes(padRightBytes(BM, START +Int lengthBytes(BS), 0), START, BS)
+    rule #setBytesRange(BM, START, BS) => replaceAtBytes(padRightBytes(BM, START +Int lengthBytes(BS)), START, BS)
       requires          0 <=Int START
 
-    rule #setBytesRange(_, START, _ ) => .Bytes
+    rule #setBytesRange(_, START, _ ) => .MutableBytes
       requires notBool (0 <=Int START)
 
-    syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, total, smtlib(setRange)]
+    syntax MutableBytes ::= #setRange ( MutableBytes , Int , Int , Int ) [function, total, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
     rule #setRange(BM, ADDR, VAL, WIDTH) => BM
       requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
@@ -599,12 +600,12 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 - `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer. The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Bytes ::= #getBytesRange ( Bytes , Int , Int ) [function, total]
+    syntax Bytes ::= #getBytesRange ( MutableBytes , Int , Int ) [function, total]
  // ----------------------------------------------------------------------------
     rule #getBytesRange(_, START, WIDTH) => .Bytes
       requires notBool (0 <=Int START andBool 0 <=Int WIDTH)
 
-    rule #getBytesRange(BM, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH, 0), START, START +Int WIDTH)
+    rule #getBytesRange(BM, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH), START, START +Int WIDTH)
       requires         (0 <=Int START andBool 0 <=Int WIDTH)
        andBool         START <Int lengthBytes(BM)
 
@@ -612,7 +613,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
       requires         (0 <=Int START andBool 0 <=Int WIDTH)
        andBool notBool (START <Int lengthBytes(BM))
 
-    syntax Int ::= #getRange(Bytes, Int, Int) [function, total, smtlib(getRange)]
+    syntax Int ::= #getRange(MutableBytes, Int, Int) [function, total, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
     rule #getRange( _, ADDR, WIDTH) => 0
       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
