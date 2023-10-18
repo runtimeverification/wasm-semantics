@@ -55,7 +55,7 @@ module MUTABLE-BYTES
 
   rule #substrBytes(Node(ChildSize, C :: Cs), Start, End)
       => #substrBytes(C, Start, ChildSize) +Bytes #substrBytes(Node(ChildSize, Cs), 0, End -Int ChildSize)
-      requires ChildSize <Int End
+      requires Start <Int ChildSize andBool ChildSize <Int End
 
   rule #substrBytes(Node(ChildSize, C :: _Cs), Start, End)
       => #substrBytes(C, Start, End)
