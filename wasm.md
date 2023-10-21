@@ -4,6 +4,7 @@ WebAssembly State and Semantics
 ```k
 require "data.md"
 require "data/map-int-to-int.k"
+require "data/sparse-bytes.k"
 require "numeric.md"
 
 module WASM-SYNTAX
@@ -227,10 +228,10 @@ module WASM
           <nextTabAddr> 0 </nextTabAddr>
           <mems>
             <memInst multiplicity="*" type="Map">
-              <mAddr> 0      </mAddr>
-              <mmax>  .Int   </mmax>
-              <msize> 0      </msize>
-              <mdata> .Bytes </mdata>
+              <mAddr> 0            </mAddr>
+              <mmax>  .Int         </mmax>
+              <msize> 0            </msize>
+              <mdata> .SparseBytes </mdata>
             </memInst>
           </mems>
           <nextMemAddr> 0 </nextMemAddr>
@@ -1005,7 +1006,7 @@ Sort `Signedness` is defined in module `BYTES`.
     syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
                    | "load" "{" IValType Int Int Signedness"}"
                    | "load" "{" IValType Int Int Signedness Int"}"
-                   | "load" "{" IValType Int Int Signedness Bytes"}"
+                   | "load" "{" IValType Int Int Signedness SparseBytes"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
     rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
@@ -1045,8 +1046,8 @@ Sort `Signedness` is defined in module `BYTES`.
          </memInst>
       requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:Bytes } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
-    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:Bytes } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:SparseBytes } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:SparseBytes } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
