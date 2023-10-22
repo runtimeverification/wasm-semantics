@@ -67,7 +67,7 @@ module SPARSE-BYTES
 
   rule substrSparseBytes(SBChunk(SBI) REST, S, E) 
     => #let SUB = substrSBItem(SBI, S, E)
-       #in SUB substrSparseBytes(REST, S -Int size(SUB), E -Int size(SUB))
+       #in SUB substrSparseBytes(REST, 0, E -Int size(SBI))
     requires 0 <=Int S andBool S <=Int E
      andBool size(SBI) >Int S
 
