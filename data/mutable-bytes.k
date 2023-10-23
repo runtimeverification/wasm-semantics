@@ -28,15 +28,15 @@ module MUTABLE-BYTES
 
   syntax MutableBytesPrivateList ::= List{MutableBytesPrivate, "::"}
 
-  syntax MutableBytes ::= mutableBytes(size:Int, bytes: MutableBytesPrivate)
+  syntax MutableBytes ::= mutableBytes(size:Int, available:Int, bytes: MutableBytesPrivate)
 
-  rule .MutableBytes => mutableBytes(0, Zero)
+  rule .MutableBytes => mutableBytes(0, 16, Zero)
 
   // --------------------------------------------------
   //                   substrBytes
   // --------------------------------------------------
 
-  rule substrBytes(mutableBytes(Size:Int, M:MutableBytesPrivate), Start:Int, End:Int)
+  rule substrBytes(mutableBytes(Size:Int, _Available:Int, M:MutableBytesPrivate), Start:Int, End:Int)
       => #substrBytes(M, Start, End)
       requires 0 <=Int Start andBool Start <=Int End andBool End <=Int Size
 
@@ -69,8 +69,8 @@ module MUTABLE-BYTES
   syntax MutableBytesPrivateList ::= #replaceAtBytesList(childSize:Int, dest: MutableBytesPrivateList, index: Int, src: Bytes) [function]
   syntax MutableBytesPrivate ::= expandZeroNode(size:Int)  [function]
 
-  rule replaceAtBytes(mutableBytes(Size:Int, Dest:MutableBytesPrivate), Index:Int, Src:Bytes)
-      => mutableBytes(Size, #replaceAtBytes(Size, Dest, Index, Src))
+  rule replaceAtBytes(mutableBytes(Size:Int, Available:Int, Dest:MutableBytesPrivate), Index:Int, Src:Bytes)
+      => mutableBytes(Size, Available, #replaceAtBytes(Size, Dest, Index, Src))
     requires 0 <=Int Index andBool Index +Int lengthBytes(Src) <=Int Size
 
   rule #replaceAtBytes(_Size:Int, Leaf(B:Bytes), Index:Int, Src:Bytes)
@@ -80,6 +80,7 @@ module MUTABLE-BYTES
   // things like Leaf(zeros) with Zero?
   rule #replaceAtBytes(Size:Int, Zero, Index:Int, Src:Bytes)
       => #replaceAtBytes(Size, expandZeroNode(Size), Index:Int, Src:Bytes)
+    requires 0 <Int Size
 
   rule #replaceAtBytes(_Size:Int, Node(ChildSize, Cs), Index:Int, Src:Bytes)
       => Node(ChildSize, #replaceAtBytesList(ChildSize, Cs, Index, Src))
@@ -101,7 +102,8 @@ module MUTABLE-BYTES
           :: Cs
     requires Index +Int lengthBytes(Src) <=Int ChildSize
 
-  rule expandZeroNode(16) => Leaf(padRightBytes(b"", 16, 0))
+  rule expandZeroNode(Size:Int) => Leaf(padRightBytes(b"", 16, 0))
+      requires 0 <Int Size andBool Size <=Int 16
   rule expandZeroNode(Size:Int) => Node(Size >>Int 2, Zero :: Zero :: Zero :: Zero)
       requires 16 <Int Size andBool Size &Int 15 ==Int 0
 
@@ -109,28 +111,22 @@ module MUTABLE-BYTES
   //                  padRightBytes
   // --------------------------------------------------
 
-  syntax MutableBytesPrivate ::= #increaseDepth(MutableBytesPrivate, childSize:Int, length:Int) [function]
-
-  rule padRightBytes(mutableBytes(Size, _) #as M:MutableBytes, Length:Int)
+  rule padRightBytes(mutableBytes(Size, _Available, _) #as M:MutableBytes, Length:Int)
       => M
     requires Length <=Int Size
-  rule padRightBytes(mutableBytes(0, _), Length:Int)
-      => padRightBytes(mutableBytes(1, Zero), Length:Int)
+  rule padRightBytes(mutableBytes(0, _Available:Int, _), Length:Int)
+      => padRightBytes(mutableBytes(1, 16, Zero), Length:Int)
     requires 0 <Int Length
-  rule padRightBytes(mutableBytes(Size, M:MutableBytesPrivate), Length:Int)
-      => mutableBytes(Length, #increaseDepth(M, ((Size +Int 16 -Int 1) >>Int 4) <<Int 4, Length))
-    requires 0 <Int Size andBool Size <Int Length
-
-  rule #increaseDepth(M:MutableBytesPrivate, ChildSize:Int, Length:Int)
-      => M
-  requires Length <=Int ChildSize
-  rule #increaseDepth(M:MutableBytesPrivate, ChildSize:Int, Length:Int)
-      => #increaseDepth(Node(ChildSize, M :: Zero :: Zero :: Zero), ChildSize *Int 4, Length)
-    requires ChildSize <Int Length
+  rule padRightBytes(mutableBytes(Size, Available, M:MutableBytesPrivate), Length:Int)
+      => mutableBytes(Length, Available, M)
+    requires Size <Int Length andBool Length <=Int Available
+  rule padRightBytes(mutableBytes(Size, Available, M:MutableBytesPrivate), Length:Int)
+      => padRightBytes(mutableBytes(Size, Available *Int 4, Node(Available, M :: Zero :: Zero :: Zero)), Length)
+    requires Size <Int Length andBool Available <Int Length
 
   // --------------------------------------------------
   //                  lengthBytes
   // --------------------------------------------------
 
-  rule lengthBytes(mutableBytes(Size:Int, _)) => Size
+  rule lengthBytes(mutableBytes(Size:Int, _, _)) => Size
 endmodule
