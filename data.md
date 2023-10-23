@@ -617,7 +617,7 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
     rule #getBytesRange(_:Bytes, START, WIDTH) => .Bytes
       requires notBool (0 <=Int START andBool 0 <=Int WIDTH)
 
-    rule #getBytesRange(BM:Bytes, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH), START, START +Int WIDTH)
+    rule #getBytesRange(BM:Bytes, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH, 0), START, START +Int WIDTH)
       requires         (0 <=Int START andBool 0 <=Int WIDTH)
        andBool         START <Int lengthBytes(BM)
 
