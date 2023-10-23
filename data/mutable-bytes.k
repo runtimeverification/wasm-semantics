@@ -92,7 +92,7 @@ module MUTABLE-BYTES
         => #replaceAtBytes(ChildSize, C, Index, substrBytes(Src, 0, ChildSize -Int Index))
           :: #replaceAtBytesList(
                   ChildSize, Cs, 0,
-                  substrBytes(Src, ChildSize -Int Index, lengthBytes(Src) -Int (ChildSize -Int Index))
+                  substrBytes(Src, ChildSize -Int Index, lengthBytes(Src))
             )
     requires Index <Int ChildSize andBool ChildSize <Int Index +Int lengthBytes(Src)
 

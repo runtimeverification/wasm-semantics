@@ -13,6 +13,8 @@ module MUTABLE-BYTES-SPEC
         => end(mutableBytes(32, Node(16, Leaf(b"\x00\x00\x00\x00\x00a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00") :: Zero :: Zero :: Zero)))
     claim start(replaceAtBytes(padRightBytes(.MutableBytes, 32), 21, b"a"))
         => end(mutableBytes(32, Node(16, Zero :: Leaf(b"\x00\x00\x00\x00\x00a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00") :: Zero :: Zero)))
+    claim start(replaceAtBytes(padRightBytes(.MutableBytes, 32), 5, b"12345678901234567890"))
+        => end(mutableBytes(32, Node(16, Leaf(b"\x00\x00\x00\x00\x0012345678901") :: Leaf(b"234567890\x00\x00\x00\x00\x00\x00\x00") :: Zero :: Zero)))
 
     claim start(substrBytes(padRightBytes(.MutableBytes, 97), 0, 1))
         => end(b"\x00")
