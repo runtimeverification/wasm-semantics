@@ -19,8 +19,8 @@ module MUTABLE-BYTES
   import BOOL
   import MUTABLE-BYTES-SYNTAX
 
-  // Leaf size: 16, 4 bits
-  // Node list size: 4, 2 bits
+  // Leaf size: 64, 6 bits
+  // Node list size: 16, 4 bits
 
   syntax MutableBytesPrivate  ::= Leaf(Bytes)  // Is start needed?
                                 | "Zero"
@@ -30,7 +30,7 @@ module MUTABLE-BYTES
 
   syntax MutableBytes ::= mutableBytes(size:Int, available:Int, bytes: MutableBytesPrivate)
 
-  rule .MutableBytes => mutableBytes(0, 16, Zero)
+  rule .MutableBytes => mutableBytes(0, 64, Zero)
 
   // --------------------------------------------------
   //                   substrBytes
@@ -102,10 +102,10 @@ module MUTABLE-BYTES
           :: Cs
     requires Index +Int lengthBytes(Src) <=Int ChildSize
 
-  rule expandZeroNode(Size:Int) => Leaf(padRightBytes(b"", 16, 0))
-      requires 0 <Int Size andBool Size <=Int 16
-  rule expandZeroNode(Size:Int) => Node(Size >>Int 2, Zero :: Zero :: Zero :: Zero)
-      requires 16 <Int Size andBool Size &Int 15 ==Int 0
+  rule expandZeroNode(Size:Int) => Leaf(padRightBytes(b"", 64, 0))
+      requires 0 <Int Size andBool Size <=Int 64
+  rule expandZeroNode(Size:Int) => Node(Size >>Int 4, Zero :: Zero :: Zero :: Zero)
+      requires 64 <Int Size andBool Size &Int 63 ==Int 0
 
   // --------------------------------------------------
   //                  padRightBytes
@@ -115,13 +115,13 @@ module MUTABLE-BYTES
       => M
     requires Length <=Int Size
   rule padRightBytes(mutableBytes(0, _Available:Int, _), Length:Int)
-      => padRightBytes(mutableBytes(1, 16, Zero), Length:Int)
+      => padRightBytes(mutableBytes(1, 64, Zero), Length:Int)
     requires 0 <Int Length
   rule padRightBytes(mutableBytes(Size, Available, M:MutableBytesPrivate), Length:Int)
       => mutableBytes(Length, Available, M)
     requires Size <Int Length andBool Length <=Int Available
   rule padRightBytes(mutableBytes(Size, Available, M:MutableBytesPrivate), Length:Int)
-      => padRightBytes(mutableBytes(Size, Available *Int 4, Node(Available, M :: Zero :: Zero :: Zero)), Length)
+      => padRightBytes(mutableBytes(Size, Available *Int 16, Node(Available, M :: Zero :: Zero :: Zero)), Length)
     requires Size <Int Length andBool Available <Int Length
 
   // --------------------------------------------------
