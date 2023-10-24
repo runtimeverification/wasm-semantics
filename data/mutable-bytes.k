@@ -121,7 +121,13 @@ module MUTABLE-BYTES
       => mutableBytes(Length, Available, M)
     requires Size <Int Length andBool Length <=Int Available
   rule padRightBytes(mutableBytes(Size, Available, M:MutableBytesPrivate), Length:Int)
-      => padRightBytes(mutableBytes(Size, Available *Int 16, Node(Available, M :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero ::)), Length)
+      => padRightBytes(
+            mutableBytes(
+                Size, Available *Int 16,
+                Node(Available, M :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero)
+            ),
+            Length
+        )
     requires Size <Int Length andBool Available <Int Length
 
   // --------------------------------------------------
