@@ -164,13 +164,14 @@ We allow 2 kinds of actions:
     rule <instrs> ( invoke ID:Identifier ENAME:WasmString .Instrs ) => invoke MODIDX ENAME ... </instrs>
          <moduleIds> ... ID |-> MODIDX ... </moduleIds>
 
-    rule <instrs> invoke MODIDX:Int ENAME:WasmString => ( invoke FADDR ):Instr ... </instrs>
+    rule <instrs> invoke MODIDX:Int ENAME:WasmString => ( invoke FUNCADDRS {{ IDX }} orDefault -1 ):Instr ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <exports> ... ENAME |-> IDX ... </exports>
-           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
+           <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
+         requires isListIndex(IDX, FUNCADDRS)
 
     rule <instrs> ( get NAME:WasmString ) => get CUR NAME  ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -375,17 +376,20 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 
 ```k
     syntax Assertion ::= "#assertFunction" Index FuncType VecType WasmString
+    syntax Assertion ::= "#assertFunctionHelper" Int FuncType VecType 
  // ------------------------------------------------------------------------
-    rule <instrs> #assertFunction IDX FTYPE LTYPE _ => . ... </instrs>
+    rule <instrs> #assertFunction IDX FTYPE LTYPE _ => #assertFunctionHelper (FUNCADDRS {{ IDX }} orDefault -1) FTYPE LTYPE ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
+           <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
+      requires isListIndex(IDX, FUNCADDRS)
+    rule <instrs> #assertFunctionHelper ADDR FTYPE LTYPE  => . ... </instrs>
          <funcs>
            <funcDef>
-             <fAddr>  FADDR </fAddr>
+             <fAddr>  ADDR </fAddr>
              <fType>  FTYPE </fType>
              <fLocal> LTYPE </fLocal>
              ...
