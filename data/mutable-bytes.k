@@ -104,7 +104,7 @@ module MUTABLE-BYTES
 
   rule expandZeroNode(Size:Int) => Leaf(padRightBytes(b"", 64, 0))
       requires 0 <Int Size andBool Size <=Int 64
-  rule expandZeroNode(Size:Int) => Node(Size >>Int 4, Zero :: Zero :: Zero :: Zero)
+  rule expandZeroNode(Size:Int) => Node(Size >>Int 4, Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero)
       requires 64 <Int Size andBool Size &Int 63 ==Int 0
 
   // --------------------------------------------------
@@ -121,7 +121,7 @@ module MUTABLE-BYTES
       => mutableBytes(Length, Available, M)
     requires Size <Int Length andBool Length <=Int Available
   rule padRightBytes(mutableBytes(Size, Available, M:MutableBytesPrivate), Length:Int)
-      => padRightBytes(mutableBytes(Size, Available *Int 16, Node(Available, M :: Zero :: Zero :: Zero)), Length)
+      => padRightBytes(mutableBytes(Size, Available *Int 16, Node(Available, M :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero :: Zero ::)), Length)
     requires Size <Int Length andBool Available <Int Length
 
   // --------------------------------------------------
