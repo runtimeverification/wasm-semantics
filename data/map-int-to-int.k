@@ -1,13 +1,14 @@
 
 require "int-type.k"
 // require "int-type.k"
+require "list-int.k"
 
 module MAP-INT-TO-INT
   imports private BOOL-SYNTAX
   imports private INT-SYNTAX
-  // imports private LIST-INT
-  // imports private LIST-INT
-  imports private LIST
+  imports private LIST-INT
+  imports private LIST-INT
+  // imports private LIST
   // imports private SET-INT
   imports private SET
   imports INT-TYPE
@@ -65,18 +66,18 @@ module MAP-INT-TO-INT
   // syntax SetInt ::= keys(MapIntToInt)
   //                [function, total, hook(MAP.keys)]
 
-  syntax List ::= "keys_list" "(" MapIntToInt ")"
-                 [function, hook(MAP.keys_list)]
-  // syntax ListInt ::= "keys_list" "(" MapIntToInt ")"
+  // syntax List ::= "keys_list" "(" MapIntToInt ")"
   //                [function, hook(MAP.keys_list)]
+  syntax ListInt ::= "keys_list" "(" MapIntToInt ")"
+                 [function, hook(MAP.keys_list)]
 
   syntax Bool ::= WrappedInt "in_keys" "(" MapIntToInt ")"
                  [function, total, hook(MAP.in_keys)]
 
-  syntax List ::= values(MapIntToInt)
-                 [function, hook(MAP.values)]
-  // syntax ListInt ::= values(MapIntToInt)
+  // syntax List ::= values(MapIntToInt)
   //                [function, hook(MAP.values)]
+  syntax ListInt ::= values(MapIntToInt)
+                 [function, hook(MAP.values)]
 
   syntax Int ::= size(MapIntToInt)
                  [function, total, hook(MAP.size), klabel(MapIntToInt.sizeMap), symbol]

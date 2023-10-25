@@ -3,8 +3,10 @@ WebAssembly State and Semantics
 
 ```k
 require "data.md"
+require "data/list-int.k"
 require "data/map-int-to-int.k"
 require "data/sparse-bytes.k"
+require "data/tools.k"
 require "numeric.md"
 
 module WASM-SYNTAX
@@ -158,10 +160,13 @@ Semantics
 
 ```k
 module WASM
+    imports LIST-INT
+    imports LIST-INT-PRIMITIVE
     imports MAP-INT-TO-INT
     imports MAP-INT-TO-INT-PRIMITIVE
     imports WASM-COMMON-SYNTAX
     imports WASM-DATA
+    imports WASM-DATA-TOOLS
     imports WASM-NUMERIC
 ```
 
@@ -184,7 +189,7 @@ module WASM
             <exports>     .Map         </exports>
             <types>       .Map         </types>
             <nextTypeIdx> 0            </nextTypeIdx>
-            <funcAddrs>   .MapIntToInt </funcAddrs>
+            <funcAddrs>   .ListInt     </funcAddrs>
             <nextFuncIdx> 0            </nextFuncIdx>
             <tabIds>      .Map         </tabIds>
             <tabAddrs>    .Map         </tabAddrs>
@@ -701,7 +706,7 @@ The importing and exporting parts of specifications are dealt with in the respec
            <modIdx> CUR </modIdx>
            <types>  ... TYPIDX |-> TYPE ... </types>
            <nextFuncIdx> NEXTIDX => NEXTIDX +Int 1 </nextFuncIdx>
-           <funcAddrs> ADDRS => ADDRS {{ NEXTIDX <- NEXTADDR }} </funcAddrs>
+           <funcAddrs> ADDRS => setExtend(ADDRS, NEXTIDX, NEXTADDR, -1) </funcAddrs>
            ...
          </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
@@ -789,7 +794,7 @@ The `#take` function will return the parameter stack in the reversed order, then
            <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
-        requires IDX in_keys {{ FUNCADDRS }}
+        requires isListIndex(IDX, FUNCADDRS)
 ```
 
 ```k
@@ -1144,7 +1149,7 @@ A table index is optional and will be default to zero.
 
     syntax ElemDefn ::= #elem(index : Int, offset : Instrs, elemSegment : Ints) [klabel(aElemDefn), symbol]
                       | "elem" "{" Int        Ints "}"
-    syntax Stmt ::= #initElements ( Int, Int, MapIntToInt, Ints )
+    syntax Stmt ::= #initElements ( Int, Int, ListInt, Ints )
  // -----------------------------------------------------
     rule <instrs> #elem(TABIDX, IS, ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
 
@@ -1207,13 +1212,14 @@ The `start` component of a module declares the function index of a `start functi
 ```k
     syntax StartDefn ::= #start(Int) [klabel(aStartDefn), symbol]
  // -------------------------------------------------------------
-    rule <instrs> #start(IDX) => ( invoke FADDR ) ... </instrs>
+    rule <instrs> #start(IDX) => ( invoke FUNCADDRS {{ IDX }} orDefault -1 ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(FADDR) ... </funcAddrs>
+           <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
+        requires isListIndex(IDX, FUNCADDRS)
 ```
 
 Export
@@ -1243,30 +1249,34 @@ The value of a global gets copied when it is imported.
 
 ```k
     syntax ImportDefn ::= #import(mod : WasmString, name : WasmString, ImportDesc) [klabel(aImportDefn), symbol]
+                        | #importHelper(ImportDesc, importedAddr:Int) [klabel(aImportDefnHelper), symbol]
     syntax ImportDesc ::= #funcDesc   (id: OptionalId, type: Int)                  [klabel(aFuncDesc),   symbol]
                         | #globalDesc (id: OptionalId, type: GlobalType)           [klabel(aGlobalDesc), symbol]
                         | #tableDesc  (id: OptionalId, type: Limits)               [klabel(aTableDesc),  symbol]
                         | #memoryDesc (id: OptionalId, type: Limits)               [klabel(aMemoryDesc), symbol]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
-    rule <instrs> #import(MOD, NAME, #funcDesc(... type: TIDX) ) => . ... </instrs>
+    rule <instrs> #import(MOD, NAME, #funcDesc(...) #as FD ) => #importHelper(FD, FS2 {{ IDX }} orDefault -1) ... </instrs>
+         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <funcAddrs> FS2 </funcAddrs>
+           <exports>   ... NAME |-> IDX ... </exports>
+           ...
+         </moduleInst>
+      requires isListIndex(IDX, FS2)
+
+    rule <instrs> #importHelper(#funcDesc(... type: TIDX), IMPORTEDADDR ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <types> TYPES </types>
-           <funcAddrs> FS => FS {{ NEXT <- ADDR }} </funcAddrs>
+           <funcAddrs> FS => setExtend(FS, NEXT, IMPORTEDADDR, -1) </funcAddrs>
            <nextFuncIdx> NEXT => NEXT +Int 1 </nextFuncIdx>
            ...
          </moduleInst>
-         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
-         <moduleInst>
-           <modIdx> MODIDX </modIdx>
-           <funcAddrs> ... wrap(IDX) Int2Int|-> wrap(ADDR) ... </funcAddrs>
-           <exports>   ... NAME |-> IDX ... </exports>
-           ...
-         </moduleInst>
          <funcDef>
-           <fAddr> ADDR </fAddr>
+           <fAddr> IMPORTEDADDR </fAddr>
            <fType> FTYPE </fType>
            ...
          </funcDef>
