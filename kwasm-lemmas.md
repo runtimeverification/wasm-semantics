@@ -349,7 +349,7 @@ Arithmetic over `#getRange`:
  // ---------------------------------------------
     rule <instrs> run ( S ) => done ( S ) ... </instrs>
 
-    syntax Step ::= Bytes | Int
+    syntax Step ::= Bytes | SparseBytes | Int
  // ---------------------------
 ```
 
