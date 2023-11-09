@@ -4,7 +4,7 @@ module SPARSE-BYTES
   import BYTES
   import INT
 
-  syntax SBItem ::= #empty(Int)      [symbol, klabel(SBItem:zero)]
+  syntax SBItem ::= #empty(Int)      [symbol, klabel(SBItem:empty)]
                   | #bytes(Bytes)    [symbol, klabel(SBItem:bytes)]
   
   syntax SparseBytes [hook(LIST.List)]
@@ -28,6 +28,11 @@ module SPARSE-BYTES
 // -----------------------------------------------------------------
   rule unwrap(SBChunk(SBI) REST) => unwrap(SBI) +Bytes unwrap(REST)
   rule unwrap(.SparseBytes)       => .Bytes
+
+  syntax SparseBytes ::= fromBytes(Bytes)
+    [function, total, symbol, klabel(SparseBytes:fromBytes)]
+// ---------------------------------------------------------
+  rule fromBytes(Bs) => SBChunk(#bytes(Bs))
 
   syntax Bytes ::= unwrap(SBItem)
     [function, total, symbol, klabel(SBItem:unwrap)]

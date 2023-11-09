@@ -342,6 +342,13 @@ Arithmetic over `#getRange`:
       [simplification]
 ```
 
+`Bytes`
+
+```k
+    rule Bs  +Bytes b"" => Bs      [simplification]
+    rule b"" +Bytes Bs  => Bs      [simplification]
+```
+
 ## Functional Tests
 
 ```k

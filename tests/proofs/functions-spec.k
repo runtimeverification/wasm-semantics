@@ -54,6 +54,11 @@ module FUNCTIONS-SPEC
     claim <instrs> run  ( substrSparseBytes(_SB, _S,  E) ) => done ( .SparseBytes ) ... </instrs> requires E <Int 0
     claim <instrs> run  ( substrSparseBytes(_SB,  S,  E) ) => done ( .SparseBytes ) ... </instrs> requires E <Int S
 
+    claim <instrs> run  ( #getRange(_SB,  S, _W) ) => done ( 0 ) ... </instrs> requires S <Int 0
+    claim <instrs> run  ( #getRange(_SB, _S,  W) ) => done ( 0 ) ... </instrs> requires W <Int 0
+    
+    claim <instrs> run  ( unwrap(fromBytes(Bs))) => done ( Bs ) ... </instrs>
+
     claim <instrs> run  ( #getBytesRange(  
                             SBChunk(#bytes(b"abcd"))
                             SBChunk(#bytes(b"efgh")),
