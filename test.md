@@ -324,7 +324,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
                        | "#assertGlobal" Index Val WasmString
  // ---------------------------------------------------------
     rule <instrs> #assertLocal INDEX VALUE _ => . ... </instrs>
-         <locals> ... INDEX |-> VALUE ... </locals>
+         <locals> ... wrap(INDEX) |-> wrap(VALUE) ... </locals>
 
     rule <instrs> #assertGlobal TFIDX VALUE _ => . ... </instrs>
          <curModIdx> CUR </curModIdx>

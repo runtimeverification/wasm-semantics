@@ -5,6 +5,7 @@ WebAssembly State and Semantics
 require "data.md"
 require "data/list-int.k"
 require "data/map-int-to-int.k"
+require "data/map-int-to-val.k"
 require "data/tools.k"
 require "numeric.md"
 
@@ -163,6 +164,8 @@ module WASM
     imports LIST-INT-PRIMITIVE
     imports MAP-INT-TO-INT
     imports MAP-INT-TO-INT-PRIMITIVE
+    imports MAP-INT-TO-VAL
+    imports MAP-INT-TO-VAL-PRIMITIVE
     imports WASM-COMMON-SYNTAX
     imports WASM-DATA
     imports WASM-DATA-TOOLS
@@ -177,7 +180,7 @@ module WASM
         <instrs> .K </instrs>
         <valstack> .ValStack </valstack>
         <curFrame>
-          <locals>    .Map </locals>
+          <locals>    .MapIntToVal   </locals>
           <curModIdx> .Int </curModIdx>
         </curFrame>
         <moduleRegistry> .Map </moduleRegistry>
@@ -512,7 +515,7 @@ The various `init_local` variants assist in setting up the `locals` cell.
                    | "#init_locals" Int ValStack
  // --------------------------------------------
     rule <instrs> init_local INDEX VALUE => . ... </instrs>
-         <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
+         <locals> LOCALS => LOCALS {{ INDEX <- VALUE }} </locals>
 
     rule <instrs> init_locals VALUES => #init_locals 0 VALUES ... </instrs>
 
@@ -533,17 +536,17 @@ The `*_local` instructions are defined here.
  // ----------------------------------------------------------------------
     rule <instrs> #local.get(I) => . ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... I |-> VALUE ... </locals>
+         <locals> ... wrap(I) Int2Val|-> VALUE ... </locals>
 
     rule <instrs> #local.set(I) => . ... </instrs>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
-         <locals> LOCALS => LOCALS[I <- VALUE] </locals>
-        requires I in_keys(LOCALS)
+         <locals> LOCALS => LOCALS{{I <- VALUE}} </locals>
+        requires I in_keys{{LOCALS}}
 
     rule <instrs> #local.tee(I) => . ... </instrs>
          <valstack> VALUE : _VALSTACK </valstack>
-         <locals> LOCALS => LOCALS[I <- VALUE] </locals>
-        requires I in_keys(LOCALS)
+         <locals> LOCALS => LOCALS{{I <- VALUE}} </locals>
+        requires I in_keys{{LOCALS}}
 ```
 
 ### Globals
@@ -740,7 +743,7 @@ Similar to labels, they sit on the instruction stack (the `<instrs>` cell), and 
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" Int ValTypes ValStack Map
+    syntax Frame ::= "frame" Int ValTypes ValStack MapIntToVal
  // --------------------------------------------------
     rule <instrs> frame MODIDX' TRANGE VALSTACK' LOCAL' => . ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
@@ -763,7 +766,7 @@ The `#take` function will return the parameter stack in the reversed order, then
                ...
          </instrs>
          <valstack>  VALSTACK => .ValStack </valstack>
-         <locals> LOCAL => .Map </locals>
+         <locals> LOCAL => .MapIntToVal </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
          <funcDef>
            <fAddr>    FADDR                     </fAddr>
