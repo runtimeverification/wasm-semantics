@@ -50,4 +50,88 @@ module FUNCTIONS-SPEC
           </instrs>
        requires 0 <=Int ADDR
 
+    claim <instrs> run  ( substrSparseBytes(_SB,  S, _E) ) => done ( .SparseBytes ) ... </instrs> requires S <Int 0
+    claim <instrs> run  ( substrSparseBytes(_SB, _S,  E) ) => done ( .SparseBytes ) ... </instrs> requires E <Int 0
+    claim <instrs> run  ( substrSparseBytes(_SB,  S,  E) ) => done ( .SparseBytes ) ... </instrs> requires E <Int S
+
+    claim <instrs> run  ( #getRange(_SB,  S, _W) ) => done ( 0 ) ... </instrs> requires S <Int 0
+    claim <instrs> run  ( #getRange(_SB, _S,  W) ) => done ( 0 ) ... </instrs> requires W <Int 0
+    
+    claim <instrs> run  ( unwrap(fromBytes(Bs))) => done ( Bs ) ... </instrs>
+
+    claim <instrs> run  ( #getBytesRange(  
+                            SBChunk(#bytes(b"abcd"))
+                            SBChunk(#bytes(b"efgh")),
+                            2,
+                            4
+                          )
+                        )
+                => done ( b"cdef" )
+               ...
+          </instrs>
+
+    claim <instrs> run  ( #getBytesRange(  
+                            SBChunk(#bytes(B1))
+                            SBChunk(#empty(N1))
+                            SBChunk(#bytes(B2)),
+                            lengthBytes(B1) +Int N1,
+                            WIDTH
+                          )
+                        )
+                => done ( padRightBytes(B2, WIDTH, 0) )
+               ...
+          </instrs>
+       requires N1 ==K 123000000
+        andBool WIDTH ==K 120
+        andBool B1 ==K b"00000000000000000000000000000000asdfghjklqwertyuio"
+        andBool B2 ==K b"asdfghjklqwertyuio"
+
+    claim <instrs> run  ( #getBytesRange(  
+                            SBChunk(#bytes(B1))
+                            SBChunk(#empty(N1))
+                            SBChunk(#bytes(B2)),
+                            lengthBytes(B1) +Int N1 -Int Z,
+                            WIDTH
+                          )
+                        )
+                => done ( padRightBytes(zeros(Z) +Bytes B2, WIDTH, 0) )
+               ...
+          </instrs>
+       requires N1 ==K 123000000
+        andBool Z ==K 30
+        andBool WIDTH ==K 120
+        andBool B1 ==K b"00000000000000000000000000000000asdfghjklqwertyuio"
+        andBool B2 ==K b"asdfghjklqwertyuio"
+
+    claim <instrs> run  ( #getBytesRange(  
+                            SBChunk(#bytes(b"a"))
+                            SBChunk(#empty(1))
+                            SBChunk(#bytes(b"b"))
+                            SBChunk(#empty(1))
+                            SBChunk(#bytes(b"c"))
+                            SBChunk(#empty(1))
+                            SBChunk(#bytes(b"d"))
+                            SBChunk(#empty(1))
+                            SBChunk(#bytes(b"e")),
+                            0,
+                            100
+                          )
+                        )
+                => done ( padRightBytes(b"a\x00b\x00c\x00d\x00e", 100, 0) )
+               ...
+          </instrs>
+
+    // Should not allocate huge bytes
+    claim <instrs> run  ( #getBytesRange(  
+                            SBChunk(#empty(Z))
+                            SBChunk(#bytes(b"x")),
+                            Z -Int 1,
+                            2
+                          )
+                        )
+                => done ( b"\x00x" )
+               ...
+          </instrs>
+        requires Z ==K 1000000000000 // ~ 1 TB
+
 endmodule

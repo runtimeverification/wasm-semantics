@@ -342,6 +342,13 @@ Arithmetic over `#getRange`:
       [simplification]
 ```
 
+`Bytes`
+
+```k
+    rule Bs  +Bytes b"" => Bs      [simplification]
+    rule b"" +Bytes Bs  => Bs      [simplification]
+```
+
 ## Functional Tests
 
 ```k
@@ -349,7 +356,7 @@ Arithmetic over `#getRange`:
  // ---------------------------------------------
     rule <instrs> run ( S ) => done ( S ) ... </instrs>
 
-    syntax Step ::= Bytes | Int
+    syntax Step ::= Bytes | SparseBytes | Int
  // ---------------------------
 ```
 
