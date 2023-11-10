@@ -2,6 +2,8 @@ WebAssembly Data
 ================
 
 ```k
+requires "data/sparse-bytes.k"
+
 module WASM-DATA-SYNTAX
     imports WASM-DATA-COMMON-SYNTAX
 endmodule
@@ -153,7 +155,7 @@ module WASM-DATA-COMMON
     imports LIST
     imports MAP
     imports FLOAT
-    imports BYTES
+    imports SPARSE-BYTES
     imports K-EQUAL
 ```
 
@@ -580,15 +582,11 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 - `#setRange(BM, START, VAL, WIDTH)` writes the integer `I` to memory as bytes (little-endian), starting at index `N`.
 
 ```k
-    syntax Bytes ::= #setBytesRange ( Bytes , Int , Bytes ) [function, total]
+    syntax SparseBytes ::= #setBytesRange ( SparseBytes , Int , Bytes ) [function, total]
  // ------------------------------------------------------------------------------
-    rule #setBytesRange(BM, START, BS) => replaceAtBytes(padRightBytes(BM, START +Int lengthBytes(BS), 0), START, BS)
-      requires          0 <=Int START
+    rule #setBytesRange(BM, START, BS) => replaceAt(BM, START, BS)
 
-    rule #setBytesRange(_, START, _ ) => .Bytes
-      requires notBool (0 <=Int START)
-
-    syntax Bytes ::= #setRange ( Bytes , Int , Int , Int ) [function, total, smtlib(setRange)]
+    syntax SparseBytes ::= #setRange ( SparseBytes , Int , Int , Int ) [function, total, smtlib(setRange)]
  // -----------------------------------------------------------------------------------------------
     rule #setRange(BM, ADDR, VAL, WIDTH) => BM
       requires notBool (0 <Int WIDTH andBool 0 <=Int VAL andBool 0 <=Int ADDR)
@@ -599,20 +597,12 @@ Wasm memories are byte arrays, sized in pages of 65536 bytes, initialized to be 
 - `#getRange(BM, START, WIDTH)` reads off `WIDTH` elements from `BM` beginning at position `START`, and converts it into an unsigned integer. The function interprets the range of bytes as little-endian.
 
 ```k
-    syntax Bytes ::= #getBytesRange ( Bytes , Int , Int ) [function, total]
+    syntax Bytes ::= #getBytesRange ( SparseBytes , Int , Int ) [function, total]
  // ----------------------------------------------------------------------------
-    rule #getBytesRange(_, START, WIDTH) => .Bytes
-      requires notBool (0 <=Int START andBool 0 <=Int WIDTH)
+    rule #getBytesRange(BM, START, WIDTH) 
+      => padRightBytes(unwrap(substrSparseBytes(BM, START, START +Int WIDTH)), WIDTH, 0)
 
-    rule #getBytesRange(BM, START, WIDTH) => substrBytes(padRightBytes(BM, START +Int WIDTH, 0), START, START +Int WIDTH)
-      requires         (0 <=Int START andBool 0 <=Int WIDTH)
-       andBool         START <Int lengthBytes(BM)
-
-    rule #getBytesRange(BM, START, WIDTH) => padRightBytes(.Bytes, WIDTH, 0)
-      requires         (0 <=Int START andBool 0 <=Int WIDTH)
-       andBool notBool (START <Int lengthBytes(BM))
-
-    syntax Int ::= #getRange(Bytes, Int, Int) [function, total, smtlib(getRange)]
+    syntax Int ::= #getRange(SparseBytes, Int, Int) [function, total, smtlib(getRange)]
  // ----------------------------------------------------------------------------------
     rule #getRange( _, ADDR, WIDTH) => 0
       requires notBool (0 <Int WIDTH andBool 0 <=Int ADDR)
