@@ -243,6 +243,11 @@ I32_POPCNT = KApply('aIUnOp', [i32, KApply('aPopcnt', [])])
 I64_CLZ = KApply('aIUnOp', [i64, KApply('aClz', [])])
 I64_CTZ = KApply('aIUnOp', [i64, KApply('aCtz', [])])
 I64_POPCNT = KApply('aIUnOp', [i64, KApply('aPopcnt', [])])
+I32_EXTEND8_s = KApply('aExtendS', [i32, KApply('aExtend8_s', [])])
+I32_EXTEND16_s = KApply('aExtendS', [i32, KApply('aExtend16_s', [])])
+I64_EXTEND8_s = KApply('aExtendS', [i32, KApply('aExtend8_s', [])])
+I64_EXTEND8_s = KApply('aExtendS', [i32, KApply('aExtend16_s', [])])
+I64_EXTEND8_s = KApply('aExtendS', [i32, KApply('aExtend32_s', [])])
 
 ###############
 # Float BinOp #
