@@ -8,7 +8,8 @@ RUN    apt-get update              \
                        curl        \
                        pandoc      \
                        python3     \
-                       python3-pip
+                       python3-pip \
+                       wabt
 
 RUN    git clone 'https://github.com/z3prover/z3' --branch=z3-4.8.15 \
     && cd z3                                                         \
@@ -32,12 +33,5 @@ WORKDIR /home/user
 RUN pip3 install --user  \
            cytoolz       \
            numpy
-
-RUN    git clone 'https://github.com/WebAssembly/wabt' --branch 1.0.13 --recurse-submodules wabt \
-    && cd wabt                                                                                   \
-    && mkdir build                                                                               \
-    && cd build                                                                                  \
-    && cmake ..                                                                                  \
-    && cmake --build .
 
 ENV PATH=/home/user/wabt/build:/home/user/.local/bin:$PATH

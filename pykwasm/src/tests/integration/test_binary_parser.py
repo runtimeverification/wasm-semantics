@@ -16,7 +16,7 @@ BINARY_WAT_FILES = BINARY_DIR.glob('*.wat')
 sys.setrecursionlimit(1500000000)
 
 
-@pytest.mark.parametrize('wat_path', BINARY_WAT_FILES)
+@pytest.mark.parametrize('wat_path', BINARY_WAT_FILES, ids=str)
 def test_wasm2kast(krun_llvm: KRun, wat_path: Path) -> None:
     # Given
     wat2wasm_cmd = ['wat2wasm', str(wat_path), '--output=/dev/stdout']
