@@ -79,6 +79,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | FValType "." "const" Number     [klabel(aFConst), symbol]
                         | IValType "." IUnOp              [klabel(aIUnOp), symbol]
                         | FValType "." FUnOp              [klabel(aFUnOp), symbol]
+                        | IValType "." ExtendS            [klabel(aExtendS), symbol] // TODO this is more permissive than the official spec as it allows 'i32.extend32_s'
                         | IValType "." IBinOp             [klabel(aIBinOp), symbol]
                         | FValType "." FBinOp             [klabel(aFBinOp), symbol]
                         | IValType "." TestOp             [klabel(aTestOp), symbol]
@@ -347,6 +348,8 @@ An `*UnOp` operator always produces a result of the same type as its operand.
          <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
     rule <instrs> FTYPE . UOP:FUnOp => FTYPE . UOP C1 ... </instrs>
          <valstack> < FTYPE > C1 : VALSTACK => VALSTACK </valstack>
+    rule <instrs> ITYPE . UOP:ExtendS => ITYPE . UOP C1 ... </instrs>
+         <valstack> < ITYPE > C1 : VALSTACK => VALSTACK </valstack>
 ```
 
 ### Binary Operations
