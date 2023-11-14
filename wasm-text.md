@@ -965,6 +965,7 @@ The `align` parameter is for optimization only and is not allowed to influence t
     rule #t2aInstr<_>(FTYPE:FValType.const N) => FTYPE.const N
     rule #t2aInstr<_>(ITYPE.OP:IUnOp)         => ITYPE.OP
     rule #t2aInstr<_>(FTYPE.OP:FUnOp)         => FTYPE.OP
+    rule #t2aInstr<_>(ITYPE.OP:ExtendS)       => ITYPE.OP
     rule #t2aInstr<_>(ITYPE.OP:IBinOp)        => ITYPE.OP
     rule #t2aInstr<_>(FTYPE.OP:FBinOp)        => FTYPE.OP
     rule #t2aInstr<_>(ITYPE.OP:TestOp)        => ITYPE.OP

@@ -24,6 +24,11 @@ module WASM-NUMERIC-SYNTAX
                    | "nearest" [klabel(aNearest), symbol]
  // -----------------------------------------------------
 
+    syntax ExtendS ::= "extend8_s"   [klabel(aExtend8_s) , symbol]
+                     | "extend16_s"  [klabel(aExtend16_s), symbol]
+                     | "extend32_s"  [klabel(aExtend32_s), symbol]
+ // ---------------------------------------------------------------
+
     syntax IBinOp ::= "add" [klabel(intAdd), symbol]
                     | "sub" [klabel(intSub), symbol]
                     | "mul" [klabel(intMul), symbol]
@@ -110,9 +115,10 @@ module WASM-NUMERIC
 `*UnOp` takes one oprand and returns a `Val`.
 
 ```k
-    syntax Val ::= IValType "." IUnOp Int   [klabel(intUnOp)  , function]
-                 | FValType "." FUnOp Float [klabel(floatUnOp), function]
- // ---------------------------------------------------------------------
+    syntax Val ::= IValType "." IUnOp   Int   [klabel(intUnOp)    , function]
+                 | FValType "." FUnOp   Float [klabel(floatUnOp)  , function]
+                 | IValType "." ExtendS Int   [klabel(extendSUnOp), function]
+ // ---------------------------------------------------------------------------
 ```
 
 #### Unary Operators for Integers
@@ -176,6 +182,20 @@ There are 7 unary operators for floats: `abs`, `neg`, `sqrt`, `floor`, `ceil`, `
     rule FTYPE . nearest F => < FTYPE >  F                requires          #isInfinityOrNaN (F)
     rule FTYPE . nearest F => #round(FTYPE, Float2Int(F)) requires (notBool #isInfinityOrNaN (F)) andBool notBool (Float2Int(F) ==Int 0 andBool signFloat(F))
     rule FTYPE . nearest F => < FTYPE > -0.0              requires (notBool #isInfinityOrNaN (F)) andBool          Float2Int(F) ==Int 0 andBool signFloat(F)
+```
+
+#### Sign-extension Operators for Integers
+
+There are 3 sign-extension operators for integers.
+
+- `extend8_s`
+- `extend16_s`
+- `extend32_s`
+
+```k
+    rule ITYPE . extend8_s I  => #extends(ITYPE, 1, #wrap(1, I)) 
+    rule ITYPE . extend16_s I => #extends(ITYPE, 2, #wrap(2, I))
+    rule ITYPE . extend32_s I => #extends(ITYPE, 4, #wrap(4, I))
 ```
 
 ### Binary Operators
@@ -425,7 +445,13 @@ There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote`
 
 ```k
     rule i64 . extend_i32_u I:Int => < i64 > I
-    rule i64 . extend_i32_s I:Int => < i64 > #unsigned(i64, #signed(i32, I))
+    rule i64 . extend_i32_s I:Int => #extends(i64, 4, I)
+
+    syntax IVal ::= #extends(to: IValType, width: Int, val: Int)    [function, klabel(extends), symbol]
+ // ---------------------------------------------------------------------------------------------------
+    rule #extends(ITYPE, WIDTH, VAL) => < ITYPE > #unsigned(ITYPE, #signedWidth(WIDTH, VAL))
+      requires WIDTH <=Int #numBytes(ITYPE)
+
 ```
 
 - `convert` takes an `int` type value and convert it to the nearest `float` type value.
