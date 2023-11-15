@@ -13,9 +13,11 @@
         ;; Commented out instructions are not currently supported by py-wasm.
         i32.const 0                   drop
         f32.const 0                   drop
-     ;; i32.extend8_s                 drop
-     ;; i32.extend16_s                drop
-     ;; i64.extend32_s                drop
+        i32.extend8_s                 drop
+        i32.extend16_s                drop
+        i64.extend8_s                 drop
+        i64.extend16_s                drop
+        i64.extend32_s                drop
         i32.wrap_i64                  drop
         i64.extend_i32_s              drop
         i64.extend_i32_u              drop
