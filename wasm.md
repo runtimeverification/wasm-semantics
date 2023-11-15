@@ -623,6 +623,9 @@ The `get` and `set` instructions read and write globals.
            <gValue> _ => VALUE </gValue>
            ...
          </globalInst>
+         [preserves-definedness]
+      // Preserving definedness:
+      //  - Map update preserves definedness (<globalInst>)
 ```
 
 Types
@@ -990,6 +993,10 @@ The value is encoded as bytes and stored at the "effective address", which is th
            ...
          </memInst>
          requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
+         [preserves-definedness]
+    // Preserving definedness:
+    //   - #setRange is total
+    //   - map updates (memInst) preserve definedness.
 
     rule <instrs> store { WIDTH  EA  _ ADDR } => trap ... </instrs>
          <memInst>
