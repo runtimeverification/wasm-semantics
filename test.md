@@ -12,10 +12,34 @@ Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consi
 
 ```k
 module WASM-TEST-SYNTAX
-    imports WASM-TEST
+    imports WASM-TEST-COMMON-SYNTAX
     imports WASM-TEXT-SYNTAX
-    imports WASM-AUXIL
+endmodule
+
+module WASM-TEST-COMMON-SYNTAX
+    imports WASM-TEXT-COMMON-SYNTAX
+    imports WASM-AUXIL-SYNTAX
     imports WASM-REFERENCE-INTERPRETER-SYNTAX
+
+    syntax Assertion ::= "#assertAndRemoveEqual"
+                       | "#assertAndRemoveToken"
+                       | "#assertTopStack"        Val      WasmString
+                       | "#assertTopStackExactly" Val      WasmString
+                       | "#assertStack"           ValStack WasmString
+                       | "#assertLocal"  Int   Val WasmString
+                       | "#assertGlobal" Index Val WasmString
+                       | "#assertTrap" WasmString
+                       | "#assertType" Int FuncType
+                       | "#assertNextTypeIdx" Int
+                       | "#assertFunction" Index FuncType VecType WasmString
+                       | "#assertMemory" Index Int OptionalInt WasmString
+                       | "#assertMemoryData"     "(" Int "," Int ")" WasmString
+                       | "#assertMemoryData" Int "(" Int "," Int ")" WasmString
+                       | "#assertTable" Index Int OptionalInt WasmString
+                       | "#assertTableElem" "(" Int "," Int ")" WasmString
+                       | "#assertNamedModule" Identifier WasmString
+                       | "#assertRegistrationUnnamed" WasmString            WasmString
+                       | "#assertRegistrationNamed"   WasmString Identifier WasmString
 endmodule
 
 module WASM-REFERENCE-INTERPRETER-SYNTAX
@@ -82,7 +106,7 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
 endmodule
 
 module WASM-TEST
-    imports WASM-REFERENCE-INTERPRETER-SYNTAX
+    imports WASM-TEST-COMMON-SYNTAX
     imports WASM-AUXIL
     imports WASM-TEXT
 ```
@@ -270,8 +294,8 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
 And we implement some helper assertions to help testing.
 
 ```k
-    syntax Assertion ::= "#assertAndRemoveEqual"
-                       | "#assertAndRemoveToken"
+    // syntax Assertion ::= "#assertAndRemoveEqual"
+    //                    | "#assertAndRemoveToken"
  // --------------------------------------------
     rule <instrs> #assertAndRemoveEqual => #assertTopStack V .WasmString ~> ( drop ) ... </instrs>
          <valstack> V : VALSTACK => VALSTACK </valstack>
@@ -284,7 +308,7 @@ And we implement some helper assertions to help testing.
 This asserts that a `trap` was just thrown.
 
 ```k
-    syntax Assertion ::= "#assertTrap" WasmString
+    // syntax Assertion ::= "#assertTrap" WasmString
  // ---------------------------------------------
     rule <instrs> trap ~> #assertTrap _ => . ... </instrs>
 ```
@@ -294,10 +318,7 @@ This asserts that a `trap` was just thrown.
 These functions make assertions about the state of the `<valstack>` cell.
 
 ```k
-    syntax Assertion ::= "#assertTopStack"        Val      WasmString
-                       | "#assertTopStackExactly" Val      WasmString
-                       | "#assertStack"           ValStack WasmString
-                       | "#assertStackAux"        ValStack ValStack
+    syntax Assertion ::= "#assertStackAux"        ValStack ValStack
  // ---------------------------------------------------------------
     rule <instrs> #assertTopStack S                      _ => . ... </instrs> <valstack> S              : _VALSTACK </valstack>
     rule <instrs> #assertTopStack < ITYPE:IValType > VAL _ => . ... </instrs> <valstack> < ITYPE > VAL' : _VALSTACK </valstack>
@@ -320,8 +341,8 @@ These functions make assertions about the state of the `<valstack>` cell.
 The operator `#assertLocal`/`#assertGlobal` operators perform a check for a local/global variable's value.
 
 ```k
-    syntax Assertion ::= "#assertLocal"  Int   Val WasmString
-                       | "#assertGlobal" Index Val WasmString
+    // syntax Assertion ::= "#assertLocal"  Int   Val WasmString
+    //                    | "#assertGlobal" Index Val WasmString
  // ---------------------------------------------------------
     rule <instrs> #assertLocal INDEX VALUE _ => . ... </instrs>
          <locals> ... INDEX |-> VALUE ... </locals>
@@ -350,8 +371,8 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 `#assertNextTypeIdx` checks whether the number of types are allocated correctly.
 
 ```k
-    syntax Assertion ::= "#assertType" Int FuncType
-                       | "#assertNextTypeIdx" Int
+    // syntax Assertion ::= "#assertType" Int FuncType
+    //                    | "#assertNextTypeIdx" Int
  // ---------------------------------------------
     rule <instrs> #assertType IDX FTYPE => . ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -375,7 +396,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 This simply checks that the given function exists in the `<funcs>` cell and has the given signature and local types.
 
 ```k
-    syntax Assertion ::= "#assertFunction" Index FuncType VecType WasmString
+    // syntax Assertion ::= "#assertFunction" Index FuncType VecType WasmString
     syntax Assertion ::= "#assertFunctionHelper" Int FuncType VecType 
  // ------------------------------------------------------------------------
     rule <instrs> #assertFunction IDX FTYPE LTYPE _ => #assertFunctionHelper (FUNCADDRS {{ IDX }} orDefault -1) FTYPE LTYPE ... </instrs>
@@ -403,7 +424,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This asserts related operation about tables.
 
 ```k
-    syntax Assertion ::= "#assertTable" Index Int OptionalInt WasmString
+    // syntax Assertion ::= "#assertTable" Index Int OptionalInt WasmString
  // --------------------------------------------------------------------
     rule <instrs> #assertTable TFIDX SIZE MAX _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -423,7 +444,7 @@ This asserts related operation about tables.
            ...
          </tabs>
 
-    syntax Assertion ::= "#assertTableElem" "(" Int "," Int ")" WasmString
+    // syntax Assertion ::= "#assertTableElem" "(" Int "," Int ")" WasmString
  // ----------------------------------------------------------------------
     rule <instrs> #assertTableElem (KEY , VAL) _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -447,7 +468,7 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    syntax Assertion ::= "#assertMemory" Index Int OptionalInt WasmString
+    // syntax Assertion ::= "#assertMemory" Index Int OptionalInt WasmString
  // ---------------------------------------------------------------------
     rule <instrs> #assertMemory TFIDX SIZE MAX _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -467,8 +488,8 @@ This checks that the last allocated memory has the given size and max value.
            ...
          </mems>
 
-    syntax Assertion ::= "#assertMemoryData"     "(" Int "," Int ")" WasmString
-    syntax Assertion ::= "#assertMemoryData" Int "(" Int "," Int ")" WasmString
+    // syntax Assertion ::= "#assertMemoryData"     "(" Int "," Int ")" WasmString
+    // syntax Assertion ::= "#assertMemoryData" Int "(" Int "," Int ")" WasmString
  // ---------------------------------------------------------------------------
     rule <instrs> #assertMemoryData (KEY , VAL) MSG => #assertMemoryData CUR (KEY, VAL) MSG ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -496,7 +517,7 @@ These assertions test (and delete) module instances.
 These assertions act on the last module defined.
 
 ```k
-    syntax Assertion ::= "#assertNamedModule" Identifier WasmString
+    // syntax Assertion ::= "#assertNamedModule" Identifier WasmString
  // ---------------------------------------------------------------
     rule [assertNamedModule]:
          <instrs> #assertNamedModule NAME _S => . ... </instrs>
@@ -518,8 +539,8 @@ Registry Assertations
 We also want to be able to test that the embedder's registration function is working.
 
 ```k
-    syntax Assertion ::= "#assertRegistrationUnnamed" WasmString            WasmString
-                       | "#assertRegistrationNamed"   WasmString Identifier WasmString
+    // syntax Assertion ::= "#assertRegistrationUnnamed" WasmString            WasmString
+    //                    | "#assertRegistrationNamed"   WasmString Identifier WasmString
  // ----------------------------------------------------------------------------------
     rule <instrs> #assertRegistrationUnnamed REGNAME _ => . ... </instrs>
          <modIdx> IDX </modIdx>
