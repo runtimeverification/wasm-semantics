@@ -146,8 +146,80 @@ endmodule
 ------------------
 
 ```k
+module WASM-DATA-INTERNAL-SYNTAX
+    imports WASM-DATA-COMMON-SYNTAX
+
+    syntax ValStack ::= ".ValStack"            [klabel(.ValStack), symbol]
+                      | Val      ":"  ValStack [klabel(concatValStack), symbol]
+```
+
+### Values
+
+Proper values are numbers annotated with their types.
+
+```k
+    syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
+    syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
+    syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
+                  | IVal | FVal
+ // ---------------------------
+```
+
+We also add `undefined` as a value, which makes many partial functions in the semantics total.
+
+```k
+    syntax Val ::= "undefined"
+ // --------------------------
+```
+
+### Type Constructors
+
+There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
+
+```k
+    syntax VecType  ::= "[" ValTypes "]" [klabel(aVecType), symbol]
+
+    syntax FuncType ::= VecType "->" VecType [klabel(aFuncType), symbol]
+```
+
+All told, a `Type` can be a value type, vector of types, or function type.
+
+```k
+    syntax Type ::= ".Type" | ValType | VecType | FuncType
+```
+
+### OptionalInt
+
+In some cases, an integer is optional, such as when either giving or omitting the max bound when defining a table or memory.
+The sort `OptionalInt` provides this potentially "undefined" `Int`.
+
+```k
+    syntax OptionalInt ::= Int | ".Int"  [klabel(.Int), symbol]
+```
+
+### Integer bounds
+
+```k
+    syntax Int ::= #pow  ( IValType ) [function, total, smtlib(pow )] /* 2 ^Int #width(T)          */
+                 | #pow1 ( IValType ) [function, total, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */    
+```
+
+### Integer interpretation
+
+```k
+    syntax Int ::= #signed      ( IValType , Int ) [function]
+                 | #unsigned    ( IValType , Int ) [function]
+                 | #signedWidth ( Int      , Int ) [function]
+```
+
+```k
+endmodule
+```
+
+```k
 module WASM-DATA-COMMON
     imports WASM-DATA-COMMON-SYNTAX
+    imports WASM-DATA-INTERNAL-SYNTAX
 
     imports INT
     imports BOOL
@@ -219,16 +291,6 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
     rule elemSegment2Ints(E:Int ES)     => E elemSegment2Ints(ES)
 ```
 
-### OptionalInt
-
-In some cases, an integer is optional, such as when either giving or omitting the max bound when defining a table or memory.
-The sort `OptionalInt` provides this potentially "undefined" `Int`.
-
-```k
-    syntax OptionalInt ::= Int | ".Int"  [klabel(.Int), symbol]
- // -----------------------------------
-```
-
 ### Limits
 
 Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
@@ -241,26 +303,12 @@ Tables and memories have limits, defined as either a single `Int` or two `Int`s,
 
 ### Type Constructors
 
-There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax VecType  ::= "[" ValTypes "]" [klabel(aVecType), symbol]
- // ---------------------------------------------------------------
-
-    syntax FuncType ::= VecType "->" VecType [klabel(aFuncType), symbol]
- // --------------------------------------------------------------------
-
     syntax Int ::= lengthValTypes ( ValTypes ) [function, total]
  // -----------------------------------------------------------------
     rule lengthValTypes(.ValTypes) => 0
     rule lengthValTypes(_V VS)     => 1 +Int lengthValTypes(VS)
-```
-
-All told, a `Type` can be a value type, vector of types, or function type.
-
-```k
-    syntax Type ::= ".Type" | ValType | VecType | FuncType
- // ------------------------------------------------------
 ```
 
 We can append two `ValTypes`s with the `_+_` operator.
@@ -301,9 +349,6 @@ The `#width` function returns the bit-width of a given `IValType`.
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
 
 ```k
-    syntax Int ::= #pow  ( IValType ) [function, total, smtlib(pow )] /* 2 ^Int #width(T)          */
-                 | #pow1 ( IValType ) [function, total, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */
- // ------------------------------------------------------------------------------------------------------
     rule #pow1(i32) => 2147483648
     rule #pow (i32) => 4294967296
     rule #pow1(i64) => 9223372036854775808
@@ -315,25 +360,6 @@ The `#width` function returns the bit-width of a given `IValType`.
 ```k
     syntax Mut ::= ".Mut"
  // ----------------------
-```
-
-### Values
-
-Proper values are numbers annotated with their types.
-
-```k
-    syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
-    syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
-    syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
-                  | IVal | FVal
- // ---------------------------
-```
-
-We also add `undefined` as a value, which makes many partial functions in the semantics total.
-
-```k
-    syntax Val ::= "undefined"
- // --------------------------
 ```
 
 #### Value Operations
@@ -377,10 +403,6 @@ These functions assume that the argument integer is in the valid range of signed
 Some operations extend integers from 1, 2, or 4 bytes, so a special function with a bit width argument helps with the conversion.
 
 ```k
-    syntax Int ::= #signed      ( IValType , Int ) [function]
-                 | #unsigned    ( IValType , Int ) [function]
-                 | #signedWidth ( Int      , Int ) [function]
-
     syntax Bool ::= definedSigned  ( IValType, Int )  [function, total]
                   | definedUnsigned( IValType, Int )  [function, total]
 
@@ -434,9 +456,7 @@ WebAssembly is a stack-machine, so here we provide the stack to operate over.
 Operator `_++_` implements an append operator for sort `ValStack`.
 
 ```k
-    syntax ValStack ::= ".ValStack"            [klabel(.ValStack), symbol]
-                      | Val      ":"  ValStack [klabel(concatValStack), symbol]
-                      | ValStack "++" ValStack [function, total]
+    syntax ValStack ::= ValStack "++" ValStack [function, total]
  // -----------------------------------------------------------------
     rule .ValStack       ++ VALSTACK' => VALSTACK'
     rule (SI : VALSTACK) ++ VALSTACK' => SI : (VALSTACK ++ VALSTACK')

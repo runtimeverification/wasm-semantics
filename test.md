@@ -14,10 +14,12 @@ Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consi
 module WASM-TEST-SYNTAX
     imports WASM-TEST-COMMON-SYNTAX
     imports WASM-TEXT-SYNTAX
+    imports WASM-INTERNAL-SYNTAX
 endmodule
 
 module WASM-TEST-COMMON-SYNTAX
     imports WASM-TEXT-COMMON-SYNTAX
+    imports WASM-DATA-INTERNAL-SYNTAX
     imports WASM-AUXIL-SYNTAX
     imports WASM-REFERENCE-INTERPRETER-SYNTAX
 

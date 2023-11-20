@@ -22,7 +22,7 @@ Common Syntax
 ```k
 module WASM-COMMON-SYNTAX
     imports WASM-DATA-COMMON-SYNTAX
-    imports WASM-NUMERIC
+    imports WASM-NUMERIC-SYNTAX
 ```
 
 ### Text Format
@@ -156,6 +156,26 @@ The following are kept abstract, and can be extended in other formats, such as t
 endmodule
 ```
 
+Internal Syntax
+---------------
+
+```k
+module WASM-INTERNAL-SYNTAX
+    imports WASM-DATA-INTERNAL-SYNTAX
+
+    syntax Instr ::=  "init_local"  Int Val
+                   |  "init_locals"     ValStack
+                   | "#init_locals" Int ValStack
+ // --------------------------------------------
+
+    syntax Int ::= #pageSize()      [function, total]
+    syntax Int ::= #maxMemorySize() [function, total]
+    syntax Int ::= #maxTableSize()  [function, total]
+ // ------------------------------------------
+
+endmodule
+```
+
 Semantics
 ---------
 
@@ -166,6 +186,7 @@ module WASM
     imports MAP-INT-TO-INT
     imports MAP-INT-TO-INT-PRIMITIVE
     imports WASM-COMMON-SYNTAX
+    imports WASM-INTERNAL-SYNTAX
     imports WASM-DATA
     imports WASM-DATA-TOOLS
     imports WASM-NUMERIC
@@ -511,10 +532,6 @@ Variable Operators
 The various `init_local` variants assist in setting up the `locals` cell.
 
 ```k
-    syntax Instr ::=  "init_local"  Int Val
-                   |  "init_locals"     ValStack
-                   | "#init_locals" Int ValStack
- // --------------------------------------------
     rule <instrs> init_local INDEX VALUE => . ... </instrs>
          <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
 
@@ -1137,10 +1154,6 @@ Incidentally, the page size is 2^16 bytes.
 The maximum of table size is 2^32 bytes.
 
 ```k
-    syntax Int ::= #pageSize()      [function, total]
-    syntax Int ::= #maxMemorySize() [function, total]
-    syntax Int ::= #maxTableSize()  [function, total]
- // ------------------------------------------
     rule #pageSize()      => 65536
     rule #maxMemorySize() => 65536
     rule #maxTableSize()  => 4294967296
