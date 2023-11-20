@@ -15,4 +15,20 @@ module SIMPLE-ARITHMETIC-SPEC
           <valstack> S:ValStack => < ITYPE > (X +Int Y) : S </valstack>
        requires 0 <=Int X andBool 0 <=Int Y
         andBool (X +Int Y) <Int #pow(ITYPE)
+
+// (i32.const #unsigned(i32, #signed(i32, #pow(i32) -Int 1)))
+// #assertTopStack < i32 > #pow(i32) -Int 1 "#unsigned . #signed 3"
+    claim <instrs> i32.const #unsigned(i32, #signed(i32, #pow(i32) -Int 1))
+                => . ... 
+          </instrs>
+          <valstack> S => < i32 > #pow(i32) -Int 1 : S </valstack>
+
+
+// (i64.const #unsigned(i64, #signed(i64, #pow(i64) -Int 1)))
+// #assertTopStack < i64 > #pow(i64) -Int 1 "#unsigned . #signed 6"
+    claim <instrs> i64.const #unsigned(i64, #signed(i64, #pow(i64) -Int 1))
+                => . ... 
+          </instrs>
+          <valstack> S => < i64 > #pow(i64) -Int 1 : S </valstack>
+
 endmodule

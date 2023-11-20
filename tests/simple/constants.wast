@@ -63,16 +63,10 @@
 (i32.const #unsigned(i32, #signed(i32, #pow1(i32))))
 #assertTopStack < i32 > #pow1(i32) "#unsigned . #signed 2"
 
-;; (i32.const #unsigned(i32, #signed(i32, #pow(i32) -Int 1)))
-;; #assertTopStack < i32 > 4294967295 "#unsigned . #signed 3" ;; #pow(i32) -Int 1
-
 (i64.const #unsigned(i64, #signed(i64, 0)))
 #assertTopStack < i64 > 0 "#unsigned . #signed 4"
 
 (i64.const #unsigned(i64, #signed(i64, #pow1(i64))))
 #assertTopStack < i64 > #pow1(i64) "#unsigned . #signed 5"
-
-;; (i64.const #unsigned(i64, #signed(i64, #pow(i64) -Int 1)))
-;; #assertTopStack < i64 > 18446744073709551615 "#unsigned . #signed 6" ;; #pow(i64) -Int 1
 
 #clearConfig
