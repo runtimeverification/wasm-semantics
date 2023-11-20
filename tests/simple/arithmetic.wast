@@ -59,7 +59,7 @@
 #assertTrap "i32.div_s 3"
 
 (i32.const #pow1(i32))
-(i32.const #pow(i32) -Int 1)
+(i32.sub (i32.const #pow(i32)) (i32.const 1))
 (i32.div_s)
 #assertTrap "i32.div_s 4"
 
@@ -89,7 +89,7 @@
 #assertTrap "rem_s"
 
 (i32.const #pow1(i32))
-(i32.const #pow(i32) -Int 1)
+(i32.sub (i32.const #pow(i32)) (i32.const 1))
 (i32.rem_s)
 #assertTopStack <i32 > 0 "rem_s edge case"
 
