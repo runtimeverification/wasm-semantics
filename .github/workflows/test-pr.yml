@@ -68,7 +68,7 @@ jobs:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
     name: 'Parser Tests'
     runs-on: [self-hosted, linux, normal]
-    timeout-minutes: 18
+    timeout-minutes: 30
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -98,7 +98,7 @@ jobs:
     needs: [parse-tests]
     name: 'Conformance Tests'
     runs-on: [self-hosted, linux, normal]
-    timeout-minutes: 18
+    timeout-minutes: 30
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -130,7 +130,7 @@ jobs:
     needs: [pykwasm-unit-tests, pykwasm-integration-tests]
     name: 'Prover Tests'
     runs-on: [self-hosted, linux, normal]
-    timeout-minutes: 18
+    timeout-minutes: 30
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
