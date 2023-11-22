@@ -6,14 +6,20 @@ Generally useful commands that are not part of the actual Wasm semantics.
 ```k
 require "wasm.md"
 
-module WASM-AUXIL
-    imports WASM
+module WASM-AUXIL-SYNTAX
+    imports WASM-SYNTAX
 
     syntax Stmt ::= Auxil
  // ---------------------
 
     syntax Auxil ::= "#clearConfig"
  // -------------------------------
+endmodule
+
+module WASM-AUXIL
+    imports WASM-AUXIL-SYNTAX
+    imports WASM
+
     rule [clearConfig]:
          <instrs> #clearConfig => . ...     </instrs>
          <curModIdx>         _ => .Int      </curModIdx>

@@ -19,39 +19,39 @@
 #assertTopStack < i32 > 4 "shl 1"
 
 (i32.const 2)
-(i32.const #pow1(i32) +Int 1)
+(i32.add (i32.const #pow1(i32)) (i32.const 1))
 (i32.shl)
 #assertTopStack < i32 > 4 "shl 2"
 
 (i32.const #pow1(i32))
 (i32.const 2)
 (i32.shr_u)
-#assertTopStack < i32 > 2 ^Int 29 "shr_u 1"
+#assertTopStack < i32 > 536870912 "shr_u 1" ;; 2 ^Int 29
 
 (i32.const 2)
 (i32.const 2)
 (i32.shr_u)
 #assertTopStack < i32 > 0 "shr_u 2"
 
-(i32.const #pow(i32) -Int 2)
+(i32.sub (i32.const #pow(i32)) (i32.const 2))
 (i32.const 1)
 (i32.shr_s)
-#assertTopStack < i32 > #pow(i32) -Int 1 "shr_s 1"
+#assertTopStack < i32 > 4294967295 "shr_s 1" ;; #pow(i32) -Int 1
 
 (i32.const 2)
 (i32.const 2)
 (i32.shr_s)
 #assertTopStack < i32 > 0 "shr_s 2"
 
-(i32.const #pow1(i32) +Int 2)
+(i32.add (i32.const #pow1(i32)) (i32.const 2))
 (i32.const 3)
 (i32.rotl)
 #assertTopStack < i32 > 20 "rotl"
 
-(i32.const #pow1(i32) +Int 16)
+(i32.add (i32.const #pow1(i32)) (i32.const 16))
 (i32.const 3)
 (i32.rotr)
-#assertTopStack < i32 > 2 ^Int 28 +Int 2 "rotr"
+#assertTopStack < i32 > 268435458 "rotr" ;; 2 ^Int 28 +Int 2
 
 ;; clz
 
@@ -76,17 +76,19 @@
 (i64.clz)
 #assertTopStack < i64 > 63 "clz 1"
 
-(i32.const 2 ^Int 32 -Int 1)
+(i32.sub (i32.const #pow(i32)) (i32.const 1))
 (i32.clz)
 #assertTopStack < i32 > 0 "clz 2^32 - 1"
-(i64.const 2 ^Int 64 -Int 1)
+
+(i64.sub (i64.const #pow(i64)) (i64.const 1))
 (i64.clz)
 #assertTopStack < i64 > 0 "clz 2^64 - 1"
 
-(i32.const 2 ^Int 31 -Int 1)
+(i32.sub (i32.const #pow1(i32)) (i32.const 1))
 (i32.clz)
 #assertTopStack < i32 > 1 "clz 2^31 - 1"
-(i64.const 2 ^Int 63 -Int 1)
+
+(i64.sub (i64.const #pow1(i64)) (i64.const 1))
 (i64.clz)
 #assertTopStack < i64 > 1 "clz 2^63 - 1"
 
@@ -112,10 +114,10 @@
 (i64.ctz)
 #assertTopStack < i64 > 0 "ctz 1"
 
-(i32.const 2 ^Int 32 -Int 1)
+(i32.sub (i32.const #pow(i32)) (i32.const 1))
 (i32.ctz)
 #assertTopStack < i32 > 0 "ctz 2^32 - 1"
-(i64.const 2 ^Int 64 -Int 1)
+(i64.sub (i64.const #pow(i64)) (i64.const 1))
 (i64.ctz)
 #assertTopStack < i64 > 0 "ctz 2^64 - 1"
 
@@ -142,10 +144,10 @@
 (i64.popcnt)
 #assertTopStack < i64 > 1 "popcnt 1"
 
-(i32.const 2 ^Int 32 -Int 1)
+(i32.sub (i32.const #pow(i32)) (i32.const 1))
 (i32.popcnt)
 #assertTopStack < i32 > 32 "popcnt 2^32 - 1"
-(i64.const 2 ^Int 64 -Int 1)
+(i64.sub (i64.const #pow(i64)) (i64.const 1))
 (i64.popcnt)
 #assertTopStack < i64 > 64 "popcnt 2^64 - 1"
 

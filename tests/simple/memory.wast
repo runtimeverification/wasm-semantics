@@ -69,7 +69,7 @@
 (i64.store16 offset=2)
 #assertMemoryData (3, 1) "store16"
 (i32.const 1)
-(i64.const #pow(i32) +Int 1)
+(i64.add (i64.const #pow(i32)) (i64.const 1))
 (i64.store16 offset=2)
 #assertMemoryData (3, 1) "store32"
 #assertMemory 0 1 .Int ""
@@ -100,7 +100,7 @@
 
 (memory 1)
 (i32.const 15)
-(i64.const #pow(i32) -Int 1)
+(i64.sub (i64.const #pow(i32)) (i64.const 1))
 (i64.store)
 (i32.const 15)
 (i32.load8_u)
@@ -116,7 +116,7 @@
 #assertTopStack <i32> -1 "load16 signed"
 (i32.const 15)
 (i64.load32_u )
-#assertTopStack <i64> #pow(i32) -Int 1 "load32 unsigned1"
+#assertTopStack <i64> 4294967295 "load32 unsigned1" ;; #pow(i32) -Int 1
 (i32.const 15)
 (i64.load32_s )
 #assertTopStack <i64> -1 "load32 signed1"
@@ -138,7 +138,7 @@
 
 (memory 1)
 (i32.const 1)
-(i64.const #pow(i64) -Int 1)
+(i64.sub (i64.const #pow(i64)) (i64.const 1))
 (i64.store)
 (i32.const 5) (i32.const 0)
 (i32.store   )
@@ -153,7 +153,7 @@
 #clearConfig
 
 (memory 1)
-(i32.const 1) (i64.const #pow(i64) -Int 1)
+(i32.const 1) (i64.sub (i64.const #pow(i64)) (i64.const 1))
 (i64.store )
 (i32.const 2) (i32.const 0)
 (i32.store8 )

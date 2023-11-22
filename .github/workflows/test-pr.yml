@@ -86,7 +86,7 @@ jobs:
         with:
           container-name: kwasm-ci-parse-${{ github.sha }}
       - name: 'Build LLVM Backend and pykwasm'
-        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm
+        run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make -j2 build-llvm RELEASE=true
       - name: 'Conformance parse'
         run: docker exec -u user kwasm-ci-parse-${GITHUB_SHA} make test-conformance-parse
       - name: 'Tear down Docker'
@@ -116,7 +116,7 @@ jobs:
         with:
           container-name: kwasm-ci-conformance-${{ github.sha }}
       - name: 'Build LLVM Backend'
-        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j2 build-llvm
+        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j2 build-llvm RELEASE=true
       - name: 'Simple tests'
         run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -j2 TEST_CONCRETE_BACKEND=llvm test-simple
       - name: 'Conformance run'

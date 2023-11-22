@@ -74,7 +74,7 @@ ALL_SOURCE_FILES   := $(patsubst %, %.md, $(SOURCE_FILES)) $(EXTRA_SOURCE_FILES)
 build: build-llvm build-haskell build-wrc20
 
 ifneq (,$(RELEASE))
-    KOMPILE_OPTS += -O2
+    KOMPILE_OPTS += -O2 --gen-glr-bison-parser
 else
     KOMPILE_OPTS += --debug
 endif
