@@ -38,7 +38,7 @@ module WASM-TEST-COMMON-SYNTAX
                        | "#assertMemoryData"     "(" Int "," Int ")" WasmString
                        | "#assertMemoryData" Int "(" Int "," Int ")" WasmString
                        | "#assertTable" Index Int OptionalInt WasmString
-                       | "#assertTableElem" "(" Int "," Int ")" WasmString
+                       | "#assertTableElem" "(" Int "," Index ")" WasmString
                        | "#assertNamedModule" Identifier WasmString
                        | "#assertRegistrationUnnamed" WasmString            WasmString
                        | "#assertRegistrationNamed"   WasmString Identifier WasmString
@@ -487,7 +487,7 @@ This asserts related operation about tables.
            ...
          </tabs>
 
-    rule <instrs> #assertTableElem (KEY , VAL) _MSG => . ... </instrs>
+    rule <instrs> #assertTableElem (KEY , VAL:Int) _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -502,6 +502,22 @@ This asserts related operation about tables.
            </tabInst>
            ...
          </tabs>
+
+    rule <instrs> #assertTableElem (KEY , FID:Identifier) MSG 
+               => #assertTableElem (KEY , FADDRS {{ FUNC_ID }} orDefault -1) MSG
+                  ...
+         </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <moduleMetadata>
+             <funcIds> ... FID |-> FUNC_ID ... </funcIds>
+             ...
+           </moduleMetadata>
+           <funcAddrs> FADDRS </funcAddrs>
+           ...
+         </moduleInst>
+
 ```
 
 ### Memory Assertions
