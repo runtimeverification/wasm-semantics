@@ -10,5 +10,4 @@ float_exprs.wast
 float_literals.wast
 globals.wast
 memory.wast
-names.wast
 skip-stack-guard-page.wast
