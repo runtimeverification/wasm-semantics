@@ -131,7 +131,10 @@ The test embedder passes control to the execution cell in Wasm.
 
 ```k
     rule <k> PGM => . </k>
-         <instrs> .K => sequenceStmts(text2abstract(PGM)) </instrs>
+         <instrs> .K
+               => #initSpectestModule
+               ~> sequenceStmts(text2abstract(PGM))
+         </instrs>
 ```
 
 Bare Allocations
@@ -249,29 +252,80 @@ In order to parse the conformance test cases, we handle these declarations here 
     rule ( module OID quote _DS ) => ( module OID .Defns )
 ```
 
-The conformance tests contain imports of the `"spectest"` module.
-For now, we just introduce some special handling that ignores any tests that make use of `"spectest"`.
-The handling consists of trapping whenever a `"spectest"` function is called, and removing the trap whenever a new module or assertion comes up.
 
-TODO: Actually implement the `"spectest"` module, or call out to the supplied on in the spec repo.
+### Spectest Host Module
+
+The conformance tests contain imports of the `"spectest"` module.
+
+- [Module signature](https://github.com/WebAssembly/spec/blob/f83a375df438067de1eafc25a2b5e249b7115a92/interpreter/README.md#spectest-host-module)
+- [JS implementation](https://github.com/WebAssembly/spec/blob/f83a375df438067de1eafc25a2b5e249b7115a92/test/harness/async_index.js#L88)
 
 ```k
-    syntax Instr ::= "spectest_trap"
- // --------------------------------
-    rule <instrs> spectest_trap ~> (_L:Label => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (_F:Frame => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (_I:Instr => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (_D:Defn  => .) ... </instrs>
+    syntax ModuleDecl ::= "#spectestModule"   [function, total]
+                        | "#emp"
+ // -----------------------------------------------------------
+    rule #spectestModule 
+      => #module ( ...
+          types: #type (... type: [ .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ i32  .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ i64  .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ f32  .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ f64  .ValTypes ] -> [ .ValTypes ] , metadata:  )  
+                 #type (... type: [ i32  f32  .ValTypes ] -> [ .ValTypes ] , metadata:  )  
+                 #type (... type: [ f64  f64  .ValTypes ] -> [ .ValTypes ] , metadata:  )  
+                 .EmptyStmts , 
+            funcs: 
+                #func (... type: 0 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 1 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 2 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 3 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 4 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 5 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 6 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                .EmptyStmts ,
+            tables: 
+                #table (... limits: #limits ( 10 , 20 ) , metadata:  )  
+                .EmptyStmts , 
+            mems: 
+                #memory (... limits: #limits ( 1 , 2 ) , metadata:  )  
+                .EmptyStmts , 
+            globals: 
+                #global (... type: const i32 , init: i32 . const 666  .EmptyStmts , metadata:  )  
+                #global (... type: const i64 , init: i64 . const 666  .EmptyStmts , metadata:  )  
+                #global (... type: const f32 , init: f32 . const 666.0  .EmptyStmts , metadata:  )  
+                #global (... type: const f64 , init: f64 . const 666.0  .EmptyStmts , metadata:  )  
+                .EmptyStmts , 
+            elem: .EmptyStmts , 
+            data: .EmptyStmts , 
+            start: .EmptyStmts , 
+            importDefns: .EmptyStmts , 
+            exports: 
+                #export (... name: #token("\"global_i32\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"global_i64\""    , "WasmStringToken") , index: 1 )  
+                #export (... name: #token("\"global_f32\""    , "WasmStringToken") , index: 2 )  
+                #export (... name: #token("\"global_f64\""    , "WasmStringToken") , index: 3 )  
+                #export (... name: #token("\"table\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"memory\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"print\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"print_i32\""    , "WasmStringToken") , index: 1 )  
+                #export (... name: #token("\"print_i64\""    , "WasmStringToken") , index: 2 )  
+                #export (... name: #token("\"print_f32\""    , "WasmStringToken") , index: 3 )  
+                #export (... name: #token("\"print_f64\""    , "WasmStringToken") , index: 4 )  
+                #export (... name: #token("\"print_i32_f32\""    , "WasmStringToken") , index: 5 )  
+                #export (... name: #token("\"print_f64_f64\""    , "WasmStringToken") , index: 6 )  
+                .EmptyStmts , 
+            metadata: #meta (... id:  , funcIds: .Map , filename: .String ) 
+        )
+    syntax Stmt ::= "#initSpectestModule"
+ // --------------------------------------------------------------------
+    rule [initSpectestModule]:
+        <instrs> #initSpectestModule 
+              => #spectestModule
+              ~> ( register #token("\"spectest\"", "WasmStringToken") )
+              ~> #emptyModule() // create an empty module for the test instructions
+                 ...
+        </instrs>
 
-    rule <instrs> (spectest_trap => .) ~> _M:ModuleDecl ... </instrs>
-    rule <instrs> (spectest_trap => .) ~> _A:Assertion  ... </instrs>
-
-    rule <instrs> #import(MOD, _, #funcDesc(... id: OID, type: TIDX))
-               => #func(... type: TIDX, locals: [ .ValTypes ], body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
-               ...
-         </instrs>
-      requires MOD ==K #token("\"spectest\"", "WasmStringToken")
-        orBool MOD ==K #token("\"test\""    , "WasmStringToken")
 ```
 
 Except `assert_return` and `assert_trap`, the remaining rules are directly reduced to empty. We are not planning to implement them and these rules are only used to make it easier to parse conformance tests.
