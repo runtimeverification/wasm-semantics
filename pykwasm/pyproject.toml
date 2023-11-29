@@ -14,7 +14,7 @@ authors = [
 python = "^3.10"
 cytoolz = "^0.12.1"
 numpy = "^1.24.2"
-pyk = { git = "https://github.com/runtimeverification/pyk.git", tag="v0.1.517" }
+pyk = { git = "https://github.com/runtimeverification/pyk.git", tag="v0.1.518" }
 py-wasm = {url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.1.1.tar.gz"}
 
 [tool.poetry.group.dev.dependencies]
