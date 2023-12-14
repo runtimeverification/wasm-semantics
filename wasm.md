@@ -97,7 +97,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
  // -----------------------------------
 
     syntax TypeUse     ::= TypeDecls
-                         | "(type" Index ")"           [prefer] // TODO: Remove and move to wasm-text.
+                         | "(type" Index ")"           [prefer, klabel(aTypeUseIndex), symbol] // TODO: Remove and move to wasm-text.
                          | "(type" Index ")" TypeDecls
     syntax TypeKeyWord ::= "param" | "result"
     syntax TypeDecl    ::= "(" TypeDecl ")"     [bracket]

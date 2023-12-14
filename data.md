@@ -165,8 +165,8 @@ Proper values are numbers annotated with their types.
 ```k
     syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
     syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
-    syntax RVal ::= "<" RValType ">" Int    [klabel(<_>_)]
-                  | "<" RValType ">" "null" [klabel(<_>null)]
+    syntax RVal ::= "<" RValType ">" Int    [klabel(<_>_), symbol]
+                  | "<" RValType ">" "null" [klabel(<_>null), symbol]
     syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
                   | IVal | FVal | RVal
  // ---------------------------
