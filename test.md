@@ -23,9 +23,7 @@ module WASM-TEST-COMMON-SYNTAX
     imports WASM-AUXIL-SYNTAX
     imports WASM-REFERENCE-INTERPRETER-SYNTAX
 
-    syntax Assertion ::= "#assertAndRemoveEqual"
-                       | "#assertAndRemoveToken"
-                       | "#assertTopStack"        Val      WasmString
+    syntax Assertion ::= "#assertTopStack"        Val      WasmString
                        | "#assertTopStackExactly" Val      WasmString
                        | "#assertStack"           ValStack WasmString
                        | "#assertLocal"  Int   Val WasmString
@@ -53,6 +51,8 @@ module WASM-REFERENCE-INTERPRETER-SYNTAX
                     | "(" "get"    OptionalId WasmString        ")"
                     |     "get"    Int        WasmString
  // ----------------------------------------------------
+    syntax PlainInstr ::= "ref" Int
+                        | "ref.extern" Int
 
     syntax Auxil ::= "(" "register" WasmString       ")"
                    | "(" "register" WasmString Index ")"
@@ -91,8 +91,7 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
 ```
 
 ```k
-    syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
-                       | "(" "assert_return"                Action            ")"
+    syntax Assertion ::= "(" "assert_return"                Action     Instrs ")"
                        | "(" "assert_return_canonical_nan"  Action            ")"
                        | "(" "assert_return_arithmetic_nan" Action            ")"
                        | "(" "assert_trap"                  Action     WasmString ")"
@@ -161,11 +160,31 @@ We allow writing instructions at the top level in the test embedder.
 Auxiliary
 ---------
 
-We add `token` as a value in order to implement some test assertions.
+We add `token` as a value in order to use as a separator in `<valstack>`.
 
 ```k
     syntax Val ::= "token"
  // ----------------------
+    rule <instrs> token => . ... </instrs>
+         <valstack> S => token : S </valstack>
+    
+    syntax ValStack ::= takeUntilToken(ValStack)    [function, total]
+                      | dropUntilToken(ValStack)    [function, total]
+ // -----------------------------------------------------------------
+    rule takeUntilToken(.ValStack)  => .ValStack
+    rule takeUntilToken(token : _ ) => token : .ValStack
+    rule takeUntilToken(V     : Vs) => V : takeUntilToken(Vs)
+      requires V =/=K token
+
+    rule dropUntilToken(.ValStack)   => .ValStack
+    rule dropUntilToken(token : Vs ) => Vs
+    rule dropUntilToken(V     : Vs)  => dropUntilToken(Vs)
+      requires V =/=K token
+
+    syntax Assertion ::= "#dropUntilToken"
+ // --------------------------------------------------
+    rule <instrs> #dropUntilToken => . ... </instrs>
+         <valstack> S => dropUntilToken(S) </valstack>
 ```
 
 Reference Interpreter Commands
@@ -284,7 +303,7 @@ The conformance tests contain imports of the `"spectest"` module.
                 #func (... type: 6 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
                 .EmptyStmts ,
             tables: 
-                #table (... limits: #limits ( 10 , 20 ) , metadata:  )  
+                #table (... limits: #limits ( 10 , 20 ) , type: funcref, metadata:  )  
                 .EmptyStmts , 
             mems: 
                 #memory (... limits: #limits ( 1 , 2 ) , metadata:  )  
@@ -333,10 +352,17 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
 *TODO:* Make use of `assert_exhaustion`, by detecting stack overflow.
 
 ```k
-    rule <instrs> (assert_return ACT INSTR)               => ACT ~> INSTR ~> #assertAndRemoveEqual ~> #assertAndRemoveToken ... </instrs>
-         <valstack> VALSTACK => token : VALSTACK </valstack>
-    rule <instrs> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </instrs>
-         <valstack> VALSTACK => token : VALSTACK </valstack>
+    rule <instrs> (assert_return ACT EXPECTED)
+               => token
+               ~> ACT
+               ~> token                    // separator between actual and expected value 
+               ~> sequenceInstrs(EXPECTED) // evaluate the expected value(s) 
+               ~> #assertReturn
+               ~> #dropUntilToken // clean expected value
+               ~> #dropUntilToken // clean return value
+                  ... 
+         </instrs>
+
     rule <instrs> (assert_return_canonical_nan  _ACT)     => . ... </instrs>
     rule <instrs> (assert_return_arithmetic_nan _ACT)     => . ... </instrs>
     rule <instrs> (assert_trap        ACT:Action    DESC) => ACT ~> #assertTrap DESC ... </instrs>
@@ -350,10 +376,13 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
 And we implement some helper assertions to help testing.
 
 ```k
-    rule <instrs> #assertAndRemoveEqual => #assertTopStack V .WasmString ~> ( drop ) ... </instrs>
-         <valstack> V : VALSTACK => VALSTACK </valstack>
-    rule <instrs> #assertAndRemoveToken => . ... </instrs>
-         <valstack> token : VALSTACK => VALSTACK </valstack>
+    syntax Assertion ::= "#assertReturn"
+ // --------------------------------------
+    rule <instrs> #assertReturn
+               => #assertStackAux takeUntilToken(S) takeUntilToken(dropUntilToken(S))
+                  ...
+         </instrs>
+         <valstack> S </valstack>
 ```
 
 ### Trap Assertion
@@ -371,20 +400,26 @@ These functions make assertions about the state of the `<valstack>` cell.
 ```k
     syntax Assertion ::= "#assertStackAux"        ValStack ValStack
  // ---------------------------------------------------------------
-    rule <instrs> #assertTopStack S                      _ => . ... </instrs> <valstack> S              : _VALSTACK </valstack>
-    rule <instrs> #assertTopStack < ITYPE:IValType > VAL _ => . ... </instrs> <valstack> < ITYPE > VAL' : _VALSTACK </valstack>
-      requires #unsigned(ITYPE, VAL) ==Int VAL'
-    rule <instrs> #assertTopStack < FTYPE:FValType > VAL _ => . ... </instrs> <valstack> < FTYPE > VAL' : _VALSTACK </valstack>
-      requires signFloat(VAL) ==Bool signFloat(VAL') andBool VAL ==Float VAL'
+    rule <instrs> #assertTopStack VAL _ => . ... </instrs>
+         <valstack> VAL' : _ </valstack>
+      requires equalVal(VAL, VAL')
 
-    rule <instrs> #assertTopStackExactly A               _ => . ... </instrs> <valstack> A              : _VALSTACK </valstack>
+    rule <instrs> #assertTopStackExactly A _ => . ... </instrs> <valstack> A : _VALSTACK </valstack>
 
     rule <instrs> #assertStack S1 _ => #assertStackAux S1 S2  ... </instrs>
          <valstack> S2 </valstack>
-    rule <instrs> #assertStackAux .ValStack  _                                 => .                       ... </instrs>
-    rule <instrs> #assertStackAux (            V : S1')              (V : S2') => #assertStackAux S1' S2' ... </instrs>
-    rule <instrs> #assertStackAux (< ITYPE > VAL : S1') (< ITYPE > VAL' : S2') => #assertStackAux S1' S2' ... </instrs>
-      requires #unsigned(ITYPE, VAL) ==Int VAL'
+
+    rule <instrs> #assertStackAux .ValStack  _ => . ... </instrs>
+    rule <instrs> #assertStackAux (V1 : S1) (V2 : S2) => #assertStackAux S1 S2 ... </instrs>
+      requires equalVal(V1, V2)
+
+    syntax Bool ::= equalVal(Val, Val)    [function, total]
+ // -------------------------------------------------------
+    rule equalVal(<ITYPE:IValType> X, <ITYPE> Y) => #unsigned(ITYPE, X) ==Int Y
+    rule equalVal(<FTYPE:FValType> X, <FTYPE> Y) => signFloat(X) ==Bool signFloat(Y) andBool X ==Float Y
+    rule equalVal(<RTYPE:RValType> X, <RTYPE> Y) => X ==Int   Y
+    rule equalVal(                 X,         Y) => X ==K     Y       [owise]
+
 ```
 
 ### Variables Assertions
@@ -497,11 +532,12 @@ This asserts related operation about tables.
          <tabs>
            <tabInst>
              <tAddr> ADDR </tAddr>
-             <tdata> ...  KEY |-> VAL ... </tdata>
+             <tdata> TDATA </tdata>
                ...
            </tabInst>
            ...
          </tabs>
+      requires <funcref> VAL ==K #getRef(KEY, TDATA, <funcref> null)
 
     rule <instrs> #assertTableElem (KEY , FID:Identifier) MSG 
                => #assertTableElem (KEY , FADDRS {{ FUNC_ID }} orDefault -1) MSG
@@ -596,6 +632,13 @@ We also want to be able to test that the embedder's registration function is wor
     rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
+```
+
+## Administrative instructions
+
+```k
+    rule <instrs> ref I        => <funcref>   I ... </instrs>
+    rule <instrs> ref.extern I => <externref> I ... </instrs>
 ```
 
 ```k

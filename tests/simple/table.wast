@@ -17,7 +17,7 @@
 #assertTable $named2 3 3 "table one with elements"
 
 (module
-  ( elem 0 (i32.const 1) $f $g)
+  ( elem (i32.const 1) $f $g)
   ( table 4 funcref)
   (func $f) (func $g)
 )
@@ -80,18 +80,18 @@
   (elem (offset (i32.const 0)) 0)
   (elem (offset (nop) (i32.const 1)) 0)
   (elem (offset (i32.const 2) (nop)) 0)
-  (elem $t (offset (i32.const 3)) 0)
-  (elem $t (offset (nop) (i32.const 4)) 0)
-  (elem $t (offset (i32.const 5) (nop)) 0)
+  (elem (table $t) (offset (i32.const 3)) 0)
+  (elem (table $t) (offset (nop) (i32.const 4)) 0)
+  (elem (table $t) (offset (i32.const 5) (nop)) 0)
 
   (elem (offset (i32.const 6 (nop))) 0)
-  (elem $t (offset (i32.const 7 (nop))) 0)
+  (elem (table $t) (offset (i32.const 7 (nop))) 0)
 
   (global $g i32 (i32.const 8))
   (global $h i32 (i32.const 9))
 
   (elem (offset (global.get $g)) 0)
-  (elem $t (offset (global.get $h)) 0)
+  (elem (table $t) (offset (global.get $h)) 0)
 
   (func $main (local i32)
     (local.set 0 (i32.const 7))
