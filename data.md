@@ -87,8 +87,13 @@ WebAssembly has four basic types, for 32 and 64 bit integers and floats.
 ```k
     syntax IValType ::= "i32" [klabel(i32), symbol] | "i64" [klabel(i64), symbol]
     syntax FValType ::= "f32" [klabel(f32), symbol] | "f64" [klabel(f64), symbol]
-    syntax ValType  ::= IValType | FValType
+    syntax RValType ::= "funcref"     [klabel(funcref), symbol]
+                      | "externref"   [klabel(externref), symbol]
+    syntax ValType  ::= IValType | FValType | RValType
  // ---------------------------------------
+
+    syntax HeapType ::= "func"   [klabel(func), symbol]
+                      | "extern" [klabel(extern), symbol]
 ```
 
 #### Type Constructors
@@ -160,8 +165,10 @@ Proper values are numbers annotated with their types.
 ```k
     syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
     syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
+    syntax RVal ::= "<" RValType ">" Int    [klabel(<_>_)]
+                  | "<" RValType ">" "null" [klabel(<_>null)]
     syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
-                  | IVal | FVal
+                  | IVal | FVal | RVal
  // ---------------------------
 ```
 
@@ -243,10 +250,14 @@ In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` bein
 This rule handles adding an `OptionalId` as a map key, but only when it is a proper identifier.
 
 ```k
-    syntax Map ::= #saveId (Map, OptionalId, Int) [function]
+    syntax Map  ::= #saveId    (Map, OptionalId, Int) [function, total]
+    syntax Bool ::= #canSaveId (Map, OptionalId)      [function, total]
  // -------------------------------------------------------
     rule #saveId (MAP, ID:OptionalId, _)   => MAP             requires notBool isIdentifier(ID)
     rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
+
+    rule #canSaveId (_,   ID:OptionalId) => true                     requires notBool isIdentifier(ID)
+    rule #canSaveId (MAP, ID:Identifier) => notBool ID in_keys(MAP)
 ```
 
 `Int` is the basic form of index, and indices always need to resolve to integers.
@@ -268,9 +279,9 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
     syntax Ints ::= List{Int, ""} [klabel(listInt), symbol]
  // -------------------------------------------------------
 
-    syntax Int   ::= #lenElemSegment (ElemSegment)      [function]
+    syntax Int   ::= #lenElemSegment (ElemSegment)      [function, total]
     syntax Index ::= #getElemSegment (ElemSegment, Int) [function]
-    syntax Int   ::= #lenInts        (Ints)             [function]
+    syntax Int   ::= #lenInts        (Ints)             [function, total]
     syntax Int   ::= #getInts        (Ints,        Int) [function]
  // --------------------------------------------------------------
     rule #lenElemSegment(.ElemSegment) => 0
@@ -289,6 +300,34 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
  // -----------------------------------------------------------
     rule elemSegment2Ints(.ElemSegment) => .Ints
     rule elemSegment2Ints(E:Int ES)     => E elemSegment2Ints(ES)
+
+    syntax Refs ::= List{RVal, ""}          [klabel(listRef), symbol]
+                  | #initRefs(Int, RVal)    [function, total]
+    syntax Int   ::= #lenRefs(Refs)         [function, total]
+ // ---------------------------------------------------------------------
+    rule #lenRefs(.Refs) => 0
+    rule #lenRefs(_ ES)  => 1 +Int #lenRefs(ES)
+
+    rule #initRefs(N, V) => V #initRefs(N -Int 1, V)  requires N >Int 0
+    rule #initRefs(N, _) => .Refs                     requires N <=Int 0
+    
+    syntax RVal ::= #getRef(Int, Refs, RVal)    [function, total]
+ // ------------------------------------------------------------
+    rule #getRef(I, _ RS, D) => #getRef(I -Int 1, RS, D)  requires I >Int 0
+    rule #getRef(0, R _ , _) => R
+    rule #getRef(_, _ ,   D) => D                         [owise]
+
+    syntax Refs ::= #dropRefs(Int, Refs)    [function, total]
+ // ---------------------------------------------------------
+    rule #dropRefs(N, _ RS) => #dropRefs(N -Int 1, RS) requires N >Int 0
+    rule #dropRefs(_, RS)   => RS                      [owise]
+
+    syntax Refs ::= #setRefs(Int, Refs, RVal)    [function, total]
+ // --------------------------------------------------------
+    rule #setRefs(0, _ RS, V) => V RS
+    rule #setRefs(N, R RS, V) => R #setRefs(N -Int 1, RS, V)  requires N >Int 0
+    rule #setRefs(_, _, _)    => .Refs                        [owise]
+
 ```
 
 ### Limits
@@ -478,8 +517,9 @@ Each call site _must_ ensure that this is desired behavior before using these fu
                       | #revs ( ValStack , ValStack ) [function, total, klabel(#revsAux)]
  // ------------------------------------------------------------------------------------------
     rule #zero(.ValTypes)             => .ValStack
-    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0   : #zero(VTYPES)
-    rule #zero(FTYPE:FValType VTYPES) => < FTYPE > 0.0 : #zero(VTYPES)
+    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0    : #zero(VTYPES)
+    rule #zero(FTYPE:FValType VTYPES) => < FTYPE > 0.0  : #zero(VTYPES)
+    rule #zero(RTYPE:RValType VTYPES) => < RTYPE > null : #zero(VTYPES)
 
     rule #take(N, _)         => .ValStack               requires notBool N >Int 0
     rule #take(N, .ValStack) => .ValStack               requires         N >Int 0
