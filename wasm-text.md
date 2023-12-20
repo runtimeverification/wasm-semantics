@@ -85,6 +85,8 @@ module WASM-TEXT-COMMON-SYNTAX
 
 ### Instructions
 
+- [https://webassembly.github.io/spec/core/text/instructions.html](https://webassembly.github.io/spec/core/text/instructions.html)
+
 #### Plain Instructions
 
 ```k
@@ -236,6 +238,8 @@ The following is the text format representation of an import specification.
 
 ### Tables
 
+- [https://webassembly.github.io/spec/core/text/modules.html#tables](https://webassembly.github.io/spec/core/text/modules.html#tables)
+
 ```k
     syntax TableDefn ::= "(" "table" OptionalId TableSpec ")"
     syntax TableSpec ::= TableType
@@ -300,6 +304,8 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 ```
 
 ### Element Segments
+
+- [https://webassembly.github.io/spec/core/text/modules.html#element-segments](https://webassembly.github.io/spec/core/text/modules.html#element-segments)
 
 ```k
 
@@ -502,6 +508,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 
 #### Tables
 
+- [Abbreviations](https://webassembly.github.io/spec/core/text/modules.html#text-table-abbrev)
+
 ```k
     rule #unfoldDefns(( table funcref ( elem ELEM:ElemSegment ) ) DS, I, M)
       => #unfoldDefns(( table #freshId(I) funcref ( elem ELEM ) ) DS, I +Int 1, M)
@@ -581,6 +589,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 
 #### Element Segments
 
+- [Abbreviations](https://webassembly.github.io/spec/core/text/modules.html#id7)
+
 ```k
     // Active
     rule #unfoldDefns((elem IDX TU (offset IS) ES) DS, I, M) 
@@ -611,7 +621,6 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 
 ```k
     rule #unfoldDefns(((data OFFSET:Offset DATA ) => ( data 0 OFFSET DATA )) _DS, _I, _M)
-    // rule #unfoldDefns(((data IDX OFFSET:Instrs DATA ) => ( data IDX ( offset OFFSET ) DATA )) _DS, _I, _M)
 
     rule #unfoldDefns((data IDX (offset IS) DATA) DS, I, M) => (data IDX (offset unfoldInstrs(IS)) DATA) #unfoldDefns(DS, I, M)
 ```

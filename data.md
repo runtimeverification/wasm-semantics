@@ -80,10 +80,13 @@ It is used when initializing a WebAssembly table, or used as the parameter of th
 
 ### WebAssembly Types
 
-#### Base Types
+#### Value Types
 
-WebAssembly has four basic types, for 32 and 64 bit integers and floats.
-
+WebAssembly has three kinds of [Value types](https://webassembly.github.io/spec/core/syntax/types.html#value-types):
+  1. [Number types](https://webassembly.github.io/spec/core/syntax/types.html#number-types)
+  2. [Vector types](https://webassembly.github.io/spec/core/syntax/types.html#vector-types)(currently not supported)
+  3. [Reference types](https://webassembly.github.io/spec/core/syntax/types.html#reference-types)
+  
 ```k
     syntax IValType ::= "i32" [klabel(i32), symbol] | "i64" [klabel(i64), symbol]
     syntax FValType ::= "f32" [klabel(f32), symbol] | "f64" [klabel(f64), symbol]

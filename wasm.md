@@ -670,6 +670,9 @@ The `get` and `set` instructions read and write globals.
 
 ### Table Instructions
 
+- [Structure](https://webassembly.github.io/spec/core/syntax/instructions.html#table-instructions)
+- [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#table-instructions)
+
 ```k
     syntax Instr ::= "#table.get"  "(" Int ")"          [klabel(aTable.get), symbol]
                    | "#table.set"  "(" Int ")"          [klabel(aTable.set), symbol]
@@ -1021,6 +1024,9 @@ The `get` and `set` instructions read and write globals.
 ```
 
 ### Reference Instructions
+
+- [Structure](https://webassembly.github.io/spec/core/syntax/instructions.html#reference-instructions)
+- [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#reference-instructions)
 
 ```k
     syntax Instr ::= "#ref.is_null"               [klabel(aRef.is_null), symbol]
