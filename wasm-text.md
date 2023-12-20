@@ -953,22 +953,23 @@ Wasm currently supports only one table, so we do not need to resolve any identif
     rule getElemType(_:ElemSegment)  => funcref
     rule getElemType(T:RValType _IS) => T
     
-    syntax Refs ::= "#t2aElemList" "<" Context ">" "(" ElemList ")" [function]
-                  | "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
-                  | "#t2aElemExprs" "<" Context ">" "(" ElemExprs ")" [function]
+    syntax ListRef ::= "#t2aElemList" "<" Context ">" "(" ElemList ")" [function]
+                     | "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
+                     | "#t2aElemExprs" "<" Context ">" "(" ElemExprs ")" [function]
     syntax RVal ::= "#t2aElemExpr" "<" Context ">" "(" ElemExpr ")" [function]
  // --------------------------------------------------------------------------------
     rule #t2aElemList<C>(func ES)          => #t2aElemSegment<C>(ES)
     rule #t2aElemList<C>(ES)               => #t2aElemSegment<C>(ES)
     rule #t2aElemList<C>(_TYP:RValType ES) => #t2aElemExprs<C>(ES)
      
-    rule #t2aElemSegment<_C>(.ElemSegment) => .Refs
+    rule #t2aElemSegment<_C>(.ElemSegment) => .ListRef
     rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Index ES) 
-      => (<funcref> idxLookup(FIDS, ID)) #t2aElemSegment<C>(ES)
+      => ListItem(<funcref> idxLookup(FIDS, ID)) #t2aElemSegment<C>(ES)
       requires validIdx(FIDS, ID)
 
-    rule #t2aElemExprs<C>(E:ElemExpr ES:ElemExprs) => #t2aElemExpr<C>(E) #t2aElemExprs<C>(ES)
-    rule #t2aElemExprs<_>(.ElemExprs)              => .Refs
+    rule #t2aElemExprs<C>(E:ElemExpr ES:ElemExprs)
+      => ListItem(#t2aElemExpr<C>(E)) #t2aElemExprs<C>(ES)
+    rule #t2aElemExprs<_>(.ElemExprs) => .ListRef
     
     rule #t2aElemExpr<ctx(... funcIds: FIDS)>((item ref.func ID)) 
       => <funcref> idxLookup(FIDS, ID)

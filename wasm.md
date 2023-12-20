@@ -4,6 +4,7 @@ WebAssembly State and Semantics
 ```k
 require "data.md"
 require "data/list-int.k"
+require "data/list-ref.k"
 require "data/map-int-to-int.k"
 require "data/sparse-bytes.k"
 require "data/tools.k"
@@ -190,6 +191,7 @@ module WASM
     imports WASM-DATA
     imports WASM-DATA-TOOLS
     imports WASM-NUMERIC
+    imports LIST-REF-EXTENSIONS
 ```
 
 ### Configuration
@@ -252,8 +254,7 @@ module WASM
             <tabInst multiplicity="*" type="Map">
               <tAddr> 0     </tAddr>
               <tmax>  .Int  </tmax>
-              <tsize> 0     </tsize>
-              <tdata> .Refs </tdata> // TODO make this an array
+              <tdata> .ListRef </tdata> // TODO use ARRAY O(1) lookup
             </tabInst>
           </tabs>
           <nextTabAddr> 0 </nextTabAddr>
@@ -276,9 +277,9 @@ module WASM
           <nextGlobAddr> 0 </nextGlobAddr>
           <elems>
             <elemInst multiplicity="*" type="Map">
-              <eAddr>  0                 </eAddr>
-              <eType>  funcref:RValType  </eType>
-              <eValue> .Refs             </eValue> // TODO make this an array
+              <eAddr>  0        </eAddr>
+              <eType>  funcref  </eType>
+              <eValue> .ListRef </eValue> // TODO use ARRAY O(1) lookup
             </elemInst>
           </elems>
           <nextElemAddr> 0 </nextElemAddr>
@@ -700,16 +701,14 @@ The `get` and `set` instructions read and write globals.
 
     syntax Instr ::= #tableGet( addr: Int, index: Int)
     rule [tableGet]:
-        <instrs> #tableGet( TADDR, I) => . ... </instrs>
-        <valstack> STACK => #getRef(I, TDATA, <funcref> null)  : STACK </valstack>
+        <instrs> #tableGet( TADDR, I) => getRefOrNull(TDATA, I) ... </instrs>
         <tabInst>
           <tAddr> TADDR    </tAddr>
-          <tsize> TSIZE </tsize>
           <tdata> TDATA </tdata>
           ...
         </tabInst>
       requires 0 <=Int I
-       andBool I <Int TSIZE
+       andBool I <Int size(TDATA)
         
     rule [tableGet-trap]:
         <instrs> #tableGet( _TADDR, _INDEX) => trap ... </instrs>
@@ -741,24 +740,27 @@ The `get` and `set` instructions read and write globals.
           ...
         </tabInst>
       requires I <Int 0
-        orBool #lenRefs(TDATA) <=Int I
+        orBool size(TDATA) <=Int I
 
     rule [tableSet]:
         <instrs> #tableSet(TADDR, VAL, I) => . ... </instrs>
         <tabInst>
           <tAddr> TADDR </tAddr>
-          <tdata> TDATA => #setRefs(I, TDATA, VAL) </tdata>
+          <tdata> TDATA => TDATA [ I <- VAL ] </tdata>
           ...
         </tabInst>
       requires 0 <=Int I
-       andBool I <Int #lenRefs(TDATA)
+       andBool I <Int size(TDATA)
+      [preserves-definedness]
+    // Preserving definedness:
+    //   - I is in list bounds
 ```
 
 #### `table.size`
 
 ```k
     rule [table.size]:
-        <instrs> #table.size(TID) => i32.const SZ ... </instrs>
+        <instrs> #table.size(TID) => i32.const size(TDATA) ... </instrs>
         <curModIdx> CUR </curModIdx>
         <moduleInst>
           <modIdx> CUR </modIdx>
@@ -767,7 +769,7 @@ The `get` and `set` instructions read and write globals.
         </moduleInst>
         <tabInst>
           <tAddr> TADDR </tAddr>
-          <tsize> SZ    </tsize>
+          <tdata> TDATA </tdata>
           ...
         </tabInst>
 ```
@@ -776,7 +778,7 @@ The `get` and `set` instructions read and write globals.
 
 ```k
     rule [table.grow]:
-        <instrs> #table.grow(TID) => i32.const #lenRefs(TDATA) ... </instrs>
+        <instrs> #table.grow(TID) => i32.const size(TDATA) ... </instrs>
         <valstack> <i32> N : REFVAL : STACK => STACK </valstack>
         <curModIdx> CUR </curModIdx>
         <moduleInst>
@@ -787,11 +789,10 @@ The `get` and `set` instructions read and write globals.
         <tabInst>
           <tAddr> TADDR </tAddr>
           <tmax>  TMAX  </tmax>
-          <tsize> TSIZE => TSIZE +Int N  </tsize>
-          <tdata> TDATA => #growRefs(TDATA, N, REFVAL) </tdata>
+          <tdata> TDATA => TDATA makeListRefTotal(N, REFVAL) </tdata>
           ...
         </tabInst>
-      requires #canGrow(TSIZE, N, TMAX)
+      requires #canGrow(size(TDATA), N, TMAX)
 
     rule [table.grow-fail]:
         <instrs> #table.grow(TID) => i32.const (#pow(i32) -Int 1) ... </instrs>
@@ -805,10 +806,10 @@ The `get` and `set` instructions read and write globals.
         <tabInst>
           <tAddr> TADDR </tAddr>
           <tmax>  TMAX  </tmax>
-          <tsize> TSIZE </tsize>
+          <tdata> TDATA </tdata>
           ...
         </tabInst>
-      requires notBool #canGrow(TSIZE, N, TMAX)
+      requires notBool #canGrow(size(TDATA), N, TMAX)
 
     syntax Bool ::= #canGrow(len: Int, n: Int, max: OptionalInt)   [function, total]
  // --------------------------------------------------------------------------------
@@ -816,11 +817,6 @@ The `get` and `set` instructions read and write globals.
                           andBool LEN +Int N <=Int MAX
     rule #canGrow(LEN, N, .Int) => LEN +Int N <Int #pow(i32)
 
-    syntax Refs ::= #growRefs(Refs, Int, RVal)    [function, total]
- // ---------------------------------------------------------------
-    rule #growRefs(.Refs, N, V) => #initRefs(N, V)
-    rule #growRefs(R RS, N, V)  => R #growRefs(RS, N, V)  
-    
 ```
 
 #### `table.fill`
@@ -936,7 +932,7 @@ The `get` and `set` instructions read and write globals.
         <instrs> #table.init(TID, EID)
               => #elemCheckSizeGTE (EA, S +Int N)
               ~> #tableCheckSizeGTE(TA, D +Int N)
-              ~> #tableInit(TID, N, D, #dropRefs(S, ELEM))
+              ~> #tableInit(TID, N, D, dropListRef(S, ELEM))
                  ...
         </instrs>
         <valstack> <i32> N : <i32> S : <i32> D : REST => REST </valstack>
@@ -953,13 +949,13 @@ The `get` and `set` instructions read and write globals.
           ...
         </elemInst>
 
-    syntax Instr ::= #tableInit(tidx: Int, n: Int, d: Int, es: Refs)
+    syntax Instr ::= #tableInit(tidx: Int, n: Int, d: Int, es: ListRef)
  // ----------------------------------------------------
     rule [tableInit-done]:
         <instrs> #tableInit(_, 0, _, _) => . ... </instrs>
 
     rule [tableInit]:
-        <instrs> #tableInit(TID, N, D, R RS)
+        <instrs> #tableInit(TID, N, D, ListItem(R) RS)
               => #table.set(TID)
               ~> #tableInit(TID, N -Int 1, D +Int 1, RS)
                  ...
@@ -982,7 +978,7 @@ The `get` and `set` instructions read and write globals.
         </moduleInst>
         <elemInst>
           <eAddr>  EA          </eAddr>
-          <eValue> _  => .Refs </eValue>
+          <eValue> _  => .ListRef </eValue>
           ...
         </elemInst>
 
@@ -997,10 +993,10 @@ The `get` and `set` instructions read and write globals.
         <instrs> #tableCheckSizeGTE(ADDR, N) => . ... </instrs>
         <tabInst>
           <tAddr> ADDR </tAddr>
-          <tsize> SIZE </tsize>
+          <tdata> TDATA </tdata>
           ...
         </tabInst>
-      requires N <=Int SIZE
+      requires N <=Int size(TDATA)
 
     rule [tableCheckSizeGTE-fail]:
         <instrs> #tableCheckSizeGTE(_, _) => trap ... </instrs>
@@ -1016,7 +1012,7 @@ The `get` and `set` instructions read and write globals.
           <eValue> ELEM </eValue>
           ...
         </elemInst>
-      requires N <=Int #lenRefs(ELEM)
+      requires N <=Int size(ELEM)
 
     rule [elemCheckSizeGTE-fail]:
         <instrs> #elemCheckSizeGTE(_, _) => trap ... </instrs>
@@ -1246,7 +1242,7 @@ The types need to be inserted at the definitions level, if a previously undeclar
     rule [call-indirect-getRef]:
         <instrs> #call_indirect(TIDX:Int,TUSE:TypeUse)
               => #callIndirect(
-                    #getRef(IDX, TDATA, <funcref> null),
+                    getRefOrNull(TDATA, IDX),
                     asFuncType(TYPEIDS, TYPES, TUSE)
                   ) ...
         </instrs>
@@ -1332,9 +1328,8 @@ The importing and exporting parts of specifications are dealt with in the respec
           => <tabInst>
                <tAddr> NEXTADDR </tAddr>
                <tmax>  MAX      </tmax>
-               <tsize> MIN      </tsize>
                <tdata>
-                #initRefs(MIN, <TYP> null)
+                makeListRefTotal(MIN, <TYP> null)
                </tdata>
              </tabInst>
            )
@@ -1569,18 +1564,18 @@ Element Segments
 ----------------
 
 ```k
-    syntax ElemDefn ::= #elem(type: RValType, elemSegment: Refs, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
+    syntax ElemDefn ::= #elem(type: RValType, elemSegment: ListRef, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
                       | #elemAux(segmentLen: Int, mode: ElemMode)
     syntax ElemMode ::= #elemActive(table: Int, offset: Instrs)                           [klabel(aElemActive), symbol]
                       | "#elemPassive"        [klabel(aElemPassive), symbol]
                       | "#elemDeclarative"    [klabel(aElemDeclarative), symbol]
 
-    syntax Alloc ::= allocelem(RValType, Refs, OptionalId)
+    syntax Alloc ::= allocelem(RValType, ListRef, OptionalId)
  // -----------------------------------------------------
     rule [elem-active]:
-        <instrs> #elem(TYPE:RValType, INIT:Refs, MODE:ElemMode, OID:OptionalId) 
+        <instrs> #elem(TYPE:RValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId) 
               => allocelem(TYPE, INIT, OID)
-              ~> #elemAux(#lenRefs(INIT), MODE)
+              ~> #elemAux(size(INIT), MODE)
                  ...
         </instrs>
 
@@ -1626,13 +1621,13 @@ Element Segments
                   <eValue> resolveAddrs(FADDRS, ELEMS) </eValue>
                 </elemInst>)
 
-    syntax Refs ::= resolveAddrs(ListInt, Refs)  [function]
+    syntax ListRef ::= resolveAddrs(ListInt, ListRef)  [function]
  // -----------------------------------------------------------
-    rule resolveAddrs(_, .Refs) => .Refs
-    rule resolveAddrs(FADDRS, (<TYP> I) IS) 
-      => (<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS) 
-    rule resolveAddrs(FADDRS, (<TYP> null) IS) 
-      => (<TYP> null)                        resolveAddrs(FADDRS, IS) 
+    rule resolveAddrs(_, .ListRef) => .ListRef
+    rule resolveAddrs(FADDRS, ListItem(<TYP> I) IS) 
+      => ListItem(<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS) 
+    rule resolveAddrs(FADDRS, ListItem(<TYP> null) IS) 
+      => ListItem(<TYP> null)                        resolveAddrs(FADDRS, IS) 
     
 ```
 
@@ -1766,10 +1761,10 @@ The value of a global gets copied when it is imported.
          <tabInst>
            <tAddr> ADDR </tAddr>
            <tmax>  MAX  </tmax>
-           <tsize> SIZE </tsize>
+           <tdata> TDATA </tdata>
            ...
          </tabInst>
-       requires #limitsMatchImport(SIZE, MAX, LIM)
+       requires #limitsMatchImport(size(TDATA), MAX, LIM)
 
     rule <instrs> #import(MOD, NAME, #memoryDesc(... id: OID, type: LIM) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>

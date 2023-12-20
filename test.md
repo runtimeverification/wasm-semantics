@@ -516,11 +516,12 @@ This asserts related operation about tables.
            <tabInst>
              <tAddr> ADDR </tAddr>
              <tmax>  MAX  </tmax>
-             <tsize> SIZE </tsize>
+             <tdata> DATA </tdata>
              ...
            </tabInst>
            ...
          </tabs>
+      requires size(DATA) ==Int SIZE
 
     rule <instrs> #assertTableElem (KEY , VAL:Int) _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -537,7 +538,7 @@ This asserts related operation about tables.
            </tabInst>
            ...
          </tabs>
-      requires <funcref> VAL ==K #getRef(KEY, TDATA, <funcref> null)
+      requires <funcref> VAL ==K getRefOrNull(TDATA, KEY)
 
     rule <instrs> #assertTableElem (KEY , FID:Identifier) MSG 
                => #assertTableElem (KEY , FADDRS {{ FUNC_ID }} orDefault -1) MSG

@@ -304,33 +304,6 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
     rule elemSegment2Ints(.ElemSegment) => .Ints
     rule elemSegment2Ints(E:Int ES)     => E elemSegment2Ints(ES)
 
-    syntax Refs ::= List{RVal, ""}          [klabel(listRef), symbol]
-                  | #initRefs(Int, RVal)    [function, total]
-    syntax Int   ::= #lenRefs(Refs)         [function, total]
- // ---------------------------------------------------------------------
-    rule #lenRefs(.Refs) => 0
-    rule #lenRefs(_ ES)  => 1 +Int #lenRefs(ES)
-
-    rule #initRefs(N, V) => V #initRefs(N -Int 1, V)  requires N >Int 0
-    rule #initRefs(N, _) => .Refs                     requires N <=Int 0
-    
-    syntax RVal ::= #getRef(Int, Refs, RVal)    [function, total]
- // ------------------------------------------------------------
-    rule #getRef(I, _ RS, D) => #getRef(I -Int 1, RS, D)  requires I >Int 0
-    rule #getRef(0, R _ , _) => R
-    rule #getRef(_, _ ,   D) => D                         [owise]
-
-    syntax Refs ::= #dropRefs(Int, Refs)    [function, total]
- // ---------------------------------------------------------
-    rule #dropRefs(N, _ RS) => #dropRefs(N -Int 1, RS) requires N >Int 0
-    rule #dropRefs(_, RS)   => RS                      [owise]
-
-    syntax Refs ::= #setRefs(Int, Refs, RVal)    [function, total]
- // --------------------------------------------------------
-    rule #setRefs(0, _ RS, V) => V RS
-    rule #setRefs(N, R RS, V) => R #setRefs(N -Int 1, RS, V)  requires N >Int 0
-    rule #setRefs(_, _, _)    => .Refs                        [owise]
-
 ```
 
 ### Limits

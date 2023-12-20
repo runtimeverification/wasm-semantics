@@ -29,8 +29,8 @@ I64 = 'i32'
 INTS = 'listInt'
 INTS_NIL = '.List{\"listInt\"}_Ints'
 
-REFS = 'listRef'
-REFS_NIL = '.List{\"listRef\"}_Refs'
+REFS = '_ListRef_'
+REFS_NIL = '.ListRef'
 
 FUNC = 'aFuncDefn'
 FUNC_METADATA = 'funcMeta'
@@ -122,9 +122,10 @@ def ints(iis: Iterable[int]) -> KInner:
 def refs(values: Iterable[int | None]) -> KInner:
     def idx_to_ref(idx: int | None) -> KInner:
         if idx is None:
-            return KApply('<_>null', [funcref])
+            ref = KApply('<_>null', [funcref])
         else:
-            return KApply('<_>_', [funcref, KInt(idx)])
+            ref = KApply('<_>_', [funcref, KInt(idx)])
+        return KApply('ListRefItem', [ref])
 
     return KNamedList(REFS, REFS_NIL, [idx_to_ref(i) for i in values])
 
