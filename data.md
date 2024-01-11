@@ -90,9 +90,9 @@ WebAssembly has three kinds of [Value types](https://webassembly.github.io/spec/
 ```k
     syntax IValType ::= "i32" [klabel(i32), symbol] | "i64" [klabel(i64), symbol]
     syntax FValType ::= "f32" [klabel(f32), symbol] | "f64" [klabel(f64), symbol]
-    syntax RValType ::= "funcref"     [klabel(funcref), symbol]
-                      | "externref"   [klabel(externref), symbol]
-    syntax ValType  ::= IValType | FValType | RValType
+    syntax RefValType ::= "funcref"     [klabel(funcref), symbol]
+                        | "externref"   [klabel(externref), symbol]
+    syntax ValType  ::= IValType | FValType | RefValType
  // ---------------------------------------
 
     syntax HeapType ::= "func"   [klabel(func), symbol]
@@ -166,12 +166,12 @@ module WASM-DATA-INTERNAL-SYNTAX
 Proper values are numbers annotated with their types.
 
 ```k
-    syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
-    syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
-    syntax RVal ::= "<" RValType ">" Int    [klabel(<_>_), symbol]
-                  | "<" RValType ">" "null" [klabel(<_>null), symbol]
+    syntax IVal ::= "<" IValType ">" Int        [klabel(<_>_)]
+    syntax FVal ::= "<" FValType ">" Float      [klabel(<_>_)]
+    syntax RefVal ::= "<" RefValType ">" Int    [klabel(<_>_)]
+                    | "<" RefValType ">" "null" [klabel(<_>null), symbol]
     syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
-                  | IVal | FVal | RVal
+                  | IVal | FVal | RefVal
  // ---------------------------
 ```
 
@@ -492,10 +492,10 @@ Each call site _must_ ensure that this is desired behavior before using these fu
                       | #revs ( ValStack )            [function, total]
                       | #revs ( ValStack , ValStack ) [function, total, klabel(#revsAux)]
  // ------------------------------------------------------------------------------------------
-    rule #zero(.ValTypes)             => .ValStack
-    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0    : #zero(VTYPES)
-    rule #zero(FTYPE:FValType VTYPES) => < FTYPE > 0.0  : #zero(VTYPES)
-    rule #zero(RTYPE:RValType VTYPES) => < RTYPE > null : #zero(VTYPES)
+    rule #zero(.ValTypes)               => .ValStack
+    rule #zero(ITYPE:IValType VTYPES)   => < ITYPE > 0    : #zero(VTYPES)
+    rule #zero(FTYPE:FValType VTYPES)   => < FTYPE > 0.0  : #zero(VTYPES)
+    rule #zero(RTYPE:RefValType VTYPES) => < RTYPE > null : #zero(VTYPES)
 
     rule #take(N, _)         => .ValStack               requires notBool N >Int 0
     rule #take(N, .ValStack) => .ValStack               requires         N >Int 0

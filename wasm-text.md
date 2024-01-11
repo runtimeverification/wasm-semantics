@@ -250,7 +250,7 @@ The following is the text format representation of an import specification.
  // -------------------------------------------
 
     syntax TableType ::= TextLimits TableElemType
-    syntax TableElemType ::= RValType
+    syntax TableElemType ::= RefValType
  // ----------------------------------
 ```
 
@@ -318,7 +318,7 @@ The offset can either be specified explicitly with the `offset` key word, or be 
 
     syntax ElemList ::= "func" ElemSegment
                       | ElemSegment               // backwards compatibility
-                      | RValType ElemExprs
+                      | RefValType ElemExprs
 
     syntax ElemExpr  ::= "(" "item" Instrs ")"
                        | "(" Instrs ")"         [macro]
@@ -865,7 +865,7 @@ Since we do not have polymorphic functions available, we define one function per
 
     rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType)))         => #import(MOD, NAME, #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)))
 
-    rule #t2aDefn<_                     >(( import MOD NAME (table  OID:OptionalId LIM:TextLimits _:RValType)))        => #import(MOD, NAME, #tableDesc(...  id: OID:OptionalId, type: t2aLimits(LIM)))
+    rule #t2aDefn<_                     >(( import MOD NAME (table  OID:OptionalId LIM:TextLimits _:RefValType)))        => #import(MOD, NAME, #tableDesc(...  id: OID:OptionalId, type: t2aLimits(LIM)))
     rule #t2aDefn<_                     >(( import MOD NAME (memory OID:OptionalId LIM:TextLimits        )))           => #import(MOD, NAME, #memoryDesc(... id: OID:OptionalId, type: t2aLimits(LIM)))
 ```
 
@@ -907,7 +907,7 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Tables
 
 ```k
-    rule #t2aDefn<_>((table OID:OptionalId LIMITS:TextLimits TYP:RValType ))
+    rule #t2aDefn<_>((table OID:OptionalId LIMITS:TextLimits TYP:RefValType ))
       => #table(... limits: t2aLimits(LIMITS), type: TYP, metadata: OID)
 ```
 
@@ -947,20 +947,20 @@ Wasm currently supports only one table, so we do not need to resolve any identif
     rule #t2aDefn<C>(( elem OID:OptionalId declare EL:ElemList )) 
       => #elem( getElemType(EL), #t2aElemList<C>(EL), #elemDeclarative, OID)
 
-    syntax RValType ::= getElemType(ElemList)    [function, total]
+    syntax RefValType ::= getElemType(ElemList)    [function, total]
  // ---------------------------------------------------------
-    rule getElemType(func _)         => funcref
-    rule getElemType(_:ElemSegment)  => funcref
-    rule getElemType(T:RValType _IS) => T
+    rule getElemType(func _)           => funcref
+    rule getElemType(_:ElemSegment)    => funcref
+    rule getElemType(T:RefValType _IS) => T
     
     syntax ListRef ::= "#t2aElemList" "<" Context ">" "(" ElemList ")" [function]
                      | "#t2aElemSegment" "<" Context ">" "(" ElemSegment ")" [function]
                      | "#t2aElemExprs" "<" Context ">" "(" ElemExprs ")" [function]
-    syntax RVal ::= "#t2aElemExpr" "<" Context ">" "(" ElemExpr ")" [function]
+    syntax RefVal ::= "#t2aElemExpr" "<" Context ">" "(" ElemExpr ")" [function]
  // --------------------------------------------------------------------------------
-    rule #t2aElemList<C>(func ES)          => #t2aElemSegment<C>(ES)
-    rule #t2aElemList<C>(ES)               => #t2aElemSegment<C>(ES)
-    rule #t2aElemList<C>(_TYP:RValType ES) => #t2aElemExprs<C>(ES)
+    rule #t2aElemList<C>(func ES)            => #t2aElemSegment<C>(ES)
+    rule #t2aElemList<C>(ES)                 => #t2aElemSegment<C>(ES)
+    rule #t2aElemList<C>(_TYP:RefValType ES) => #t2aElemExprs<C>(ES)
      
     rule #t2aElemSegment<_C>(.ElemSegment) => .ListRef
     rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Index ES) 

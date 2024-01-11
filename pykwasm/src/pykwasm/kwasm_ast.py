@@ -124,7 +124,8 @@ def refs(values: Iterable[int | None]) -> KInner:
         if idx is None:
             ref = KApply('<_>null', [funcref])
         else:
-            ref = KApply('<_>_', [funcref, KInt(idx)])
+            # TODO find a readable symbol for RefVals
+            ref = KApply('<_>__WASM-DATA-INTERNAL-SYNTAX_RefVal_RefValType_Int', [funcref, KInt(idx)])
         return KApply('ListRefItem', [ref])
 
     return KNamedList(REFS, REFS_NIL, [idx_to_ref(i) for i in values])

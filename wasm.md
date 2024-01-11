@@ -724,13 +724,13 @@ The `get` and `set` instructions read and write globals.
 #### `table.set`
 
 ```k
-    syntax Instr ::= #tableSet( addr: Int , val: RVal , idx: Int )
+    syntax Instr ::= #tableSet( addr: Int , val: RefVal , idx: Int )
  // -----------------------------------------
     rule [table.set]:
         <instrs> #table.set( TID )
               => #tableSet(TADDR, VAL, I) ...
         </instrs>
-        <valstack> VAL:RVal : <i32> I : REST => REST </valstack>
+        <valstack> VAL:RefVal : <i32> I : REST => REST </valstack>
         <curModIdx> CUR </curModIdx>
         <moduleInst>
           <modIdx> CUR </modIdx>
@@ -841,7 +841,7 @@ The `get` and `set` instructions read and write globals.
           ...
         </moduleInst>
 
-    syntax Instr ::= #tableFill(Int, Int, RVal, Int)
+    syntax Instr ::= #tableFill(Int, Int, RefVal, Int)
  // ------------------------------------------------------
     rule [tableFill-zero]:
         <instrs> #tableFill(_, 0, _, _) => . ... </instrs>
@@ -1033,11 +1033,11 @@ The `get` and `set` instructions read and write globals.
 
     rule [ref.isNull-true]:
         <instrs> #ref.is_null => i32.const 1 ... </instrs>
-        <valstack> <_:RValType> null : STACK => STACK </valstack>
+        <valstack> <_:RefValType> null : STACK => STACK </valstack>
 
     rule [ref.isNull-false]:
         <instrs> #ref.is_null => i32.const 0 ... </instrs>
-        <valstack> <_:RValType> _:Int : STACK => STACK </valstack>
+        <valstack> <_:RefValType> _:Int : STACK => STACK </valstack>
 
     rule [ref.func]:
         <instrs> #ref.func(IDX) => (<funcref> FUNCADDRS {{ IDX }} orDefault 0 )  ... </instrs>
@@ -1259,7 +1259,7 @@ The types need to be inserted at the definitions level, if a previously undeclar
         </tabInst>
 
 
-    syntax Instr ::= #callIndirect(RVal, FuncType)
+    syntax Instr ::= #callIndirect(RefVal, FuncType)
  // ------------------------------------------
     rule [callIndirect-invoke]:
         <instrs> #callIndirect(<funcref> FADDR, ETYPE)
@@ -1301,8 +1301,8 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TableDefn ::= #table (limits: Limits, type: RValType, metadata: OptionalId) [klabel(aTableDefn), symbol]
-    syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt, RValType)
+    syntax TableDefn ::= #table (limits: Limits, type: RefValType, metadata: OptionalId) [klabel(aTableDefn), symbol]
+    syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt, RefValType)
  // --------------------------------------------------------------------
     rule <instrs> #table(... limits: #limitsMin(MIN), type: TYP, metadata: OID)   => alloctable(OID, MIN, .Int, TYP) ... </instrs>
       requires MIN <=Int #maxTableSize()
@@ -1561,16 +1561,16 @@ Element Segments
 ----------------
 
 ```k
-    syntax ElemDefn ::= #elem(type: RValType, elemSegment: ListRef, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
+    syntax ElemDefn ::= #elem(type: RefValType, elemSegment: ListRef, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
                       | #elemAux(segmentLen: Int, mode: ElemMode)
     syntax ElemMode ::= #elemActive(table: Int, offset: Instrs)                           [klabel(aElemActive), symbol]
                       | "#elemPassive"        [klabel(aElemPassive), symbol]
                       | "#elemDeclarative"    [klabel(aElemDeclarative), symbol]
 
-    syntax Alloc ::= allocelem(RValType, ListRef, OptionalId)
+    syntax Alloc ::= allocelem(RefValType, ListRef, OptionalId)
  // -----------------------------------------------------
     rule [elem-active]:
-        <instrs> #elem(TYPE:RValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId) 
+        <instrs> #elem(TYPE:RefValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId) 
               => allocelem(TYPE, INIT, OID)
               ~> #elemAux(size(INIT), MODE)
                  ...

@@ -415,9 +415,9 @@ These functions make assertions about the state of the `<valstack>` cell.
 
     syntax Bool ::= equalVal(Val, Val)    [function, total]
  // -------------------------------------------------------
-    rule equalVal(<ITYPE:IValType> X, <ITYPE> Y) => #unsigned(ITYPE, X) ==Int Y
-    rule equalVal(<FTYPE:FValType> X, <FTYPE> Y) => signFloat(X) ==Bool signFloat(Y) andBool X ==Float Y
-    rule equalVal(<RTYPE:RValType> X, <RTYPE> Y) => X ==Int   Y
+    rule equalVal(<ITYPE:IValType> X, <ITYPE> Y)   => #unsigned(ITYPE, X) ==Int Y
+    rule equalVal(<FTYPE:FValType> X, <FTYPE> Y)   => signFloat(X) ==Bool signFloat(Y) andBool X ==Float Y
+    rule equalVal(<RTYPE:RefValType> X, <RTYPE> Y) => X ==Int   Y
     rule equalVal(                 X,         Y) => X ==K     Y       [owise]
 
 ```
