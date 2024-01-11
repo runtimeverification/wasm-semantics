@@ -703,7 +703,7 @@ The `get` and `set` instructions read and write globals.
     rule [tableGet]:
         <instrs> #tableGet( TADDR, I) => getRefOrNull(TDATA, I) ... </instrs>
         <tabInst>
-          <tAddr> TADDR    </tAddr>
+          <tAddr> TADDR </tAddr>
           <tdata> TDATA </tdata>
           ...
         </tabInst>
@@ -711,8 +711,14 @@ The `get` and `set` instructions read and write globals.
        andBool I <Int size(TDATA)
         
     rule [tableGet-trap]:
-        <instrs> #tableGet( _TADDR, _INDEX) => trap ... </instrs>
-      [owise]
+        <instrs> #tableGet( TADDR, I) => trap ... </instrs>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
+      requires I <Int 0
+        orBool size(TDATA) <=Int I
 ```
 
 #### `table.set`
