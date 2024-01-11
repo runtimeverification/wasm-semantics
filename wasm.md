@@ -1210,7 +1210,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 
 ### Function Call
 
-`call funcidx` and `call_indirect tableidx typeuse` are 2 control instructions that invokes a function in the current frame.
+`call funcidx` and `call_indirect tableidx typeuse` are 2 control instructions that invoke a function in the current frame.
 
 ```k
     syntax Instr ::= #call(Int) [klabel(aCall), symbol]
