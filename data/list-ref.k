@@ -83,7 +83,7 @@ module LIST-REF-EXTENSIONS
 // --------------------------------------------------------------
   rule dropListRef(N, ListItem(_) L) => dropListRef(N -Int 1, L)
     requires N >Int 0
-  rule dropListRef(N, L)             => L
+  rule dropListRef(_, L)             => L
     [owise]
   
 endmodule
