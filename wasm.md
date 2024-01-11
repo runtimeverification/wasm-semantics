@@ -851,10 +851,7 @@ The `get` and `set` instructions read and write globals.
               => <i32> I
               ~> RVAL
               ~> #table.set(TID)
-              ~> <i32> I +Int 1
-              ~> RVAL
-              ~> <i32> N -Int 1
-              ~> #table.fill(TID)
+              ~> #tableFill(TID, N -Int 1, RVAL, I +Int 1)
                  ...
         </instrs>
       requires N >Int 0
@@ -906,10 +903,7 @@ The `get` and `set` instructions read and write globals.
               ~> <i32> S
               ~> #table.get(TIY)
               ~> #table.set(TIX)
-              ~> <i32> (D +Int 1)
-              ~> <i32> (S +Int 1)
-              ~> <i32> (N -Int 1)
-              ~> #table.copy(TIX, TIY)
+              ~> #tableCopy(TIX, TIY, N -Int 1, S +Int 1, D +Int 1)
                  ...
         </instrs>
       requires N >Int 0
@@ -921,10 +915,7 @@ The `get` and `set` instructions read and write globals.
               ~> <i32> (S +Int N -Int 1)
               ~> #table.get(TIY)
               ~> #table.set(TIX)
-              ~> <i32> D
-              ~> <i32> S
-              ~> <i32> (N -Int 1)
-              ~> #table.copy(TIX, TIY)
+              ~> #tableCopy(TIX, TIY, N -Int 1, S, D)
                  ...
         </instrs>
       requires N >Int 0
