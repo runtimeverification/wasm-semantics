@@ -27,6 +27,7 @@ from wasm.datatypes import (
     TableType,
     TypeIdx,
     ValType,
+    addresses,
 )
 from wasm.opcodes import BinaryOpcode
 from wasm.parsers import parse_module
@@ -97,7 +98,11 @@ def func(f: Function):
 
 def table(t: Table):
     ls = limits(t.type.limits)
-    return a.table(ls)
+    if isinstance(t.type.elem_type, addresses.FunctionAddress):
+        typ = a.funcref
+    else:
+        typ = a.externref
+    return a.table(ls, typ)
 
 
 def memory(m: Memory):
@@ -113,7 +118,8 @@ def glob(g: Global):
 
 def elem(e: ElementSegment):
     offset = instrs(e.offset)
-    return a.elem(e.table_idx, offset, e.init)
+    elem_mode = a.elem_mode(e.table_idx, offset)
+    return a.elem(a.funcref, elem_mode, e.init)
 
 
 def data(d: DataSegment):

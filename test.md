@@ -23,9 +23,7 @@ module WASM-TEST-COMMON-SYNTAX
     imports WASM-AUXIL-SYNTAX
     imports WASM-REFERENCE-INTERPRETER-SYNTAX
 
-    syntax Assertion ::= "#assertAndRemoveEqual"
-                       | "#assertAndRemoveToken"
-                       | "#assertTopStack"        Val      WasmString
+    syntax Assertion ::= "#assertTopStack"        Val      WasmString
                        | "#assertTopStackExactly" Val      WasmString
                        | "#assertStack"           ValStack WasmString
                        | "#assertLocal"  Int   Val WasmString
@@ -38,7 +36,7 @@ module WASM-TEST-COMMON-SYNTAX
                        | "#assertMemoryData"     "(" Int "," Int ")" WasmString
                        | "#assertMemoryData" Int "(" Int "," Int ")" WasmString
                        | "#assertTable" Index Int OptionalInt WasmString
-                       | "#assertTableElem" "(" Int "," Int ")" WasmString
+                       | "#assertTableElem" "(" Int "," Index ")" WasmString
                        | "#assertNamedModule" Identifier WasmString
                        | "#assertRegistrationUnnamed" WasmString            WasmString
                        | "#assertRegistrationNamed"   WasmString Identifier WasmString
@@ -53,6 +51,8 @@ module WASM-REFERENCE-INTERPRETER-SYNTAX
                     | "(" "get"    OptionalId WasmString        ")"
                     |     "get"    Int        WasmString
  // ----------------------------------------------------
+    syntax PlainInstr ::= "ref" Int
+                        | "ref.extern" Int
 
     syntax Auxil ::= "(" "register" WasmString       ")"
                    | "(" "register" WasmString Index ")"
@@ -91,8 +91,7 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
 ```
 
 ```k
-    syntax Assertion ::= "(" "assert_return"                Action     Instr  ")"
-                       | "(" "assert_return"                Action            ")"
+    syntax Assertion ::= "(" "assert_return"                Action     Instrs ")"
                        | "(" "assert_return_canonical_nan"  Action            ")"
                        | "(" "assert_return_arithmetic_nan" Action            ")"
                        | "(" "assert_trap"                  Action     WasmString ")"
@@ -131,7 +130,10 @@ The test embedder passes control to the execution cell in Wasm.
 
 ```k
     rule <k> PGM => . </k>
-         <instrs> .K => sequenceStmts(text2abstract(PGM)) </instrs>
+         <instrs> .K
+               => #initSpectestModule
+               ~> sequenceStmts(text2abstract(PGM))
+         </instrs>
 ```
 
 Bare Allocations
@@ -158,11 +160,31 @@ We allow writing instructions at the top level in the test embedder.
 Auxiliary
 ---------
 
-We add `token` as a value in order to implement some test assertions.
+We add `token` as a value in order to use as a separator in `<valstack>`.
 
 ```k
     syntax Val ::= "token"
  // ----------------------
+    rule <instrs> token => . ... </instrs>
+         <valstack> S => token : S </valstack>
+    
+    syntax ValStack ::= takeUntilToken(ValStack)    [function, total]
+                      | dropUntilToken(ValStack)    [function, total]
+ // -----------------------------------------------------------------
+    rule takeUntilToken(.ValStack)  => .ValStack
+    rule takeUntilToken(token : _ ) => token : .ValStack
+    rule takeUntilToken(V     : Vs) => V : takeUntilToken(Vs)
+      requires V =/=K token
+
+    rule dropUntilToken(.ValStack)   => .ValStack
+    rule dropUntilToken(token : Vs ) => Vs
+    rule dropUntilToken(V     : Vs)  => dropUntilToken(Vs)
+      requires V =/=K token
+
+    syntax Assertion ::= "#dropUntilToken"
+ // --------------------------------------------------
+    rule <instrs> #dropUntilToken => . ... </instrs>
+         <valstack> S => dropUntilToken(S) </valstack>
 ```
 
 Reference Interpreter Commands
@@ -249,29 +271,80 @@ In order to parse the conformance test cases, we handle these declarations here 
     rule ( module OID quote _DS ) => ( module OID .Defns )
 ```
 
-The conformance tests contain imports of the `"spectest"` module.
-For now, we just introduce some special handling that ignores any tests that make use of `"spectest"`.
-The handling consists of trapping whenever a `"spectest"` function is called, and removing the trap whenever a new module or assertion comes up.
 
-TODO: Actually implement the `"spectest"` module, or call out to the supplied on in the spec repo.
+### Spectest Host Module
+
+The conformance tests contain imports of the `"spectest"` module.
+
+- [Module signature](https://github.com/WebAssembly/spec/blob/f83a375df438067de1eafc25a2b5e249b7115a92/interpreter/README.md#spectest-host-module)
+- [JS implementation](https://github.com/WebAssembly/spec/blob/f83a375df438067de1eafc25a2b5e249b7115a92/test/harness/async_index.js#L88)
 
 ```k
-    syntax Instr ::= "spectest_trap"
- // --------------------------------
-    rule <instrs> spectest_trap ~> (_L:Label => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (_F:Frame => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (_I:Instr => .) ... </instrs>
-    rule <instrs> spectest_trap ~> (_D:Defn  => .) ... </instrs>
+    syntax ModuleDecl ::= "#spectestModule"   [function, total]
+                        | "#emp"
+ // -----------------------------------------------------------
+    rule #spectestModule 
+      => #module ( ...
+          types: #type (... type: [ .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ i32  .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ i64  .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ f32  .ValTypes ] -> [ .ValTypes ] , metadata:  )
+                 #type (... type: [ f64  .ValTypes ] -> [ .ValTypes ] , metadata:  )  
+                 #type (... type: [ i32  f32  .ValTypes ] -> [ .ValTypes ] , metadata:  )  
+                 #type (... type: [ f64  f64  .ValTypes ] -> [ .ValTypes ] , metadata:  )  
+                 .EmptyStmts , 
+            funcs: 
+                #func (... type: 0 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 1 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 2 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 3 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 4 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 5 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                #func (... type: 6 , locals: [ .ValTypes ] , body: .EmptyStmts , metadata: #meta (... id: , localIds: .Map ) )  
+                .EmptyStmts ,
+            tables: 
+                #table (... limits: #limits ( 10 , 20 ) , type: funcref, metadata:  )  
+                .EmptyStmts , 
+            mems: 
+                #memory (... limits: #limits ( 1 , 2 ) , metadata:  )  
+                .EmptyStmts , 
+            globals: 
+                #global (... type: const i32 , init: i32 . const 666  .EmptyStmts , metadata:  )  
+                #global (... type: const i64 , init: i64 . const 666  .EmptyStmts , metadata:  )  
+                #global (... type: const f32 , init: f32 . const 666.0  .EmptyStmts , metadata:  )  
+                #global (... type: const f64 , init: f64 . const 666.0  .EmptyStmts , metadata:  )  
+                .EmptyStmts , 
+            elem: .EmptyStmts , 
+            data: .EmptyStmts , 
+            start: .EmptyStmts , 
+            importDefns: .EmptyStmts , 
+            exports: 
+                #export (... name: #token("\"global_i32\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"global_i64\""    , "WasmStringToken") , index: 1 )  
+                #export (... name: #token("\"global_f32\""    , "WasmStringToken") , index: 2 )  
+                #export (... name: #token("\"global_f64\""    , "WasmStringToken") , index: 3 )  
+                #export (... name: #token("\"table\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"memory\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"print\""    , "WasmStringToken") , index: 0 )  
+                #export (... name: #token("\"print_i32\""    , "WasmStringToken") , index: 1 )  
+                #export (... name: #token("\"print_i64\""    , "WasmStringToken") , index: 2 )  
+                #export (... name: #token("\"print_f32\""    , "WasmStringToken") , index: 3 )  
+                #export (... name: #token("\"print_f64\""    , "WasmStringToken") , index: 4 )  
+                #export (... name: #token("\"print_i32_f32\""    , "WasmStringToken") , index: 5 )  
+                #export (... name: #token("\"print_f64_f64\""    , "WasmStringToken") , index: 6 )  
+                .EmptyStmts , 
+            metadata: #meta (... id:  , funcIds: .Map , filename: .String ) 
+        )
+    syntax Stmt ::= "#initSpectestModule"
+ // --------------------------------------------------------------------
+    rule [initSpectestModule]:
+        <instrs> #initSpectestModule 
+              => #spectestModule
+              ~> ( register #token("\"spectest\"", "WasmStringToken") )
+              ~> #emptyModule() // create an empty module for the test instructions
+                 ...
+        </instrs>
 
-    rule <instrs> (spectest_trap => .) ~> _M:ModuleDecl ... </instrs>
-    rule <instrs> (spectest_trap => .) ~> _A:Assertion  ... </instrs>
-
-    rule <instrs> #import(MOD, _, #funcDesc(... id: OID, type: TIDX))
-               => #func(... type: TIDX, locals: [ .ValTypes ], body: spectest_trap .Instrs, metadata: #meta(... id: OID, localIds: .Map))
-               ...
-         </instrs>
-      requires MOD ==K #token("\"spectest\"", "WasmStringToken")
-        orBool MOD ==K #token("\"test\""    , "WasmStringToken")
 ```
 
 Except `assert_return` and `assert_trap`, the remaining rules are directly reduced to empty. We are not planning to implement them and these rules are only used to make it easier to parse conformance tests.
@@ -279,10 +352,17 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
 *TODO:* Make use of `assert_exhaustion`, by detecting stack overflow.
 
 ```k
-    rule <instrs> (assert_return ACT INSTR)               => ACT ~> INSTR ~> #assertAndRemoveEqual ~> #assertAndRemoveToken ... </instrs>
-         <valstack> VALSTACK => token : VALSTACK </valstack>
-    rule <instrs> (assert_return ACT)                     => ACT                                   ~> #assertAndRemoveToken ... </instrs>
-         <valstack> VALSTACK => token : VALSTACK </valstack>
+    rule <instrs> (assert_return ACT EXPECTED)
+               => token
+               ~> ACT
+               ~> token                    // separator between actual and expected value 
+               ~> sequenceInstrs(EXPECTED) // evaluate the expected value(s) 
+               ~> #assertReturn
+               ~> #dropUntilToken // clean expected value
+               ~> #dropUntilToken // clean return value
+                  ... 
+         </instrs>
+
     rule <instrs> (assert_return_canonical_nan  _ACT)     => . ... </instrs>
     rule <instrs> (assert_return_arithmetic_nan _ACT)     => . ... </instrs>
     rule <instrs> (assert_trap        ACT:Action    DESC) => ACT ~> #assertTrap DESC ... </instrs>
@@ -296,10 +376,13 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
 And we implement some helper assertions to help testing.
 
 ```k
-    rule <instrs> #assertAndRemoveEqual => #assertTopStack V .WasmString ~> ( drop ) ... </instrs>
-         <valstack> V : VALSTACK => VALSTACK </valstack>
-    rule <instrs> #assertAndRemoveToken => . ... </instrs>
-         <valstack> token : VALSTACK => VALSTACK </valstack>
+    syntax Assertion ::= "#assertReturn"
+ // --------------------------------------
+    rule <instrs> #assertReturn
+               => #assertStackAux takeUntilToken(S) takeUntilToken(dropUntilToken(S))
+                  ...
+         </instrs>
+         <valstack> S </valstack>
 ```
 
 ### Trap Assertion
@@ -317,20 +400,26 @@ These functions make assertions about the state of the `<valstack>` cell.
 ```k
     syntax Assertion ::= "#assertStackAux"        ValStack ValStack
  // ---------------------------------------------------------------
-    rule <instrs> #assertTopStack S                      _ => . ... </instrs> <valstack> S              : _VALSTACK </valstack>
-    rule <instrs> #assertTopStack < ITYPE:IValType > VAL _ => . ... </instrs> <valstack> < ITYPE > VAL' : _VALSTACK </valstack>
-      requires #unsigned(ITYPE, VAL) ==Int VAL'
-    rule <instrs> #assertTopStack < FTYPE:FValType > VAL _ => . ... </instrs> <valstack> < FTYPE > VAL' : _VALSTACK </valstack>
-      requires signFloat(VAL) ==Bool signFloat(VAL') andBool VAL ==Float VAL'
+    rule <instrs> #assertTopStack VAL _ => . ... </instrs>
+         <valstack> VAL' : _ </valstack>
+      requires equalVal(VAL, VAL')
 
-    rule <instrs> #assertTopStackExactly A               _ => . ... </instrs> <valstack> A              : _VALSTACK </valstack>
+    rule <instrs> #assertTopStackExactly A _ => . ... </instrs> <valstack> A : _VALSTACK </valstack>
 
     rule <instrs> #assertStack S1 _ => #assertStackAux S1 S2  ... </instrs>
          <valstack> S2 </valstack>
-    rule <instrs> #assertStackAux .ValStack  _                                 => .                       ... </instrs>
-    rule <instrs> #assertStackAux (            V : S1')              (V : S2') => #assertStackAux S1' S2' ... </instrs>
-    rule <instrs> #assertStackAux (< ITYPE > VAL : S1') (< ITYPE > VAL' : S2') => #assertStackAux S1' S2' ... </instrs>
-      requires #unsigned(ITYPE, VAL) ==Int VAL'
+
+    rule <instrs> #assertStackAux .ValStack  _ => . ... </instrs>
+    rule <instrs> #assertStackAux (V1 : S1) (V2 : S2) => #assertStackAux S1 S2 ... </instrs>
+      requires equalVal(V1, V2)
+
+    syntax Bool ::= equalVal(Val, Val)    [function, total]
+ // -------------------------------------------------------
+    rule equalVal(<ITYPE:IValType> X, <ITYPE> Y)   => #unsigned(ITYPE, X) ==Int Y
+    rule equalVal(<FTYPE:FValType> X, <FTYPE> Y)   => signFloat(X) ==Bool signFloat(Y) andBool X ==Float Y
+    rule equalVal(<RTYPE:RefValType> X, <RTYPE> Y) => X ==Int   Y
+    rule equalVal(                 X,         Y) => X ==K     Y       [owise]
+
 ```
 
 ### Variables Assertions
@@ -427,13 +516,14 @@ This asserts related operation about tables.
            <tabInst>
              <tAddr> ADDR </tAddr>
              <tmax>  MAX  </tmax>
-             <tsize> SIZE </tsize>
+             <tdata> DATA </tdata>
              ...
            </tabInst>
            ...
          </tabs>
+      requires size(DATA) ==Int SIZE
 
-    rule <instrs> #assertTableElem (KEY , VAL) _MSG => . ... </instrs>
+    rule <instrs> #assertTableElem (KEY , VAL:Int) _MSG => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -443,11 +533,28 @@ This asserts related operation about tables.
          <tabs>
            <tabInst>
              <tAddr> ADDR </tAddr>
-             <tdata> ...  KEY |-> VAL ... </tdata>
+             <tdata> TDATA </tdata>
                ...
            </tabInst>
            ...
          </tabs>
+      requires <funcref> VAL ==K getRefOrNull(TDATA, KEY)
+
+    rule <instrs> #assertTableElem (KEY , FID:Identifier) MSG 
+               => #assertTableElem (KEY , FADDRS {{ FUNC_ID }} orDefault -1) MSG
+                  ...
+         </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <moduleMetadata>
+             <funcIds> ... FID |-> FUNC_ID ... </funcIds>
+             ...
+           </moduleMetadata>
+           <funcAddrs> FADDRS </funcAddrs>
+           ...
+         </moduleInst>
+
 ```
 
 ### Memory Assertions
@@ -526,6 +633,13 @@ We also want to be able to test that the embedder's registration function is wor
     rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
+```
+
+## Administrative instructions
+
+```k
+    rule <instrs> ref I        => <funcref>   I ... </instrs>
+    rule <instrs> ref.extern I => <externref> I ... </instrs>
 ```
 
 ```k

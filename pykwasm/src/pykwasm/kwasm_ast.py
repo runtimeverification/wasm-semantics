@@ -29,6 +29,9 @@ I64 = 'i32'
 INTS = 'listInt'
 INTS_NIL = '.List{\"listInt\"}_Ints'
 
+REFS = '_ListRef_'
+REFS_NIL = '.ListRef'
+
 FUNC = 'aFuncDefn'
 FUNC_METADATA = 'funcMeta'
 
@@ -116,6 +119,18 @@ def ints(iis: Iterable[int]) -> KInner:
     return KNamedList(INTS, INTS_NIL, kis)
 
 
+def refs(values: Iterable[int | None]) -> KInner:
+    def idx_to_ref(idx: int | None) -> KInner:
+        if idx is None:
+            ref = KApply('<_>null', [funcref])
+        else:
+            # TODO find a readable symbol for RefVals
+            ref = KApply('<_>__WASM-DATA-INTERNAL-SYNTAX_RefVal_RefValType_Int', [funcref, KInt(idx)])
+        return KApply('ListRefItem', [ref])
+
+    return KNamedList(REFS, REFS_NIL, [idx_to_ref(i) for i in values])
+
+
 ###########
 # Empties #
 ###########
@@ -135,6 +150,8 @@ i32 = KApply('i32', [])
 i64 = KApply('i64', [])
 f32 = KApply('f32', [])
 f64 = KApply('f64', [])
+funcref = KApply('funcref', [])
+externref = KApply('externref', [])
 
 MUT_CONST = KApply('mutConst', [])
 MUT_VAR = KApply('mutVar', [])
@@ -204,7 +221,8 @@ def CALL(function_idx: int) -> KInner:
 
 
 def CALL_INDIRECT(type_idx: int) -> KInner:
-    return KApply('aCall_indirect', [KInt(type_idx)])
+    type_use = KApply('aTypeUseIndex', [KInt(type_idx)])
+    return KApply('aCall_indirect', [KInt(0), type_use])
 
 
 ##########################
@@ -566,8 +584,8 @@ def func(type: KInner, locals: KInner, body: KInner, metadata: KInner = EMPTY_FU
     return KApply(FUNC, [type, locals, body, metadata])
 
 
-def table(lim: tuple[int, int], metadata: KInner = EMPTY_ID) -> KInner:
-    return KApply(TABLE, [limits(lim), metadata])
+def table(lim: tuple[int, int], typ: KInner, metadata: KInner = EMPTY_ID) -> KInner:
+    return KApply(TABLE, [limits(lim), typ, metadata])
 
 
 def memory(lim: tuple[int, int], metadata: KInner = EMPTY_ID) -> KInner:
@@ -578,8 +596,13 @@ def glob(type: KInner, init: KInner, metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(GLOBAL, [type, init, metadata])
 
 
-def elem(table_idx: int, offset: KInner, init: Iterable[int]) -> KInner:
-    return KApply(ELEM, [KInt(table_idx), offset, ints(init)])
+def elem_mode(table_idx: int, offset: KInner) -> KInner:
+    # TODO Implement other elem modes
+    return KApply('aElemActive', [KInt(table_idx), offset])
+
+
+def elem(typ: KInner, elem_mode: KInner, init: Iterable[int | None], metadata: KInner = EMPTY_ID) -> KInner:
+    return KApply(ELEM, [typ, refs(init), elem_mode, metadata])
 
 
 def data(memory_idx: int, offset: KInner, data: bytes) -> KInner:

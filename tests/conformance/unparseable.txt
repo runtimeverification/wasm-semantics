@@ -1,6 +1,9 @@
+block.wast
 br_table.wast
+bulk.wast
 comments.wast
 conversions.wast
+data.wast
 endianness.wast
 f32_cmp.wast
 f32.wast
@@ -8,7 +11,14 @@ f64_cmp.wast
 f64.wast
 float_exprs.wast
 float_literals.wast
-globals.wast
+global.wast
+if.wast
+imports.wast
+loop.wast
+memory_copy.wast
+memory_fill.wast
+memory_init.wast
 memory.wast
-names.wast
+select.wast
 skip-stack-guard-page.wast
+table_copy.wast
