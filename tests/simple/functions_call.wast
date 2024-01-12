@@ -36,7 +36,7 @@
 
 
   (table 1 funcref)
-  (elem 0 (i32.const 0) 2)
+  (elem (i32.const 0) 2)
 
   ;; More complicated function with locals
 

@@ -4,6 +4,7 @@ WebAssembly State and Semantics
 ```k
 require "data.md"
 require "data/list-int.k"
+require "data/list-ref.k"
 require "data/map-int-to-int.k"
 require "data/sparse-bytes.k"
 require "data/tools.k"
@@ -77,6 +78,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
 ```k
     syntax PlainInstr ::= IValType "." "const" WasmInt    [klabel(aIConst), symbol]
                         | FValType "." "const" Number     [klabel(aFConst), symbol]
+                        | "ref.null" HeapType             [klabel(aRefNull), symbol]
                         | IValType "." IUnOp              [klabel(aIUnOp), symbol]
                         | FValType "." FUnOp              [klabel(aFUnOp), symbol]
                         | IValType "." ExtendS            [klabel(aExtendS), symbol] // TODO this is more permissive than the official spec as it allows 'i32.extend32_s'
@@ -95,9 +97,8 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "memory.grow"                   [klabel(aGrow), symbol]
  // -----------------------------------
 
-    syntax PlainInstr  ::= "call_indirect" TypeUse
     syntax TypeUse     ::= TypeDecls
-                         | "(type" Index ")"           [prefer] // TODO: Remove and move to wasm-text.
+                         | "(type" Index ")"           [prefer, klabel(aTypeUseIndex), symbol] // TODO: Remove and move to wasm-text.
                          | "(type" Index ")" TypeDecls
     syntax TypeKeyWord ::= "param" | "result"
     syntax TypeDecl    ::= "(" TypeDecl ")"     [bracket]
@@ -190,6 +191,7 @@ module WASM
     imports WASM-DATA
     imports WASM-DATA-TOOLS
     imports WASM-NUMERIC
+    imports LIST-REF-EXTENSIONS
 ```
 
 ### Configuration
@@ -215,8 +217,12 @@ module WASM
             <nextFuncIdx> 0            </nextFuncIdx>
             <tabIds>      .Map         </tabIds>
             <tabAddrs>    .Map         </tabAddrs>
+            <nextTabIdx>  0            </nextTabIdx>
             <memIds>      .Map         </memIds>
             <memAddrs>    .MapIntToInt </memAddrs>
+            <elemIds>     .Map         </elemIds>
+            <elemAddrs>   .MapIntToInt </elemAddrs>
+            <nextElemIdx> 0            </nextElemIdx>
             <globIds>     .Map         </globIds>
             <globalAddrs> .Map         </globalAddrs>
             <nextGlobIdx> 0            </nextGlobIdx>
@@ -246,10 +252,9 @@ module WASM
           <nextFuncAddr> 0 </nextFuncAddr>
           <tabs>
             <tabInst multiplicity="*" type="Map">
-              <tAddr> 0    </tAddr>
-              <tmax>  .Int </tmax>
-              <tsize> 0    </tsize>
-              <tdata> .Map </tdata>
+              <tAddr> 0     </tAddr>
+              <tmax>  .Int  </tmax>
+              <tdata> .ListRef </tdata> // TODO use ARRAY O(1) lookup
             </tabInst>
           </tabs>
           <nextTabAddr> 0 </nextTabAddr>
@@ -270,6 +275,14 @@ module WASM
             </globalInst>
           </globals>
           <nextGlobAddr> 0 </nextGlobAddr>
+          <elems>
+            <elemInst multiplicity="*" type="Map">
+              <eAddr>  0        </eAddr>
+              <eType>  funcref  </eType>
+              <eValue> .ListRef </eValue> // TODO use ARRAY O(1) lookup
+            </elemInst>
+          </elems>
+          <nextElemAddr> 0 </nextElemAddr>
         </mainStore>
         <deterministicMemoryGrowth> true </deterministicMemoryGrowth>
       </wasm>
@@ -357,6 +370,9 @@ Function `#unsigned` is called on integers to allow programs to use negative num
 ```k
     rule <instrs> ITYPE:IValType . const VAL => #chop (< ITYPE > VAL) ... </instrs>
     rule <instrs> FTYPE:FValType . const VAL => #round(  FTYPE , VAL) ... </instrs>
+
+    rule <instrs> ref.null extern => <externref> null ... </instrs>
+    rule <instrs> ref.null func   => <funcref>   null ... </instrs>
 ```
 
 ### Unary Operations
@@ -585,7 +601,7 @@ The importing and exporting parts of specifications are dealt with in the respec
     rule <instrs> #global(... type: TYP, init: IS, metadata: OID) => sequenceInstrs(IS) ~> allocglobal(OID, TYP) ... </instrs>
 
     rule <instrs> allocglobal(OID:OptionalId, MUT:Mut TYP:ValType) => . ... </instrs>
-         <valstack> < TYP > VAL : STACK => STACK </valstack>
+         <valstack> VAL : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -598,13 +614,21 @@ The importing and exporting parts of specifications are dealt with in the respec
          <globals>
            ( .Bag
           => <globalInst>
-               <gAddr>  NEXTADDR  </gAddr>
-               <gValue> <TYP> VAL </gValue>
-               <gMut>   MUT       </gMut>
+               <gAddr>  NEXTADDR </gAddr>
+               <gValue> VAL      </gValue>
+               <gMut>   MUT      </gMut>
              </globalInst>
            )
            ...
          </globals>
+      requires #typeMatches(TYP, VAL)
+
+    syntax Bool ::= #typeMatches(ValType, Val)  [function, total]
+ // -------------------------------------------------------------
+    rule #typeMatches(TYP, <TYP> _)    => true
+    rule #typeMatches(TYP, <TYP> null) => true
+    rule #typeMatches(_, _)            => false [owise]
+    
 ```
 
 The `get` and `set` instructions read and write globals.
@@ -643,6 +667,387 @@ The `get` and `set` instructions read and write globals.
          [preserves-definedness]
       // Preserving definedness:
       //  - Map update preserves definedness (<globalInst>)
+```
+
+### Table Instructions
+
+- [Structure](https://webassembly.github.io/spec/core/syntax/instructions.html#table-instructions)
+- [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#table-instructions)
+
+```k
+    syntax Instr ::= "#table.get"  "(" Int ")"          [klabel(aTable.get), symbol]
+                   | "#table.set"  "(" Int ")"          [klabel(aTable.set), symbol]
+                   | "#table.size" "(" Int ")"          [klabel(aTable.size), symbol]
+                   | "#table.grow" "(" Int ")"          [klabel(aTable.grow), symbol]
+                   | "#table.fill" "(" Int ")"          [klabel(aTable.fill), symbol]
+                   | "#table.copy" "(" Int "," Int ")"  [klabel(aTable.copy), symbol]
+                   | "#table.init" "(" Int "," Int ")"  [klabel(aTable.init), symbol]
+                   | "#elem.drop"  "(" Int ")"          [klabel(aElem.drop), symbol]
+ // ---------------------------------------------------------------------------------
+```
+
+#### `table.get`
+
+```k
+    rule [table.get]:
+        <instrs> #table.get( TID ) => #tableGet(TADDR, I) ... </instrs>
+        <valstack> <i32> I : REST => REST </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx>   CUR    </modIdx>
+          <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+
+    syntax Instr ::= #tableGet( addr: Int, index: Int)
+    rule [tableGet]:
+        <instrs> #tableGet( TADDR, I) => getRefOrNull(TDATA, I) ... </instrs>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
+      requires 0 <=Int I
+       andBool I <Int size(TDATA)
+        
+    rule [tableGet-trap]:
+        <instrs> #tableGet( TADDR, I) => trap ... </instrs>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
+      requires I <Int 0
+        orBool size(TDATA) <=Int I
+```
+
+#### `table.set`
+
+```k
+    syntax Instr ::= #tableSet( addr: Int , val: RefVal , idx: Int )
+ // -----------------------------------------
+    rule [table.set]:
+        <instrs> #table.set( TID )
+              => #tableSet(TADDR, VAL, I) ...
+        </instrs>
+        <valstack> VAL:RefVal : <i32> I : REST => REST </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+    
+    rule [tableSet-oob]:
+        <instrs> #tableSet(TADDR, _VAL, I) => trap ... </instrs>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
+      requires I <Int 0
+        orBool size(TDATA) <=Int I
+
+    rule [tableSet]:
+        <instrs> #tableSet(TADDR, VAL, I) => . ... </instrs>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tdata> TDATA => TDATA [ I <- VAL ] </tdata>
+          ...
+        </tabInst>
+      requires 0 <=Int I
+       andBool I <Int size(TDATA)
+      [preserves-definedness]
+    // Preserving definedness:
+    //   - I is in list bounds
+```
+
+#### `table.size`
+
+```k
+    rule [table.size]:
+        <instrs> #table.size(TID) => i32.const size(TDATA) ... </instrs>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
+```
+
+#### `table.grow`
+
+```k
+    rule [table.grow]:
+        <instrs> #table.grow(TID) => i32.const size(TDATA) ... </instrs>
+        <valstack> <i32> N : REFVAL : STACK => STACK </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tmax>  TMAX  </tmax>
+          <tdata> TDATA => TDATA makeListRefTotal(N, REFVAL) </tdata>
+          ...
+        </tabInst>
+      requires #canGrow(size(TDATA), N, TMAX)
+
+    rule [table.grow-fail]:
+        <instrs> #table.grow(TID) => i32.const (#pow(i32) -Int 1) ... </instrs>
+        <valstack> <i32> N : _REFVAL : STACK => STACK </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+        <tabInst>
+          <tAddr> TADDR </tAddr>
+          <tmax>  TMAX  </tmax>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
+      requires notBool #canGrow(size(TDATA), N, TMAX)
+
+    syntax Bool ::= #canGrow(len: Int, n: Int, max: OptionalInt)   [function, total]
+ // --------------------------------------------------------------------------------
+    rule #canGrow(LEN, N, MAX) => LEN +Int N <Int #pow(i32)
+                          andBool LEN +Int N <=Int MAX
+    rule #canGrow(LEN, N, .Int) => LEN +Int N <Int #pow(i32)
+
+```
+
+#### `table.fill`
+
+```k
+    rule [table.fill]:
+        <instrs> #table.fill(TID)
+              => #tableCheckSizeGTE(TADDR, I +Int N)
+              ~> #tableFill(TID, N, RVAL, I) ...
+        </instrs>
+        <valstack> <i32> N : RVAL : <i32> I : STACK => STACK </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+
+    syntax Instr ::= #tableFill(Int, Int, RefVal, Int)
+ // ------------------------------------------------------
+    rule [tableFill-zero]:
+        <instrs> #tableFill(_, 0, _, _) => . ... </instrs>
+    
+    rule [tableFill-loop]:
+        <instrs> #tableFill(TID, N, RVAL, I)
+              => <i32> I
+              ~> RVAL
+              ~> #table.set(TID)
+              ~> #tableFill(TID, N -Int 1, RVAL, I +Int 1)
+                 ...
+        </instrs>
+      requires N >Int 0
+
+```
+
+#### `table.copy`
+
+```k
+    rule [table.copy]:
+        <instrs> #table.copy(TX, TY)
+              => #tableCheckSizeGTE(TYADDR, S +Int N)
+              ~> #tableCheckSizeGTE(TXADDR, D +Int N)
+              ~> #tableCopy(TX, TY, N, S, D)
+                 ...
+        </instrs>
+        <valstack> <i32> N : <i32> S : <i32> D : STACK => STACK </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <tabAddrs> ... (TX |-> TXADDR) (TY |-> TYADDR) ... </tabAddrs>
+          ...
+        </moduleInst>
+
+    rule [table.copy-self]:
+        <instrs> #table.copy(TX, TX)
+              => #tableCheckSizeGTE(TXADDR, maxInt(S, D) +Int N)
+              ~> #tableCopy(TX, TX, N, S, D)
+                 ...
+        </instrs>
+        <valstack> <i32> N : <i32> S : <i32> D : STACK => STACK </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <tabAddrs> ... TX |-> TXADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+
+    syntax Instr ::= #tableCopy(tix: Int, tiy: Int, n: Int, s: Int, d: Int)
+ // -----------------------------------------------------------------------
+    rule [tableCopy-zero]:
+        <instrs> #tableCopy(_, _, 0, _, _) => . ... </instrs>
+
+    // If D (destination index) is less than S (source), go from left to right
+    // Otherwise, start from the end
+    rule [tableCopy-LR]:
+        <instrs> #tableCopy(TIX, TIY, N, S, D)
+              => <i32> D
+              ~> <i32> S
+              ~> #table.get(TIY)
+              ~> #table.set(TIX)
+              ~> #tableCopy(TIX, TIY, N -Int 1, S +Int 1, D +Int 1)
+                 ...
+        </instrs>
+      requires N >Int 0
+       andBool D <=Int S
+
+    rule [tableCopy-RL]:
+        <instrs> #tableCopy(TIX, TIY, N, S, D)
+              => <i32> (D +Int N -Int 1)
+              ~> <i32> (S +Int N -Int 1)
+              ~> #table.get(TIY)
+              ~> #table.set(TIX)
+              ~> #tableCopy(TIX, TIY, N -Int 1, S, D)
+                 ...
+        </instrs>
+      requires N >Int 0
+       andBool D >Int S
+```
+
+#### `table.init`
+
+```k
+    rule [table.init]:
+        <instrs> #table.init(TID, EID)
+              => #elemCheckSizeGTE (EA, S +Int N)
+              ~> #tableCheckSizeGTE(TA, D +Int N)
+              ~> #tableInit(TID, N, D, dropListRef(S, ELEM))
+                 ...
+        </instrs>
+        <valstack> <i32> N : <i32> S : <i32> D : REST => REST </valstack>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx>   CUR    </modIdx>
+          <tabAddrs>  ... TID |-> TA ... </tabAddrs>
+          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          ...
+        </moduleInst>
+        <elemInst>
+          <eAddr>  EA    </eAddr>
+          <eValue> ELEM  </eValue>
+          ...
+        </elemInst>
+
+    syntax Instr ::= #tableInit(tidx: Int, n: Int, d: Int, es: ListRef)
+ // ----------------------------------------------------
+    rule [tableInit-done]:
+        <instrs> #tableInit(_, 0, _, _) => . ... </instrs>
+
+    rule [tableInit]:
+        <instrs> #tableInit(TID, N, D, ListItem(R) RS)
+              => #table.set(TID)
+              ~> #tableInit(TID, N -Int 1, D +Int 1, RS)
+                 ...
+        </instrs>
+        <valstack> STACK => R : <i32> D : STACK </valstack>
+      requires N >Int 0
+
+```
+
+#### `elem.drop`
+
+```k
+    rule [elem.drop]:
+        <instrs> #elem.drop(EID) => . ... </instrs>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx>   CUR    </modIdx>
+          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          ...
+        </moduleInst>
+        <elemInst>
+          <eAddr>  EA          </eAddr>
+          <eValue> _  => .ListRef </eValue>
+          ...
+        </elemInst>
+
+```
+
+#### Misc
+
+```k
+    syntax Instr ::= #tableCheckSizeGTE(addr: Int, n: Int)
+ // -------------------------------------------------------
+    rule [tableCheckSizeGTE-pass]:
+        <instrs> #tableCheckSizeGTE(ADDR, N) => . ... </instrs>
+        <tabInst>
+          <tAddr> ADDR </tAddr>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
+      requires N <=Int size(TDATA)
+
+    rule [tableCheckSizeGTE-fail]:
+        <instrs> #tableCheckSizeGTE(_, _) => trap ... </instrs>
+      [owise]
+
+
+    syntax Instr ::= #elemCheckSizeGTE(addr: Int, n: Int)
+ // -------------------------------------------------------
+    rule [elemCheckSizeGTE-pass]:
+        <instrs> #elemCheckSizeGTE(ADDR, N) => . ... </instrs>
+        <elemInst>
+          <eAddr>  ADDR </eAddr>
+          <eValue> ELEM </eValue>
+          ...
+        </elemInst>
+      requires N <=Int size(ELEM)
+
+    rule [elemCheckSizeGTE-fail]:
+        <instrs> #elemCheckSizeGTE(_, _) => trap ... </instrs>
+      [owise]
+```
+
+### Reference Instructions
+
+- [Structure](https://webassembly.github.io/spec/core/syntax/instructions.html#reference-instructions)
+- [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#reference-instructions)
+
+```k
+    syntax Instr ::= "#ref.is_null"               [klabel(aRef.is_null), symbol]
+                   | "#ref.func" "(" Int ")"    [klabel(aRef.func), symbol]
+ // ------------------------------------------------------------------------
+
+    rule [ref.null.func]:
+        <instrs> ref.null func => <funcref> null ... </instrs>
+    rule [ref.null.extern]:
+        <instrs> ref.null extern => <externref> null ... </instrs>
+
+    rule [ref.isNull-true]:
+        <instrs> #ref.is_null => i32.const 1 ... </instrs>
+        <valstack> <_:RefValType> null : STACK => STACK </valstack>
+
+    rule [ref.isNull-false]:
+        <instrs> #ref.is_null => i32.const 0 ... </instrs>
+        <valstack> <_:RefValType> _:Int : STACK => STACK </valstack>
+
+    rule [ref.func]:
+        <instrs> #ref.func(IDX) => (<funcref> FUNCADDRS {{ IDX }} orDefault 0 )  ... </instrs>
+        <curModIdx> CUR </curModIdx>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <funcAddrs> FUNCADDRS </funcAddrs>
+          ...
+        </moduleInst>
+      requires isListIndex(IDX, FUNCADDRS)
 ```
 
 Types
@@ -805,7 +1210,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 
 ### Function Call
 
-`call funcidx` and `call_indirect typeidx` are 2 control instructions that invokes a function in the current frame.
+`call funcidx` and `call_indirect tableidx typeuse` are 2 control instructions that invoke a function in the current frame.
 
 ```k
     syntax Instr ::= #call(Int) [klabel(aCall), symbol]
@@ -821,9 +1226,8 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```
 
 ```k
-    syntax Instr ::= "#call_indirect" "(" Int ")" [klabel(aCall_indirect), symbol]
+    syntax Instr ::= "#call_indirect" "(" Int "," TypeUse ")" [klabel(aCall_indirect), symbol]
  // ------------------------------------------------------------------------------
-    rule <instrs> #call_indirect(I) => call_indirect (type I) ... </instrs>
 ```
 
 TODO: This is kept for compatibility with the text format.
@@ -832,64 +1236,56 @@ But this requires a recursive descent into all the instructions of a function, w
 The types need to be inserted at the definitions level, if a previously undeclared type is present in a `call_indirect` function.
 
 ```k
-    rule <instrs> call_indirect TUSE:TypeUse => ( invoke FADDR ) ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <typeIds> TYPEIDS </typeIds>
-           <types> TYPES </types>
-           <tabAddrs> 0 |-> ADDR </tabAddrs>
-           ...
-         </moduleInst>
-         <tabInst>
-           <tAddr> ADDR </tAddr>
-           <tdata> ... IDX |-> FADDR ... </tdata>
-           ...
-         </tabInst>
-         <funcDef>
-           <fAddr> FADDR </fAddr>
-           <fType> FTYPE </fType>
-           ...
-         </funcDef>
-      requires asFuncType(TYPEIDS, TYPES, TUSE) ==K FTYPE
+    rule [call-indirect-getRef]:
+        <instrs> #call_indirect(TIDX:Int,TUSE:TypeUse)
+              => #callIndirect(
+                    getRefOrNull(TDATA, IDX),
+                    asFuncType(TYPEIDS, TYPES, TUSE)
+                  ) ...
+        </instrs>
+        <curModIdx> CUR </curModIdx>
+        <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
+        <moduleInst>
+          <modIdx> CUR </modIdx>
+          <typeIds> TYPEIDS </typeIds>
+          <types> TYPES </types>
+          <tabAddrs> ... TIDX |-> ADDR ... </tabAddrs>
+          ...
+        </moduleInst>
+        <tabInst>
+          <tAddr> ADDR </tAddr>
+          <tdata> TDATA </tdata>
+          ...
+        </tabInst>
 
-    rule <instrs> call_indirect TUSE:TypeUse => trap ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <typeIds> TYPEIDS </typeIds>
-           <types> TYPES </types>
-           <tabAddrs> 0 |-> ADDR </tabAddrs>
-           ...
-         </moduleInst>
-         <tabInst>
-           <tAddr> ADDR </tAddr>
-           <tdata> ... IDX |-> FADDR ... </tdata>
-           ...
-         </tabInst>
-         <funcDef>
-           <fAddr> FADDR </fAddr>
-           <fType> FTYPE </fType>
-           ...
-         </funcDef>
-      requires asFuncType(TYPEIDS, TYPES, TUSE) =/=K FTYPE
 
-    rule <instrs> call_indirect _TUSE:TypeUse => trap ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
-         <moduleInst>
-           <modIdx> CUR </modIdx>
-           <tabAddrs> 0 |-> ADDR </tabAddrs>
-           ...
-         </moduleInst>
-         <tabInst>
-           <tAddr> ADDR  </tAddr>
-           <tdata> TDATA </tdata>
-           ...
-         </tabInst>
-      requires notBool IDX in_keys(TDATA)
+    syntax Instr ::= #callIndirect(RefVal, FuncType)
+ // ------------------------------------------
+    rule [callIndirect-invoke]:
+        <instrs> #callIndirect(<funcref> FADDR, ETYPE)
+              => ( invoke FADDR ) ...
+        </instrs>
+        <funcDef>
+          <fAddr> FADDR </fAddr>
+          <fType> FTYPE </fType>
+          ...
+        </funcDef>
+      requires ETYPE ==K FTYPE
+
+    rule [callIndirect-wrong-type]:
+        <instrs> #callIndirect(<funcref> FADDR, ETYPE)
+              => trap ...
+        </instrs>
+        <funcDef>
+          <fAddr> FADDR </fAddr>
+          <fType> FTYPE </fType>
+          ...
+        </funcDef>
+      requires ETYPE =/=K FTYPE
+
+    rule [callIndirect-null-ref]:
+        <instrs> #callIndirect(<_> null, _) => trap ... </instrs>
+
 ```
 
 Table
@@ -905,31 +1301,33 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TableDefn ::= #table (limits: Limits, metadata: OptionalId) [klabel(aTableDefn), symbol]
-    syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt)
- // ----------------------------------------------------------
-    rule <instrs> #table(... limits: #limitsMin(MIN), metadata: OID)   => alloctable(OID, MIN, .Int) ... </instrs>
+    syntax TableDefn ::= #table (limits: Limits, type: RefValType, metadata: OptionalId) [klabel(aTableDefn), symbol]
+    syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt, RefValType)
+ // --------------------------------------------------------------------
+    rule <instrs> #table(... limits: #limitsMin(MIN), type: TYP, metadata: OID)   => alloctable(OID, MIN, .Int, TYP) ... </instrs>
       requires MIN <=Int #maxTableSize()
-    rule <instrs> #table(... limits: #limits(MIN, MAX), metadata: OID) => alloctable(OID, MIN, MAX) ... </instrs>
+    rule <instrs> #table(... limits: #limits(MIN, MAX), type: TYP, metadata: OID) => alloctable(OID, MIN, MAX, TYP) ... </instrs>
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
-    rule <instrs> alloctable(ID, MIN, MAX) => . ... </instrs>
+    rule <instrs> alloctable(ID, MIN, MAX, TYP) => . ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIds> IDS => #saveId(IDS, ID, 0) </tabIds>
-           <tabAddrs> .Map => (0 |-> NEXTADDR) </tabAddrs>
+           <tabIds> IDS => #saveId(IDS, ID, NEXTIDX) </tabIds>
+           <tabAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR] </tabAddrs>
+           <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
            ...
          </moduleInst>
          <nextTabAddr> NEXTADDR => NEXTADDR +Int 1 </nextTabAddr>
          <tabs>
            ( .Bag
           => <tabInst>
-               <tAddr>   NEXTADDR </tAddr>
-               <tmax>    MAX      </tmax>
-               <tsize>   MIN      </tsize>
-               <tdata>   .Map     </tdata>
+               <tAddr> NEXTADDR </tAddr>
+               <tmax>  MAX      </tmax>
+               <tdata>
+                makeListRefTotal(MIN, <TYP> null)
+               </tdata>
              </tabInst>
            )
            ...
@@ -1159,43 +1557,79 @@ The maximum of table size is 2^32 bytes.
     rule #maxTableSize()  => 4294967296
 ```
 
-Initializers
-------------
-
-### Table initialization
-
-Tables can be initialized with element and the element type is always `funcref`.
-The initialization of a table needs an offset and a list of functions, given as `Index`s.
-A table index is optional and will be default to zero.
+Element Segments
+----------------
 
 ```k
+    syntax ElemDefn ::= #elem(type: RefValType, elemSegment: ListRef, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
+                      | #elemAux(segmentLen: Int, mode: ElemMode)
+    syntax ElemMode ::= #elemActive(table: Int, offset: Instrs)                           [klabel(aElemActive), symbol]
+                      | "#elemPassive"        [klabel(aElemPassive), symbol]
+                      | "#elemDeclarative"    [klabel(aElemDeclarative), symbol]
 
-    syntax ElemDefn ::= #elem(index : Int, offset : Instrs, elemSegment : Ints) [klabel(aElemDefn), symbol]
-                      | "elem" "{" Int        Ints "}"
-    syntax Stmt ::= #initElements ( Int, Int, ListInt, Ints )
+    syntax Alloc ::= allocelem(RefValType, ListRef, OptionalId)
  // -----------------------------------------------------
-    rule <instrs> #elem(TABIDX, IS, ELEMSEGMENT ) => sequenceInstrs(IS) ~> elem { TABIDX ELEMSEGMENT } ... </instrs>
+    rule [elem-active]:
+        <instrs> #elem(TYPE:RefValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId) 
+              => allocelem(TYPE, INIT, OID)
+              ~> #elemAux(size(INIT), MODE)
+                 ...
+        </instrs>
 
-    rule <instrs> elem { TABIDX ELEMSEGMENT } => #initElements ( ADDR, OFFSET, FADDRS, ELEMSEGMENT ) ... </instrs>
-         <curModIdx> CUR </curModIdx>
-         <valstack> < i32 > OFFSET : STACK => STACK </valstack>
-         <moduleInst>
-           <modIdx> CUR  </modIdx>
-           <funcAddrs> FADDRS </funcAddrs>
-           <tabAddrs> TABIDX |-> ADDR </tabAddrs>
-           ...
-         </moduleInst>
+    rule [elem-active-aux]:
+        <instrs> #elemAux(LEN:Int, #elemActive(... table: TID, offset: OFFSET))
+              => sequenceInstrs(OFFSET)
+              ~> i32.const 0
+              ~> i32.const LEN
+              ~> #table.init(TID, IDX)
+              ~> #elem.drop(IDX)
+                 ...
+        </instrs>
+        <valstack> <i32> IDX : S => S </valstack>
 
-    rule <instrs> #initElements (    _,      _,      _, .Ints ) => . ... </instrs>
-    rule <instrs> #initElements ( ADDR, OFFSET, FADDRS,  E:Int ES    ) => #initElements ( ADDR, OFFSET +Int 1, FADDRS, ES ) ... </instrs>
-         <tabInst>
-           <tAddr> ADDR </tAddr>
-           <tdata> DATA => DATA [ OFFSET <- FADDRS{{E}} ] </tdata>
-           ...
-         </tabInst>
+    rule [elem-declarative-aux]:
+        <instrs> #elemAux(_LEN:Int, #elemDeclarative)
+              => #elem.drop(IDX)
+                 ...
+        </instrs>
+        <valstack> <i32> IDX : S => S </valstack>
+
+    rule [elem-passive-aux]:
+        <instrs> #elemAux(_LEN:Int, #elemPassive)
+              => . ...
+        </instrs>
+        <valstack> <i32> _IDX : S => S </valstack>
+
+    rule [allocelem]:
+      <instrs> allocelem(TYPE, ELEMS, OID) => i32.const NEXTIDX ... </instrs>
+      <curModIdx> CUR </curModIdx>
+      <moduleInst>
+        <modIdx> CUR </modIdx>
+        <funcAddrs> FADDRS </funcAddrs>
+        <elemAddrs> ADDRS => ADDRS {{ NEXTIDX <- NEXTADDR }} </elemAddrs>
+        <nextElemIdx> NEXTIDX => NEXTIDX +Int 1   </nextElemIdx>
+        <elemIds>     IDS => #saveId(IDS, OID, 0) </elemIds>
+        ...
+      </moduleInst>
+      <nextElemAddr> NEXTADDR => NEXTADDR +Int 1 </nextElemAddr>
+      (.Bag => <elemInst>
+                  <eAddr>  NEXTADDR </eAddr>
+                  <eType>  TYPE     </eType>
+                  <eValue> resolveAddrs(FADDRS, ELEMS) </eValue>
+                </elemInst>)
+
+    syntax ListRef ::= resolveAddrs(ListInt, ListRef)  [function]
+ // -----------------------------------------------------------
+    rule resolveAddrs(_, .ListRef) => .ListRef
+    rule resolveAddrs(FADDRS, ListItem(<TYP> I) IS) 
+      => ListItem(<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS) 
+    rule resolveAddrs(FADDRS, ListItem(<TYP> null) IS) 
+      => ListItem(<TYP> null)                        resolveAddrs(FADDRS, IS) 
+    
 ```
 
-### Memory initialization
+Data Segments
+-------------
 
 Memories can be initialized with data, specified as a list of bytes together with an offset.
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
@@ -1324,10 +1758,10 @@ The value of a global gets copied when it is imported.
          <tabInst>
            <tAddr> ADDR </tAddr>
            <tmax>  MAX  </tmax>
-           <tsize> SIZE </tsize>
+           <tdata> TDATA </tdata>
            ...
          </tabInst>
-       requires #limitsMatchImport(SIZE, MAX, LIM)
+       requires #limitsMatchImport(size(TDATA), MAX, LIM)
 
     rule <instrs> #import(MOD, NAME, #memoryDesc(... id: OID, type: LIM) ) => . ... </instrs>
          <curModIdx> CUR </curModIdx>

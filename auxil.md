@@ -38,6 +38,8 @@ module WASM-AUXIL
            <mems>            _ => .Bag      </mems>
            <nextGlobAddr>    _ => 0         </nextGlobAddr>
            <globals>         _ => .Bag      </globals>
+           <nextElemAddr>    _ => 0         </nextElemAddr>
+           <elems>           _ => .Bag      </elems>
          </mainStore>
 
 endmodule
