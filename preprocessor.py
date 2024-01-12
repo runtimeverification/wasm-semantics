@@ -17,6 +17,8 @@ def hex2float(h):
             return h.split()[0] + " " + "%e" % (float.fromhex(h.split()[1]))
         except OverflowError:
             return h
+        except ValueError as e:
+            return h
     else:
         return h
 

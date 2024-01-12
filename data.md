@@ -80,15 +80,23 @@ It is used when initializing a WebAssembly table, or used as the parameter of th
 
 ### WebAssembly Types
 
-#### Base Types
+#### Value Types
 
-WebAssembly has four basic types, for 32 and 64 bit integers and floats.
-
+WebAssembly has three kinds of [Value types](https://webassembly.github.io/spec/core/syntax/types.html#value-types):
+  1. [Number types](https://webassembly.github.io/spec/core/syntax/types.html#number-types)
+  2. [Vector types](https://webassembly.github.io/spec/core/syntax/types.html#vector-types)(currently not supported)
+  3. [Reference types](https://webassembly.github.io/spec/core/syntax/types.html#reference-types)
+  
 ```k
     syntax IValType ::= "i32" [klabel(i32), symbol] | "i64" [klabel(i64), symbol]
     syntax FValType ::= "f32" [klabel(f32), symbol] | "f64" [klabel(f64), symbol]
-    syntax ValType  ::= IValType | FValType
+    syntax RefValType ::= "funcref"     [klabel(funcref), symbol]
+                        | "externref"   [klabel(externref), symbol]
+    syntax ValType  ::= IValType | FValType | RefValType
  // ---------------------------------------
+
+    syntax HeapType ::= "func"   [klabel(func), symbol]
+                      | "extern" [klabel(extern), symbol]
 ```
 
 #### Type Constructors
@@ -158,10 +166,12 @@ module WASM-DATA-INTERNAL-SYNTAX
 Proper values are numbers annotated with their types.
 
 ```k
-    syntax IVal ::= "<" IValType ">" Int    [klabel(<_>_)]
-    syntax FVal ::= "<" FValType ">" Float  [klabel(<_>_)]
+    syntax IVal ::= "<" IValType ">" Int        [klabel(<_>_)]
+    syntax FVal ::= "<" FValType ">" Float      [klabel(<_>_)]
+    syntax RefVal ::= "<" RefValType ">" Int    [klabel(<_>_)]
+                    | "<" RefValType ">" "null" [klabel(<_>null), symbol]
     syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
-                  | IVal | FVal
+                  | IVal | FVal | RefVal
  // ---------------------------
 ```
 
@@ -243,10 +253,14 @@ In KWasm we store identifiers in maps from `Identifier` to `Int`, the `Int` bein
 This rule handles adding an `OptionalId` as a map key, but only when it is a proper identifier.
 
 ```k
-    syntax Map ::= #saveId (Map, OptionalId, Int) [function]
+    syntax Map  ::= #saveId    (Map, OptionalId, Int) [function, total]
+    syntax Bool ::= #canSaveId (Map, OptionalId)      [function, total]
  // -------------------------------------------------------
     rule #saveId (MAP, ID:OptionalId, _)   => MAP             requires notBool isIdentifier(ID)
     rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
+
+    rule #canSaveId (_,   ID:OptionalId) => true                     requires notBool isIdentifier(ID)
+    rule #canSaveId (MAP, ID:Identifier) => notBool ID in_keys(MAP)
 ```
 
 `Int` is the basic form of index, and indices always need to resolve to integers.
@@ -268,9 +282,9 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
     syntax Ints ::= List{Int, ""} [klabel(listInt), symbol]
  // -------------------------------------------------------
 
-    syntax Int   ::= #lenElemSegment (ElemSegment)      [function]
+    syntax Int   ::= #lenElemSegment (ElemSegment)      [function, total]
     syntax Index ::= #getElemSegment (ElemSegment, Int) [function]
-    syntax Int   ::= #lenInts        (Ints)             [function]
+    syntax Int   ::= #lenInts        (Ints)             [function, total]
     syntax Int   ::= #getInts        (Ints,        Int) [function]
  // --------------------------------------------------------------
     rule #lenElemSegment(.ElemSegment) => 0
@@ -289,6 +303,7 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
  // -----------------------------------------------------------
     rule elemSegment2Ints(.ElemSegment) => .Ints
     rule elemSegment2Ints(E:Int ES)     => E elemSegment2Ints(ES)
+
 ```
 
 ### Limits
@@ -477,9 +492,10 @@ Each call site _must_ ensure that this is desired behavior before using these fu
                       | #revs ( ValStack )            [function, total]
                       | #revs ( ValStack , ValStack ) [function, total, klabel(#revsAux)]
  // ------------------------------------------------------------------------------------------
-    rule #zero(.ValTypes)             => .ValStack
-    rule #zero(ITYPE:IValType VTYPES) => < ITYPE > 0   : #zero(VTYPES)
-    rule #zero(FTYPE:FValType VTYPES) => < FTYPE > 0.0 : #zero(VTYPES)
+    rule #zero(.ValTypes)               => .ValStack
+    rule #zero(ITYPE:IValType VTYPES)   => < ITYPE > 0    : #zero(VTYPES)
+    rule #zero(FTYPE:FValType VTYPES)   => < FTYPE > 0.0  : #zero(VTYPES)
+    rule #zero(RTYPE:RefValType VTYPES) => < RTYPE > null : #zero(VTYPES)
 
     rule #take(N, _)         => .ValStack               requires notBool N >Int 0
     rule #take(N, .ValStack) => .ValStack               requires         N >Int 0

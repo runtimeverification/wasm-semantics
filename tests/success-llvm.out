@@ -54,6 +54,12 @@
       <nextGlobAddr>
         0
       </nextGlobAddr>
+      <elems>
+        .ElemInstCellMap
+      </elems>
+      <nextElemAddr>
+        0
+      </nextElemAddr>
     </mainStore>
     <deterministicMemoryGrowth>
       true
