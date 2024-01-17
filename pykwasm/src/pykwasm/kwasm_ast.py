@@ -226,6 +226,59 @@ def CALL_INDIRECT(type_idx: int) -> KInner:
 
 
 ##########################
+# Reference Instructions #
+##########################
+
+
+def REF_FUNC(func_idx: int) -> KInner:
+    return KApply('aRef.func', [KInt(func_idx)])
+
+
+REF_IS_NULL: KInner = KApply('aRef.is_null', [])
+
+
+def REF_NULL(t: str) -> KInner:
+    return KApply('aRef.null', [KApply(t, [])])
+
+
+##########################
+# Table Instructions #
+##########################
+
+
+def TABLE_GET(table_idx: int) -> KInner:
+    return KApply('aTable.get', [KInt(table_idx)])
+
+
+def TABLE_SET(table_idx: int) -> KInner:
+    return KApply('aTable.set', [KInt(table_idx)])
+
+
+def TABLE_INIT(table_idx: int, elem_idx: int) -> KInner:
+    return KApply('aTable.init', [KInt(table_idx), KInt(elem_idx)])
+
+
+def ELEM_DROP(elem_idx: int) -> KInner:
+    return KApply('aElem.drop', [KInt(elem_idx)])
+
+
+def TABLE_COPY(table_idx1: int, table_idx2: int) -> KInner:
+    return KApply('aTable.copy', [KInt(table_idx1), KInt(table_idx2)])
+
+
+def TABLE_GROW(table_idx: int) -> KInner:
+    return KApply('aTable.grow', [KInt(table_idx)])
+
+
+def TABLE_SIZE(table_idx: int) -> KInner:
+    return KApply('aTable.size', [KInt(table_idx)])
+
+
+def TABLE_FILL(table_idx: int) -> KInner:
+    return KApply('aTable.fill', [KInt(table_idx)])
+
+
+##########################
 # Parametric Instruction #
 ##########################
 
@@ -596,9 +649,16 @@ def glob(type: KInner, init: KInner, metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(GLOBAL, [type, init, metadata])
 
 
-def elem_mode(table_idx: int, offset: KInner) -> KInner:
-    # TODO Implement other elem modes
+def elem_active(table_idx: int, offset: KInner) -> KInner:
     return KApply('aElemActive', [KInt(table_idx), offset])
+
+
+def elem_declarative() -> KInner:
+    return KApply('aElemDeclarative', [])
+
+
+def elem_passive() -> KInner:
+    return KApply('aElemPassive', [])
 
 
 def elem(typ: KInner, elem_mode: KInner, init: Iterable[int | None], metadata: KInner = EMPTY_ID) -> KInner:

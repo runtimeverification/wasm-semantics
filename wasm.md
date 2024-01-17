@@ -78,7 +78,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
 ```k
     syntax PlainInstr ::= IValType "." "const" WasmInt    [klabel(aIConst), symbol]
                         | FValType "." "const" Number     [klabel(aFConst), symbol]
-                        | "ref.null" HeapType             [klabel(aRefNull), symbol]
+                        | "ref.null" HeapType             [klabel(aRef.null), symbol]
                         | IValType "." IUnOp              [klabel(aIUnOp), symbol]
                         | FValType "." FUnOp              [klabel(aFUnOp), symbol]
                         | IValType "." ExtendS            [klabel(aExtendS), symbol] // TODO this is more permissive than the official spec as it allows 'i32.extend32_s'
