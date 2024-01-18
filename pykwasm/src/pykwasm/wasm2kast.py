@@ -8,6 +8,7 @@ import sys
 from typing import IO, Iterable
 
 from pyk.kast.inner import KInner
+from wasm import instructions
 from wasm.datatypes import (
     DataSegment,
     ElementSegment,
@@ -22,6 +23,7 @@ from wasm.datatypes import (
     MemoryType,
     Module,
     Mutability,
+    RefType,
     StartFunction,
     Table,
     TableType,
@@ -29,6 +31,8 @@ from wasm.datatypes import (
     ValType,
     addresses,
 )
+from wasm.datatypes.element_segment import ElemMode, ElemModeActive, ElemModeDeclarative, ElemModePassive
+from wasm.instructions import BaseInstruction
 from wasm.opcodes import BinaryOpcode
 from wasm.parsers import parse_module
 
@@ -116,10 +120,43 @@ def glob(g: Global):
     return a.glob(t, init)
 
 
+def ref_type(t: RefType):
+    if t is addresses.FunctionAddress:
+        return a.funcref
+    return a.externref
+
+
+def elem_mode(m: ElemMode) -> KInner:
+    if isinstance(m, ElemModeActive):
+        offset = instrs(m.offset)
+        return a.elem_active(m.table, offset)
+    if isinstance(m, ElemModeDeclarative):
+        return a.elem_declarative()
+    if isinstance(m, ElemModePassive):
+        return a.elem_passive()
+    raise ValueError(f'Unknown ElemMode: {m}')
+
+
+def elem_init(init: tuple[Iterable[BaseInstruction], ...]) -> Iterable[int | None]:
+    def expr_to_int(expr: Iterable[BaseInstruction]) -> int | None:
+        # 'expr' must be a constant expression consisting of a reference instruction
+        assert len(expr) == 1 or len(expr) == 2 and isinstance(expr[1], instructions.End), expr
+        instr = expr[0]
+
+        if isinstance(instr, instructions.RefFunc):
+            return instr.funcidx
+        if isinstance(instr, instructions.RefNull):
+            return None
+        raise ValueError(f'Invalid reference expression: {expr}')
+
+    return [expr_to_int(e) for e in init]
+
+
 def elem(e: ElementSegment):
-    offset = instrs(e.offset)
-    elem_mode = a.elem_mode(e.table_idx, offset)
-    return a.elem(a.funcref, elem_mode, e.init)
+    typ = ref_type(e.type)
+    mode = elem_mode(e.mode)
+    init = elem_init(e.init)
+    return a.elem(typ, mode, init)
 
 
 def data(d: DataSegment):
@@ -173,6 +210,7 @@ def instrs(iis):
 def instr(i):
     B = BinaryOpcode
     global block_id
+    # TODO rewrite 'i.opcode == _' conditions as isinstance for better type-checking
     if i.opcode == B.BLOCK:
         cur_block_id = block_id
         block_id += 1
@@ -278,6 +316,31 @@ def instr(i):
         return a.SET_LOCAL(i.local_idx)
     if i.opcode == B.TEE_LOCAL:
         return a.TEE_LOCAL(i.local_idx)
+    if isinstance(i, instructions.RefFunc):
+        return a.REF_FUNC(i.funcidx)
+    if isinstance(i, instructions.RefNull):
+        if i.reftype is addresses.FunctionAddress:
+            return a.REF_NULL('func')
+        if i.reftype is addresses.ExternAddress:
+            return a.REF_NULL('extern')
+        raise ValueError(f'Unknown heap type: {i}, {i.reftype}')
+    if isinstance(i, instructions.TableGet):
+        return a.TABLE_GET(i.tableidx)
+    if isinstance(i, instructions.TableSet):
+        return a.TABLE_SET(i.tableidx)
+    if isinstance(i, instructions.TableInit):
+        return a.TABLE_INIT(i.tableidx, i.elemidx)
+    if isinstance(i, instructions.ElemDrop):
+        return a.ELEM_DROP(i.elemidx)
+    if isinstance(i, instructions.TableCopy):
+        return a.TABLE_COPY(i.tableidx1, i.tableidx2)
+    if isinstance(i, instructions.TableGrow):
+        return a.TABLE_GROW(i.tableidx)
+    if isinstance(i, instructions.TableSize):
+        return a.TABLE_SIZE(i.tableidx)
+    if isinstance(i, instructions.TableFill):
+        return a.TABLE_FILL(i.tableidx)
+
     # Catch all for operations without direct arguments.
     return eval('a.' + i.opcode.name)
 
@@ -296,6 +359,11 @@ def val_type(t: ValType):
         return a.f32
     if t == ValType.f64:
         return a.f64
+    if t == ValType.externref:
+        return a.externref
+    if t == ValType.funcref:
+        return a.funcref
+    raise ValueError(f'Unknown value type: {t}')
 
 
 def vec_type(ts: Iterable[ValType]):

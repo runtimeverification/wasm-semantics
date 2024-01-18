@@ -1,8 +1,11 @@
 (module
   (memory 0)
   (table 100 funcref)
+  (elem func $f)
   (global (mut i32) (i32.const 0))
   (func (param i32 i64) (local f64))
+  (func $f)
+  (global funcref (ref.func $f))
   (func (local i32)
         ;; `unreachable` and `drop` are inserted as needed to
         ;; ensure correct typing.
@@ -171,6 +174,25 @@
         call 0
         call_indirect (type 0)
         ;; --
+
+        ;; Reference Instrs
+        ref.is_null      drop
+        ref.null extern  drop
+        ref.null func    drop
+        ref.func $f      drop
+        ;; --
+
+        ;; Table Instrs
+        table.get 0      drop
+        table.set 0      drop
+        table.init 0 0   drop
+        elem.drop 0      drop
+        table.copy 0 0   drop
+        table.grow 0     drop
+        table.size 0     drop
+        table.fill 0     drop
+        ;; --
+
         unreachable
     )
 
