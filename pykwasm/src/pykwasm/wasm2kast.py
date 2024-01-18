@@ -102,10 +102,7 @@ def func(f: Function):
 
 def table(t: Table):
     ls = limits(t.type.limits)
-    if isinstance(t.type.elem_type, addresses.FunctionAddress):
-        typ = a.funcref
-    else:
-        typ = a.externref
+    typ = ref_type(t.type.elem_type)
     return a.table(ls, typ)
 
 
@@ -123,7 +120,9 @@ def glob(g: Global):
 def ref_type(t: RefType):
     if t is addresses.FunctionAddress:
         return a.funcref
-    return a.externref
+    if t is addresses.ExternAddress:
+        return a.externref
+    raise ValueError(f'Invalid RefType: {t}')
 
 
 def elem_mode(m: ElemMode) -> KInner:
