@@ -817,13 +817,13 @@ test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
 
 [[package]]
 name = "py-wasm"
-version = "0.1.0-alpha.0"
+version = "0.2.0"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.5, <4"
 files = [
-    {file = "0.1.1.tar.gz", hash = "sha256:0a89ca8aac920b6518b85a6e34f11147f766f2153fb3904494464b989f0ba3bf"},
+    {file = "0.2.0.tar.gz", hash = "sha256:83d335ef1ec5064ee8efffdcba88a69644974953726b58003b48fe4a735eb686"},
 ]
 
 [package.dependencies]
@@ -840,7 +840,7 @@ test = ["hypothesis (>=6.88.1,<7)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.2.
 
 [package.source]
 type = "url"
-url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.1.1.tar.gz"
+url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.2.0.tar.gz"
 [[package]]
 name = "pybind11"
 version = "2.11.1"
@@ -1161,4 +1161,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "4ff53b13bad37c5b191112a843ba83bd821398d816990153fa73bda8bfa01f1b"
+content-hash = "b469c8c05266445a6ae2747347f0705b245c34af0e516a23cb175db41d054b63"
