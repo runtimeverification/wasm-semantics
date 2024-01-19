@@ -55,6 +55,7 @@ disallow_untyped_defs = true
 exclude = [
     'src/pykwasm/wasm2kast\.py',
     'src/wasm/*',
+    'src/tests/unit/test_wasm2kast\.py',
 ]
 
 [tool.poetry.scripts]
