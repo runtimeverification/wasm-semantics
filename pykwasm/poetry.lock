@@ -394,14 +394,14 @@ pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
 name = "flake8-bugbear"
-version = "24.1.16"
+version = "24.1.17"
 description = "A plugin for flake8 finding likely bugs and design problems in your program. Contains warnings that don't belong in pyflakes and pycodestyle."
 category = "dev"
 optional = false
 python-versions = ">=3.8.1"
 files = [
-    {file = "flake8-bugbear-24.1.16.tar.gz", hash = "sha256:e94514b1f866270663ce047d23dea731025c24ebacb4ce5999d8959076027504"},
-    {file = "flake8_bugbear-24.1.16-py3-none-any.whl", hash = "sha256:1648f4a433d11da8fb4e148cbaa845692ff51379f3f598e3225010e3b9a667b7"},
+    {file = "flake8-bugbear-24.1.17.tar.gz", hash = "sha256:bcb388a4f3b516258749b1e690ee394c082eff742f44595e3754cf5c7781c2c7"},
+    {file = "flake8_bugbear-24.1.17-py3-none-any.whl", hash = "sha256:46cc840ddaed26507cd0ada530d1526418b717ee76c9b5dfdbd238b5eab34139"},
 ]
 
 [package.dependencies]
@@ -817,13 +817,13 @@ test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
 
 [[package]]
 name = "py-wasm"
-version = "0.1.0-alpha.0"
+version = "0.2.0"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.5, <4"
 files = [
-    {file = "0.1.1.tar.gz", hash = "sha256:0a89ca8aac920b6518b85a6e34f11147f766f2153fb3904494464b989f0ba3bf"},
+    {file = "0.2.0.tar.gz", hash = "sha256:83d335ef1ec5064ee8efffdcba88a69644974953726b58003b48fe4a735eb686"},
 ]
 
 [package.dependencies]
@@ -840,7 +840,7 @@ test = ["hypothesis (>=6.88.1,<7)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.2.
 
 [package.source]
 type = "url"
-url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.1.1.tar.gz"
+url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.2.0.tar.gz"
 [[package]]
 name = "pybind11"
 version = "2.11.1"
@@ -1161,4 +1161,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "4ff53b13bad37c5b191112a843ba83bd821398d816990153fa73bda8bfa01f1b"
+content-hash = "b469c8c05266445a6ae2747347f0705b245c34af0e516a23cb175db41d054b63"
