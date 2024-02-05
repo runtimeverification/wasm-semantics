@@ -335,7 +335,7 @@ Test operations consume one operand and produce a bool, which is an `i32` value.
 There is no test operation for float numbers.
 
 ```k
-    syntax Val ::= IValType "." TestOp Int [klabel(intTestOp), function]
+    syntax Val ::= IValType "." TestOp Int [klabel(intTestOp), function, total]
  // --------------------------------------------------------------------
 ```
 
