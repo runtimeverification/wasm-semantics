@@ -156,6 +156,7 @@ endmodule
 ```k
 module WASM-DATA-INTERNAL-SYNTAX
     imports WASM-DATA-COMMON-SYNTAX
+    imports BOOL
 
     syntax ValStack ::= ".ValStack"            [klabel(.ValStack), symbol]
                       | Val      ":"  ValStack [klabel(concatValStack), symbol]
@@ -166,13 +167,29 @@ module WASM-DATA-INTERNAL-SYNTAX
 Proper values are numbers annotated with their types.
 
 ```k
-    syntax IVal ::= "<" IValType ">" Int        [klabel(<_>_)]
-    syntax FVal ::= "<" FValType ">" Float      [klabel(<_>_)]
-    syntax RefVal ::= "<" RefValType ">" Int    [klabel(<_>_)]
-                    | "<" RefValType ">" "null" [klabel(<_>null), symbol]
-    syntax  Val ::= "<"  ValType ">" Number [klabel(<_>_)]
-                  | IVal | FVal | RefVal
+    syntax IVal ::= "<" IValType ">" Int        [klabel(IVal), symbol]
+    syntax FVal ::= "<" FValType ">" Float      [klabel(FVal), symbol]
+    syntax RefVal ::= "<" RefValType ">" Int    [klabel(RefVal), symbol]
+                    | "<" RefValType ">" "null" [klabel(RefValNull), symbol]
+    syntax  Val ::= IVal | FVal | RefVal
  // ---------------------------
+
+    syntax Bool ::= #typeMatches(ValType, Val)  [function, total]
+ // -------------------------------------------------------------
+    rule #typeMatches(TYP:IValType,   <TYP> _:Int)   => true
+    rule #typeMatches(TYP:FValType,   <TYP> _:Float) => true
+    rule #typeMatches(TYP:RefValType, <TYP> _:Int)   => true
+    rule #typeMatches(TYP:RefValType, <TYP> null)    => true
+    rule #typeMatches(_, _)                          => false [owise]
+
+    syntax Bool ::= #sameType(Val, Val)   [function, total]
+ // -------------------------------------------------------
+    rule #sameType(<T:IValType> _,   V) => #typeMatches(T, V)
+    rule #sameType(<T:FValType> _,   V) => #typeMatches(T, V)
+    rule #sameType(<T:RefValType> _, V) => #typeMatches(T, V)
+    rule #sameType(<T> null,         V) => #typeMatches(T, V)
+    rule #sameType(undefined,        _) => false
+     
 ```
 
 We also add `undefined` as a value, which makes many partial functions in the semantics total.
