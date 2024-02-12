@@ -5,6 +5,17 @@ module LOCALS-SPEC
 
     claim <instrs> #local.get(X) ~> #local.set(X) => . ... </instrs>
           <locals>
-            X |-> < _ITYPE > (VAL => VAL)
+            X |-> _:IVal
           </locals>
+
+    claim <instrs> #local.get(X) ~> #local.set(X) => . ... </instrs>
+          <locals>
+            X |-> _:FVal
+          </locals>
+
+    claim <instrs> #local.get(X) ~> #local.set(X) => . ... </instrs>
+          <locals>
+            X |-> _:RefVal
+          </locals>
+
 endmodule

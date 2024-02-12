@@ -449,10 +449,11 @@ The `select` operator picks one of the second or third stack values based on the
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     rule <instrs> select => . ... </instrs>
-         <valstack>
-           < i32 > C : < TYPE > V2:Number : < TYPE > V1:Number : VALSTACK
-      =>   < TYPE > #if C =/=Int 0 #then V1 #else V2 #fi       : VALSTACK
+         <valstack> < i32 > C : V2 : V1                  : VALSTACK
+                 => #if C =/=Int 0 #then V1 #else V2 #fi : VALSTACK
          </valstack>
+      requires #sameType(V1, V2)
+
 ```
 
 Structured Control Flow
@@ -509,16 +510,16 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     syntax Instr ::= "#br_if" "(" Int ")" [klabel(aBr_if), symbol]
  // --------------------------------------------------------------
     rule <instrs> #br_if(IDX) => #br(IDX) ... </instrs>
-         <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
     rule <instrs> #br_if(_IDX) => .    ... </instrs>
-         <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
     syntax Instr ::= "#br_table" "(" Ints ")" [klabel(aBr_table), symbol]
  // ---------------------------------------------------------------------
     rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenInts(ES) -Int 1))) ... </instrs>
-         <valstack> < _TYPE > VAL : VALSTACK => VALSTACK </valstack>
+         <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -622,12 +623,6 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </globals>
       requires #typeMatches(TYP, VAL)
-
-    syntax Bool ::= #typeMatches(ValType, Val)  [function, total]
- // -------------------------------------------------------------
-    rule #typeMatches(TYP, <TYP> _)    => true
-    rule #typeMatches(TYP, <TYP> null) => true
-    rule #typeMatches(_, _)            => false [owise]
     
 ```
 
@@ -1805,10 +1800,11 @@ The value of a global gets copied when it is imported.
            ...
          </moduleInst>
          <globalInst>
-           <gAddr>  ADDR    </gAddr>
-           <gValue> <TYP> _ </gValue>
-           <gMut>   MUT     </gMut>
+           <gAddr>  ADDR </gAddr>
+           <gValue> GVAL </gValue>
+           <gMut>   MUT  </gMut>
          </globalInst>
+      requires #typeMatches(TYP, GVAL)
 ```
 
 Tables and memories have proper subtyping, unlike globals and functions where a type is only a subtype of itself.

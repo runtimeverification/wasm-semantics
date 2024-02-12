@@ -122,10 +122,10 @@ def ints(iis: Iterable[int]) -> KInner:
 def refs(values: Iterable[int | None]) -> KInner:
     def idx_to_ref(idx: int | None) -> KInner:
         if idx is None:
-            ref = KApply('<_>null', [funcref])
+            ref = KApply('RefValNull', [funcref])
         else:
             # TODO find a readable symbol for RefVals
-            ref = KApply('<_>__WASM-DATA-INTERNAL-SYNTAX_RefVal_RefValType_Int', [funcref, KInt(idx)])
+            ref = KApply('RefVal', [funcref, KInt(idx)])
         return KApply('ListRefItem', [ref])
 
     return KNamedList(REFS, REFS_NIL, [idx_to_ref(i) for i in values])
