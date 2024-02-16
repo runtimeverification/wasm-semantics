@@ -910,7 +910,7 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyk"
-version = "0.1.629"
+version = "0.1.630"
 description = ""
 category = "main"
 optional = false
@@ -932,8 +932,8 @@ xdg-base-dirs = "^6.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/pyk.git"
-reference = "v0.1.629"
-resolved_reference = "8bec235cf7356a844066d44279f7070e4a2ca13a"
+reference = "v0.1.630"
+resolved_reference = "b7934d59fa2c2a994a61a9d589abf88e5c324e02"
 
 [[package]]
 name = "pyperclip"
@@ -960,14 +960,14 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "8.0.0"
+version = "8.0.1"
 description = "pytest: simple powerful testing with Python"
 category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.0.0-py3-none-any.whl", hash = "sha256:50fb9cbe836c3f20f0dfa99c565201fb75dc54c8d76373cd1bde06b06657bdb6"},
-    {file = "pytest-8.0.0.tar.gz", hash = "sha256:249b1b0864530ba251b7438274c4d251c58d868edaaec8762893ad4a0d71c36c"},
+    {file = "pytest-8.0.1-py3-none-any.whl", hash = "sha256:3e4f16fe1c0a9dc9d9389161c127c3edc5d810c38d6793042fb81d9f48a59fca"},
+    {file = "pytest-8.0.1.tar.gz", hash = "sha256:267f6563751877d772019b13aacbe4e860d73fe8f651f28112e9ac37de7513ae"},
 ]
 
 [package.dependencies]
@@ -1190,4 +1190,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "4b99713b23f9fc2ac93e4c6f8959f43b9f2d2801b2da302736e2e03e10bde4b8"
+content-hash = "be0c762c98d00188f3a4c9d3b78844f96583a5372c4288bf928b3f23c349859d"
