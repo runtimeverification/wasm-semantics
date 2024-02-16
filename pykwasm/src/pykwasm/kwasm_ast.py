@@ -23,11 +23,11 @@ TYPE = 'aTypeDefn'
 FUNC_TYPE = 'aFuncType'
 VEC_TYPE = 'aVecType'
 VAL_TYPES = 'listValTypes'
-VAL_TYPES_NIL = '.List{\"listValTypes\"}_ValTypes'
+VAL_TYPES_NIL = '.List{\"listValTypes\"}'
 I32 = 'i32'
 I64 = 'i32'
 INTS = 'listInt'
-INTS_NIL = '.List{\"listInt\"}_Ints'
+INTS_NIL = '.List{\"listInt\"}'
 
 REFS = '_ListRef_'
 REFS_NIL = '.ListRef'
@@ -136,7 +136,7 @@ def refs(values: Iterable[int | None]) -> KInner:
 ###########
 
 EMPTY_ID = KApply('.Identifier', [])
-EMPTY_STMTS = '.List{\"listStmt\"}_EmptyStmts'
+EMPTY_STMTS = '.List{\"listStmt\"}'
 EMPTY_MAP = KApply('.Map', [])
 EMPTY_OPT_STRING = KApply('.String', [])
 EMPTY_DEFNS = KApply(EMPTY_STMTS, [])
