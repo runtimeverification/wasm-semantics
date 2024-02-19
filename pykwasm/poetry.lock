@@ -22,14 +22,14 @@ tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "p
 
 [[package]]
 name = "autoflake"
-version = "2.2.1"
+version = "2.3.0"
 description = "Removes unused imports and unused variables"
 category = "dev"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "autoflake-2.2.1-py3-none-any.whl", hash = "sha256:265cde0a43c1f44ecfb4f30d95b0437796759d07be7706a2f70e4719234c0f79"},
-    {file = "autoflake-2.2.1.tar.gz", hash = "sha256:62b7b6449a692c3c9b0c916919bbc21648da7281e8506bcf8d3f8280e431ebc1"},
+    {file = "autoflake-2.3.0-py3-none-any.whl", hash = "sha256:79a51eb8c0744759d2efe052455ab20aa6a314763510c3fd897499a402126327"},
+    {file = "autoflake-2.3.0.tar.gz", hash = "sha256:8c2011fa34701b9d7dcf05b9873bc4859d4fce4e62dfea90dffefd1576f5f01d"},
 ]
 
 [package.dependencies]
@@ -910,7 +910,7 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyk"
-version = "0.1.631"
+version = "0.1.632"
 description = ""
 category = "main"
 optional = false
@@ -932,8 +932,8 @@ xdg-base-dirs = "^6.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/pyk.git"
-reference = "v0.1.631"
-resolved_reference = "02ec6eb1d39f126633f10e69b07f2661e05feb8d"
+reference = "v0.1.632"
+resolved_reference = "1ec0bc821058f06214e3a7f60a3fb3e3357968f1"
 
 [[package]]
 name = "pyperclip"
@@ -1190,4 +1190,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d7b733c65251dc0aab5dc0ef2441e9c70763a78132f1af445a41a87eb3e2a6b9"
+content-hash = "b7d38828da7ec30973329f61fe207261bfe3768005b49de68dc06fa913271953"
