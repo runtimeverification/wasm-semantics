@@ -16,7 +16,7 @@ module LIST-REF
           ]
   syntax ListRef ::= ".ListRef"
           [ function, total, hook(LIST.unit), klabel(.ListRef),
-            symbol, smtlib(smt_seq_nil), latex(\dotCt{ListRef})
+            symbol, smtlib(smt_seq_nil)
           ]
   syntax ListRef ::= ListItem(RefVal)
           [ function, total, hook(LIST.element), klabel(ListRefItem),
