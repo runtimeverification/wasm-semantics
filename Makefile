@@ -2,55 +2,16 @@
 # --------
 
 BUILD_DIR := .build
-DEPS_DIR  := deps
 DEFN_DIR  := $(BUILD_DIR)/defn
 K_INCLUDE_DIR ?= $(CURDIR)
 
-K_SUBMODULE := $(DEPS_DIR)/k
-ifneq (,$(wildcard deps/k/k-distribution/target/release/k/bin/*))
-  K_RELEASE ?= $(abspath $(K_SUBMODULE)/k-distribution/target/release/k)
-else
-  K_RELEASE ?= $(dir $(shell which kompile))..
-endif
-K_BIN := $(K_RELEASE)/bin
-K_LIB := $(K_RELEASE)/lib/kframework
-export K_RELEASE
-
-ifneq ($(RELEASE),)
-    K_BUILD_TYPE := Release
-else
-    K_BUILD_TYPE := Debug
-endif
-
-PATH := $(K_BIN):$(PATH)
-export PATH
-
-PYK_PATH             := $(abspath $(K_SUBMODULE)/pyk/src/)
-PYWASM_PATH          := ./deps/py-wasm
-
-PYTHONPATH := $(PYK_PATH)
-export PYTHONPATH
-
-.PHONY: all clean deps                                                     \
+.PHONY: all                                                                \
         build build-llvm build-haskell build-wrc20                         \
         test test-execution test-simple test-prove                         \
         test-conformance test-conformance-parse test-conformance-supported \
         media presentations reports
 
 all: build
-
-clean:
-	rm -rf $(BUILD_DIR)
-
-# Build Dependencies (K Submodule)
-# --------------------------------
-
-K_JAR := $(K_SUBMODULE)/k-distribution/target/release/k/lib/java/kernel-1.0-SNAPSHOT.jar
-
-deps: $(K_JAR) $(TANGLER)
-
-$(K_JAR):
-	cd $(K_SUBMODULE) && mvn package -DskipTests -Dproject.build.type=$(K_BUILD_TYPE)
 
 # Building Definition
 # -------------------
