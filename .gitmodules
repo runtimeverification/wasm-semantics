@@ -1,7 +1,3 @@
-[submodule "deps/k"]
-	path = deps/k
-	url = https://github.com/kframework/k
-	ignore = untracked
 [submodule "tests/wasm-tests"]
 	path = tests/wasm-tests
 	url = https://github.com/webassembly/spec
