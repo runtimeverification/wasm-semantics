@@ -25,12 +25,12 @@ module MAP-INT-TO-INT
          ]
   syntax MapIntToInt ::= ".MapIntToInt"
          [ function, total, hook(MAP.unit),
-           klabel(.MapIntToInt), symbol, latex(\dotCt{MapIntToInt})
+           klabel(.MapIntToInt), symbol
          ]
   syntax MapIntToInt ::= WrappedInt "Int2Int|->" WrappedInt
          [ function, total, hook(MAP.element),
            klabel(_Int2Int|->_), symbol,
-           latex({#1}\mapsto{#2}), injective
+           injective
          ]
 
   syntax priorities _Int2Int|->_ > _MapIntToInt_ .MapIntToInt
@@ -50,9 +50,7 @@ module MAP-INT-TO-INT
                    klabel(_MapIntToInt[_<-undef]), symbol
                  ]
   syntax MapIntToInt ::= MapIntToInt "-Map" MapIntToInt
-                 [ function, total, hook(MAP.difference),
-                   latex({#1}-_{\it MapIntToIntMap}{#2})
-                 ]
+                 [ function, total, hook(MAP.difference) ]
   syntax MapIntToInt ::= updateMap(MapIntToInt, MapIntToInt)
                  [function, total, hook(MAP.updateAll)]
 

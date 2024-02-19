@@ -16,7 +16,7 @@ module SPARSE-BYTES
           ]
   syntax SparseBytes ::= ".SparseBytes"
           [ function, total, hook(LIST.unit), klabel(.SparseBytes),
-            symbol, smtlib(smt_seq_nil), latex(\dotCt{SparseBytes})
+            symbol, smtlib(smt_seq_nil)
           ]
   syntax SparseBytes ::= SBChunk(SBItem)
           [ function, total, hook(LIST.element), klabel(SparseBytesItem),
