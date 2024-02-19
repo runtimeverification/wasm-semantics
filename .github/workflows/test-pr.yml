@@ -8,6 +8,31 @@ concurrency:
 
 jobs:
 
+  version-bump:
+    name: 'Version Bump'
+    runs-on: [self-hosted, linux, flyweight-ephemeral]
+    steps:
+      - name: 'Check out code'
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.JENKINS_GITHUB_PAT }}
+          # fetch-depth 0 means deep clone the repo
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: 'Configure GitHub user'
+        run: |
+          git config user.name devops
+          git config user.email devops@runtimeverification.com
+      - name: 'Update version'
+        run: |
+          og_version=$(git show origin/${GITHUB_BASE_REF}:package/version)
+          ./package/version.sh bump ${og_version}
+          ./package/version.sh sub
+          new_version=$(cat package/version)
+          git add --update && git commit --message "Set Version: ${new_version}" || true
+      - name: 'Push updates'
+        run: git push origin HEAD:${GITHUB_HEAD_REF}
+
   pykwasm-code-quality-checks:
     name: 'Code Quality Checks'
     runs-on: ubuntu-latest
