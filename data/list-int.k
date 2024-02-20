@@ -16,7 +16,7 @@ module LIST-INT
           ]
   syntax ListInt ::= ".ListInt"
           [ function, total, hook(LIST.unit), klabel(.ListInt),
-            symbol, smtlib(smt_seq_nil), latex(\dotCt{ListInt})
+            symbol, smtlib(smt_seq_nil)
           ]
   syntax ListInt ::= ListItem(WrappedInt)
           [ function, total, hook(LIST.element), klabel(ListIntItem),

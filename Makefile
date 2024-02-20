@@ -50,7 +50,8 @@ KOMPILE_LLVM := kompile --backend llvm --md-selector "$(tangle_selector)" \
 
 KOMPILE_HASKELL := kompile --backend haskell --md-selector "$(tangle_selector)" \
                    $(KOMPILE_OPTS)                                              \
-                   $(HASKELL_KOMPILE_OPTS)
+                   $(HASKELL_KOMPILE_OPTS)                                      \
+                   --warnings-to-errors
 
 ### LLVM
 
