@@ -129,7 +129,7 @@ Passing Control
 The test embedder passes control to the execution cell in Wasm.
 
 ```k
-    rule <k> PGM => . </k>
+    rule <k> PGM => .K </k>
          <instrs> .K
                => #initSpectestModule
                ~> sequenceStmts(text2abstract(PGM))
@@ -165,7 +165,7 @@ We add `token` as a value in order to use as a separator in `<valstack>`.
 ```k
     syntax Val ::= "token"
  // ----------------------
-    rule <instrs> token => . ... </instrs>
+    rule <instrs> token => .K ... </instrs>
          <valstack> S => token : S </valstack>
     
     syntax ValStack ::= takeUntilToken(ValStack)    [function, total]
@@ -183,7 +183,7 @@ We add `token` as a value in order to use as a separator in `<valstack>`.
 
     syntax Assertion ::= "#dropUntilToken"
  // --------------------------------------------------
-    rule <instrs> #dropUntilToken => . ... </instrs>
+    rule <instrs> #dropUntilToken => .K ... </instrs>
          <valstack> S => dropUntilToken(S) </valstack>
 ```
 
@@ -255,7 +255,7 @@ We will reference modules by name in imports.
     rule <instrs> ( register S ID:Identifier ) => ( register S IDX ) ... </instrs>
          <moduleIds> ... ID |-> IDX ... </moduleIds>
 
-    rule <instrs> ( register S:WasmString IDX:Int ) => . ... </instrs>
+    rule <instrs> ( register S:WasmString IDX:Int ) => .K ... </instrs>
          <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
 ```
 
@@ -363,13 +363,13 @@ Except `assert_return` and `assert_trap`, the remaining rules are directly reduc
                   ... 
          </instrs>
 
-    rule <instrs> (assert_return_canonical_nan  _ACT)     => . ... </instrs>
-    rule <instrs> (assert_return_arithmetic_nan _ACT)     => . ... </instrs>
+    rule <instrs> (assert_return_canonical_nan  _ACT)     => .K ... </instrs>
+    rule <instrs> (assert_return_arithmetic_nan _ACT)     => .K ... </instrs>
     rule <instrs> (assert_trap        ACT:Action    DESC) => ACT ~> #assertTrap DESC ... </instrs>
-    rule <instrs> (assert_exhaustion _ACT:Action   _DESC) => . ... </instrs>
-    rule <instrs> (assert_malformed  _MOD          _DESC) => . ... </instrs>
-    rule <instrs> (assert_invalid    _MOD          _DESC) => . ... </instrs>
-    rule <instrs> (assert_unlinkable _MOD          _DESC) => . ... </instrs>
+    rule <instrs> (assert_exhaustion _ACT:Action   _DESC) => .K ... </instrs>
+    rule <instrs> (assert_malformed  _MOD          _DESC) => .K ... </instrs>
+    rule <instrs> (assert_invalid    _MOD          _DESC) => .K ... </instrs>
+    rule <instrs> (assert_unlinkable _MOD          _DESC) => .K ... </instrs>
     rule <instrs> (assert_trap       MOD:ModuleDecl DESC) => sequenceStmts(text2abstract(MOD .Stmts)) ~> #assertTrap DESC ... </instrs>
 ```
 
@@ -390,7 +390,7 @@ And we implement some helper assertions to help testing.
 This asserts that a `trap` was just thrown.
 
 ```k
-    rule <instrs> trap ~> #assertTrap _ => . ... </instrs>
+    rule <instrs> trap ~> #assertTrap _ => .K ... </instrs>
 ```
 
 ### ValStack Assertions
@@ -400,16 +400,16 @@ These functions make assertions about the state of the `<valstack>` cell.
 ```k
     syntax Assertion ::= "#assertStackAux"        ValStack ValStack
  // ---------------------------------------------------------------
-    rule <instrs> #assertTopStack VAL _ => . ... </instrs>
+    rule <instrs> #assertTopStack VAL _ => .K ... </instrs>
          <valstack> VAL' : _ </valstack>
       requires equalVal(VAL, VAL')
 
-    rule <instrs> #assertTopStackExactly A _ => . ... </instrs> <valstack> A : _VALSTACK </valstack>
+    rule <instrs> #assertTopStackExactly A _ => .K ... </instrs> <valstack> A : _VALSTACK </valstack>
 
     rule <instrs> #assertStack S1 _ => #assertStackAux S1 S2  ... </instrs>
          <valstack> S2 </valstack>
 
-    rule <instrs> #assertStackAux .ValStack  _ => . ... </instrs>
+    rule <instrs> #assertStackAux .ValStack  _ => .K ... </instrs>
     rule <instrs> #assertStackAux (V1 : S1) (V2 : S2) => #assertStackAux S1 S2 ... </instrs>
       requires equalVal(V1, V2)
 
@@ -427,10 +427,10 @@ These functions make assertions about the state of the `<valstack>` cell.
 The operator `#assertLocal`/`#assertGlobal` operators perform a check for a local/global variable's value.
 
 ```k
-    rule <instrs> #assertLocal INDEX VALUE _ => . ... </instrs>
+    rule <instrs> #assertLocal INDEX VALUE _ => .K ... </instrs>
          <locals> ... INDEX |-> VALUE ... </locals>
 
-    rule <instrs> #assertGlobal TFIDX VALUE _ => . ... </instrs>
+    rule <instrs> #assertGlobal TFIDX VALUE _ => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -454,7 +454,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 `#assertNextTypeIdx` checks whether the number of types are allocated correctly.
 
 ```k
-    rule <instrs> #assertType IDX FTYPE => . ... </instrs>
+    rule <instrs> #assertType IDX FTYPE => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -462,7 +462,7 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
            ...
          </moduleInst>
 
-    rule <instrs> #assertNextTypeIdx IDX => . ... </instrs>
+    rule <instrs> #assertNextTypeIdx IDX => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -487,7 +487,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
          </moduleInst>
       requires isListIndex(IDX, FUNCADDRS)
 
-    rule <instrs> #assertFunctionHelper ADDR FTYPE LTYPE  => . ... </instrs>
+    rule <instrs> #assertFunctionHelper ADDR FTYPE LTYPE  => .K ... </instrs>
          <funcs>
            <funcDef>
              <fAddr>  ADDR </fAddr>
@@ -504,7 +504,7 @@ This simply checks that the given function exists in the `<funcs>` cell and has 
 This asserts related operation about tables.
 
 ```k
-    rule <instrs> #assertTable TFIDX SIZE MAX _MSG => . ... </instrs>
+    rule <instrs> #assertTable TFIDX SIZE MAX _MSG => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -523,7 +523,7 @@ This asserts related operation about tables.
          </tabs>
       requires size(DATA) ==Int SIZE
 
-    rule <instrs> #assertTableElem (KEY , VAL:Int) _MSG => . ... </instrs>
+    rule <instrs> #assertTableElem (KEY , VAL:Int) _MSG => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -562,7 +562,7 @@ This asserts related operation about tables.
 This checks that the last allocated memory has the given size and max value.
 
 ```k
-    rule <instrs> #assertMemory TFIDX SIZE MAX _MSG => . ... </instrs>
+    rule <instrs> #assertMemory TFIDX SIZE MAX _MSG => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -583,7 +583,7 @@ This checks that the last allocated memory has the given size and max value.
     rule <instrs> #assertMemoryData (KEY , VAL) MSG => #assertMemoryData CUR (KEY, VAL) MSG ... </instrs>
          <curModIdx> CUR </curModIdx>
 
-    rule <instrs> #assertMemoryData MODIDX (KEY , VAL) _MSG => . ... </instrs>
+    rule <instrs> #assertMemoryData MODIDX (KEY , VAL) _MSG => .K ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
@@ -607,7 +607,7 @@ These assertions act on the last module defined.
 
 ```k
     rule [assertNamedModule]:
-         <instrs> #assertNamedModule NAME _S => . ... </instrs>
+         <instrs> #assertNamedModule NAME _S => .K ... </instrs>
          <moduleIds> ... NAME |-> IDX ... </moduleIds>
          <moduleInstances>
            <moduleInst>
@@ -626,11 +626,11 @@ Registry Assertations
 We also want to be able to test that the embedder's registration function is working.
 
 ```k
-    rule <instrs> #assertRegistrationUnnamed REGNAME _ => . ... </instrs>
+    rule <instrs> #assertRegistrationUnnamed REGNAME _ => .K ... </instrs>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
 
-    rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => . ... </instrs>
+    rule <instrs> #assertRegistrationNamed REGNAME _NAME _ => .K ... </instrs>
          <modIdx> IDX </modIdx>
          <moduleRegistry> ... REGNAME |-> IDX ...  </moduleRegistry>
 ```
