@@ -1,7 +1,7 @@
 
 
 module LIST-REF
-  import WASM-DATA-INTERNAL-SYNTAX
+  imports WASM-DATA-INTERNAL-SYNTAX
   imports private INT-SYNTAX
   imports private BASIC-K
 

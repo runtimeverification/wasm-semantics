@@ -4,7 +4,7 @@ Auxiliary Wasm Commands
 Generally useful commands that are not part of the actual Wasm semantics.
 
 ```k
-require "wasm.md"
+requires "wasm.md"
 
 module WASM-AUXIL-SYNTAX
     imports WASM-SYNTAX

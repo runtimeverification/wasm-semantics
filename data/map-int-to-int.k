@@ -1,7 +1,7 @@
 
-require "int-type.k"
-// require "int-type.k"
-require "list-int.k"
+requires "int-type.k"
+// requires "int-type.k"
+requires "list-int.k"
 
 module MAP-INT-TO-INT
   imports private BOOL-SYNTAX
@@ -33,7 +33,7 @@ module MAP-INT-TO-INT
            injective
          ]
 
-  syntax priorities _Int2Int|->_ > _MapIntToInt_ .MapIntToInt
+  syntax priority _Int2Int|->_ > _MapIntToInt_ .MapIntToInt
   syntax non-assoc _Int2Int|->_
   syntax WrappedInt ::= MapIntToInt "[" WrappedInt "]"
                  [function, hook(MAP.lookup), klabel(MapIntToInt:lookup), symbol]

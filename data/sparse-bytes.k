@@ -1,8 +1,8 @@
 
 module SPARSE-BYTES
-  import BOOL
-  import BYTES
-  import INT
+  imports BOOL
+  imports BYTES
+  imports INT
 
   syntax SBItem ::= #empty(Int)      [symbol, klabel(SBItem:empty)]
                   | #bytes(Bytes)    [symbol, klabel(SBItem:bytes)]

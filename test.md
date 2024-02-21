@@ -4,8 +4,8 @@ KWasm Testing
 For testing, we augment the semantics with some helpers.
 
 ```k
-require "wasm-text.md"
-require "auxil.md"
+requires "wasm-text.md"
+requires "auxil.md"
 ```
 
 Module `WASM-TEST-SYNTAX` is just used for program parsing and `WASM-TEST` consists of the definitions both for parsing and execution.
