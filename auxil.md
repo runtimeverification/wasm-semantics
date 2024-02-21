@@ -21,7 +21,7 @@ module WASM-AUXIL
     imports WASM
 
     rule [clearConfig]:
-         <instrs> #clearConfig => . ...     </instrs>
+         <instrs> #clearConfig => .K ...    </instrs>
          <curModIdx>         _ => .Int      </curModIdx>
          <valstack>          _ => .ValStack </valstack>
          <locals>            _ => .Map      </locals>
