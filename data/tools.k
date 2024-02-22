@@ -1,4 +1,4 @@
-require "list-int.k"
+requires "list-int.k"
 
 module WASM-DATA-TOOLS
     imports BOOL

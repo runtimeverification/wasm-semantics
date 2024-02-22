@@ -1,6 +1,6 @@
 
 module INT-TYPE
-  import INT
+  imports INT
 
   syntax WrappedInt
   syntax Int

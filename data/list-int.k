@@ -1,4 +1,4 @@
-require "int-type.k"
+requires "int-type.k"
 
 module LIST-INT
   imports private INT-SYNTAX
