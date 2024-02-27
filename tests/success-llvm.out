@@ -1,10 +1,10 @@
 <wasm-test>
   <k>
-    .
+    .K
   </k>
   <wasm>
     <instrs>
-      .
+      .K
     </instrs>
     <valstack>
       .ValStack
