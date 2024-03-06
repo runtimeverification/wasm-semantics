@@ -59,10 +59,10 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax Stmt  ::= Instr | Defn
  // -----------------------------
 
-    syntax EmptyStmts ::= List{EmptyStmt , ""} [klabel(listStmt), symbol]
-    syntax Instrs     ::= List{Instr     , ""} [klabel(listStmt)]
-    syntax Defns      ::= List{Defn      , ""} [klabel(listStmt)]
-    syntax Stmts      ::= List{Stmt      , ""} [klabel(listStmt)]
+    syntax EmptyStmts ::= List{EmptyStmt , ""} [overload(listStmt), terminator-symbol(".List{\"listStmt\"}")]
+    syntax Instrs     ::= List{Instr     , ""} [overload(listStmt)]
+    syntax Defns      ::= List{Defn      , ""} [overload(listStmt)]
+    syntax Stmts      ::= List{Stmt      , ""} [overload(listStmt)]
  // -------------------------------------------------------------
 
     syntax Instrs ::= EmptyStmts
@@ -104,7 +104,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax TypeDecl    ::= "(" TypeDecl ")"     [bracket]
                          | TypeKeyWord ValTypes
                          | "param" Identifier ValType
-    syntax TypeDecls   ::= List{TypeDecl , ""} [klabel(listTypeDecl)]
+    syntax TypeDecls   ::= List{TypeDecl , ""} [symbol(listTypeDecl), terminator-symbol(".List{\"listTypeDecl\"}")]
  // -----------------------------------------------------------------
 
     syntax StoreOp ::= "store"    [klabel(storeOpStore),   symbol]

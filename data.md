@@ -53,7 +53,7 @@ The exception is for characters that are explicitly escaped which can represent 
     syntax String ::= #parseWasmString   ( WasmStringToken ) [function, total, hook(STRING.token2string)]
  // ----------------------------------------------------------------------------------------------------------
 
-    syntax DataString ::= List{WasmString, ""} [klabel(listWasmString)]
+    syntax DataString ::= List{WasmString, ""} [symbol(listWasmString), terminator-symbol(".List{\"listWasmString\"}")]
  // -------------------------------------------------------------------
 ```
 
@@ -74,7 +74,7 @@ Element Segment is a list of indices.
 It is used when initializing a WebAssembly table, or used as the parameter of the `br_table` function.
 
 ```k
-    syntax ElemSegment ::= List{Index, ""} [klabel(listIndex)]
+    syntax ElemSegment ::= List{Index, ""} [symbol(listIndex), terminator-symbol(".List{\"listIndex\"}")]
  // ----------------------------------------------------------
 ```
 
@@ -104,7 +104,7 @@ WebAssembly has three kinds of [Value types](https://webassembly.github.io/spec/
 There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax ValTypes ::= List{ValType, ""} [klabel(listValTypes), symbol]
+    syntax ValTypes ::= List{ValType, ""} [symbol(listValTypes), terminator-symbol(".List{\"listValTypes\"}")]
  // --------------------------------------------------------------------
 ```
 
@@ -296,7 +296,7 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 ### ElemSegment
 
 ```k
-    syntax Ints ::= List{Int, ""} [klabel(listInt), symbol]
+    syntax Ints ::= List{Int, ""} [symbol(listInt), terminator-symbol(".List{\"listInt\"}")]
  // -------------------------------------------------------
 
     syntax Int   ::= #lenElemSegment (ElemSegment)      [function, total]
