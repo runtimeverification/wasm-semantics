@@ -232,7 +232,7 @@ The following is the text format representation of an import specification.
     syntax LocalDecl  ::= "(" LocalDecl ")"           [bracket]
                         | "local"            ValTypes
                         | "local" Identifier ValType
-    syntax LocalDecls ::= List{LocalDecl , ""}        [klabel(listLocalDecl)]
+    syntax LocalDecls ::= List{LocalDecl , ""}        [symbol(listLocalDecl), terminator-symbol(".List{\"listLocalDecl\"}")]
  // -------------------------------------------------------------------------
 ```
 
