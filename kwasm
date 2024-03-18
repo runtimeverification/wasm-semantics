@@ -59,7 +59,7 @@ run_kast() {
 
     preprocess
     output_mode="${1:-kast}" ; shift
-    kast --directory "$backend_dir" "$run_file" --output "$output_mode" "$@"
+    kast --definition "$backend_dir/test-kompiled" "$run_file" --output "$output_mode" "$@"
 }
 
 run_prove() {
