@@ -820,17 +820,17 @@ url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.2.0.ta
 
 [[package]]
 name = "pybind11"
-version = "2.11.1"
+version = "2.12.0"
 description = "Seamless operability between C++11 and Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "pybind11-2.11.1-py3-none-any.whl", hash = "sha256:33cdd02a6453380dd71cc70357ce388ad1ee8d32bd0e38fc22b273d050aa29b3"},
-    {file = "pybind11-2.11.1.tar.gz", hash = "sha256:00cd59116a6e8155aecd9174f37ba299d1d397ed4a6b86ac1dfe01b3e40f2cc4"},
+    {file = "pybind11-2.12.0-py3-none-any.whl", hash = "sha256:df8d60b94f9e714d81013db233393d430ebf9f3551642b82291cf1b14d1afdbd"},
+    {file = "pybind11-2.12.0.tar.gz", hash = "sha256:5e3c557a84b06b969247630407fc4d985bed157b4253b13153b8e8e165e0c3dc"},
 ]
 
 [package.extras]
-global = ["pybind11-global (==2.11.1)"]
+global = ["pybind11-global (==2.12.0)"]
 
 [[package]]
 name = "pycodestyle"
@@ -871,7 +871,7 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyk"
-version = "0.1.750"
+version = "0.1.751"
 description = ""
 optional = false
 python-versions = "^3.10"
@@ -892,8 +892,8 @@ xdg-base-dirs = "^6.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/pyk.git"
-reference = "v0.1.750"
-resolved_reference = "62c9ba12466596f80d96c07776946d63982e469a"
+reference = "v0.1.751"
+resolved_reference = "1f2ebed939246de8cc27a83ec9c682dbab1d798a"
 
 [[package]]
 name = "pyperclip"
@@ -1134,4 +1134,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "0d01a241e0ea02d6c4c1ee44a4909b101bc3146da70f7f0d957fcdf43bea2275"
+content-hash = "e74ad82f383c1be4f63e1705aefeb38d4e90ca2a6cd884d1d8107024089bde9b"
