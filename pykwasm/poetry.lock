@@ -346,13 +346,13 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "execnet"
-version = "2.1.0"
+version = "2.1.1"
 description = "execnet: rapid multi-Python deployment"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "execnet-2.1.0-py3-none-any.whl", hash = "sha256:ad174d7705410adc9359ba4822bad211d71cdbd59ff70304e1aa41d196b4b4d3"},
-    {file = "execnet-2.1.0.tar.gz", hash = "sha256:dc4a63f86afb40f8429f59f938d6cb97846f9e7cf7dd9eb4b8c26016965b7ac0"},
+    {file = "execnet-2.1.1-py3-none-any.whl", hash = "sha256:26dee51f1b80cebd6d0ca8e74dd8745419761d3bef34163928cbebbdc4749fdc"},
+    {file = "execnet-2.1.1.tar.gz", hash = "sha256:5189b52c6121c24feae288166ab41b32549c7e2348652736540b9e6e7d4e72e3"},
 ]
 
 [package.extras]
@@ -798,9 +798,8 @@ version = "0.2.0"
 description = "py-wasm: A python implementation of the web assembly interpreter"
 optional = false
 python-versions = ">=3.5, <4"
-files = [
-    {file = "0.2.0.tar.gz", hash = "sha256:83d335ef1ec5064ee8efffdcba88a69644974953726b58003b48fe4a735eb686"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 cytoolz = {version = ">=0.9.0,<1.0.0", markers = "implementation_name == \"cpython\""}
@@ -815,8 +814,10 @@ lint = ["flake8 (==3.6.0)", "isort (>=4.3.9,<5)", "mypy (==1.6.1)"]
 test = ["hypothesis (>=6.88.1,<7)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.2.0,<5)", "pytest-xdist (>=3.2.0,<4)", "tox (>=4.11.3,<5)"]
 
 [package.source]
-type = "url"
-url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.2.0.tar.gz"
+type = "git"
+url = "https://github.com/runtimeverification/py-wasm.git"
+reference = "0.2.0"
+resolved_reference = "2852f9f6da5fd93f9b76a336b4be71cb621c0059"
 
 [[package]]
 name = "pybind11"
@@ -1134,4 +1135,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "f96bed10cf5adfe15a04b4be9c609619ede3c344b172346a15f0b22a8ef8a240"
+content-hash = "f436cc4438b6d78d1a78d202ffc080348ccb1a826d519cefdabaaa43b61f1547"
