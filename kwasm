@@ -6,6 +6,7 @@ shopt -s extglob
 notif() { echo "== $@" >&2 ; }
 fatal() { echo "[FATAL] $@" ; exit 1 ; }
 
+usage_name="${USAGE_NAME:-$0}"
 kwasm_dir="${KWASM_DIR:-$(dirname $0)}"
 build_dir="$kwasm_dir/.build"
 defn_dir="${KWASM_DEFN_DIR:-$build_dir/defn}"
@@ -21,10 +22,6 @@ fi
 
 export PATH="$k_release_dir/lib/native/linux:$k_release_dir/lib/native/linux64:$k_release_dir/bin/:$PATH"
 export LD_LIBRARY_PATH="$k_release_dir/lib/native/linux64:$lib_dir:${LD_LIBRARY_PATH:-}"
-
-test_logs="$build_dir/logs"
-mkdir -p "$test_logs"
-test_log="$test_logs/tests.log"
 
 export K_OPTS="${K_OPTS:--Xmx16G -Xss512m}"
 
@@ -79,18 +76,18 @@ run_prove() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
-           $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <axioms_file> <K args>*
+    usage: $usage_name run        [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
+           $usage_name kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
+           $usage_name prove      [--backend (haskell)] [--repl|--bug-report] <spec> <axioms_file> <K args>*
 
-           $0 [help|--help|version|--version]
+           $usage_name [help|--help|version|--version]
 
-       $0 run        : Run a single WebAssembly program
-       $0 kast       : Parse a single WebAssembly program and output it in supported format
-       $0 prove      : Run a WebAssembly K proof
+       $usage_name run        : Run a single WebAssembly program
+       $usage_name kast       : Parse a single WebAssembly program and output it in supported format
+       $usage_name prove      : Run a WebAssembly K proof
 
-       $0 help    : Display this help message.
-       $0 version : Display the KWasm, K, Kore, and Z3 versions in use.
+       $usage_name help    : Display this help message.
+       $usage_name version : Display the KWasm, K, Kore, and Z3 versions in use.
 
        Note: <pgm> is a path to a file containing a WebAssembly program.
              <spec> is a K specification to be proved.

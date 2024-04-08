@@ -2,7 +2,7 @@
 # --------
 
 BUILD_DIR := .build
-DEFN_DIR  := $(BUILD_DIR)/defn
+DEFN_DIR  ?= $(BUILD_DIR)/defn
 K_INCLUDE_DIR ?= $(CURDIR)
 
 .PHONY: all                                                                \
