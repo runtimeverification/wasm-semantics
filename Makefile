@@ -3,7 +3,6 @@
 
 BUILD_DIR := .build
 DEFN_DIR  := $(BUILD_DIR)/defn
-K_INCLUDE_DIR ?= $(CURDIR)
 
 .PHONY: all                                                                \
         build build-llvm build-haskell build-wrc20                         \
@@ -22,6 +21,7 @@ HASKELL_KOMPILE_OPTS :=
 
 tangle_selector := k
 
+SOURCE_DIR         := pykwasm/src/pykwasm/kdist
 SOURCE_FILES       := data         \
                       kwasm-lemmas \
                       numeric      \
@@ -30,7 +30,7 @@ SOURCE_FILES       := data         \
                       wasm-text    \
                       wrc20
 EXTRA_SOURCE_FILES :=
-ALL_SOURCE_FILES   := $(patsubst %, %.md, $(SOURCE_FILES)) $(EXTRA_SOURCE_FILES)
+ALL_SOURCE_FILES   := $(patsubst %, $(SOURCE_DIR)/%.md, $(SOURCE_FILES)) $(EXTRA_SOURCE_FILES)
 
 build: build-llvm build-haskell build-wrc20
 
@@ -58,15 +58,15 @@ KOMPILE_HASKELL := kompile --backend haskell --md-selector "$(tangle_selector)" 
 llvm_files         := $(ALL_SOURCE_FILES)
 llvm_main_module   := WASM-TEST
 llvm_syntax_module := $(llvm_main_module)-SYNTAX
-llvm_main_file     := test
-llvm_dir           := $(DEFN_DIR)/llvm/$(llvm_main_file)-kompiled
+llvm_main_file     := $(SOURCE_DIR)/test.md
+llvm_dir           := $(DEFN_DIR)/llvm/test-kompiled
 llvm_kompiled      := $(llvm_dir)/interpreter
 
 build-llvm: $(llvm_kompiled)
 
 $(llvm_kompiled): $(llvm_files)
-	$(KOMPILE_LLVM) $(llvm_main_file).md      \
-	    --output-definition $(llvm_dir) -I $(K_INCLUDE_DIR)  \
+	$(KOMPILE_LLVM) $(llvm_main_file)         \
+	    --output-definition $(llvm_dir)       \
 	    --main-module $(llvm_main_module)     \
 	    --syntax-module $(llvm_syntax_module) \
 	    --emit-json
@@ -76,33 +76,33 @@ $(llvm_kompiled): $(llvm_files)
 haskell_files         := $(ALL_SOURCE_FILES)
 haskell_main_module   := KWASM-LEMMAS
 haskell_syntax_module := WASM-TEXT-SYNTAX
-haskell_main_file     := kwasm-lemmas
-haskell_dir           := $(DEFN_DIR)/haskell/$(haskell_main_file)-kompiled
+haskell_main_file     := $(SOURCE_DIR)/kwasm-lemmas.md
+haskell_dir           := $(DEFN_DIR)/haskell/kwasm-lemmas-kompiled
 haskell_kompiled      := $(haskell_dir)/definition.kore
 
 build-haskell: $(haskell_kompiled)
 
 $(haskell_kompiled): $(haskell_files)
-	$(KOMPILE_HASKELL) $(haskell_main_file).md   \
-	    --output-definition $(haskell_dir) -I $(K_INCLUDE_DIR)  \
-	    --main-module $(haskell_main_module)     \
+	$(KOMPILE_HASKELL) $(haskell_main_file)  \
+	    --output-definition $(haskell_dir)   \
+	    --main-module $(haskell_main_module) \
 	    --syntax-module $(haskell_syntax_module)
 
 ### WRC-20 Verification
 
-wrc20_files         := $(haskell_files) wrc20.md
+wrc20_files         := $(haskell_files)
 wrc20_main_module   := WRC20-LEMMAS
 wrc20_syntax_module := WASM-TEXT-SYNTAX
-wrc20_main_file     := wrc20
-wrc20_dir           := $(DEFN_DIR)/haskell/$(wrc20_main_file)-kompiled
+wrc20_main_file     := $(SOURCE_DIR)/wrc20.md
+wrc20_dir           := $(DEFN_DIR)/haskell/wrc20-kompiled
 wrc20_kompiled      := $(wrc20_dir)/definition.kore
 
 build-wrc20: $(wrc20_kompiled)
 
 $(wrc20_kompiled): $(wrc20_files)
-	$(KOMPILE_HASKELL) $(wrc20_main_file).md   \
-	    --output-definition $(wrc20_dir) -I $(K_INCLUDE_DIR)  \
-	    --main-module $(wrc20_main_module)     \
+	$(KOMPILE_HASKELL) $(wrc20_main_file)  \
+	    --output-definition $(wrc20_dir)   \
+	    --main-module $(wrc20_main_module) \
 	    --syntax-module $(wrc20_syntax_module)
 
 # Testing
@@ -135,10 +135,10 @@ tests/%.parse: tests/% $(llvm_kompiled)
 	rm -rf $@-out
 
 tests/%.prove: tests/% $(haskell_kompiled)
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< $(haskell_main_file)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR)
 
 tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k $(wrc20_kompiled)
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< $(wrc20_main_file)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR)
 
 ### Execution Tests
 
