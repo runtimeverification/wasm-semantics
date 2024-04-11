@@ -10,6 +10,9 @@ authors = [
     "Runtime Verification, Inc. <contact@runtimeverification.com>",
 ]
 
+[tool.poetry.plugins.kdist]
+wasm-semantics = "pykwasm.kdist.plugin"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 cytoolz = "^0.12.1"

@@ -8,7 +8,8 @@ fatal() { echo "[FATAL] $@" ; exit 1 ; }
 
 kwasm_dir="${KWASM_DIR:-$(dirname $0)}"
 build_dir="$kwasm_dir/.build"
-defn_dir="${KWASM_DEFN_DIR:-$build_dir/defn}"
+kdist_dir="$(poetry -C pykwasm run -- kdist which)"
+defn_dir="${KWASM_DEFN_DIR:-$kdist_dir}/wasm-semantics"
 lib_dir="$build_dir/local/lib"
 k_release_dir="${K_RELEASE:-$kwasm_dir/deps/k/k-distribution/target/release/k}"
 if [[ ! -f "${k_release_dir}/bin/kompile" ]]; then
@@ -45,13 +46,8 @@ preprocess() {
 # -------
 
 run_krun() {
-    local additional_run_args
-
-    additional_run_args=()
-    ! $bug_report || additional_run_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
-
     preprocess
-    krun --definition "$backend_dir/test-kompiled" "$run_file" "${additional_run_args[@]}" "$@"
+    krun --definition "$defn_dir/llvm" "$run_file" "$@"
 }
 
 run_kast() {
@@ -59,7 +55,7 @@ run_kast() {
 
     preprocess
     output_mode="${1:-kast}" ; shift
-    kast --definition "$backend_dir/test-kompiled" "$run_file" --output "$output_mode" "$@"
+    kast --definition "$defn_dir/llvm" "$run_file" --output "$output_mode" "$@"
 }
 
 run_prove() {
@@ -71,7 +67,7 @@ run_prove() {
     ! $repl       || additional_proof_args+=(--debugger)
     ! $bug_report || additional_proof_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
 
-    kprove --definition "$backend_dir/$def_module-kompiled" -I "$kwasm_dir" "$run_file" "${additional_proof_args[@]}" "$@"
+    kprove --definition "$defn_dir/$def_module" -I "$kwasm_dir" "$run_file" "${additional_proof_args[@]}" "$@"
 }
 
 # Main
@@ -145,8 +141,6 @@ set -- "${args[@]}"
 
 ! $repl       || [[ "$backend" == "haskell" ]] || fatal "--repl option only available for Haskell backend."
 ! $bug_report || [[ "$backend" == "haskell" ]] || fatal "--bug-report option only available for Haskell backend."
-
-backend_dir="$defn_dir/$backend"
 
 # get the run file
 [[ ! -z ${1:-} ]] || usage_fatal "Must supply a file to run on."
