@@ -4,11 +4,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pykwasm"
-version = "0.1.26"
+version = "0.1.27"
 description = ""
 authors = [
     "Runtime Verification, Inc. <contact@runtimeverification.com>",
 ]
+
+[tool.poetry.plugins.kdist]
+wasm-semantics = "pykwasm.kdist.plugin"
 
 [tool.poetry.dependencies]
 python = "^3.10"

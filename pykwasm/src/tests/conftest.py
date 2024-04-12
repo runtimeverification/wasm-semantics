@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 from pyk.cli.utils import dir_path
+from pyk.kdist import kdist
 from pyk.ktool.krun import KRun
 from pytest import Config, Parser
 
@@ -16,12 +17,17 @@ def pytest_addoption(parser: Parser) -> None:
 
 
 @pytest.fixture(scope='session')
-def llvm_dir(pytestconfig: Config) -> Path:
-    ldir = pytestconfig.getoption('llvm_dir')
-    assert isinstance(ldir, Path)
-    return ldir
+def llvm_dir(pytestconfig: Config) -> Path | None:
+    return pytestconfig.getoption('llvm_dir')
 
 
 @pytest.fixture(scope='session')
-def krun_llvm(llvm_dir: Path) -> KRun:
+def krun_llvm(llvm_dir: Path | None) -> KRun:
+    if llvm_dir is not None:
+        return KRun(llvm_dir)
+
+    llvm_dir = kdist.which('wasm-semantics.llvm')
+    if not llvm_dir.is_dir():
+        raise ValueError('LLVM definition not found. Run make from the repository root, or pass --llvm-dir')
+
     return KRun(llvm_dir)
