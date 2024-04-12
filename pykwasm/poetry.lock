@@ -81,6 +81,17 @@ jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "classify-imports"
+version = "4.2.0"
+description = "Utilities for refactoring imports in python-like syntax."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "classify_imports-4.2.0-py2.py3-none-any.whl", hash = "sha256:dbbc264b70a470ed8c6c95976a11dfb8b7f63df44ed1af87328bbed2663f5161"},
+    {file = "classify_imports-4.2.0.tar.gz", hash = "sha256:7abfb7ea92149b29d046bd34573d247ba6e68cc28100c801eba4af17964fc40e"},
+]
+
+[[package]]
 name = "click"
 version = "8.1.7"
 description = "Composable command line interface toolkit"
@@ -435,6 +446,21 @@ files = [
 [package.dependencies]
 flake8 = "*"
 setuptools = "*"
+
+[[package]]
+name = "flake8-type-checking"
+version = "2.9.0"
+description = "A flake8 plugin for managing type-checking imports & forward references"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "flake8_type_checking-2.9.0-py3-none-any.whl", hash = "sha256:b63e1745f6e7deee1403d7e0150a5bca378315e9fe4d4cdaa7b71338034dbcc3"},
+    {file = "flake8_type_checking-2.9.0.tar.gz", hash = "sha256:6fcc0e8a63f6a87b5b26b776388c21907e66c4efbd15dcc1bcbd96fe884da93d"},
+]
+
+[package.dependencies]
+classify-imports = "*"
+flake8 = "*"
 
 [[package]]
 name = "graphviz"
@@ -994,6 +1020,20 @@ setproctitle = ["setproctitle"]
 testing = ["filelock"]
 
 [[package]]
+name = "pyupgrade"
+version = "3.15.2"
+description = "A tool to automatically upgrade syntax for newer versions."
+optional = false
+python-versions = ">=3.8.1"
+files = [
+    {file = "pyupgrade-3.15.2-py2.py3-none-any.whl", hash = "sha256:ce309e0ff8ecb73f56a45f12570be84bbbde9540d13697cacb261a7f595fb1f5"},
+    {file = "pyupgrade-3.15.2.tar.gz", hash = "sha256:c488d6896c546d25845712ef6402657123008d56c1063174e27aabe15bd6b4e5"},
+]
+
+[package.dependencies]
+tokenize-rt = ">=5.2.0"
+
+[[package]]
 name = "rich"
 version = "13.7.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
@@ -1046,6 +1086,17 @@ typing-extensions = ">=4.4.0,<5.0.0"
 
 [package.extras]
 dev = ["aiohttp (>=3.8.1)", "click (>=8.1.2)", "msgpack (>=1.0.3)"]
+
+[[package]]
+name = "tokenize-rt"
+version = "5.2.0"
+description = "A wrapper around the stdlib `tokenize` which roundtrips."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tokenize_rt-5.2.0-py2.py3-none-any.whl", hash = "sha256:b79d41a65cfec71285433511b50271b05da3584a1da144a0752e9c621a285289"},
+    {file = "tokenize_rt-5.2.0.tar.gz", hash = "sha256:9fe80f8a5c1edad2d3ede0f37481cc0cc1538a2f442c9c2f9e4feacd2792d054"},
+]
 
 [[package]]
 name = "tomli"
@@ -1134,4 +1185,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6715d022f7698483c2b504715a6b24f10d50aad18e973df5d1257b2db93853bf"
+content-hash = "4b152e445a43df7125f6c8ac6331c4f8ebf61d2ed433cdf8b0619aff24d57f93"

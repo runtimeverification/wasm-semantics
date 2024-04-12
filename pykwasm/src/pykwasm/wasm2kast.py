@@ -4,39 +4,41 @@
 This library provides a translation from the Wasm binary format to Kast.
 """
 
-import sys
-from typing import IO, Iterable
+from __future__ import annotations
 
-from pyk.kast.inner import KInner
+import sys
+from typing import TYPE_CHECKING
+
 from wasm import instructions
-from wasm.datatypes import (
-    DataSegment,
-    ElementSegment,
-    Export,
-    Function,
-    FunctionType,
-    Global,
-    GlobalType,
-    Import,
-    Limits,
-    Memory,
-    MemoryType,
-    Module,
-    Mutability,
-    RefType,
-    StartFunction,
-    Table,
-    TableType,
-    TypeIdx,
-    ValType,
-    addresses,
-)
-from wasm.datatypes.element_segment import ElemMode, ElemModeActive, ElemModeDeclarative, ElemModePassive
-from wasm.instructions import BaseInstruction
+from wasm.datatypes import GlobalType, MemoryType, Mutability, TableType, TypeIdx, ValType, addresses
+from wasm.datatypes.element_segment import ElemModeActive, ElemModeDeclarative, ElemModePassive
 from wasm.opcodes import BinaryOpcode
 from wasm.parsers import parse_module
 
 from pykwasm import kwasm_ast as a
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import IO
+
+    from pyk.kast import KInner
+    from wasm.datatypes import (
+        DataSegment,
+        ElementSegment,
+        Export,
+        Function,
+        FunctionType,
+        Global,
+        Import,
+        Limits,
+        Memory,
+        Module,
+        RefType,
+        StartFunction,
+        Table,
+    )
+    from wasm.datatypes.element_segment import ElemMode
+    from wasm.instructions import BaseInstruction
 
 
 def main():

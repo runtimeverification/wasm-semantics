@@ -45,6 +45,8 @@ jobs:
         uses: Gr1N/setup-poetry@v8
       - name: 'Build and run code quality checks'
         run: make -C pykwasm check
+      - name: 'Run pyupgrade'
+        run: make -C pykwasm pyupgrade
 
   pykwasm-unit-tests:
     needs: pykwasm-code-quality-checks

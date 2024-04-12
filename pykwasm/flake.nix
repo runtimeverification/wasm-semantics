@@ -11,7 +11,7 @@
         poetry2nix.overlay
         (final: prev: {
           pykwasm = prev.poetry2nix.mkPoetryApplication {
-            python = prev.python39;
+            python = prev.python310;
             projectDir = ./.;
             groups = [];
             # We remove `dev` from `checkGroups`, so that poetry2nix does not try to resolve dev dependencies.

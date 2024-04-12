@@ -1,10 +1,16 @@
-from pathlib import Path
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 from pyk.cli.utils import dir_path
 from pyk.kdist import kdist
 from pyk.ktool.krun import KRun
-from pytest import Config, Parser
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest import Config, Parser
 
 
 def pytest_addoption(parser: Parser) -> None:
