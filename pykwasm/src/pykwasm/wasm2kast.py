@@ -5,7 +5,8 @@ This library provides a translation from the Wasm binary format to Kast.
 """
 
 import sys
-from typing import IO, Iterable
+from collections.abc import Iterable
+from typing import IO
 
 from pyk.kast.inner import KInner
 from wasm import instructions

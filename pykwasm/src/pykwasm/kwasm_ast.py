@@ -8,7 +8,7 @@ This library provides a convenient interface to create KWasm programs in Kast fo
 It is a mirror of the abstract syntax in the K semantics.
 """
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 from pyk.kast.inner import KApply, KInner, KToken
 from pyk.prelude.bytes import bytesToken
@@ -681,7 +681,7 @@ def export(name: KInner, index: int) -> KInner:
     return KApply(EXPORT, [name, KInt(index)])
 
 
-def module_metadata(mid: None = None, fids: None = None, filename: Optional[str] = None) -> KInner:
+def module_metadata(mid: None = None, fids: None = None, filename: str | None = None) -> KInner:
     # TODO: Implement module id and function ids metadata transformation.
     kfilename = EMPTY_OPT_STRING if filename is None else KString(filename)
     return KApply(MODULE_METADATA, [EMPTY_ID, EMPTY_MAP, kfilename])
