@@ -1,9 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from pyk.kast.inner import KApply, KInner
+from pyk.kast.inner import KApply
 from wasm.datatypes import ExternAddress, FunctionAddress, Limits, Table, TableType
 
 from pykwasm import wasm2kast
 from pykwasm.kwasm_ast import KInt, externref, funcref
+
+if TYPE_CHECKING:
+    from pyk.kast import KInner
+
 
 TABLE_TEST_DATA = (
     (Table(TableType(Limits(0, None), FunctionAddress)), KApply('limitsMin', [KInt(0)]), funcref),

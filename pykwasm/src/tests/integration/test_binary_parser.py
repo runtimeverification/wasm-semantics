@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import sys
 from io import BytesIO
 from pathlib import Path
 from subprocess import run
+from typing import TYPE_CHECKING
 
 import pytest
-from pyk.kast.inner import KInner, KSequence, KSort, Subst
+from pyk.kast.inner import KSequence, KSort, Subst
 from pyk.kast.manip import split_config_from
-from pyk.ktool.krun import KRun
 
 from pykwasm.wasm2kast import wasm2kast
+
+if TYPE_CHECKING:
+    from pyk.kast import KInner
+    from pyk.ktool.krun import KRun
+
 
 BINARY_DIR = Path(__file__).parent / 'binary'
 BINARY_WAT_FILES = BINARY_DIR.glob('*.wat')

@@ -8,10 +8,18 @@ This library provides a convenient interface to create KWasm programs in Kast fo
 It is a mirror of the abstract syntax in the K semantics.
 """
 
-from collections.abc import Iterable
+from __future__ import annotations
 
-from pyk.kast.inner import KApply, KInner, KToken
+from typing import TYPE_CHECKING
+
+from pyk.kast.inner import KApply, KToken
 from pyk.prelude.bytes import bytesToken
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from pyk.kast import KInner
+
 
 ###########
 # KLabels #
