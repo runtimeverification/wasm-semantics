@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 SOURCE_DIR: Final = Path(__file__).parent
+K_DIR: Final = SOURCE_DIR / 'wasm-semantics'
 
 
 class KompileTarget(Target):
@@ -39,7 +40,7 @@ __TARGETS__: Final = {
     'llvm': KompileTarget(
         {
             'backend': KompileBackend.LLVM,
-            'main_file': SOURCE_DIR / 'test.md',
+            'main_file': K_DIR / 'test.md',
             'main_module': 'WASM-TEST',
             'syntax_module': 'WASM-TEST-SYNTAX',
             'md_selector': 'k',
@@ -51,7 +52,7 @@ __TARGETS__: Final = {
     'kwasm-lemmas': KompileTarget(
         {
             'backend': KompileBackend.HASKELL,
-            'main_file': SOURCE_DIR / 'kwasm-lemmas.md',
+            'main_file': K_DIR / 'kwasm-lemmas.md',
             'main_module': 'KWASM-LEMMAS',
             'syntax_module': 'WASM-TEXT-SYNTAX',
             'md_selector': 'k',
@@ -61,7 +62,7 @@ __TARGETS__: Final = {
     'wrc20': KompileTarget(
         {
             'backend': KompileBackend.HASKELL,
-            'main_file': SOURCE_DIR / 'wrc20.md',
+            'main_file': K_DIR / 'wrc20.md',
             'main_module': 'WRC20-LEMMAS',
             'syntax_module': 'WASM-TEXT-SYNTAX',
             'md_selector': 'k',
