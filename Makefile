@@ -34,8 +34,6 @@ CHECK := git --no-pager diff --no-index --ignore-all-space -R
 TEST_CONCRETE_BACKEND := llvm
 TEST_SYMBOLIC_BACKEND := haskell
 
-SOURCE_DIR := pykwasm/src/pykwasm/kdist
-
 test: test-execution test-prove
 
 # Generic Test Harnesses
@@ -55,6 +53,8 @@ tests/%.run-term: tests/%
 tests/%.parse: tests/%
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
 	rm -rf $@-out
+
+SOURCE_DIR := pykwasm/src/pykwasm/kdist/wasm-semantics
 
 tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR)
