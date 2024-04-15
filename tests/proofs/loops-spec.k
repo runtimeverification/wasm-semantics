@@ -24,7 +24,7 @@ module LOOPS-SPEC
                     }
                     .ValStack
                 ~> label [ .ValTypes ] {.Instrs } STACK // Block label.
-                => .
+                => .K
                 ...
           </instrs>
           <valstack> _ => STACK </valstack>
@@ -56,7 +56,7 @@ module LOOPS-SPEC
                  ),
                  _
               )
-           => .
+           => .K
            ...
           </instrs>
           <locals>
