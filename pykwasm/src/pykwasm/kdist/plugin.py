@@ -44,6 +44,7 @@ __TARGETS__: Final = {
             'main_module': 'WASM-TEST',
             'syntax_module': 'WASM-TEST-SYNTAX',
             'md_selector': 'k',
+            'warning_to_error': True,
             'gen_glr_bison_parser': True,
             'opt_level': 2,
             'ccopts': ['-g'],
