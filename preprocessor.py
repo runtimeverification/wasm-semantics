@@ -1,5 +1,5 @@
 # Preprocessor that converts Wasm concrete syntax into a form parseable by K.
-# example usage: python convert.py f32.wast
+# example usage: python preprocessor.py f32.wast
 
 import re
 import sys
