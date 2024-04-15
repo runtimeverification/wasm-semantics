@@ -165,9 +165,11 @@ We add `token` as a value in order to use as a separator in `<valstack>`.
 ```k
     syntax Val ::= "token"
  // ----------------------
+    rule #sameType(token, _) => false
+
     rule <instrs> token => .K ... </instrs>
          <valstack> S => token : S </valstack>
-    
+
     syntax ValStack ::= takeUntilToken(ValStack)    [function, total]
                       | dropUntilToken(ValStack)    [function, total]
  // -----------------------------------------------------------------
