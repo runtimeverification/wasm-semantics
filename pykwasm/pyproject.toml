@@ -4,11 +4,17 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pykwasm"
-version = "0.1.31"
+version = "0.1.32"
 description = ""
 authors = [
     "Runtime Verification, Inc. <contact@runtimeverification.com>",
 ]
+
+[tool.poetry.scripts]
+wasm2kast = "pykwasm.wasm2kast:main"
+kwasm = "pykwasm.scripts.kwasm:main"
+kwasm-convert = "pykwasm.scripts.convert:main"
+kwasm-preprocess = "pykwasm.scripts.preprocessor:main"
 
 [tool.poetry.plugins.kdist]
 wasm-semantics = "pykwasm.kdist.plugin"
@@ -62,6 +68,3 @@ exclude = [
     'src/wasm/*',
     'src/tests/unit/test_wasm2kast\.py',
 ]
-
-[tool.poetry.scripts]
-wasm2kast = "pykwasm.wasm2kast:main"

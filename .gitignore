@@ -1,4 +1,4 @@
-/.build/*
+/.kwasm-logs/
 /tests/*/*-out
 
 *.pdf

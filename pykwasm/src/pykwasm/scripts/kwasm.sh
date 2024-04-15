@@ -1,29 +1,13 @@
-#!/usr/bin/env bash
-
 set -euo pipefail
 shopt -s extglob
 
 notif() { echo "== $@" >&2 ; }
 fatal() { echo "[FATAL] $@" ; exit 1 ; }
 
-kwasm_dir="${KWASM_DIR:-$(dirname $0)}"
-build_dir="$kwasm_dir/.build"
-kdist_dir="$(poetry -C pykwasm run -- kdist which)"
+kdist_dir="$(kdist which)"
 defn_dir="${KWASM_DEFN_DIR:-$kdist_dir}/wasm-semantics"
-lib_dir="$build_dir/local/lib"
-k_release_dir="${K_RELEASE:-$kwasm_dir/deps/k/k-distribution/target/release/k}"
-if [[ ! -f "${k_release_dir}/bin/kompile" ]]; then
-    if which kompile &> /dev/null; then
-        k_release_dir="$(dirname $(which kompile))/.."
-    else
-        fatal "Cannot find K Installation!"
-    fi
-fi
 
-export PATH="$k_release_dir/lib/native/linux:$k_release_dir/lib/native/linux64:$k_release_dir/bin/:$PATH"
-export LD_LIBRARY_PATH="$k_release_dir/lib/native/linux64:$lib_dir:${LD_LIBRARY_PATH:-}"
-
-test_logs="$build_dir/logs"
+test_logs='.kwasm-logs'
 mkdir -p "$test_logs"
 test_log="$test_logs/tests.log"
 
@@ -33,12 +17,11 @@ export K_OPTS="${K_OPTS:--Xmx16G -Xss512m}"
 # ---------
 
 preprocess() {
-    local this_script_dir tmp_dir tmp_input
-    this_script_dir="$(dirname $0)"
+    local tmp_dir tmp_input
     tmp_dir="$(mktemp -d)"
     tmp_input="$tmp_dir/$(basename $run_file))"
     touch "$tmp_input"
-    python3 "$this_script_dir/preprocessor.py" "$run_file" > "$tmp_input"
+    kwasm-preprocess "$run_file" > "$tmp_input"
     run_file="$tmp_input"
 }
 
@@ -67,7 +50,7 @@ run_prove() {
     ! $repl       || additional_proof_args+=(--debugger)
     ! $bug_report || additional_proof_args+=(--haskell-backend-command "kore-exec --bug-report $bug_report_name")
 
-    kprove --definition "$defn_dir/$def_module" -I "$kwasm_dir" "$run_file" "${additional_proof_args[@]}" "$@"
+    kprove --definition "$defn_dir/$def_module" "$run_file" "${additional_proof_args[@]}" "$@"
 }
 
 # Main

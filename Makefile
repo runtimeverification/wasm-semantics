@@ -28,7 +28,7 @@ clean: pykwasm
 # Testing
 # -------
 
-TEST  := ./kwasm
+TEST  := $(POETRY) run -- kwasm
 CHECK := git --no-pager diff --no-index --ignore-all-space -R
 
 TEST_CONCRETE_BACKEND := llvm
