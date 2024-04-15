@@ -12,6 +12,7 @@ authors = [
 
 [tool.poetry.scripts]
 wasm2kast = "pykwasm.wasm2kast:main"
+kwasm = "pykwasm.scripts.kwasm:main"
 kwasm-convert = "pykwasm.scripts.convert:main"
 kwasm-preprocess = "pykwasm.scripts.preprocessor:main"
 
