@@ -10,6 +10,10 @@ authors = [
     "Runtime Verification, Inc. <contact@runtimeverification.com>",
 ]
 
+[tool.poetry.scripts]
+wasm2kast = "pykwasm.wasm2kast:main"
+kwasm-convert = "pykwasm.scripts.convert:main"
+
 [tool.poetry.plugins.kdist]
 wasm-semantics = "pykwasm.kdist.plugin"
 
@@ -62,6 +66,3 @@ exclude = [
     'src/wasm/*',
     'src/tests/unit/test_wasm2kast\.py',
 ]
-
-[tool.poetry.scripts]
-wasm2kast = "pykwasm.wasm2kast:main"
