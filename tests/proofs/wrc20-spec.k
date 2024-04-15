@@ -13,7 +13,7 @@ module WRC20-SPEC
                 ~> #load(i64, load, 0)
                 ~> (invoke NEXTADDR) // TODO: Use `call`.
                 ~> #store(i64, store, 0)
-                => .
+                => .K
                    ...
           </instrs>
           <curModIdx> CUR </curModIdx>
