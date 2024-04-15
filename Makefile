@@ -57,10 +57,10 @@ tests/%.parse: tests/%
 SOURCE_DIR := pykwasm/src/pykwasm/kdist/wasm-semantics
 
 tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR) -w2e
 
 tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR)
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR) -w2e
 
 ### Execution Tests
 
