@@ -44,7 +44,7 @@ __TARGETS__: Final = {
             'main_module': 'WASM-TEST',
             'syntax_module': 'WASM-TEST-SYNTAX',
             'md_selector': 'k',
-            'warning_to_error': True,
+            'warnings_to_errors': True,
             'gen_glr_bison_parser': True,
             'opt_level': 2,
             'ccopts': ['-g'],
@@ -57,7 +57,7 @@ __TARGETS__: Final = {
             'main_module': 'KWASM-LEMMAS',
             'syntax_module': 'WASM-TEXT-SYNTAX',
             'md_selector': 'k',
-            'warning_to_error': True,
+            'warnings_to_errors': True,
         },
     ),
     'wrc20': KompileTarget(
@@ -67,7 +67,7 @@ __TARGETS__: Final = {
             'main_module': 'WRC20-LEMMAS',
             'syntax_module': 'WASM-TEXT-SYNTAX',
             'md_selector': 'k',
-            'warning_to_error': True,
+            'warnings_to_errors': True,
         },
     ),
 }
