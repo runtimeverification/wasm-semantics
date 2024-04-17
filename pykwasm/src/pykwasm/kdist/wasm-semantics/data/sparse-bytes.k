@@ -6,22 +6,11 @@ module SPARSE-BYTES
 
   syntax SBItem ::= #empty(Int)      [symbol, klabel(SBItem:empty)]
                   | #bytes(Bytes)    [symbol, klabel(SBItem:bytes)]
+
+
+  syntax SBItemChunk ::= SBChunk(SBItem)
   
-  syntax SparseBytes [hook(LIST.List)]
-  syntax SparseBytes ::= SparseBytes SparseBytes
-          [ left, function, total, hook(LIST.concat),
-            klabel(_SparseBytes_), symbol, smtlib(smt_seq_concat),
-            assoc, unit(.SparseBytes), element(SparseBytesItem),
-            format(%1%n%2)
-          ]
-  syntax SparseBytes ::= ".SparseBytes"
-          [ function, total, hook(LIST.unit), klabel(.SparseBytes),
-            symbol, smtlib(smt_seq_nil)
-          ]
-  syntax SparseBytes ::= SBChunk(SBItem)
-          [ function, total, hook(LIST.element), klabel(SparseBytesItem),
-            symbol, smtlib(smt_seq_elem)
-          ]
+  syntax SparseBytes ::= List{SBItemChunk, ""}
 
   syntax Bytes ::= unwrap(SparseBytes)
     [function, total, symbol, klabel(SparseBytes:unwrap)]
