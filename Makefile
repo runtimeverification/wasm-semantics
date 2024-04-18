@@ -60,7 +60,7 @@ tests/%.prove: tests/%
 	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR) -w2e
 
 tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR) -w2e
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR) -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
 
 ### Execution Tests
 
