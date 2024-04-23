@@ -10,7 +10,9 @@ all: build
 # Building Definition
 # -------------------
 
-POETRY := poetry -C pykwasm
+POETRY     := poetry -C pykwasm
+POETRY_RUN := $(POETRY) run --
+KDIST      := $(POETRY_RUN) kdist
 
 .PHONY: pykwasm
 pykwasm:
@@ -18,17 +20,17 @@ pykwasm:
 
 .PHONY: build
 build: pykwasm
-	$(POETRY) run kdist -v build -j3
+	$(KDIST) -v build -j3
 
 .PHONY: clean
 clean: pykwasm
-	$(POETRY) run kdist clean
+	$(KDIST) clean
 
 
 # Testing
 # -------
 
-TEST  := $(POETRY) run -- kwasm
+TEST  := $(POETRY_RUN) kwasm
 CHECK := git --no-pager diff --no-index --ignore-all-space -R
 
 TEST_CONCRETE_BACKEND := llvm
@@ -54,13 +56,13 @@ tests/%.parse: tests/%
 	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
 	rm -rf $@-out
 
-SOURCE_DIR := pykwasm/src/pykwasm/kdist/wasm-semantics
-
 tests/%.prove: tests/%
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR) -w2e
+	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e
 
 tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR) -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
+	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
+	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
 
 ### Execution Tests
 
