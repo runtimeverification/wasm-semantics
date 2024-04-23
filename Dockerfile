@@ -1,5 +1,13 @@
+ARG Z3_VERSION
+ARG K_COMMIT
+
+ARG Z3_VERSION=4.12.1
+FROM runtimeverificationinc/z3:ubuntu-jammy-${Z3_VERSION} as Z3
+
 ARG K_COMMIT
 FROM runtimeverificationinc/kframework-k:ubuntu-jammy-${K_COMMIT}
+
+COPY --from=Z3 /usr/bin/z3 /usr/bin/z3
 
 RUN    apt-get update              \
     && apt-get upgrade --yes       \
@@ -10,15 +18,6 @@ RUN    apt-get update              \
                        python3     \
                        python3-pip \
                        wabt
-
-RUN    git clone 'https://github.com/z3prover/z3' --branch=z3-4.12.1 \
-    && cd z3                                                         \
-    && python3 scripts/mk_make.py                                    \
-    && cd build                                                      \
-    && make -j8                                                      \
-    && make install                                                  \
-    && cd ../..                                                      \
-    && rm -rf z3
 
 RUN    curl -sSL https://install.python-poetry.org | POETRY_HOME=/usr python3 - \
     && poetry --version
