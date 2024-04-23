@@ -43,23 +43,13 @@ jobs:
           submodules: recursive
       - name: 'Install Poetry'
         uses: Gr1N/setup-poetry@v8
-      - name: 'Build and run code quality checks'
+      - name: 'Build pykwasm'
+        run: poetry -C pykwasm install
+      - name: 'Run code quality checks'
         run: make -C pykwasm check
       - name: 'Run pyupgrade'
         run: make -C pykwasm pyupgrade
-
-  pykwasm-unit-tests:
-    needs: pykwasm-code-quality-checks
-    name: 'Unit Tests'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Check out code'
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: 'Install Poetry'
-        uses: Gr1N/setup-poetry@v8
-      - name: 'Build and run unit tests'
+      - name: 'Run unit tests'
         run: make -C pykwasm cov-unit
 
   pykwasm-integration-tests:
