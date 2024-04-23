@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pykwasm"
-version = "0.1.35"
+version = "0.1.36"
 description = ""
 authors = [
     "Runtime Verification, Inc. <contact@runtimeverification.com>",
@@ -23,7 +23,7 @@ wasm-semantics = "pykwasm.kdist.plugin"
 python = "^3.10"
 cytoolz = "^0.12.1"
 numpy = "^1.24.2"
-pyk = { git = "https://github.com/runtimeverification/k.git", tag="v7.0.9", subdirectory = "pyk" }
+pyk = { git = "https://github.com/runtimeverification/k.git", tag="v7.0.17", subdirectory = "pyk" }
 py-wasm = {url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.2.0.tar.gz"}
 
 [tool.poetry.group.dev.dependencies]
