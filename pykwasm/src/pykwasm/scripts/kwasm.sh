@@ -28,11 +28,6 @@ preprocess() {
 # Runners
 # -------
 
-run_krun() {
-    preprocess
-    krun --definition "$defn_dir/llvm" "$run_file" "$@"
-}
-
 run_kast() {
     local output_mode
 
@@ -58,13 +53,11 @@ run_prove() {
 
 usage() {
     echo "
-    usage: $0 run        [--backend (llvm|haskell)] [--bug-report]   <pgm>  <K args>*
-           $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
+    usage: $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
            $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <axioms_file> <K args>*
 
            $0 [help|--help|version|--version]
 
-       $0 run        : Run a single WebAssembly program
        $0 kast       : Parse a single WebAssembly program and output it in supported format
        $0 prove      : Run a WebAssembly K proof
 
@@ -138,7 +131,6 @@ fi
 bug_report_name="kwasm-bug-$(basename "$run_file")"
 
 case "$run_command-$backend" in
-    run-@(llvm|haskell)        ) run_krun        "$@" ;;
     kast-@(llvm|haskell)       ) run_kast        "$@" ;;
     prove-@(haskell)           ) run_prove       "$@" ;;
     *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
