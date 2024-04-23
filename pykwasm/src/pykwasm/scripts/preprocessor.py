@@ -5,6 +5,17 @@ import re
 import sys
 
 
+def preprocess(s: str) -> str:
+    def replace(m: re.Match) -> str:
+        return hex2float(m.group())
+
+    lines = []
+    for line in s.split('\n'):  # splitlines also splits on other characters, e.g \u2028
+        lines.append(re.sub(r'(?:(?:f32|f64)\.const )([^\)]+)', replace, line + '\n'))
+
+    return ''.join(lines)
+
+
 def hex2float(h: str) -> str:
     h = re.sub('_', '', h)
     if 'nan' in h:
@@ -28,13 +39,7 @@ def main() -> None:
         infile = sys.stdin
     else:
         infile = open(sys.argv[1])
-
-    def replace(m: re.Match) -> str:
-        return hex2float(m.group())
-
-    for line in infile.readlines():
-        sys.stdout.write(re.sub(r'(?:(?:f32|f64)\.const )([^\)]+)', replace, line))
-
+    print(preprocess(infile.read()))
     infile.close()
 
 
