@@ -11,7 +11,7 @@ RUN    apt-get update              \
                        python3-pip \
                        wabt
 
-RUN    git clone 'https://github.com/z3prover/z3' --branch=z3-4.8.15 \
+RUN    git clone 'https://github.com/z3prover/z3' --branch=z3-4.12.1 \
     && cd z3                                                         \
     && python3 scripts/mk_make.py                                    \
     && cd build                                                      \
