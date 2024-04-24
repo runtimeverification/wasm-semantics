@@ -53,7 +53,7 @@ tests/%.run-term: tests/%
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 
 tests/%.parse: tests/%
-	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
+	$(TEST) kast $< kast > $@-out
 	rm -rf $@-out
 
 tests/%.prove: tests/%
