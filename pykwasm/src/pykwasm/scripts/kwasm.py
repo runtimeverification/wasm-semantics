@@ -13,16 +13,12 @@ from pyk.kdist import kdist
 from pyk.ktool.kprint import KAstOutput, _kast
 from pyk.ktool.kprove import _kprove
 from pyk.ktool.krun import _krun
-from pyk.utils import run_process
 
 from .preprocessor import preprocess
 
 if TYPE_CHECKING:
     from collections.abc import Container, Iterable, Iterator
     from subprocess import CompletedProcess
-
-
-SCRIPT_FILE = Path(__file__).parent / 'kwasm.sh'
 
 
 class ProofDefinition(Enum):
@@ -40,9 +36,6 @@ def main() -> None:
         _exec_kast(program=args.program, output=args.output)
     elif args.command == 'prove':
         _exec_prove(spec_file=args.spec, proof_defn=args.defn, include_dirs=args.include_dirs, args=rest)
-    else:
-        proc_res = run_process(['bash', str(SCRIPT_FILE)] + sys.argv[1:], pipe_stdout=False, check=False)
-        sys.exit(proc_res.returncode)
 
     raise AssertionError()
 
@@ -120,9 +113,6 @@ def _argument_parser() -> ArgumentParser:
     prove_parser.add_argument(
         '-I', dest='include_dirs', metavar='INCLUDE', action='append', type=dir_path, help='include path'
     )
-
-    command_parser.add_parser('help', help='display help message')
-    command_parser.add_parser('version', help='display the KWasm, K, Kore, and Z3 versions in use')
 
     return parser
 
