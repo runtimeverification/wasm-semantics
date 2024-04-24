@@ -13,28 +13,8 @@ test_log="$test_logs/tests.log"
 
 export K_OPTS="${K_OPTS:--Xmx16G -Xss512m}"
 
-# Utilities
-# ---------
-
-preprocess() {
-    local tmp_dir tmp_input
-    tmp_dir="$(mktemp -d)"
-    tmp_input="$tmp_dir/$(basename $run_file))"
-    touch "$tmp_input"
-    kwasm-preprocess "$run_file" > "$tmp_input"
-    run_file="$tmp_input"
-}
-
 # Runners
 # -------
-
-run_kast() {
-    local output_mode
-
-    preprocess
-    output_mode="${1:-kast}" ; shift
-    kast --definition "$defn_dir/llvm" "$run_file" --output "$output_mode" "$@"
-}
 
 run_prove() {
     local additional_proof_args
@@ -53,21 +33,16 @@ run_prove() {
 
 usage() {
     echo "
-    usage: $0 kast       [--backend (llvm|haskell)]                  <pgm>  <output format> <K args>*
-           $0 prove      [--backend (haskell)] [--repl|--bug-report] <spec> <axioms_file> <K args>*
+    usage: $0 prove [--backend (haskell)] [--repl|--bug-report] <spec> <axioms_file> <K args>*
 
            $0 [help|--help|version|--version]
 
-       $0 kast       : Parse a single WebAssembly program and output it in supported format
-       $0 prove      : Run a WebAssembly K proof
-
+       $0 prove   : Run a WebAssembly K proof
        $0 help    : Display this help message.
        $0 version : Display the KWasm, K, Kore, and Z3 versions in use.
 
-       Note: <pgm> is a path to a file containing a WebAssembly program.
-             <spec> is a K specification to be proved.
+       Note: <spec> is a K specification to be proved.
              <K args> are any arguments you want to pass to K when executing/proving.
-             <output format> is the format for Kast to output the term in.
              <axioms_file> is the file name (without extension) to take as axioms for verification.
 "
 }
@@ -131,7 +106,6 @@ fi
 bug_report_name="kwasm-bug-$(basename "$run_file")"
 
 case "$run_command-$backend" in
-    kast-@(llvm|haskell)       ) run_kast        "$@" ;;
     prove-@(haskell)           ) run_prove       "$@" ;;
     *) usage_fatal "Unknown command on '$backend' backend: $run_command" ;;
 esac
