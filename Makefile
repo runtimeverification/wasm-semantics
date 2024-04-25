@@ -41,28 +41,28 @@ test: test-execution test-prove
 # Generic Test Harnesses
 
 tests/%.run: tests/%
-	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	$(TEST) run $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/success-$(TEST_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 
 tests/%.run-term: tests/%
-	$(TEST) run --backend $(TEST_CONCRETE_BACKEND) $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	$(TEST) run $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	grep --after-context=2 "<instrs>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out-term tests/success-k.out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 
 tests/%.parse: tests/%
-	$(TEST) kast --backend $(TEST_CONCRETE_BACKEND) $< kast > $@-out
+	K_OPTS='-Xmx16G -Xss512m' $(TEST) kast $< kast > $@-out
 	rm -rf $@-out
 
 tests/%.prove: tests/%
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e
+	$(TEST) prove $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e
 
 tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
-	$(TEST) prove --backend $(TEST_SYMBOLIC_BACKEND) $< wrc20 -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
+	$(TEST) prove $< wrc20 -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
 
 ### Execution Tests
 
