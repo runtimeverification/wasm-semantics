@@ -898,7 +898,7 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyk"
-version = "7.0.24"
+version = "7.0.25"
 description = ""
 optional = false
 python-versions = "^3.10"
@@ -919,8 +919,8 @@ xdg-base-dirs = "^6.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/k.git"
-reference = "v7.0.24"
-resolved_reference = "f6f7287b63e0f4c72aab49906786c426b097beaf"
+reference = "v7.0.25"
+resolved_reference = "8c88ad342e70950d71d7dcf32657cee51ae301f1"
 subdirectory = "pyk"
 
 [[package]]
@@ -946,13 +946,13 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "8.1.1"
+version = "8.1.2"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.1.1-py3-none-any.whl", hash = "sha256:2a8386cfc11fa9d2c50ee7b2a57e7d898ef90470a7a34c4b949ff59662bb78b7"},
-    {file = "pytest-8.1.1.tar.gz", hash = "sha256:ac978141a75948948817d360297b7aae0fcb9d6ff6bc9ec6d514b85d5a65c044"},
+    {file = "pytest-8.1.2-py3-none-any.whl", hash = "sha256:6c06dc309ff46a05721e6fd48e492a775ed8165d2ecdf57f156a80c7e95bb142"},
+    {file = "pytest-8.1.2.tar.gz", hash = "sha256:f3c45d1d5eed96b01a2aea70dee6a4a366d51d38f9957768083e4fecfc77f3ef"},
 ]
 
 [package.dependencies]
@@ -1187,4 +1187,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "81d28b48ad0e631c1b175eb26c4ef2345d2c68ff73363a8f7bc246b4ccc88b58"
+content-hash = "bce2fd08cebfd3cdd3711d4194d572a600b5fd968f5d466b7e5cf3f22a156c6e"
