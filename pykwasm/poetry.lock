@@ -825,9 +825,8 @@ version = "0.2.0"
 description = "py-wasm: A python implementation of the web assembly interpreter"
 optional = false
 python-versions = ">=3.5, <4"
-files = [
-    {file = "0.2.0.tar.gz", hash = "sha256:83d335ef1ec5064ee8efffdcba88a69644974953726b58003b48fe4a735eb686"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 cytoolz = {version = ">=0.9.0,<1.0.0", markers = "implementation_name == \"cpython\""}
@@ -842,8 +841,10 @@ lint = ["flake8 (==3.6.0)", "isort (>=4.3.9,<5)", "mypy (==1.6.1)"]
 test = ["hypothesis (>=6.88.1,<7)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.2.0,<5)", "pytest-xdist (>=3.2.0,<4)", "tox (>=4.11.3,<5)"]
 
 [package.source]
-type = "url"
-url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.2.0.tar.gz"
+type = "git"
+url = "https://github.com/runtimeverification/py-wasm.git"
+reference = "0.2.1"
+resolved_reference = "e5fb6ed5b1aebf1c0d67087397b3c1240ff412da"
 
 [[package]]
 name = "pybind11"
@@ -946,13 +947,13 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "8.1.2"
+version = "8.2.0"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.1.2-py3-none-any.whl", hash = "sha256:6c06dc309ff46a05721e6fd48e492a775ed8165d2ecdf57f156a80c7e95bb142"},
-    {file = "pytest-8.1.2.tar.gz", hash = "sha256:f3c45d1d5eed96b01a2aea70dee6a4a366d51d38f9957768083e4fecfc77f3ef"},
+    {file = "pytest-8.2.0-py3-none-any.whl", hash = "sha256:1733f0620f6cda4095bbf0d9ff8022486e91892245bb9e7d5542c018f612f233"},
+    {file = "pytest-8.2.0.tar.gz", hash = "sha256:d507d4482197eac0ba2bae2e9babf0672eb333017bcedaa5fb1a3d42c1174b3f"},
 ]
 
 [package.dependencies]
@@ -960,11 +961,11 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.4,<2.0"
+pluggy = ">=1.5,<2.0"
 tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-testing = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
 name = "pytest-cov"
@@ -1003,18 +1004,18 @@ dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
 name = "pytest-xdist"
-version = "3.5.0"
+version = "3.6.1"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pytest-xdist-3.5.0.tar.gz", hash = "sha256:cbb36f3d67e0c478baa57fa4edc8843887e0f6cfc42d677530a36d7472b32d8a"},
-    {file = "pytest_xdist-3.5.0-py3-none-any.whl", hash = "sha256:d075629c7e00b611df89f490a5063944bee7a4362a5ff11c7cc7824a03dfce24"},
+    {file = "pytest_xdist-3.6.1-py3-none-any.whl", hash = "sha256:9ed4adfb68a016610848639bb7e02c9352d5d9f03d04809919e2dafc3be4cca7"},
+    {file = "pytest_xdist-3.6.1.tar.gz", hash = "sha256:ead156a4db231eec769737f57668ef58a2084a34b2e55c4a8fa20d861107300d"},
 ]
 
 [package.dependencies]
-execnet = ">=1.1"
-pytest = ">=6.2.0"
+execnet = ">=2.1"
+pytest = ">=7.0.0"
 
 [package.extras]
 psutil = ["psutil (>=3.0)"]
@@ -1187,4 +1188,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "bce2fd08cebfd3cdd3711d4194d572a600b5fd968f5d466b7e5cf3f22a156c6e"
+content-hash = "fbd6591bd65cc9eff7a01494c349a710485f835b9a88f5be5fbc5557f11fedb5"
