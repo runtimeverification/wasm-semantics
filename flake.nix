@@ -50,7 +50,8 @@
             enableParallelBuilding = true;
 
             buildPhase = ''
-              XDG_CACHE_HOME=$(pwd) kdist -v build -j4
+              export XDG_CACHE_HOME=$(pwd)
+              kdist -v build -j4
             '';
 
             installPhase = ''
@@ -103,24 +104,26 @@
 
             buildInputs = with prev; [
               final.kwasm
-              final.kwasm-pyk
               which
               git
             ];
 
             patchPhase = ''
-              substituteInPlace Makefile \
-                --replace-fail '$(TEST)' '${final.kwasm}/bin/kwasm' \
-                --replace-fail '$(KDIST)' '${nixpkgs-pyk.pyk-python310}/bin/kdist' \
-                --replace-fail '$(SOURCE_DIR)' '${final.kwasm}/wasm-semantics/source'
+              substituteInPlace Makefile                                                  \
+                --replace-fail '$(TEST)'        '${final.kwasm}/bin/kwasm'                \
+                --replace-fail '$(KDIST)'       '${nixpkgs-pyk.pyk-python310}/bin/kdist'  \
+                --replace-fail '$(SOURCE_DIR)'  '${final.kwasm}/wasm-semantics/source'
             '';
 
             buildPhase = ''
               export XDG_CACHE_HOME=$(pwd)
-              make \
-                NIX=1 \
-                -j$NIX_BUILD_CORES \
-                test-conformance-parse test-simple test-conformance-supported test-prove
+              make                          \
+                NIX=1                       \
+                -j$NIX_BUILD_CORES          \
+                test-conformance-parse      \
+                test-simple                 \
+                test-conformance-supported  \
+                test-prove
             '';
 
             installPhase = ''
