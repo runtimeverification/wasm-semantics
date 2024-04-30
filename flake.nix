@@ -102,8 +102,9 @@
             pname = "kwasm-test";
             src = final.kwasm.src;
 
-            buildInputs = with prev; [
-              final.kwasm
+            buildInputs = with final; [
+              kwasm
+              kwasm-pyk
               which
               git
             ];
@@ -120,10 +121,7 @@
               make                          \
                 NIX=1                       \
                 -j$NIX_BUILD_CORES          \
-                test-conformance-parse      \
-                test-simple                 \
-                test-conformance-supported  \
-                test-prove
+                test
             '';
 
             installPhase = ''
