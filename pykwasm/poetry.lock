@@ -825,9 +825,8 @@ version = "0.2.0"
 description = "py-wasm: A python implementation of the web assembly interpreter"
 optional = false
 python-versions = ">=3.5, <4"
-files = [
-    {file = "0.2.0.tar.gz", hash = "sha256:83d335ef1ec5064ee8efffdcba88a69644974953726b58003b48fe4a735eb686"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 cytoolz = {version = ">=0.9.0,<1.0.0", markers = "implementation_name == \"cpython\""}
@@ -836,14 +835,16 @@ numpy = ">=1.16.0,<2"
 toolz = {version = ">0.9.0,<1", markers = "implementation_name == \"pypy\""}
 
 [package.extras]
-dev = ["bumpversion (>=0.5.3,<1)", "ipython", "pytest-watch (>=4.1.0,<5)", "twine", "wheel"]
+dev = ["Sphinx (>=1.6.5,<2)", "bumpversion (>=0.5.3,<1)", "flake8 (==3.6.0)", "hypothesis (>=6.88.1,<7)", "ipython", "isort (>=4.3.9,<5)", "mypy (==1.6.1)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.1.0,<5)", "pytest-watch (>=4.2.0,<5)", "pytest-xdist (>=3.2.0,<4)", "sphinx_rtd_theme (>=0.1.9)", "tox (>=4.11.3,<5)", "twine", "wheel"]
 doc = ["Sphinx (>=1.6.5,<2)", "sphinx_rtd_theme (>=0.1.9)"]
 lint = ["flake8 (==3.6.0)", "isort (>=4.3.9,<5)", "mypy (==1.6.1)"]
 test = ["hypothesis (>=6.88.1,<7)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.2.0,<5)", "pytest-xdist (>=3.2.0,<4)", "tox (>=4.11.3,<5)"]
 
 [package.source]
-type = "url"
-url = "https://github.com/runtimeverification/py-wasm/archive/refs/tags/0.2.0.tar.gz"
+type = "git"
+url = "https://github.com/runtimeverification/py-wasm.git"
+reference = "0.2.1"
+resolved_reference = "e5fb6ed5b1aebf1c0d67087397b3c1240ff412da"
 
 [[package]]
 name = "pybind11"
@@ -1187,4 +1188,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5f50261647a10127503d16828fe27d992e279187d6361603c3a27ad48b3c4e97"
+content-hash = "83fc808b8c7c9017939f85528b1bf5dad858368694c49b4d5c6c24a3f3baa850"

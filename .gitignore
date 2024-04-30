@@ -8,3 +8,5 @@
 .kprove*
 .kompile*
 
+.envrc
+result

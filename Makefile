@@ -10,9 +10,11 @@ all: build
 # Building Definition
 # -------------------
 
+ifneq ($(NIX),1)
 POETRY     := poetry -C pykwasm
 POETRY_RUN := $(POETRY) run --
 KDIST      := $(POETRY_RUN) kdist
+endif
 
 .PHONY: pykwasm
 pykwasm:
