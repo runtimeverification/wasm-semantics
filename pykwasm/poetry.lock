@@ -835,7 +835,7 @@ numpy = ">=1.16.0,<2"
 toolz = {version = ">0.9.0,<1", markers = "implementation_name == \"pypy\""}
 
 [package.extras]
-dev = ["Sphinx (>=1.6.5,<2)", "bumpversion (>=0.5.3,<1)", "flake8 (==3.6.0)", "hypothesis (>=6.88.1,<7)", "ipython", "isort (>=4.3.9,<5)", "mypy (==1.6.1)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.1.0,<5)", "pytest-watch (>=4.2.0,<5)", "pytest-xdist (>=3.2.0,<4)", "sphinx_rtd_theme (>=0.1.9)", "tox (>=4.11.3,<5)", "twine", "wheel"]
+dev = ["bumpversion (>=0.5.3,<1)", "ipython", "pytest-watch (>=4.1.0,<5)", "twine", "wheel"]
 doc = ["Sphinx (>=1.6.5,<2)", "sphinx_rtd_theme (>=0.1.9)"]
 lint = ["flake8 (==3.6.0)", "isort (>=4.3.9,<5)", "mypy (==1.6.1)"]
 test = ["hypothesis (>=6.88.1,<7)", "pytest (>=7.4.3,<8)", "pytest-watch (>=4.2.0,<5)", "pytest-xdist (>=3.2.0,<4)", "tox (>=4.11.3,<5)"]
@@ -899,7 +899,7 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyk"
-version = "7.0.29"
+version = "7.0.32"
 description = ""
 optional = false
 python-versions = "^3.10"
@@ -920,8 +920,8 @@ xdg-base-dirs = "^6.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/k.git"
-reference = "v7.0.29"
-resolved_reference = "7d92b56e645f311f2645db57a963501a95fb2773"
+reference = "v7.0.32"
+resolved_reference = "c885ed22e2357cf9855f9a8df0b64683d601b980"
 subdirectory = "pyk"
 
 [[package]]
@@ -1188,4 +1188,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "83fc808b8c7c9017939f85528b1bf5dad858368694c49b4d5c6c24a3f3baa850"
+content-hash = "4d1922a21f47099795860b85699190b8d0d13c5fa0e4abd298eaffc612005f52"
