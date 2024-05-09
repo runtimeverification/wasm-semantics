@@ -449,16 +449,11 @@ The `select` operator picks one of the second or third stack values based on the
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     rule <instrs> select => .K ... </instrs>
-         <valstack> < i32 > C : V2 : V1 : VALSTACK
-                 =>             V2      : VALSTACK
+         <valstack> < i32 > C : V2 : V1                  : VALSTACK
+                 => #if C =/=Int 0 #then V1 #else V2 #fi : VALSTACK
          </valstack>
-      requires C ==Int 0 andBool #sameType(V1, V2)
+      requires #sameType(V1, V2)
 
-    rule <instrs> select => .K ... </instrs>
-         <valstack> < i32 > C : V2 : V1 : VALSTACK
-                 =>                  V1 : VALSTACK
-         </valstack>
-      requires C =/=Int 0 andBool #sameType(V1, V2)
 ```
 
 Structured Control Flow
@@ -628,7 +623,7 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </globals>
       requires #typeMatches(TYP, VAL)
-
+    
 ```
 
 The `get` and `set` instructions read and write globals.
@@ -709,7 +704,7 @@ The `get` and `set` instructions read and write globals.
         </tabInst>
       requires 0 <=Int I
        andBool I <Int size(TDATA)
-
+        
     rule [tableGet-trap]:
         <instrs> #tableGet( TADDR, I) => trap ... </instrs>
         <tabInst>
@@ -737,7 +732,7 @@ The `get` and `set` instructions read and write globals.
           <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
           ...
         </moduleInst>
-
+    
     rule [tableSet-oob]:
         <instrs> #tableSet(TADDR, _VAL, I) => trap ... </instrs>
         <tabInst>
@@ -845,7 +840,7 @@ The `get` and `set` instructions read and write globals.
  // ------------------------------------------------------
     rule [tableFill-zero]:
         <instrs> #tableFill(_, 0, _, _) => .K ... </instrs>
-
+    
     rule [tableFill-loop]:
         <instrs> #tableFill(TID, N, RVAL, I)
               => <i32> I
@@ -1570,7 +1565,7 @@ Element Segments
     syntax Alloc ::= allocelem(RefValType, ListRef, OptionalId)
  // -----------------------------------------------------
     rule [elem-active]:
-        <instrs> #elem(TYPE:RefValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId)
+        <instrs> #elem(TYPE:RefValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId) 
               => allocelem(TYPE, INIT, OID)
               ~> #elemAux(size(INIT), MODE)
                  ...
@@ -1621,11 +1616,11 @@ Element Segments
     syntax ListRef ::= resolveAddrs(ListInt, ListRef)  [function]
  // -----------------------------------------------------------
     rule resolveAddrs(_, .ListRef) => .ListRef
-    rule resolveAddrs(FADDRS, ListItem(<TYP> I) IS)
-      => ListItem(<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS)
-    rule resolveAddrs(FADDRS, ListItem(<TYP> null) IS)
-      => ListItem(<TYP> null)                        resolveAddrs(FADDRS, IS)
-
+    rule resolveAddrs(FADDRS, ListItem(<TYP> I) IS) 
+      => ListItem(<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS) 
+    rule resolveAddrs(FADDRS, ListItem(<TYP> null) IS) 
+      => ListItem(<TYP> null)                        resolveAddrs(FADDRS, IS) 
+    
 ```
 
 Data Segments
