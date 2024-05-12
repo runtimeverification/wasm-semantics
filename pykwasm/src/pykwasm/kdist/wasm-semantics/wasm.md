@@ -448,10 +448,19 @@ The `select` operator picks one of the second or third stack values based on the
     rule <instrs> drop => .K ... </instrs>
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> select => .K ... </instrs>
-         <valstack> < i32 > C : V2 : V1                  : VALSTACK
-                 => #if C =/=Int 0 #then V1 #else V2 #fi : VALSTACK
-         </valstack>
+    rule [select-nonzero]:
+        <instrs> select => .K ... </instrs>
+        <valstack> < i32 > C : V2 : V1 : VALSTACK
+                => V1                  : VALSTACK
+        </valstack>
+      requires #sameType(V1, V2)
+       andBool C =/=Int 0
+
+    rule [select-0]:
+        <instrs> select => .K ... </instrs>
+        <valstack> < i32 > 0 : V2 : V1 : VALSTACK
+                => V2                  : VALSTACK
+        </valstack>
       requires #sameType(V1, V2)
 
 ```
