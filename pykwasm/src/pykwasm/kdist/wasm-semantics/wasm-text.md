@@ -35,7 +35,7 @@ Note that you cannot use a normal K `String` in any production definitions, beca
 In WebAssembly, identifiers are defined by the regular expression below.
 
 ```k
-    syntax IdentifierToken ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@^.-]+" [token]
+    syntax IdentifierToken ::= r"\\$[0-9a-zA-Z!$%&'*+/<>?_`|~=:\\@\\^.\\-]+" [token]
  // ----------------------------------------------------------------------------
 ```
 
@@ -45,8 +45,8 @@ In WebAssembly, integers could be represented in either the decimal form or hexa
 In both cases, digits can optionally be separated by underscores.
 
 ```k
-    syntax WasmIntToken ::= r"[\\+-]?[0-9]+(_[0-9]+)*"               [token]
-                          | r"[\\+-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
+    syntax WasmIntToken ::= r"[\\+\\-]?[0-9]+(_[0-9]+)*"               [token]
+                          | r"[\\+\\-]?0x[0-9a-fA-F]+(_[0-9a-fA-F]+)*" [token]
  // ------------------------------------------------------------------------
 ```
 
