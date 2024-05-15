@@ -898,7 +898,7 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyk"
-version = "7.0.64"
+version = "7.0.65"
 description = ""
 optional = false
 python-versions = "^3.10"
@@ -919,8 +919,8 @@ xdg-base-dirs = "^6.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/runtimeverification/k.git"
-reference = "v7.0.64"
-resolved_reference = "da61a997abf8549fdd6fa25e4568af9a3850ac5e"
+reference = "v7.0.65"
+resolved_reference = "7137a288a73053d24c102e85b295782e34bd1503"
 subdirectory = "pyk"
 
 [[package]]
@@ -1187,4 +1187,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5aefed6a6c16b93ba938e18682c56b3d06b7dd1451d520a617495083384ec491"
+content-hash = "519573c7181ab4f9d5fb4f17791348b061e79fa6e10958a5b0623c25c5d35b8f"
