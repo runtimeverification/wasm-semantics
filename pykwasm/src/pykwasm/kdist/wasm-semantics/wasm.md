@@ -1380,8 +1380,8 @@ The value is encoded as bytes and stored at the "effective address", which is th
     syntax Instr ::= #store(ValType, StoreOp, offset : Int) [klabel(aStore), symbol]
                    | IValType "." StoreOp Int Int
  //                | FValType "." StoreOp Int Float
-                   | "store" "{" Int Int Number "}"
-                   | "store" "{" Int Int Number Int "}"
+                   | "store" "{" IWidth Int Number "}"
+                   | "store" "{" IWidth Int Number Int "}"
  // -----------------------------------------------
     rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
@@ -1399,10 +1399,10 @@ The value is encoded as bytes and stored at the "effective address", which is th
          <memInst>
            <mAddr>   ADDR </mAddr>
            <msize>   SIZE </msize>
-           <mdata>   DATA => #setRange(DATA, EA, VAL, WIDTH) </mdata>
+           <mdata>   DATA => #setRange(DATA, EA, VAL, #numBytes(WIDTH)) </mdata>
            ...
          </memInst>
-         requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
+         requires (EA +Int #numBytes(WIDTH)) <=Int (SIZE *Int #pageSize())
          [preserves-definedness]
     // Preserving definedness:
     //   - #setRange is total
@@ -1414,12 +1414,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
            <msize>   SIZE </msize>
            ...
          </memInst>
-         requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
+         requires (EA +Int #numBytes(WIDTH)) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> ITYPE . store   EA VAL => store { #numBytes(ITYPE) EA VAL           } ... </instrs>
-    rule <instrs> _     . store8  EA VAL => store { 1                EA #wrap(1, VAL) } ... </instrs>
-    rule <instrs> _     . store16 EA VAL => store { 2                EA #wrap(2, VAL) } ... </instrs>
-    rule <instrs> i64   . store32 EA VAL => store { 4                EA #wrap(4, VAL) } ... </instrs>
+    rule <instrs> ITYPE . store   EA VAL => store { ITYPE EA VAL           } ... </instrs>
+    rule <instrs> _     . store8  EA VAL => store { i8    EA #wrap(1, VAL) } ... </instrs>
+    rule <instrs> _     . store16 EA VAL => store { i16   EA #wrap(2, VAL) } ... </instrs>
+    rule <instrs> i64   . store32 EA VAL => store { i32   EA #wrap(4, VAL) } ... </instrs>
 ```
 
 The assorted load operations take an address of type `i32`.
@@ -1429,21 +1429,21 @@ Sort `Signedness` is defined in module `BYTES`.
 
 ```k
     syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
-                   | "load" "{" IValType Int Int Signedness"}"
-                   | "load" "{" IValType Int Int Signedness Int"}"
-                   | "load" "{" IValType Int Int Signedness SparseBytes"}"
+                   | "load" "{" IValType IWidth Int Signedness"}"
+                   | "load" "{" IValType IWidth Int Signedness Int"}"
+                   | "load" "{" IValType IWidth Int Signedness SparseBytes"}"
                    | IValType "." LoadOp Int
  // ----------------------------------------
     rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> ITYPE . load     EA:Int => load { ITYPE #numBytes(ITYPE) EA Unsigned } ... </instrs>
-    rule <instrs> ITYPE . load8_u  EA:Int => load { ITYPE 1                EA Unsigned } ... </instrs>
-    rule <instrs> ITYPE . load16_u EA:Int => load { ITYPE 2                EA Unsigned } ... </instrs>
-    rule <instrs> i64   . load32_u EA:Int => load { i64   4                EA Unsigned } ... </instrs>
-    rule <instrs> ITYPE . load8_s  EA:Int => load { ITYPE 1                EA Signed   } ... </instrs>
-    rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE 2                EA Signed   } ... </instrs>
-    rule <instrs> i64   . load32_s EA:Int => load { i64   4                EA Signed   } ... </instrs>
+    rule <instrs> ITYPE . load     EA:Int => load { ITYPE ITYPE EA Unsigned } ... </instrs>
+    rule <instrs> ITYPE . load8_u  EA:Int => load { ITYPE i8    EA Unsigned } ... </instrs>
+    rule <instrs> ITYPE . load16_u EA:Int => load { ITYPE i16   EA Unsigned } ... </instrs>
+    rule <instrs> i64   . load32_u EA:Int => load { i64   i32   EA Unsigned } ... </instrs>
+    rule <instrs> ITYPE . load8_s  EA:Int => load { ITYPE i8    EA Signed   } ... </instrs>
+    rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE i16   EA Signed   } ... </instrs>
+    rule <instrs> i64   . load32_s EA:Int => load { i64   i32   EA Signed   } ... </instrs>
 
     rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN (MEMADDRS{{0}} orDefault 0)} ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -1461,7 +1461,7 @@ Sort `Signedness` is defined in module `BYTES`.
            <mdata>   DATA </mdata>
            ...
          </memInst>
-      requires (EA +Int WIDTH) <=Int (SIZE *Int #pageSize())
+      requires (EA +Int #numBytes(WIDTH)) <=Int (SIZE *Int #pageSize())
 
     rule <instrs> load { _ WIDTH EA _ ADDR:Int} => trap ... </instrs>
          <memInst>
@@ -1469,10 +1469,10 @@ Sort `Signedness` is defined in module `BYTES`.
            <msize>   SIZE </msize>
            ...
          </memInst>
-      requires (EA +Int WIDTH) >Int (SIZE *Int #pageSize())
+      requires (EA +Int #numBytes(WIDTH)) >Int (SIZE *Int #pageSize())
 
-    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:SparseBytes } => #chop(< ITYPE > #signedWidth(WIDTH, #getRange(DATA, EA, WIDTH))) ... </instrs>
-    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:SparseBytes } => < ITYPE > #getRange(DATA, EA, WIDTH) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA   Signed DATA:SparseBytes } => #chop(< ITYPE > #signed(WIDTH, #getRange(DATA, EA, #numBytes(WIDTH)))) ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:SparseBytes } => < ITYPE > #getRange(DATA, EA, #numBytes(WIDTH)) ... </instrs>
 ```
 
 The `size` operation returns the size of the memory, measured in pages.

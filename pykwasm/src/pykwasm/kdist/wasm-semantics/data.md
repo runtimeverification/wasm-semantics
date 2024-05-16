@@ -227,16 +227,20 @@ The sort `OptionalInt` provides this potentially "undefined" `Int`.
 ### Integer bounds
 
 ```k
-    syntax Int ::= #pow  ( IValType ) [function, total, smtlib(pow )] /* 2 ^Int #width(T)          */
-                 | #pow1 ( IValType ) [function, total, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */    
+    syntax Int ::= #pow  ( IWidth ) [function, total, smtlib(pow )] /* 2 ^Int #width(T)          */
+                 | #pow1 ( IWidth ) [function, total, smtlib(pow1)] /* 2 ^Int (#width(T) -Int 1) */    
 ```
 
 ### Integer interpretation
 
 ```k
-    syntax Int ::= #signed      ( IValType , Int ) [function]
-                 | #unsigned    ( IValType , Int ) [function]
-                 | #signedWidth ( Int      , Int ) [function]
+    syntax Int ::= #signed   ( IWidth , Int ) [function]
+                 | #unsigned ( IWidth , Int ) [function]
+
+    syntax IWidth ::= IValType   // => i32 | i64
+                    | "i8"   
+                    | "i16"
+
 ```
 
 ```k
@@ -369,9 +373,11 @@ Also we can reverse a `ValTypes` with `#revt`
 The `#width` function returns the bit-width of a given `IValType`.
 
 ```k
-    syntax Int ::= #width    ( IValType ) [function, total]
-    syntax Int ::= #numBytes ( IValType ) [function, total, smtlib(numBytes)]
+    syntax Int ::= #width    ( IWidth ) [function, total]
+    syntax Int ::= #numBytes ( IWidth ) [function, total, smtlib(numBytes)]
  // ------------------------------------------------------------------------------
+    rule #width(i8)  => 8
+    rule #width(i16) => 16
     rule #width(i32) => 32
     rule #width(i64) => 64
 
@@ -381,6 +387,10 @@ The `#width` function returns the bit-width of a given `IValType`.
 `2 ^Int 32` and `2 ^Int 64` are used often enough to warrant providing helpers for them.
 
 ```k
+    rule #pow1(i8 ) => 128
+    rule #pow (i8 ) => 256
+    rule #pow1(i16) => 32768
+    rule #pow (i16) => 65536
     rule #pow1(i32) => 2147483648
     rule #pow (i32) => 4294967296
     rule #pow1(i64) => 9223372036854775808
@@ -420,7 +430,7 @@ The `#round` function casts a `f64` float to a `f32` float.
 `f32` floats has 1 bit for the sign, 23 bits for the value and 8 bits for exponent.
 
 ```k
-    syntax FVal ::= #round ( FValType , Number ) [function]
+    syntax FVal ::= #round ( FValType , Number ) [function, total]
  // -------------------------------------------------------
     rule #round(f64 , N:Float) => < f64 > roundFloat(N, 53, 11) [concrete]
     rule #round(f32 , N:Float) => < f32 > roundFloat(N, 24, 8)  [concrete]
@@ -435,8 +445,8 @@ These functions assume that the argument integer is in the valid range of signed
 Some operations extend integers from 1, 2, or 4 bytes, so a special function with a bit width argument helps with the conversion.
 
 ```k
-    syntax Bool ::= definedSigned  ( IValType, Int )  [function, total]
-                  | definedUnsigned( IValType, Int )  [function, total]
+    syntax Bool ::= definedSigned  ( IWidth, Int )  [function, total]
+                  | definedUnsigned( IWidth, Int )  [function, total]
 
  // ---------------------------------------------------------
     rule #signed(ITYPE, N) => N                  requires 0            <=Int N andBool N <Int #pow1(ITYPE)
@@ -445,15 +455,9 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
     rule #unsigned( ITYPE, N) => N +Int #pow(ITYPE) requires N  <Int 0
     rule #unsigned(_ITYPE, N) => N                  requires 0 <=Int N
 
-    rule #signedWidth(1, N) => N            requires 0     <=Int N andBool N <Int 128
-    rule #signedWidth(1, N) => N -Int 256   requires 128   <=Int N andBool N <Int 256
-    rule #signedWidth(2, N) => N            requires 0     <=Int N andBool N <Int 32768
-    rule #signedWidth(2, N) => N -Int 65536 requires 32768 <=Int N andBool N <Int 65536
-    rule #signedWidth(4, N) => #signed(i32, N)
+    rule definedSigned(T:IWidth, N:Int) => 0 <=Int N andBool N <Int #pow(T)
 
-    rule definedSigned(T:IValType, N:Int) => 0 <=Int N andBool N <Int #pow(T)
-
-    rule #Ceil(#signed(@Arg0:IValType, @Arg1:Int))
+    rule #Ceil(#signed(@Arg0:IWidth, @Arg1:Int))
         =>  (({ definedSigned(@Arg0, @Arg1)  #Equals true }
           #And #Ceil(@Arg0))
           #And #Ceil(@Arg1))
@@ -461,9 +465,9 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
 
     // Should this use `N <Int #pow1(T)`? If the argument is always signed, then
     // it should, otherwise it may be better as below.
-    rule definedUnsigned(T:IValType, N:Int) => 0 -Int #pow1(T) <=Int N andBool N <Int #pow(T)
+    rule definedUnsigned(T:IWidth, N:Int) => 0 -Int #pow1(T) <=Int N andBool N <Int #pow(T)
 
-    rule #Ceil(#unsigned(@Arg0:IValType, @Arg1:Int))
+    rule #Ceil(#unsigned(@Arg0:IWidth, @Arg1:Int))
         =>  (({ definedUnsigned(@Arg0, @Arg1)  #Equals true }
           #And #Ceil(@Arg0))
           #And #Ceil(@Arg1))

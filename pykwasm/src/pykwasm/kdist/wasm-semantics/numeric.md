@@ -193,9 +193,9 @@ There are 3 sign-extension operators for integers.
 - `extend32_s`
 
 ```k
-    rule ITYPE . extend8_s I  => #extends(ITYPE, 1, #wrap(1, I)) 
-    rule ITYPE . extend16_s I => #extends(ITYPE, 2, #wrap(2, I))
-    rule ITYPE . extend32_s I => #extends(ITYPE, 4, #wrap(4, I))
+    rule ITYPE . extend8_s I  => #extends(ITYPE, i8, #wrap(1, I)) 
+    rule ITYPE . extend16_s I => #extends(ITYPE, i16, #wrap(2, I))
+    rule ITYPE . extend32_s I => #extends(ITYPE, i32, #wrap(4, I))
 ```
 
 ### Binary Operators
@@ -429,8 +429,9 @@ Conversion operators always take a single argument as input and cast it to anoth
 The operators are further broken down into subsorts for their input type, for simpler type-checking.
 
 ```k
-    syntax Val ::= ValType "." CvtOp Number [klabel(numberCvtOp), function]
+    syntax Val ::= ValType "." CvtOp Number [symbol(numberCvtOp), function, total]
  // -----------------------------------------------------------------------
+    rule _:ValType . _:CvtOp _:Number => undefined      [owise]
 ```
 
 There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote` ,`promote` and `reinterpret`.
@@ -445,22 +446,25 @@ There are 7 conversion operators: `wrap`, `extend`, `trunc`, `convert`, `demote`
 
 ```k
     rule i64 . extend_i32_u I:Int => < i64 > I
-    rule i64 . extend_i32_s I:Int => #extends(i64, 4, I)
+    rule i64 . extend_i32_s I:Int => #extends(i64, i32, I)
 
-    syntax IVal ::= #extends(to: IValType, width: Int, val: Int)    [function, klabel(extends), symbol]
- // ---------------------------------------------------------------------------------------------------
-    rule #extends(ITYPE, WIDTH, VAL) => < ITYPE > #unsigned(ITYPE, #signedWidth(WIDTH, VAL))
-      requires WIDTH <=Int #numBytes(ITYPE)
+    syntax Val ::= #extends(to: IValType, width: IWidth, val: Int)    [function, total, symbol(extends)]
+ // ----------------------------------------------------------------------------------------------------
+    rule #extends(ITYPE, WIDTH, VAL) => < ITYPE > #unsigned(ITYPE, #signed(WIDTH, VAL))
+      requires #numBytes(WIDTH) <=Int #numBytes(ITYPE)
+       andBool definedSigned(WIDTH, VAL)
+
+    rule #extends(_, _, _) => undefined     [owise]
 
 ```
 
 - `convert` takes an `int` type value and convert it to the nearest `float` type value.
 
 ```k
-    rule FTYPE . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) )
+    rule FTYPE . convert_i32_s I:Int => #round( FTYPE , #signed(i32, I) )  requires definedSigned(i32, I)
     rule FTYPE . convert_i32_u I:Int => #round( FTYPE , I )
 
-    rule FTYPE . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) )
+    rule FTYPE . convert_i64_s I:Int => #round( FTYPE , #signed(i64, I) )  requires definedSigned(i32, I)
     rule FTYPE . convert_i64_u I:Int => #round( FTYPE , I )
 ```
 
