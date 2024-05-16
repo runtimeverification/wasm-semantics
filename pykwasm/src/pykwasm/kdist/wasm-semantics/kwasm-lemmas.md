@@ -288,7 +288,7 @@ Bounds on `#getRange`:
     rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
     rule VAL1 +Int VAL2                     <Int MAX => true requires VAL1 <Int MAX andBool VAL2 <Int MAX andBool #distinctBits(VAL1, VAL2) [simplification]
 
-    syntax Bool ::= #distinctBits ( Int , Int ) [function]
+    syntax Bool ::= #distinctBits ( Int , Int ) [function, no-evaluators]
  // ------------------------------------------------------
     rule #distinctBits(#getRange(_, _, WIDTH), #getRange(_, _, _) <<Int SHIFT) => true requires WIDTH *Int 8 <=Int SHIFT
       [simplification]
