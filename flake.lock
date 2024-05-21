@@ -126,16 +126,16 @@
         "rv-utils": "rv-utils_3"
       },
       "locked": {
-        "lastModified": 1716325381,
-        "narHash": "sha256-VQPXNRPp4layRBgSw7NgvMJw0OEaupbUyyTVp2rw4mc=",
+        "lastModified": 1716329041,
+        "narHash": "sha256-1u+cqXGdILE1ohESEWxyDkRzvEftu6l0+u5gmOpC0fE=",
         "owner": "runtimeverification",
         "repo": "k",
-        "rev": "b486ee7c4d23fabb859eb4435078c76c79ad94d3",
+        "rev": "ba4be1c8a02ed2243c46a1784b2f642952b252de",
         "type": "github"
       },
       "original": {
         "owner": "runtimeverification",
-        "ref": "v7.0.78",
+        "ref": "v7.0.79",
         "repo": "k",
         "type": "github"
       }
@@ -314,17 +314,17 @@
       },
       "locked": {
         "dir": "pyk",
-        "lastModified": 1716325381,
-        "narHash": "sha256-VQPXNRPp4layRBgSw7NgvMJw0OEaupbUyyTVp2rw4mc=",
+        "lastModified": 1716329041,
+        "narHash": "sha256-1u+cqXGdILE1ohESEWxyDkRzvEftu6l0+u5gmOpC0fE=",
         "owner": "runtimeverification",
         "repo": "k",
-        "rev": "b486ee7c4d23fabb859eb4435078c76c79ad94d3",
+        "rev": "ba4be1c8a02ed2243c46a1784b2f642952b252de",
         "type": "github"
       },
       "original": {
         "dir": "pyk",
         "owner": "runtimeverification",
-        "ref": "v7.0.78",
+        "ref": "v7.0.79",
         "repo": "k",
         "type": "github"
       }
