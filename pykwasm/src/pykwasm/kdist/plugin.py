@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from pyk.kbuild.utils import k_version
 from pyk.kdist.api import Target
-from pyk.ktool.kompile import KompileBackend, kompile
+from pyk.ktool.kompile import PykBackend, kompile
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -44,7 +44,7 @@ __TARGETS__: Final = {
     'source': SourceTarget(),
     'llvm': KompileTarget(
         lambda src_dir: {
-            'backend': KompileBackend.LLVM,
+            'backend': PykBackend.LLVM,
             'main_file': src_dir / 'wasm-semantics/test.md',
             'main_module': 'WASM-TEST',
             'syntax_module': 'WASM-TEST-SYNTAX',
@@ -57,7 +57,7 @@ __TARGETS__: Final = {
     ),
     'kwasm-lemmas': KompileTarget(
         lambda src_dir: {
-            'backend': KompileBackend.HASKELL,
+            'backend': PykBackend.HASKELL,
             'main_file': src_dir / 'wasm-semantics/kwasm-lemmas.md',
             'main_module': 'KWASM-LEMMAS',
             'syntax_module': 'WASM-TEXT-SYNTAX',
@@ -67,7 +67,7 @@ __TARGETS__: Final = {
     ),
     'wrc20': KompileTarget(
         lambda src_dir: {
-            'backend': KompileBackend.HASKELL,
+            'backend': PykBackend.HASKELL,
             'main_file': src_dir / 'wasm-semantics/wrc20.md',
             'main_module': 'WRC20-LEMMAS',
             'syntax_module': 'WASM-TEXT-SYNTAX',
