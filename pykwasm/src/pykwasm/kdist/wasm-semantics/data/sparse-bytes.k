@@ -1,6 +1,4 @@
-
-module SPARSE-BYTES
-  imports BOOL
+module SPARSE-BYTES-SYNTAX
   imports BYTES
   imports INT
 
@@ -9,11 +7,33 @@ module SPARSE-BYTES
 
 
   syntax SBItemChunk ::= SBChunk(SBItem)
-  
+
   syntax SparseBytes ::= List{SBItemChunk, ""}
 
   syntax Bytes ::= unwrap(SparseBytes)
     [function, total, symbol, klabel(SparseBytes:unwrap)]
+
+  syntax Bytes ::= unwrap(SBItem)
+    [function, total, symbol, klabel(SBItem:unwrap)]
+
+  syntax Int ::= size(SparseBytes)
+    [function, total, klabel(SparseBytes:size), symbol]
+
+  syntax Int ::= size(SBItem)
+    [function, total, symbol, klabel(SBItem:size)]
+
+  syntax Bytes ::= zeros(Int) [function, total, symbol, klabel(zeros)]
+endmodule
+
+module SPARSE-BYTES
+  imports BOOL
+  imports SPARSE-BYTES-SYNTAX
+  imports REPLACE-AT-COMMON
+  imports REPLACE-AT-CONCRETE
+  imports REPLACE-AT-SYMBOLIC
+
+  // syntax Bytes ::= unwrap(SparseBytes)
+  //   [function, total, symbol, klabel(SparseBytes:unwrap)]
 // -----------------------------------------------------------------
   rule unwrap(SBChunk(SBI) REST) => unwrap(SBI) +Bytes unwrap(REST)
   rule unwrap(.SparseBytes)       => .Bytes
@@ -23,24 +43,24 @@ module SPARSE-BYTES
 // ---------------------------------------------------------
   rule fromBytes(Bs) => SBChunk(#bytes(Bs))
 
-  syntax Bytes ::= unwrap(SBItem)
-    [function, total, symbol, klabel(SBItem:unwrap)]
+  // syntax Bytes ::= unwrap(SBItem)
+  //   [function, total, symbol, klabel(SBItem:unwrap)]
 // -----------------------------------------------
   rule unwrap(#bytes(Bs)) => Bs
   rule unwrap(#empty(N))  => zeros(N)
 
-  syntax Bytes ::= zeros(Int) [function, total, symbol, klabel(zeros)]
+  // syntax Bytes ::= zeros(Int) [function, total, symbol, klabel(zeros)]
 // -------------------------------------------------------------------
   rule zeros(N) => padLeftBytes(.Bytes, size(#empty(N)), 0)
 
-  syntax Int ::= size(SparseBytes)
-    [function, total, klabel(SparseBytes:size), symbol]
+  // syntax Int ::= size(SparseBytes)
+  //   [function, total, klabel(SparseBytes:size), symbol]
 // ---------------------------------------------------
   rule size(SBChunk(SBI)  SBS) => size(SBI) +Int size(SBS)
   rule size(.SparseBytes)       => 0
 
-  syntax Int ::= size(SBItem)
-    [function, total, symbol, klabel(SBItem:size)]
+  // syntax Int ::= size(SBItem)
+  //   [function, total, symbol, klabel(SBItem:size)]
 // -----------------------------------------------
   rule size(#bytes(Bs)) => lengthBytes(Bs)
   rule size(#empty(N))   => maxInt(N,0)
@@ -59,7 +79,7 @@ module SPARSE-BYTES
     requires 0 <=Int S andBool S <=Int E
      andBool size(SBI) <=Int S
 
-  rule substrSparseBytes(SBChunk(SBI) REST, S, E) 
+  rule substrSparseBytes(SBChunk(SBI) REST, S, E)
     => #let SUB = substrSBItem(SBI, S, E)
        #in SUB substrSparseBytes(REST, 0, E -Int size(SBI))
     requires 0 <=Int S andBool S <=Int E
@@ -78,22 +98,27 @@ module SPARSE-BYTES
   rule substrSBItem(#empty(N), S, E) => SBChunk( #empty( minInt(E, N) -Int S) )
     requires 0 <=Int S andBool S <=Int E
      andBool S <Int N
-  
+
   rule substrSBItem(#bytes(Bs), S, E) => .SparseBytes
     requires 0 <=Int S andBool S <=Int E
      andBool          lengthBytes(Bs) <=Int S
 
-  rule substrSBItem(#bytes(Bs), S, E) 
+  rule substrSBItem(#bytes(Bs), S, E)
     => SBChunk(#bytes( substrBytes(Bs, S, minInt(E, lengthBytes(Bs))) ))
     requires 0 <=Int S andBool S <=Int E
-     andBool S <Int lengthBytes(Bs) 
+     andBool S <Int lengthBytes(Bs)
 
+endmodule
+
+module REPLACE-AT-COMMON
+  imports BOOL
+  imports SPARSE-BYTES-SYNTAX
 
   syntax SparseBytes ::= replaceAt(SparseBytes, Int, Bytes)
     [function, total, symbol, klabel(SparseBytes:replaceAt)]
 // --------------------------------------------------------
   // invalid argument
-  rule replaceAt(_, S, _) => .SparseBytes 
+  rule replaceAt(_, S, _) => .SparseBytes
     requires S <Int 0
 
   // append
@@ -105,32 +130,27 @@ module SPARSE-BYTES
     requires 0 <Int S
 
   // skip
-  rule replaceAt(SBChunk(SBI) REST, S, Bs) 
+  rule replaceAt(SBChunk(SBI) REST, S, Bs)
     => SBChunk(SBI) replaceAt(REST, S -Int size(SBI), Bs)
     requires size(SBI) <=Int S
 
-  rule replaceAt(SBChunk(#empty(N))  REST, S, Bs) => replaceAtZ(N, REST, S, Bs)
-    requires S <Int N
-  rule replaceAt(SBChunk(#bytes(B)) REST, S, Bs) => replaceAtB(B, REST, S, Bs)
-    requires S <Int lengthBytes(B)
-  
   syntax SparseBytes ::= replaceAtZ(Int, SparseBytes, Int, Bytes)
     [function, total, symbol, klabel(SparseBytes:replaceAtZ)]
 // ---------------------------------------------------------------
   ////////////// S < 0
-  rule replaceAtZ(_, _, S, _) => .SparseBytes 
+  rule replaceAtZ(_, _, S, _) => .SparseBytes
     requires S <Int 0
 
   ////////////// S > 0
   // split zeros: 0 < S < N
   rule replaceAtZ(N, REST, S, Bs)
-    => SBChunk(#empty(S)) replaceAtZ(N -Int S, REST, 0, Bs) 
+    => SBChunk(#empty(S)) replaceAtZ(N -Int S, REST, 0, Bs)
     requires 0 <Int S
      andBool S <Int N
 
   // skip zeros: 0 <= N <= S
   rule replaceAtZ(N, REST, S, Bs)
-    => SBChunk(#empty(N)) replaceAt(REST, S -Int N, Bs) 
+    => SBChunk(#empty(N)) replaceAt(REST, S -Int N, Bs)
     requires 0 <Int S
      andBool 0 <=Int N
      andBool N <=Int S
@@ -138,19 +158,19 @@ module SPARSE-BYTES
   ////////////// S == 0
   ///////// len(Bs) < N
   rule replaceAtZ(N, REST, S, Bs)
-    => SBChunk(#bytes(Bs)) SBChunk(#empty(N -Int lengthBytes(Bs))) REST 
+    => SBChunk(#bytes(Bs)) SBChunk(#empty(N -Int lengthBytes(Bs))) REST
     requires 0 ==Int S
      andBool lengthBytes(Bs) <Int N
 
   ///////// len(Bs) = N
   rule replaceAtZ(N, REST, S, Bs)
-    => SBChunk(#bytes(Bs)) REST 
+    => SBChunk(#bytes(Bs)) REST
     requires 0 ==Int S
      andBool lengthBytes(Bs) ==Int N
 
   ///////// len(Bs) > N
   rule replaceAtZ(N, REST, S, Bs)
-    => replaceAt(SBChunk(#bytes(zeros(N))) REST, S, Bs) 
+    => replaceAt(SBChunk(#bytes(zeros(N))) REST, S, Bs)
     requires 0 ==Int S
      andBool lengthBytes(Bs) >Int N
 
@@ -172,7 +192,7 @@ module SPARSE-BYTES
           Bs
         )
     requires 0 <=Int S
-     andBool lengthBytes(MB) <Int S +Int lengthBytes(Bs) 
+     andBool lengthBytes(MB) <Int S +Int lengthBytes(Bs)
 
 
   // join list items until Bs is at least I bytes
@@ -190,5 +210,26 @@ module SPARSE-BYTES
   rule joinUntil(Bs, .SparseBytes, I)
     => SBChunk(#bytes( padRightBytes(Bs, I, 0) ))
     requires I >Int lengthBytes(Bs)
+endmodule
+
+module REPLACE-AT-CONCRETE  [concrete]
+  imports REPLACE-AT-COMMON
+
+  rule replaceAt(SBChunk(#empty(N))  REST, S, Bs) => replaceAtZ(N, REST, S, Bs)
+    requires S <Int N
+  rule replaceAt(SBChunk(#bytes(B)) REST, S, Bs) => replaceAtB(B, REST, S, Bs)
+    requires S <Int lengthBytes(B)
+
+endmodule
+
+module REPLACE-AT-SYMBOLIC  [symbolic]
+  imports REPLACE-AT-COMMON
+
+  rule replaceAt(SBChunk(#empty(N))  REST, S, Bs) => replaceAtZ(N, REST, S, Bs)
+    requires S <Int N
+    [simplification, concrete]
+  rule replaceAt(SBChunk(#bytes(B)) REST, S, Bs) => replaceAtB(B, REST, S, Bs)
+    requires S <Int lengthBytes(B)
+    [simplification, concrete]
 
 endmodule
