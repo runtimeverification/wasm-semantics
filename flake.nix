@@ -2,11 +2,11 @@
   description = "K Semantics of WebAssembly";
 
   inputs = {
-    k-framework.url = "github:runtimeverification/k/v7.0.112";
+    k-framework.url = "github:runtimeverification/k/v7.0.113";
     nixpkgs.follows = "k-framework/nixpkgs";
     flake-utils.follows = "k-framework/flake-utils";
     rv-utils.follows = "k-framework/rv-utils";
-    pyk.url = "github:runtimeverification/k/v7.0.112?dir=pyk";
+    pyk.url = "github:runtimeverification/k/v7.0.113?dir=pyk";
     nixpkgs-pyk.follows = "pyk/nixpkgs";
     poetry2nix.follows = "pyk/poetry2nix";
   };
