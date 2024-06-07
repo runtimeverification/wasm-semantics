@@ -126,16 +126,16 @@
         "rv-utils": "rv-utils_3"
       },
       "locked": {
-        "lastModified": 1717580671,
-        "narHash": "sha256-ucSdll3uu4lu3FIYQ1hyLnm2BGiIydHx40orLN9VM8s=",
+        "lastModified": 1717703773,
+        "narHash": "sha256-3eIJw8y8COwUCAqGNyv+Q0juud4F/rdIIAAioC/J2f4=",
         "owner": "runtimeverification",
         "repo": "k",
-        "rev": "e12cbe44f5e39c7daf84b62e538d59b8fa31bc28",
+        "rev": "e070a2048b7e6ce45748426c4868d593113af050",
         "type": "github"
       },
       "original": {
         "owner": "runtimeverification",
-        "ref": "v7.0.112",
+        "ref": "v7.0.120",
         "repo": "k",
         "type": "github"
       }
@@ -160,16 +160,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1717532732,
-        "narHash": "sha256-0VTqGrolstZlxtd6DRmoWnJsYO+BB8i+PniGKenB34I=",
+        "lastModified": 1717613611,
+        "narHash": "sha256-5rDBlXOfvxYNei+mL949pV6TIE5oAfY6LKxV/AcU3Mo=",
         "owner": "runtimeverification",
         "repo": "llvm-backend",
-        "rev": "caca83fbec616482760697fbf7620c45e9b560b7",
+        "rev": "744a6150c4e616edcd60faf9786cc27780c364ad",
         "type": "github"
       },
       "original": {
         "owner": "runtimeverification",
-        "ref": "v0.1.42",
+        "ref": "v0.1.44",
         "repo": "llvm-backend",
         "type": "github"
       }
@@ -314,17 +314,17 @@
       },
       "locked": {
         "dir": "pyk",
-        "lastModified": 1717580671,
-        "narHash": "sha256-ucSdll3uu4lu3FIYQ1hyLnm2BGiIydHx40orLN9VM8s=",
+        "lastModified": 1717703773,
+        "narHash": "sha256-3eIJw8y8COwUCAqGNyv+Q0juud4F/rdIIAAioC/J2f4=",
         "owner": "runtimeverification",
         "repo": "k",
-        "rev": "e12cbe44f5e39c7daf84b62e538d59b8fa31bc28",
+        "rev": "e070a2048b7e6ce45748426c4868d593113af050",
         "type": "github"
       },
       "original": {
         "dir": "pyk",
         "owner": "runtimeverification",
-        "ref": "v7.0.112",
+        "ref": "v7.0.120",
         "repo": "k",
         "type": "github"
       }
