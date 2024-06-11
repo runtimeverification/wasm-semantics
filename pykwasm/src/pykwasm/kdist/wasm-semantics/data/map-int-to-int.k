@@ -283,7 +283,7 @@ module MAP-INT-TO-INT-PRIMITIVE-SYMBOLIC  [symbolic]
 
   rule K in_keys{{_M:MapIntToInt {{ K <- undef }} }} => false [simplification]
   rule K in_keys{{_M:MapIntToInt {{ K <- _ }} }} => true [simplification]
-  rule K1 in_keys{{ M:MapIntToInt {{ K2 <- _ }} }}
+  rule K1 in_keys{{ _M:MapIntToInt {{ K2 <- _ }} }}
       => true requires K1 ==K K2
       [simplification]
   rule K1 in_keys{{ M:MapIntToInt {{ K2 <- _ }} }}
