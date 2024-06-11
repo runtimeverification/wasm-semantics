@@ -19,35 +19,35 @@ module MAP-INT-TO-INT
 
   syntax MapIntToInt [hook(MAP.Map)]
   syntax MapIntToInt ::= MapIntToInt MapIntToInt
-         [ left, function, hook(MAP.concat), klabel(_MapIntToInt_),
-           symbol, assoc, comm, unit(.MapIntToInt), element(_Int2Int|->_),
+         [ left, function, hook(MAP.concat), symbol(_MapIntToInt_),
+           assoc, comm, unit(.MapIntToInt), element(_Int2Int|->_),
            index(0), format(%1%n%2)
          ]
   syntax MapIntToInt ::= ".MapIntToInt"
          [ function, total, hook(MAP.unit),
-           klabel(.MapIntToInt), symbol
+           symbol(.MapIntToInt)
          ]
   syntax MapIntToInt ::= WrappedInt "Int2Int|->" WrappedInt
          [ function, total, hook(MAP.element),
-           klabel(_Int2Int|->_), symbol,
+           symbol(_Int2Int|->_),
            injective
          ]
 
   syntax priority _Int2Int|->_ > _MapIntToInt_ .MapIntToInt
   syntax non-assoc _Int2Int|->_
   syntax WrappedInt ::= MapIntToInt "[" WrappedInt "]"
-                 [function, hook(MAP.lookup), klabel(MapIntToInt:lookup), symbol]
+                 [function, hook(MAP.lookup), symbol(MapIntToInt:lookup)]
   syntax WrappedInt ::= MapIntToInt "[" WrappedInt "]" "orDefault" WrappedInt
                  [ function, total, hook(MAP.lookupOrDefault),
-                   klabel(MapIntToInt:lookupOrDefault), symbol
+                   symbol(MapIntToInt:lookupOrDefault)
                  ]
   syntax MapIntToInt ::= MapIntToInt "[" key: WrappedInt "<-" value: WrappedInt "]"
-                 [ function, total, klabel(MapIntToInt:update), symbol,
+                 [ function, total, symbol(MapIntToInt:update),
                    hook(MAP.update), prefer
                  ]
   syntax MapIntToInt ::= MapIntToInt "[" WrappedInt "<-" "undef" "]"
                  [ function, total, hook(MAP.remove),
-                   klabel(_MapIntToInt[_<-undef]), symbol
+                   symbol(_MapIntToInt[_<-undef])
                  ]
   syntax MapIntToInt ::= MapIntToInt "-Map" MapIntToInt
                  [ function, total, hook(MAP.difference) ]
@@ -78,11 +78,11 @@ module MAP-INT-TO-INT
                  [function, hook(MAP.values)]
 
   syntax Int ::= size(MapIntToInt)
-                 [function, total, hook(MAP.size), klabel(MapIntToInt.sizeMap), symbol]
+                 [function, total, hook(MAP.size), symbol(MapIntToInt.sizeMap)]
   syntax Bool ::= MapIntToInt "<=Map" MapIntToInt
                  [function, total, hook(MAP.inclusion)]
   syntax WrappedInt ::= choice(MapIntToInt)
-                 [function, hook(MAP.choice), klabel(MapIntToInt:choice), symbol]
+                 [function, hook(MAP.choice), symbol(MapIntToInt:choice)]
 endmodule
 
 module MAP-INT-TO-INT-PRIMITIVE
@@ -96,17 +96,17 @@ module MAP-INT-TO-INT-PRIMITIVE-CONCRETE [concrete]
   imports public  MAP-INT-TO-INT
 
   syntax Int ::= MapIntToInt "{{" Int "}}"
-                 [function, klabel(MapIntToInt:primitiveLookup), symbol]
+                 [function, symbol(MapIntToInt:primitiveLookup)]
   syntax Int ::= MapIntToInt "{{" Int "}}" "orDefault" Int
-                 [ function, total, klabel(MapIntToInt:primitiveLookupOrDefault), symbol ]
+                 [ function, total, symbol(MapIntToInt:primitiveLookupOrDefault) ]
   syntax MapIntToInt ::= MapIntToInt "{{" key: Int "<-" value: Int "}}"
-                 [ function, total, klabel(MapIntToInt:primitiveUpdate), symbol,
+                 [ function, total, symbol(MapIntToInt:primitiveUpdate),
                    prefer
                  ]
   syntax MapIntToInt ::= MapIntToInt "{{" Int "<-" "undef" "}}"
-                 [ function, total, klabel(MapIntToInt:primitiveRemove), symbol ]
+                 [ function, total, symbol(MapIntToInt:primitiveRemove) ]
   syntax Bool ::= Int "in_keys" "{{" MapIntToInt "}}"
-                 [function, total, klabel(MapIntToInt:primitiveInKeys), symbol]
+                 [function, total, symbol(MapIntToInt:primitiveInKeys)]
 
   rule (M:MapIntToInt {{ Key:Int }})
       => (unwrap( M[wrap(Key)] ))
@@ -126,17 +126,17 @@ module MAP-INT-TO-INT-PRIMITIVE-SYMBOLIC  [symbolic]
   imports private MAP-INT-TO-INT-KORE-SYMBOLIC
 
   syntax Int ::= MapIntToInt "{{" Int "}}"
-                 [function, symbol, klabel(MapIntToInt:primitiveLookup)]
+                 [function, symbol(MapIntToInt:primitiveLookup)]
   syntax Int ::= MapIntToInt "{{" Int "}}" "orDefault" Int
-                 [ function, total, symbol, klabel(MapIntToInt:primitiveLookupOrDefault) ]
+                 [ function, total, symbol(MapIntToInt:primitiveLookupOrDefault) ]
   syntax MapIntToInt ::= MapIntToInt "{{" key: Int "<-" value: Int "}}"
-                 [ function, total, klabel(MapIntToInt:primitiveUpdate), symbol,
+                 [ function, total, symbol(MapIntToInt:primitiveUpdate),
                    prefer
                  ]
   syntax MapIntToInt ::= MapIntToInt "{{" Int "<-" "undef" "}}"
-                 [ function, total, symbol, klabel(MapIntToInt:primitiveRemove) ]
+                 [ function, total, symbol(MapIntToInt:primitiveRemove) ]
   syntax Bool ::= Int "in_keys" "{{" MapIntToInt "}}"
-                 [function, total, symbol, klabel(MapIntToInt:primitiveInKeys)]
+                 [function, total, symbol(MapIntToInt:primitiveInKeys)]
 
   // Definitions
   // -----------
@@ -416,7 +416,7 @@ module MAP-INT-TO-INT-CURLY-BRACE
   imports MAP-INT-TO-INT
 
   syntax MapIntToInt ::= MapIntToInt "{" key:WrappedInt "<-" value:WrappedInt "}"
-      [function, total, symbol, klabel(MapIntToInt:curly_update)]
+      [function, total, symbol(MapIntToInt:curly_update)]
   rule M:MapIntToInt{Key <- Value} => M (Key Int2Int|-> Value)
     requires notBool Key in_keys(M)
   rule (Key Int2Int|-> _ M:MapIntToInt){Key <- Value}
