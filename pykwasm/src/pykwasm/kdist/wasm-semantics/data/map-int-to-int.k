@@ -254,12 +254,12 @@ module MAP-INT-TO-INT-PRIMITIVE-SYMBOLIC  [symbolic]
   rule (K1 Int2Int|-> V1 M:MapIntToInt) {{ K2 <- V2 }}
       => (K1 Int2Int|-> V1 (M {{ K2 <- V2 }}))
       requires unwrap( K1 ) =/=K K2
-      [simplification]
+      [simplification, preserves-definedness]
 
   rule (K1 Int2Int|-> V1 M:MapIntToInt) {{ K2 <- undef }}
       => (K1 Int2Int|-> V1 (M {{ K2 <- undef }}))
       requires unwrap( K1 ) =/=K K2
-      [simplification]
+      [simplification, preserves-definedness]
 
   rule (K1 Int2Int|-> _V M:MapIntToInt) {{ K2 }} => M {{K2}}
       requires unwrap( K1 ) =/=K K2
@@ -284,7 +284,7 @@ module MAP-INT-TO-INT-PRIMITIVE-SYMBOLIC  [symbolic]
   rule K in_keys{{_M:MapIntToInt {{ K <- undef }} }} => false [simplification]
   rule K in_keys{{_M:MapIntToInt {{ K <- _ }} }} => true [simplification]
   rule K1 in_keys{{ M:MapIntToInt {{ K2 <- _ }} }}
-      => true requires K1 ==K K2 orBool K1 in_keys{{M}}
+      => true requires K1 ==K K2
       [simplification]
   rule K1 in_keys{{ M:MapIntToInt {{ K2 <- _ }} }}
       => K1 in_keys {{ M }}
@@ -294,7 +294,7 @@ module MAP-INT-TO-INT-PRIMITIVE-SYMBOLIC  [symbolic]
   rule K1 in_keys {{ (K2 Int2Int|-> V) M:MapIntToInt }}
       => K1 ==K unwrap( K2 ) orBool K1 in_keys {{ M }}
     requires definedMapElementConcat(K2, V, M)
-    [simplification(100)]
+    [simplification(100), preserves-definedness]
 
 
   rule {false #Equals @Key in_keys{{ Key' Int2Int|-> Val @M:MapIntToInt }}}
@@ -323,13 +323,14 @@ module MAP-INT-TO-INT-KORE-SYMBOLIC
           #And #Ceil(@M) #And #Ceil(@K)
       [simplification]
 
-  rule (K Int2Int|-> _ M:MapIntToInt) [ K <- V ] => (K Int2Int|-> V M) [simplification]
+  rule (K Int2Int|-> _ M:MapIntToInt) [ K <- V ] => (K Int2Int|-> V M)
+      [simplification, preserves-definedness]
   rule M:MapIntToInt [ K <- V ] => (K Int2Int|-> V M) requires notBool (K in_keys(M))
-      [simplification]
+      [simplification, preserves-definedness]
   rule M:MapIntToInt [ K <- _ ] [ K <- V ] => M [ K <- V ] [simplification]
   rule (K1 Int2Int|-> V1 M:MapIntToInt) [ K2 <- V2 ] => (K1 Int2Int|-> V1 (M [ K2 <- V2 ]))
       requires K1 =/=K K2
-      [simplification]
+      [simplification, preserves-definedness]
 
   rule (K Int2Int|-> _ M:MapIntToInt) [ K <- undef ] => M
       ensures notBool (K in_keys(M))
@@ -340,7 +341,7 @@ module MAP-INT-TO-INT-KORE-SYMBOLIC
   rule (K1 Int2Int|-> V1 M:MapIntToInt) [ K2 <- undef ]
       => (K1 Int2Int|-> V1 (M [ K2 <- undef ]))
       requires K1 =/=K K2
-      [simplification]
+      [simplification, preserves-definedness]
 
   rule (K  Int2Int|->  V M:MapIntToInt) [ K ] => V
       ensures notBool (K in_keys(M))
@@ -382,17 +383,17 @@ module MAP-INT-TO-INT-KORE-SYMBOLIC
   rule K in_keys((K Int2Int|-> V) M:MapIntToInt)
       => true
     requires definedMapElementConcat(K, V, M)
-    [simplification(50)]
+    [simplification(50), preserves-definedness]
   rule K1 in_keys((K2 Int2Int|-> V) M:MapIntToInt)
       => K1 in_keys(M)
     requires true
         andBool definedMapElementConcat(K2, V, M)
         andBool K1 =/=K K2
-    [simplification(50)]
+    [simplification(50), preserves-definedness]
   rule K1 in_keys((K2 Int2Int|-> V) M:MapIntToInt)
       => K1 ==K K2 orBool K1 in_keys(M)
     requires definedMapElementConcat(K2, V, M)
-    [simplification(100)]
+    [simplification(100), preserves-definedness]
 
 
   rule {false #Equals @Key in_keys(.MapIntToInt)} => #Ceil(@Key) [simplification]
@@ -423,7 +424,7 @@ module MAP-INT-TO-INT-CURLY-BRACE
   rule (M:MapIntToInt{Key <- Value})(A Int2Int|-> B N:MapIntToInt)
       => (M (A Int2Int|-> B)) {Key <- Value} N
       requires notBool A ==K Key
-      [simplification]
+      [simplification, preserves-definedness]
 
   rule M:MapIntToInt{Key1 <- Value1}[Key2 <- Value2]
       => ((M:MapIntToInt[Key2 <- Value2]{Key1 <- Value1}) #And #Not ({Key1 #Equals Key2}))
