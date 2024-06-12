@@ -286,10 +286,11 @@ Bounds on `#getRange`:
 
     rule #getRange(_, _, WIDTH)             <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
     rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
-    rule (#getRange(_, _, WIDTH) #as VAL1) +Int ((#getRange(_, _, _) <<Int SHIFT) #as VAL2) <Int MAX => true
+    rule (#getRange(_, _, WIDTH1) #as VAL1) +Int ((#getRange(_, _, WIDTH2) <<Int SHIFT) #as VAL2) <Int MAX => true
         requires VAL1 <Int MAX
           andBool VAL2 <Int MAX
-          andBool WIDTH *Int 8 <=Int SHIFT
+          andBool WIDTH1 *Int 8 <=Int SHIFT
+          andBool 2 ^Int ((8 *Int WIDTH2) +Int SHIFT) <=Int MAX
         [simplification]
 
 ```
