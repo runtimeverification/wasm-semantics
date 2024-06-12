@@ -115,7 +115,7 @@ module MAP-INT-TO-INT-PRIMITIVE
 endmodule
 
 module MAP-INT-TO-INT-SYMBOLIC
-  imports MAP-KORE-SYMBOLIC
+  imports MAP-INT-TO-INT-KORE-SYMBOLIC
 endmodule
 
 module MAP-INT-TO-INT-KORE-SYMBOLIC [symbolic,haskell]
