@@ -3,9 +3,6 @@ WebAssembly State and Semantics
 
 ```k
 requires "data.md"
-requires "data/list-int.k"
-requires "data/list-ref.k"
-requires "data/map-int-to-int.k"
 requires "data/sparse-bytes.k"
 requires "data/tools.k"
 requires "numeric.md"
@@ -182,16 +179,12 @@ Semantics
 
 ```k
 module WASM
-    imports LIST-INT
-    imports LIST-INT-PRIMITIVE
-    imports MAP-INT-TO-INT
-    imports MAP-INT-TO-INT-PRIMITIVE
+    imports MAP
     imports WASM-COMMON-SYNTAX
     imports WASM-INTERNAL-SYNTAX
     imports WASM-DATA
     imports WASM-DATA-TOOLS
     imports WASM-NUMERIC
-    imports LIST-REF-EXTENSIONS
 ```
 
 ### Configuration
@@ -209,23 +202,23 @@ module WASM
         <moduleIds> .Map </moduleIds>
         <moduleInstances>
           <moduleInst multiplicity="*" type="Map">
-            <modIdx>      0            </modIdx>
-            <exports>     .Map         </exports>
-            <types>       .Map         </types>
-            <nextTypeIdx> 0            </nextTypeIdx>
-            <funcAddrs>   .ListInt     </funcAddrs>
-            <nextFuncIdx> 0            </nextFuncIdx>
-            <tabIds>      .Map         </tabIds>
-            <tabAddrs>    .Map         </tabAddrs>
-            <nextTabIdx>  0            </nextTabIdx>
-            <memIds>      .Map         </memIds>
-            <memAddrs>    .MapIntToInt </memAddrs>
-            <elemIds>     .Map         </elemIds>
-            <elemAddrs>   .MapIntToInt </elemAddrs>
-            <nextElemIdx> 0            </nextElemIdx>
-            <globIds>     .Map         </globIds>
-            <globalAddrs> .Map         </globalAddrs>
-            <nextGlobIdx> 0            </nextGlobIdx>
+            <modIdx>      0     </modIdx>
+            <exports>     .Map  </exports>
+            <types>       .Map  </types>
+            <nextTypeIdx> 0     </nextTypeIdx>
+            <funcAddrs>   .List </funcAddrs>
+            <nextFuncIdx> 0     </nextFuncIdx>
+            <tabIds>      .Map  </tabIds>
+            <tabAddrs>    .Map  </tabAddrs>
+            <nextTabIdx>  0     </nextTabIdx>
+            <memIds>      .Map  </memIds>
+            <memAddrs>    .Map  </memAddrs>
+            <elemIds>     .Map  </elemIds>
+            <elemAddrs>   .Map  </elemAddrs>
+            <nextElemIdx> 0     </nextElemIdx>
+            <globIds>     .Map  </globIds>
+            <globalAddrs> .Map  </globalAddrs>
+            <nextGlobIdx> 0     </nextGlobIdx>
             <moduleMetadata>
               <moduleFileName> .String </moduleFileName>
               <moduleId>               </moduleId>
@@ -254,7 +247,7 @@ module WASM
             <tabInst multiplicity="*" type="Map">
               <tAddr> 0     </tAddr>
               <tmax>  .Int  </tmax>
-              <tdata> .ListRef </tdata> // TODO use ARRAY O(1) lookup
+              <tdata> .List </tdata> // TODO use ARRAY O(1) lookup
             </tabInst>
           </tabs>
           <nextTabAddr> 0 </nextTabAddr>
@@ -279,7 +272,7 @@ module WASM
             <elemInst multiplicity="*" type="Map">
               <eAddr>  0        </eAddr>
               <eType>  funcref  </eType>
-              <eValue> .ListRef </eValue> // TODO use ARRAY O(1) lookup
+              <eValue> .List    </eValue> // TODO use ARRAY O(1) lookup
             </elemInst>
           </elems>
           <nextElemAddr> 0 </nextElemAddr>
@@ -448,10 +441,19 @@ The `select` operator picks one of the second or third stack values based on the
     rule <instrs> drop => .K ... </instrs>
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> select => .K ... </instrs>
-         <valstack> < i32 > C : V2 : V1                  : VALSTACK
-                 => #if C =/=Int 0 #then V1 #else V2 #fi : VALSTACK
-         </valstack>
+    rule [select-nonzero]:
+        <instrs> select => .K ... </instrs>
+        <valstack> < i32 > C : V2 : V1 : VALSTACK
+                => V1                  : VALSTACK
+        </valstack>
+      requires #sameType(V1, V2)
+       andBool C =/=Int 0
+
+    rule [select-0]:
+        <instrs> select => .K ... </instrs>
+        <valstack> < i32 > 0 : V2 : V1 : VALSTACK
+                => V2                  : VALSTACK
+        </valstack>
       requires #sameType(V1, V2)
 
 ```
@@ -684,6 +686,16 @@ The `get` and `set` instructions read and write globals.
 #### `table.get`
 
 ```k
+
+    syntax RefVal ::= unwrap(KItem, RefVal)       [function, total, symbol(unwrap:RefVal)]
+ // -----------------------------------------------------------------
+    rule [unwrap-RefVal-int]: unwrap(B:RefVal, _:RefVal) => B
+    rule [unwrap-RefVal-def]: unwrap(X,        D:RefVal) => D   requires notBool isRefVal(X)
+
+    syntax RefVal ::= getRefOrNull(List, Int)    [function, total]
+ // ---------------------------------------------------------
+    rule getRefOrNull(L, I) => unwrap(L [I] orDefault (<funcref> null), (<funcref> null))
+
     rule [table.get]:
         <instrs> #table.get( TID ) => #tableGet(TADDR, I) ... </instrs>
         <valstack> <i32> I : REST => REST </valstack>
@@ -790,7 +802,7 @@ The `get` and `set` instructions read and write globals.
         <tabInst>
           <tAddr> TADDR </tAddr>
           <tmax>  TMAX  </tmax>
-          <tdata> TDATA => TDATA makeListRefTotal(N, REFVAL) </tdata>
+          <tdata> TDATA => TDATA makeListTotal(N, REFVAL) </tdata>
           ...
         </tabInst>
       requires #canGrow(size(TDATA), N, TMAX)
@@ -924,7 +936,7 @@ The `get` and `set` instructions read and write globals.
         <instrs> #table.init(TID, EID)
               => #elemCheckSizeGTE (EA, S +Int N)
               ~> #tableCheckSizeGTE(TA, D +Int N)
-              ~> #tableInit(TID, N, D, dropListRef(S, ELEM))
+              ~> #tableInit(TID, N, D, dropList(ELEM, S))
                  ...
         </instrs>
         <valstack> <i32> N : <i32> S : <i32> D : REST => REST </valstack>
@@ -932,7 +944,7 @@ The `get` and `set` instructions read and write globals.
         <moduleInst>
           <modIdx>   CUR    </modIdx>
           <tabAddrs>  ... TID |-> TA ... </tabAddrs>
-          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          <elemAddrs> ... EID |-> EA ... </elemAddrs>
           ...
         </moduleInst>
         <elemInst>
@@ -941,7 +953,7 @@ The `get` and `set` instructions read and write globals.
           ...
         </elemInst>
 
-    syntax Instr ::= #tableInit(tidx: Int, n: Int, d: Int, es: ListRef)
+    syntax Instr ::= #tableInit(tidx: Int, n: Int, d: Int, es: List)
  // ----------------------------------------------------
     rule [tableInit-done]:
         <instrs> #tableInit(_, 0, _, _) => .K ... </instrs>
@@ -965,12 +977,12 @@ The `get` and `set` instructions read and write globals.
         <curModIdx> CUR </curModIdx>
         <moduleInst>
           <modIdx>   CUR    </modIdx>
-          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          <elemAddrs> ... EID |-> EA ... </elemAddrs>
           ...
         </moduleInst>
         <elemInst>
           <eAddr>  EA          </eAddr>
-          <eValue> _  => .ListRef </eValue>
+          <eValue> _  => .List </eValue>
           ...
         </elemInst>
 
@@ -1321,7 +1333,7 @@ The importing and exporting parts of specifications are dealt with in the respec
                <tAddr> NEXTADDR </tAddr>
                <tmax>  MAX      </tmax>
                <tdata>
-                makeListRefTotal(MIN, <TYP> null)
+                makeListTotal(MIN, <TYP> null)
                </tdata>
              </tabInst>
            )
@@ -1355,7 +1367,7 @@ The importing and exporting parts of specifications are dealt with in the respec
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
-           <memAddrs> .MapIntToInt => (wrap(0) Int2Int|-> wrap(NEXTADDR)) </memAddrs>
+           <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
            ...
          </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
@@ -1393,7 +1405,7 @@ The value is encoded as bytes and stored at the "effective address", which is th
            <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
-         requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+         requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1
 
     rule <instrs> store { WIDTH EA VAL ADDR } => .K ... </instrs>
          <memInst>
@@ -1452,7 +1464,7 @@ Sort `Signedness` is defined in module `BYTES`.
            <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
-      requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+      requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1
 
     rule <instrs> load { ITYPE WIDTH EA SIGN ADDR:Int} => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
          <memInst>
@@ -1482,7 +1494,7 @@ The `size` operation returns the size of the memory, measured in pages.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1508,7 +1520,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1524,7 +1536,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1556,16 +1568,16 @@ Element Segments
 ----------------
 
 ```k
-    syntax ElemDefn ::= #elem(type: RefValType, elemSegment: ListRef, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
+    syntax ElemDefn ::= #elem(type: RefValType, elemSegment: List, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
                       | #elemAux(segmentLen: Int, mode: ElemMode)
     syntax ElemMode ::= #elemActive(table: Int, offset: Instrs)                           [klabel(aElemActive), symbol]
                       | "#elemPassive"        [klabel(aElemPassive), symbol]
                       | "#elemDeclarative"    [klabel(aElemDeclarative), symbol]
 
-    syntax Alloc ::= allocelem(RefValType, ListRef, OptionalId)
+    syntax Alloc ::= allocelem(RefValType, List, OptionalId)
  // -----------------------------------------------------
     rule [elem-active]:
-        <instrs> #elem(TYPE:RefValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId) 
+        <instrs> #elem(TYPE:RefValType, INIT:List, MODE:ElemMode, OID:OptionalId) 
               => allocelem(TYPE, INIT, OID)
               ~> #elemAux(size(INIT), MODE)
                  ...
@@ -1601,7 +1613,7 @@ Element Segments
       <moduleInst>
         <modIdx> CUR </modIdx>
         <funcAddrs> FADDRS </funcAddrs>
-        <elemAddrs> ADDRS => ADDRS {{ NEXTIDX <- NEXTADDR }} </elemAddrs>
+        <elemAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </elemAddrs>
         <nextElemIdx> NEXTIDX => NEXTIDX +Int 1   </nextElemIdx>
         <elemIds>     IDS => #saveId(IDS, OID, 0) </elemIds>
         ...
@@ -1613,12 +1625,14 @@ Element Segments
                   <eValue> resolveAddrs(FADDRS, ELEMS) </eValue>
                 </elemInst>)
 
-    syntax ListRef ::= resolveAddrs(ListInt, ListRef)  [function]
+    syntax List ::= resolveAddrs(List, List)  [function]
  // -----------------------------------------------------------
-    rule resolveAddrs(_, .ListRef) => .ListRef
-    rule resolveAddrs(FADDRS, ListItem(<TYP> I) IS) 
+    rule resolveAddrs(_, .List) => .List
+
+    rule resolveAddrs(FADDRS, ListItem(<TYP:RefValType> I) IS) 
       => ListItem(<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS) 
-    rule resolveAddrs(FADDRS, ListItem(<TYP> null) IS) 
+
+    rule resolveAddrs(FADDRS, ListItem(<TYP:RefValType> null) IS) 
       => ListItem(<TYP> null)                        resolveAddrs(FADDRS, IS) 
     
 ```
@@ -1642,7 +1656,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(MEMIDX) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1763,14 +1777,14 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
-           <memAddrs> .MapIntToInt => wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> .Map => 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
-           <memAddrs> ... wrap(#ContextLookup(IDS' , TFIDX)) Int2Int|-> wrap(ADDR) ... </memAddrs>
+           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
            <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
