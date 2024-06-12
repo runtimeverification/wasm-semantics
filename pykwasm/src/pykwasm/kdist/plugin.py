@@ -51,7 +51,7 @@ __TARGETS__: Final = {
             'md_selector': 'k',
             'warnings_to_errors': True,
             'gen_glr_bison_parser': True,
-            'opt_level': 2,
+            'opt_level': 3,
             'ccopts': ['-g'],
         },
     ),
