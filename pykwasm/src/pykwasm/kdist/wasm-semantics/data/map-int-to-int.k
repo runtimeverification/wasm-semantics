@@ -192,17 +192,17 @@ module MAP-INT-TO-INT-KORE-SYMBOLIC  [symbolic]
       requires K1 =/=K K2
       [simplification]
 
-  rule K in_keys((K Int2Int|-> V) M:MapIntToInt)
+  rule K in_keys((K Int2Int|-> _V) M:MapIntToInt)
       => true
     requires notBool K in_keys(M)
     [simplification(50), preserves-definedness]
-  rule K1 in_keys((K2 Int2Int|-> V) M:MapIntToInt)
+  rule K1 in_keys((K2 Int2Int|-> _V) M:MapIntToInt)
       => K1 in_keys(M)
     requires true
         andBool (notBool K2 in_keys(M))
         andBool K1 =/=K K2
     [simplification(50), preserves-definedness]
-  rule K1 in_keys((K2 Int2Int|-> V) M:MapIntToInt)
+  rule K1 in_keys((K2 Int2Int|-> _V) M:MapIntToInt)
       => K1 ==K K2 orBool K1 in_keys(M)
     requires notBool K2 in_keys(M)
     [simplification(100), preserves-definedness]
