@@ -19,35 +19,35 @@ module MAP-INT-TO-INT
 
   syntax MapIntToInt [hook(MAP.Map)]
   syntax MapIntToInt ::= MapIntToInt MapIntToInt
-         [ left, function, hook(MAP.concat), klabel(_MapIntToInt_),
-           symbol, assoc, comm, unit(.MapIntToInt), element(_Int2Int|->_),
+         [ left, function, hook(MAP.concat), symbol(_MapIntToInt_),
+           assoc, comm, unit(.MapIntToInt), element(_Int2Int|->_),
            index(0), format(%1%n%2)
          ]
   syntax MapIntToInt ::= ".MapIntToInt"
          [ function, total, hook(MAP.unit),
-           klabel(.MapIntToInt), symbol
+           symbol(.MapIntToInt)
          ]
   syntax MapIntToInt ::= WrappedInt "Int2Int|->" WrappedInt
          [ function, total, hook(MAP.element),
-           klabel(_Int2Int|->_), symbol,
+           symbol(_Int2Int|->_),
            injective
          ]
 
   syntax priority _Int2Int|->_ > _MapIntToInt_ .MapIntToInt
   syntax non-assoc _Int2Int|->_
   syntax WrappedInt ::= MapIntToInt "[" WrappedInt "]"
-                 [function, hook(MAP.lookup), klabel(MapIntToInt:lookup), symbol]
+                 [function, hook(MAP.lookup), symbol(MapIntToInt:lookup)]
   syntax WrappedInt ::= MapIntToInt "[" WrappedInt "]" "orDefault" WrappedInt
                  [ function, total, hook(MAP.lookupOrDefault),
-                   klabel(MapIntToInt:lookupOrDefault), symbol
+                   symbol(MapIntToInt:lookupOrDefault)
                  ]
   syntax MapIntToInt ::= MapIntToInt "[" key: WrappedInt "<-" value: WrappedInt "]"
-                 [ function, total, klabel(MapIntToInt:update), symbol,
+                 [ function, total, symbol(MapIntToInt:update),
                    hook(MAP.update), prefer
                  ]
   syntax MapIntToInt ::= MapIntToInt "[" WrappedInt "<-" "undef" "]"
                  [ function, total, hook(MAP.remove),
-                   klabel(_MapIntToInt[_<-undef]), symbol
+                   symbol(_MapIntToInt[_<-undef])
                  ]
   syntax MapIntToInt ::= MapIntToInt "-Map" MapIntToInt
                  [ function, total, hook(MAP.difference) ]
@@ -78,11 +78,11 @@ module MAP-INT-TO-INT
                  [function, hook(MAP.values)]
 
   syntax Int ::= size(MapIntToInt)
-                 [function, total, hook(MAP.size), klabel(MapIntToInt.sizeMap), symbol]
+                 [function, total, hook(MAP.size), symbol(MapIntToInt.sizeMap)]
   syntax Bool ::= MapIntToInt "<=Map" MapIntToInt
                  [function, total, hook(MAP.inclusion)]
   syntax WrappedInt ::= choice(MapIntToInt)
-                 [function, hook(MAP.choice), klabel(MapIntToInt:choice), symbol]
+                 [function, hook(MAP.choice), symbol(MapIntToInt:choice)]
 endmodule
 
 module MAP-INT-TO-INT-PRIMITIVE
@@ -91,17 +91,17 @@ module MAP-INT-TO-INT-PRIMITIVE
   imports public  MAP-INT-TO-INT
 
   syntax Int ::= MapIntToInt "{{" Int "}}"
-                 [function, klabel(MapIntToInt:primitiveLookup), symbol]
+                 [function, symbol(MapIntToInt:primitiveLookup)]
   syntax Int ::= MapIntToInt "{{" Int "}}" "orDefault" Int
-                 [ function, total, klabel(MapIntToInt:primitiveLookupOrDefault), symbol ]
+                 [ function, total, symbol(MapIntToInt:primitiveLookupOrDefault) ]
   syntax MapIntToInt ::= MapIntToInt "{{" key: Int "<-" value: Int "}}"
-                 [ function, total, klabel(MapIntToInt:primitiveUpdate), symbol,
+                 [ function, total, symbol(MapIntToInt:primitiveUpdate),
                    prefer
                  ]
   syntax MapIntToInt ::= MapIntToInt "{{" Int "<-" "undef" "}}"
-                 [ function, total, klabel(MapIntToInt:primitiveRemove), symbol ]
+                 [ function, total, symbol(MapIntToInt:primitiveRemove) ]
   syntax Bool ::= Int "in_keys" "{{" MapIntToInt "}}"
-                 [function, total, klabel(MapIntToInt:primitiveInKeys), symbol]
+                 [function, total, symbol(MapIntToInt:primitiveInKeys)]
 
   rule (M:MapIntToInt {{ Key:Int }})
       => (unwrap( M[wrap(Key)] ))
@@ -118,19 +118,16 @@ module MAP-INT-TO-INT-SYMBOLIC
   imports MAP-INT-TO-INT-KORE-SYMBOLIC
 endmodule
 
-module MAP-INT-TO-INT-KORE-SYMBOLIC [symbolic,haskell]
+module MAP-INT-TO-INT-KORE-SYMBOLIC  [symbolic]
   imports MAP-INT-TO-INT
   imports private K-EQUAL
   imports private BOOL
 
   rule #Ceil(@M:MapIntToInt [@K:WrappedInt])
-      => {(@K in_keys(@M)) #Equals true} #And #Ceil(@M) #And #Ceil(@K)
+      => {(@K in_keys(@M)) #Equals true}
+          #And #Ceil(@M) #And #Ceil(@K)
       [simplification]
 
-  // Symbolic update
-
-  // Adding the definedness condition `notBool (K in_keys(M))` in the ensures clause of the following rule would be redundant
-  // because K also appears in the rhs, preserving the case when it's #Bottom.
   rule (K Int2Int|-> _ M:MapIntToInt) [ K <- V ] => (K Int2Int|-> V M)
       [simplification, preserves-definedness]
   rule M:MapIntToInt [ K <- V ] => (K Int2Int|-> V M) requires notBool (K in_keys(M))
@@ -138,45 +135,89 @@ module MAP-INT-TO-INT-KORE-SYMBOLIC [symbolic,haskell]
   rule M:MapIntToInt [ K <- _ ] [ K <- V ] => M [ K <- V ] [simplification]
   // Adding the definedness condition `notBool (K1 in_keys(M))` in the ensures clause of the following rule would be redundant
   // because K1 also appears in the rhs, preserving the case when it's #Bottom.
-  rule (K1 Int2Int|-> V1 M:MapIntToInt) [ K2 <- V2 ] => (K1 Int2Int|-> V1 (M [ K2 <- V2 ])) requires K1 =/=K K2
+  rule (K1 Int2Int|-> V1 M:MapIntToInt) [ K2 <- V2 ] => (K1 Int2Int|-> V1 (M [ K2 <- V2 ]))
+      requires K1 =/=K K2
       [simplification, preserves-definedness]
 
   // Symbolic remove
-  rule (K Int2Int|-> _ M:MapIntToInt) [ K <- undef ] => M ensures notBool (K in_keys(M)) [simplification]
-  rule M:MapIntToInt [ K <- undef ] => M requires notBool (K in_keys(M)) [simplification]
+  rule (K Int2Int|-> _ M:MapIntToInt) [ K <- undef ] => M
+      ensures notBool (K in_keys(M))
+      [simplification]
+  rule M:MapIntToInt [ K <- undef ] => M
+      requires notBool (K in_keys(M))
+      [simplification]
   // Adding the definedness condition `notBool (K1 in_keys(M))` in the ensures clause of the following rule would be redundant
   // because K1 also appears in the rhs, preserving the case when it's #Bottom.
-  rule (K1 Int2Int|-> V1 M:MapIntToInt) [ K2 <- undef ] => (K1 Int2Int|-> V1 (M [ K2 <- undef ])) requires K1 =/=K K2
+  rule (K1 Int2Int|-> V1 M:MapIntToInt) [ K2 <- undef ]
+      => (K1 Int2Int|-> V1 (M [ K2 <- undef ]))
+      requires K1 =/=K K2
       [simplification, preserves-definedness]
 
   // Symbolic lookup
-  rule (K  Int2Int|->  V M:MapIntToInt) [ K ]  => V ensures notBool (K in_keys(M)) [simplification]
-  rule (K1 Int2Int|-> _V M:MapIntToInt) [ K2 ] => M [K2] requires K1 =/=K K2 ensures notBool (K1 in_keys(M)) [simplification]
+  rule (K  Int2Int|->  V M:MapIntToInt) [ K ] => V
+      ensures notBool (K in_keys(M))
+      [simplification]
+  rule (K1 Int2Int|-> _V M:MapIntToInt) [ K2 ] => M [K2]
+      requires K1 =/=K K2
+      ensures notBool (K1 in_keys(M))
+      [simplification]
   rule (_MAP:MapIntToInt [ K  <-  V1 ]) [ K ]  => V1 [simplification]
-  rule ( MAP:MapIntToInt [ K1 <- _V1 ]) [ K2 ] => MAP [ K2 ] requires K1 =/=K K2 [simplification]
+  rule ( MAP:MapIntToInt [ K1 <- _V1 ]) [ K2 ] => MAP [ K2 ]
+      requires K1 =/=K K2
+      [simplification]
 
-  rule (K  Int2Int|->  V M:MapIntToInt) [  K ] orDefault _ => V ensures notBool (K in_keys(M)) [simplification]
-  rule (K1 Int2Int|-> _V M:MapIntToInt) [ K2 ] orDefault D => M [K2] orDefault D requires K1 =/=K K2 ensures notBool (K1 in_keys(M)) [simplification]
+  rule (K  Int2Int|->  V M:MapIntToInt) [  K ] orDefault _ => V
+      ensures notBool (K in_keys(M))
+      [simplification]
+  rule (K1 Int2Int|-> _V M:MapIntToInt) [ K2 ] orDefault D
+      => M [K2] orDefault D
+      requires K1 =/=K K2
+      ensures notBool (K1 in_keys(M))
+      [simplification]
   rule (_MAP:MapIntToInt [ K  <-  V1 ]) [ K ] orDefault _ => V1 [simplification]
-  rule ( MAP:MapIntToInt [ K1 <- _V1 ]) [ K2 ] orDefault D => MAP [ K2 ] orDefault D requires K1 =/=K K2 [simplification]
+  rule ( MAP:MapIntToInt [ K1 <- _V1 ]) [ K2 ] orDefault D
+      => MAP [ K2 ] orDefault D
+      requires K1 =/=K K2
+      [simplification]
   rule .MapIntToInt [ _ ] orDefault D => D [simplification]
 
   // Symbolic in_keys
   rule K in_keys(_M:MapIntToInt [ K <- undef ]) => false [simplification]
   rule K in_keys(_M:MapIntToInt [ K <- _ ]) => true [simplification]
-  rule K1 in_keys(M:MapIntToInt [ K2 <- _ ]) => true requires K1 ==K K2 orBool K1 in_keys(M) [simplification]
-  rule K1 in_keys(M:MapIntToInt [ K2 <- _ ]) => K1 in_keys(M) requires K1 =/=K K2 [simplification]
+  rule K1 in_keys(M:MapIntToInt [ K2 <- _ ])
+      => true requires K1 ==K K2 orBool K1 in_keys(M)
+      [simplification]
+  rule K1 in_keys(M:MapIntToInt [ K2 <- _ ])
+      => K1 in_keys(M)
+      requires K1 =/=K K2
+      [simplification]
+
+  rule K in_keys((K Int2Int|-> V) M:MapIntToInt)
+      => true
+    requires notBool K in_keys(M)
+    [simplification(50), preserves-definedness]
+  rule K1 in_keys((K2 Int2Int|-> V) M:MapIntToInt)
+      => K1 in_keys(M)
+    requires true
+        andBool (notBool K2 in_keys(M))
+        andBool K1 =/=K K2
+    [simplification(50), preserves-definedness]
+  rule K1 in_keys((K2 Int2Int|-> V) M:MapIntToInt)
+      => K1 ==K K2 orBool K1 in_keys(M)
+    requires notBool K2 in_keys(M)
+    [simplification(100), preserves-definedness]
+
 
   rule {false #Equals @Key in_keys(.MapIntToInt)} => #Ceil(@Key) [simplification]
   rule {@Key in_keys(.MapIntToInt) #Equals false} => #Ceil(@Key) [simplification]
-  rule {false #Equals @Key in_keys(Key' Int2Int|-> Val @M:MapIntToInt)} => #Ceil(@Key) #And #Ceil(Key' Int2Int|-> Val @M) #And #Not({@Key #Equals Key'}) #And {false #Equals @Key in_keys(@M)} [simplification]
-  rule {@Key in_keys(Key' Int2Int|-> Val @M:MapIntToInt) #Equals false} => #Ceil(@Key) #And #Ceil(Key' Int2Int|-> Val @M) #And #Not({@Key #Equals Key'}) #And {@Key in_keys(@M) #Equals false} [simplification]
-
-/*
-// The rule below is automatically generated by the frontend for every sort
-// hooked to MAP.Map. It is left here to serve as documentation.
-
-  rule #Ceil(@M:MapIntToInt (@K:KItem Int2Int|-> @V:KItem)) => {(@K in_keys(@M)) #Equals false} #And #Ceil(@M) #And #Ceil(@K) #And #Ceil(@V)
-    [simplification]
-*/
+  rule {false #Equals @Key in_keys(Key' Int2Int|-> Val @M:MapIntToInt)}
+      =>  #Ceil(@Key) #And #Ceil(Key' Int2Int|-> Val @M)
+          #And #Not({@Key #Equals Key'})
+          #And {false #Equals @Key in_keys(@M)}
+      [simplification]
+  rule {@Key in_keys(Key' Int2Int|-> Val @M:MapIntToInt) #Equals false}
+      =>  #Ceil(@Key) #And #Ceil(Key' Int2Int|-> Val @M)
+          #And #Not({@Key #Equals Key'})
+          #And {@Key in_keys(@M) #Equals false}
+      [simplification]
 endmodule
