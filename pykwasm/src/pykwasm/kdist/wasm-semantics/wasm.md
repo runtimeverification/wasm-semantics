@@ -186,6 +186,7 @@ module WASM
     imports LIST-INT-PRIMITIVE
     imports MAP-INT-TO-INT
     imports MAP-INT-TO-INT-PRIMITIVE
+    imports MAP-INT-TO-INT-SYMBOLIC
     imports WASM-COMMON-SYNTAX
     imports WASM-INTERNAL-SYNTAX
     imports WASM-DATA
