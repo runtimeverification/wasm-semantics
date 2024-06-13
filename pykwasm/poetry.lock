@@ -537,6 +537,34 @@ files = [
 colors = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "kframework"
+version = "7.1.2"
+description = ""
+optional = false
+python-versions = "^3.10"
+files = []
+develop = false
+
+[package.dependencies]
+cmd2 = "^2.4.2"
+coloredlogs = "^15.0.1"
+filelock = "^3.9.0"
+graphviz = "^0.20.1"
+psutil = "5.9.5"
+pybind11 = "^2.10.3"
+pytest = "*"
+textual = "^0.27.0"
+tomli = "^2.0.1"
+xdg-base-dirs = "^6.0.1"
+
+[package.source]
+type = "git"
+url = "https://github.com/runtimeverification/k.git"
+reference = "v7.1.2"
+resolved_reference = "b94a07f268eb7b271fa65963c83f90c833ee1a36"
+subdirectory = "pyk"
+
+[[package]]
 name = "linkify-it-py"
 version = "2.0.3"
 description = "Links recognition library with FULL unicode support."
@@ -897,34 +925,6 @@ files = [
 windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
-name = "pyk"
-version = "7.0.130"
-description = ""
-optional = false
-python-versions = "^3.10"
-files = []
-develop = false
-
-[package.dependencies]
-cmd2 = "^2.4.2"
-coloredlogs = "^15.0.1"
-filelock = "^3.9.0"
-graphviz = "^0.20.1"
-psutil = "5.9.5"
-pybind11 = "^2.10.3"
-pytest = "*"
-textual = "^0.27.0"
-tomli = "^2.0.1"
-xdg-base-dirs = "^6.0.1"
-
-[package.source]
-type = "git"
-url = "https://github.com/runtimeverification/k.git"
-reference = "v7.0.130"
-resolved_reference = "7e036e3f2ec92655c9a4077baac835235f899057"
-subdirectory = "pyk"
-
-[[package]]
 name = "pyperclip"
 version = "1.8.2"
 description = "A cross-platform clipboard module for Python. (Only handles plain text for now.)"
@@ -1187,4 +1187,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "429d9f0bd932d5783e5503c1059f01ee4c36f9acf9b3605916541531e6e92210"
+content-hash = "ef55eea50500757b0e48c0733594daf51d125da30ea24bdb96dbcc58b3c941ee"
