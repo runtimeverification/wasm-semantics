@@ -115,9 +115,9 @@ module WASM-NUMERIC
 `*UnOp` takes one oprand and returns a `Val`.
 
 ```k
-    syntax Val ::= IValType "." IUnOp   Int   [klabel(intUnOp)    , function]
+    syntax Val ::= IValType "." IUnOp   Int   [klabel(intUnOp)    , function, total]
                  | FValType "." FUnOp   Float [klabel(floatUnOp)  , function]
-                 | IValType "." ExtendS Int   [klabel(extendSUnOp), function]
+                 | IValType "." ExtendS Int   [klabel(extendSUnOp), function, total]
  // ---------------------------------------------------------------------------
 ```
 
