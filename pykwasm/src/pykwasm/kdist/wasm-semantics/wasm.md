@@ -521,6 +521,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenInts(ES) -Int 1))) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires 0 <=Int VAL
+       andBool #lenInts(ES) >Int 0
       [preserves-definedness]
       // preserves-definedness:
       // - 0 <= VAL and minInt(VAL, #lenInts(ES) -Int 1) ensures #getInts(_) is defined
