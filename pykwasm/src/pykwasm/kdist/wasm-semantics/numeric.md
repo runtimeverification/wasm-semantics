@@ -136,18 +136,18 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
     rule ITYPE . ctz    I1 => < ITYPE > #if I1 ==Int 0 #then #width(ITYPE) #else #ctz(I1) #fi
     rule ITYPE . popcnt I1 => < ITYPE > #popcnt(I1)
 
-    syntax Int ::= #minWidth ( Int ) [function]
-                 | #ctz      ( Int ) [function]
-                 | #popcnt   ( Int ) [function]
+    syntax Int ::= #minWidth ( Int ) [function, total]
+                 | #ctz      ( Int ) [function, total]
+                 | #popcnt   ( Int ) [function, total]
  // -------------------------------------------
-    rule #minWidth(0) => 0
-    rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)                                 requires N =/=Int 0
+    rule #minWidth(N) => 0                                                           requires N <=Int 0
+    rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)                                 requires N >Int 0
 
-    rule #ctz(0) => 0
-    rule #ctz(N) => #if N modInt 2 ==Int 1 #then 0 #else 1 +Int #ctz(N >>Int 1) #fi  requires N =/=Int 0
+    rule #ctz(N) => 0                                                                requires N <=Int 0
+    rule #ctz(N) => #if N modInt 2 ==Int 1 #then 0 #else 1 +Int #ctz(N >>Int 1) #fi  requires N >Int 0
 
-    rule #popcnt(0) => 0
-    rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N =/=Int 0
+    rule #popcnt(N) => 0                                                             requires N <=Int 0
+    rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N >Int 0
 ```
 
 Before we implement the rule for float point numbers, we first need to define a helper function.
