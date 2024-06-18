@@ -11,7 +11,7 @@
     </valstack>
     <curFrame>
       <locals>
-        .Map
+        .List
       </locals>
       <curModIdx>
         .Int
