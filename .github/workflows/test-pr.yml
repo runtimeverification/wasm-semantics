@@ -14,10 +14,8 @@ jobs:
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - name: 'Install Poetry'
-        uses: Gr1N/setup-poetry@v8
+        uses: Gr1N/setup-poetry@v9
       - name: 'Build pykwasm'
         run: poetry -C pykwasm install
       - name: 'Run code quality checks'
