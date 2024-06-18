@@ -10,7 +10,7 @@ jobs:
 
   pykwasm-code-quality-checks:
     name: 'Code Quality Checks'
-    runs-on: [self-hosted, linux, flyweight]
+    runs-on: ubuntu-latest
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v4
