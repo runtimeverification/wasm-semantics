@@ -80,6 +80,10 @@
             overrides = poetry2nix.overrides.withDefaults
             (finalPython: prevPython: {
               pyk = nixpkgs-pyk.pyk-python310;
+              pygments = prevPython.pygments.overridePythonAttrs ( old: {
+                buildInputs = (old.buildInputs or [ ])
+                  ++ [ prevPython.hatchling ];
+              });
               xdg-base-dirs = prevPython.xdg-base-dirs.overridePythonAttrs
                 (old: {
                   propagatedBuildInputs = (old.propagatedBuildInputs or [ ])
