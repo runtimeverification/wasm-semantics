@@ -2,11 +2,11 @@
   description = "K Semantics of WebAssembly";
 
   inputs = {
-    k-framework.url = "github:runtimeverification/k/v7.0.130";
+    k-framework.url = "github:runtimeverification/k/v7.1.8";
     nixpkgs.follows = "k-framework/nixpkgs";
     flake-utils.follows = "k-framework/flake-utils";
     rv-utils.follows = "k-framework/rv-utils";
-    pyk.url = "github:runtimeverification/k/v7.0.130?dir=pyk";
+    pyk.url = "github:runtimeverification/k/v7.1.8?dir=pyk";
     nixpkgs-pyk.follows = "pyk/nixpkgs";
     poetry2nix.follows = "pyk/poetry2nix";
   };
@@ -80,6 +80,10 @@
             overrides = poetry2nix.overrides.withDefaults
             (finalPython: prevPython: {
               pyk = nixpkgs-pyk.pyk-python310;
+              pygments = prevPython.pygments.overridePythonAttrs ( old: {
+                buildInputs = (old.buildInputs or [ ])
+                  ++ [ prevPython.hatchling ];
+              });
               xdg-base-dirs = prevPython.xdg-base-dirs.overridePythonAttrs
                 (old: {
                   propagatedBuildInputs = (old.propagatedBuildInputs or [ ])
