@@ -133,21 +133,33 @@ Note: The actual `ctz` operator considers the integer 0 to have *all* zero-bits,
 
 ```k
     rule ITYPE . clz    I1 => < ITYPE > #width(ITYPE) -Int #minWidth(I1)
+      requires 0 <=Int I1
     rule ITYPE . ctz    I1 => < ITYPE > #if I1 ==Int 0 #then #width(ITYPE) #else #ctz(I1) #fi
+      requires 0 <=Int I1
     rule ITYPE . popcnt I1 => < ITYPE > #popcnt(I1)
+      requires 0 <=Int I1
+    rule _:IValType . _:IUnOp I1 => undefined
+      requires I1 <Int 0
 
     syntax Int ::= #minWidth ( Int ) [function, total]
                  | #ctz      ( Int ) [function, total]
                  | #popcnt   ( Int ) [function, total]
  // -------------------------------------------
-    rule #minWidth(N) => 0                                                           requires N <=Int 0
+    rule #minWidth(N) => 0                                                           requires N ==Int 0
     rule #minWidth(N) => 1 +Int #minWidth(N >>Int 1)                                 requires N >Int 0
+    rule [minWidth-invalid]:
+         #minWidth(N) => -1                                                          requires N <Int 0
 
-    rule #ctz(N) => 0                                                                requires N <=Int 0
-    rule #ctz(N) => #if N modInt 2 ==Int 1 #then 0 #else 1 +Int #ctz(N >>Int 1) #fi  requires N >Int 0
+    rule #ctz(N) => 0                                                                requires N ==Int 0
+    rule #ctz(N) => 0                                                                requires N >Int 0 andBool N &Int 1 ==Int 1
+    rule #ctz(N) => 1 +Int #ctz(N >>Int 1)                                           [owise]
+    rule [ctz-invalid]:
+         #ctz(N) => -1                                                               requires N <Int 0
 
-    rule #popcnt(N) => 0                                                             requires N <=Int 0
-    rule #popcnt(N) => #bool(N modInt 2 ==Int 1) +Int #popcnt(N >>Int 1)             requires N >Int 0
+    rule #popcnt(N) => 0                                                             requires N ==Int 0
+    rule #popcnt(N) => #bool(N &Int 1 ==Int 1) +Int #popcnt(N >>Int 1)               requires N >Int 0
+    rule [popcnt-invalid]:
+         #popcnt(N) => -1                                                            requires N <Int 0
 ```
 
 Before we implement the rule for float point numbers, we first need to define a helper function.
