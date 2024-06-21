@@ -449,11 +449,16 @@ The `select` operator picks one of the second or third stack values based on the
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     rule <instrs> select => .K ... </instrs>
-         <valstack> < i32 > C : V2 : V1                  : VALSTACK
-                 => #if C =/=Int 0 #then V1 #else V2 #fi : VALSTACK
+         <valstack> < i32 > C : V2 : V1 : VALSTACK
+                 =>             V2      : VALSTACK
          </valstack>
-      requires #sameType(V1, V2)
+      requires C ==Int 0 andBool #sameType(V1, V2)
 
+    rule <instrs> select => .K ... </instrs>
+         <valstack> < i32 > C : V2 : V1 : VALSTACK
+                 =>                  V1 : VALSTACK
+         </valstack>
+      requires C =/=Int 0 andBool #sameType(V1, V2)
 ```
 
 Structured Control Flow
