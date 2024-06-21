@@ -1478,6 +1478,11 @@ Sort `Signedness` is defined in module `BYTES`.
       requires (EA +Int #numBytes(WIDTH)) >Int (SIZE *Int #pageSize())
 
     rule <instrs> load { ITYPE WIDTH EA   Signed DATA:SparseBytes } => #chop(< ITYPE > #signed(WIDTH, #getRange(DATA, EA, #numBytes(WIDTH)))) ... </instrs>
+        [preserves-definedness]
+        // #signed(WIDTH, N) is defined for 0 <= N <= #pow(WIDTH)
+        // #pow(WIDTH) == 2 ^ #width(WIDTH) == 2 ^ (#numBytes(WIDTH) * 8)
+        // and #getRange(_, _, SIZE) < 2 ^ (SIZE * 8)
+
     rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:SparseBytes } => < ITYPE > #getRange(DATA, EA, #numBytes(WIDTH)) ... </instrs>
 ```
 
