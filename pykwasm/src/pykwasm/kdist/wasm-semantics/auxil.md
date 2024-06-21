@@ -24,7 +24,7 @@ module WASM-AUXIL
          <instrs> #clearConfig => .K ...    </instrs>
          <curModIdx>         _ => .Int      </curModIdx>
          <valstack>          _ => .ValStack </valstack>
-         <locals>            _ => .Map      </locals>
+         <locals>            _ => .List     </locals>
          <moduleInstances>   _ => .Bag      </moduleInstances>
          <moduleIds>         _ => .Map      </moduleIds>
          <nextModuleIdx>     _ => 0         </nextModuleIdx>

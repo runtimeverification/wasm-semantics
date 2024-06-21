@@ -165,10 +165,9 @@ Internal Syntax
 module WASM-INTERNAL-SYNTAX
     imports WASM-DATA-INTERNAL-SYNTAX
 
-    syntax Instr ::=  "init_local"  Int Val
-                   |  "init_locals"     ValStack
-                   | "#init_locals" Int ValStack
- // --------------------------------------------
+    syntax Instr ::=  "init_locals" ValStack
+                   | "#init_locals" ValStack
+ // ----------------------------------------
 
     syntax Int ::= #pageSize()      [function, total]
     syntax Int ::= #maxMemorySize() [function, total]
@@ -202,8 +201,8 @@ module WASM
         <instrs> .K </instrs>
         <valstack> .ValStack </valstack>
         <curFrame>
-          <locals>    .Map </locals>
-          <curModIdx> .Int </curModIdx>
+          <locals>    .List </locals>
+          <curModIdx> .Int  </curModIdx>
         </curFrame>
         <moduleRegistry> .Map </moduleRegistry>
         <moduleIds> .Map </moduleIds>
@@ -560,17 +559,15 @@ Variable Operators
 The various `init_local` variants assist in setting up the `locals` cell.
 
 ```k
-    rule <instrs> init_local INDEX VALUE => .K ... </instrs>
-         <locals> LOCALS => LOCALS [ INDEX <- VALUE ] </locals>
+    rule <instrs> init_locals VALUES => #init_locals VALUES ... </instrs>
+         <locals> _ => .List </locals>
 
-    rule <instrs> init_locals VALUES => #init_locals 0 VALUES ... </instrs>
-
-    rule <instrs> #init_locals _ .ValStack => .K ... </instrs>
-    rule <instrs> #init_locals N (VALUE : VALSTACK)
-               => init_local N VALUE
-               ~> #init_locals (N +Int 1) VALSTACK
+    rule <instrs> #init_locals .ValStack => .K ... </instrs>
+    rule <instrs> #init_locals (VALUE : VALSTACK)
+               => #init_locals VALSTACK
                ...
           </instrs>
+         <locals> ... .List => ListItem(VALUE) </locals>
 ```
 
 The `*_local` instructions are defined here.
@@ -581,18 +578,18 @@ The `*_local` instructions are defined here.
                    | "#local.tee" "(" Int ")" [symbol(aLocal.tee)]
  // ----------------------------------------------------------------------
     rule <instrs> #local.get(I) => .K ... </instrs>
-         <valstack> VALSTACK => VALUE : VALSTACK </valstack>
-         <locals> ... I |-> VALUE ... </locals>
+         <valstack> VALSTACK => {LOCALS [ I ]}:>Val : VALSTACK </valstack>
+         <locals> LOCALS </locals>
 
     rule <instrs> #local.set(I) => .K ... </instrs>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
          <locals> LOCALS => LOCALS[I <- VALUE] </locals>
-        requires I in_keys(LOCALS)
+        requires I >=Int 0 andBool I <Int size(LOCALS)
 
     rule <instrs> #local.tee(I) => .K ... </instrs>
          <valstack> VALUE : _VALSTACK </valstack>
          <locals> LOCALS => LOCALS[I <- VALUE] </locals>
-        requires I in_keys(LOCALS)
+        requires I >=Int 0 andBool I <Int size(LOCALS)
 ```
 
 ### Globals
@@ -1175,8 +1172,8 @@ Similar to labels, they sit on the instruction stack (the `<instrs>` cell), and 
 Unlike labels, only one frame can be "broken" through at a time.
 
 ```k
-    syntax Frame ::= "frame" Int ValTypes ValStack Map
- // --------------------------------------------------
+    syntax Frame ::= "frame" Int ValTypes ValStack List
+ // ---------------------------------------------------
     rule <instrs> frame MODIDX' TRANGE VALSTACK' LOCAL' => .K ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TRANGE), VALSTACK) ++ VALSTACK' </valstack>
          <locals> _ => LOCAL' </locals>
@@ -1198,7 +1195,7 @@ The `#take` function will return the parameter stack in the reversed order, then
                ...
          </instrs>
          <valstack>  VALSTACK => .ValStack </valstack>
-         <locals> LOCAL => .Map </locals>
+         <locals> LOCAL </locals>
          <curModIdx> MODIDX => MODIDX' </curModIdx>
          <funcDef>
            <fAddr>    FADDR                     </fAddr>

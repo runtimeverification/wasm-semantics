@@ -430,7 +430,8 @@ The operator `#assertLocal`/`#assertGlobal` operators perform a check for a loca
 
 ```k
     rule <instrs> #assertLocal INDEX VALUE _ => .K ... </instrs>
-         <locals> ... INDEX |-> VALUE ... </locals>
+         <locals> LOCALS </locals>
+      requires LOCALS[INDEX] ==K VALUE
 
     rule <instrs> #assertGlobal TFIDX VALUE _ => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
