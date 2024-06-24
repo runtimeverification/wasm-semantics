@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - '_update-deps/runtimeverification/k'
+      - 'pyk-pypi-dependency'
 # Stop in progress workflows on the same branch and same workflow to use latest committed code
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
