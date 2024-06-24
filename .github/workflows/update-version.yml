@@ -39,8 +39,8 @@ jobs:
           authToken: '${{ secrets.CACHIX_PUBLIC_TOKEN }}'
       - name: 'Update pyk release tag'
         run: |
-          K_VERSION=v"$(cat deps/k_release)"
-          sed -i 's!kframework = { git = "https://github.com/runtimeverification/k.git", tag="[v0-9\.]*", subdirectory = "pyk" }!kframework = { git = "https://github.com/runtimeverification/k.git", tag="'${K_VERSION}'", subdirectory = "pyk" }!' pykwasm/pyproject.toml
+          K_VERSION=$(cat deps/k_release)
+          sed -i 's!kframework = "[v0-9\.]*"!kframework = "'${K_VERSION}'"!' pykwasm/pyproject.toml
           poetry -C pykwasm update
           git add pykwasm/ && git commit -m "pykwasm/: sync poetry files ${K_VERSION}" || true
       - name: 'Update Nix flake inputs'
