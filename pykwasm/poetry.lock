@@ -494,13 +494,13 @@ pyreadline3 = {version = "*", markers = "sys_platform == \"win32\" and python_ve
 
 [[package]]
 name = "hypothesis"
-version = "6.104.0"
+version = "6.104.1"
 description = "A library for property-based testing"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "hypothesis-6.104.0-py3-none-any.whl", hash = "sha256:4aaa38b57625abae0d377b2460b80a5847504dcce22985e3381e4373079d45d0"},
-    {file = "hypothesis-6.104.0.tar.gz", hash = "sha256:f3f376491380aab841d706c562034c0118616dca7ce23e07b1a744c99f38d26b"},
+    {file = "hypothesis-6.104.1-py3-none-any.whl", hash = "sha256:a0a898fa78ecaefe76ad248901dc274e598f29198c6015b3053f7f7827670e0e"},
+    {file = "hypothesis-6.104.1.tar.gz", hash = "sha256:4033898019a6149823d2feeb8d214921b4ac2d342a05d6b02e40a3ca4be07eea"},
 ]
 
 [package.dependencies]
@@ -527,13 +527,13 @@ zoneinfo = ["backports.zoneinfo (>=0.2.1)", "tzdata (>=2024.1)"]
 
 [[package]]
 name = "importlib-metadata"
-version = "7.2.1"
+version = "8.0.0"
 description = "Read metadata from Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "importlib_metadata-7.2.1-py3-none-any.whl", hash = "sha256:ffef94b0b66046dd8ea2d619b701fe978d9264d38f3998bc4c27ec3b146a87c8"},
-    {file = "importlib_metadata-7.2.1.tar.gz", hash = "sha256:509ecb2ab77071db5137c655e24ceb3eee66e7bbc6574165d0d114d9fc4bbe68"},
+    {file = "importlib_metadata-8.0.0-py3-none-any.whl", hash = "sha256:15584cf2b1bf449d98ff8a6ff1abef57bf20f3ac6454f431736cd3e660921b2f"},
+    {file = "importlib_metadata-8.0.0.tar.gz", hash = "sha256:188bd24e4c346d3f0a933f275c2fec67050326a856b9a359881d7c2a697e8812"},
 ]
 
 [package.dependencies]
@@ -571,13 +571,13 @@ colors = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "kframework"
-version = "7.1.30"
+version = "7.1.31"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "kframework-7.1.30-py3-none-any.whl", hash = "sha256:7f8de5d3b797593145aa69d92d89ce169e46a1254bb0d48354f1faedaeb1dcdd"},
-    {file = "kframework-7.1.30.tar.gz", hash = "sha256:d3a07d7dd8b8af7e3e336254035ec3e08f12002e94d927a5bde2cef2c2b3225a"},
+    {file = "kframework-7.1.31-py3-none-any.whl", hash = "sha256:560c444ebe0cc4d47acef151a084ca594143e1fc052823ccf31892729d4c9e8c"},
+    {file = "kframework-7.1.31.tar.gz", hash = "sha256:69ee1176304865adb168dfdb617f6c17b94184f572755e29e2ab66548fad984a"},
 ]
 
 [package.dependencies]
@@ -905,17 +905,17 @@ resolved_reference = "e5fb6ed5b1aebf1c0d67087397b3c1240ff412da"
 
 [[package]]
 name = "pybind11"
-version = "2.12.0"
+version = "2.13.0"
 description = "Seamless operability between C++11 and Python"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "pybind11-2.12.0-py3-none-any.whl", hash = "sha256:df8d60b94f9e714d81013db233393d430ebf9f3551642b82291cf1b14d1afdbd"},
-    {file = "pybind11-2.12.0.tar.gz", hash = "sha256:5e3c557a84b06b969247630407fc4d985bed157b4253b13153b8e8e165e0c3dc"},
+    {file = "pybind11-2.13.0-py3-none-any.whl", hash = "sha256:da2eaf03b9973f3e9fdfb4880a716b5770f6bfdc2da32d2e92120173d687a553"},
+    {file = "pybind11-2.13.0.tar.gz", hash = "sha256:1dbab243bdbd72d9f3e9cd0a63f65500b6d09d61c20fab43edf8c5c2ad3a7538"},
 ]
 
 [package.extras]
-global = ["pybind11-global (==2.12.0)"]
+global = ["pybind11-global (==2.13.0)"]
 
 [[package]]
 name = "pycodestyle"
@@ -1227,4 +1227,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "179f114c65c725f22aa54cf2abbe0621be3c8c0d49de9c846679af3180169957"
+content-hash = "739d49ce3ae20a3a8fe39732b8ca060f548fa9724c3c9446de37bbea9de1c61b"
