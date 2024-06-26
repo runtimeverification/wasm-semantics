@@ -6,8 +6,14 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k
 requires "wasm-text.md"
+requires "symbolic/symbolic.md"
 
-module KWASM-LEMMAS [symbolic]
+module KWASM-LEMMAS
+    imports WASM-SYMBOLIC
+    imports KWASM-LEMMAS-SYMBOLIC
+endmodule
+
+module KWASM-LEMMAS-SYMBOLIC [symbolic]
     imports WASM-TEXT
     imports BYTES-KORE
     imports INT-SYMBOLIC
