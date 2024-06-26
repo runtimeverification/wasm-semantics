@@ -1,6 +1,5 @@
 
-module SPARSE-BYTES
-  imports BOOL
+module SPARSE-BYTES-SYNTAX
   imports BYTES
   imports INT
 
@@ -9,8 +8,17 @@ module SPARSE-BYTES
 
 
   syntax SBItemChunk ::= SBChunk(SBItem)
-  
+
   syntax SparseBytes ::= List{SBItemChunk, ""}
+
+endmodule
+
+module SPARSE-BYTES
+  imports BOOL
+  imports REPLACE-AT-CONCRETE
+  imports REPLACE-AT-SYNTAX
+  imports REPLACE-AT-SYMBOLIC
+  imports SPARSE-BYTES-SYNTAX
 
   syntax Bytes ::= unwrap(SparseBytes)
     [function, total, symbol, klabel(SparseBytes:unwrap)]
@@ -88,10 +96,6 @@ module SPARSE-BYTES
     requires 0 <=Int S andBool S <=Int E
      andBool S <Int lengthBytes(Bs) 
 
-
-  syntax SparseBytes ::= replaceAt(SparseBytes, Int, Bytes)
-    [function, total, symbol, klabel(SparseBytes:replaceAt)]
-// --------------------------------------------------------
   // invalid argument
   rule replaceAt(_, S, _) => .SparseBytes 
     requires S <Int 0
@@ -108,14 +112,7 @@ module SPARSE-BYTES
   rule replaceAt(SBChunk(SBI) REST, S, Bs) 
     => SBChunk(SBI) replaceAt(REST, S -Int size(SBI), Bs)
     requires size(SBI) <=Int S
-
-  rule replaceAt(SBChunk(#empty(N))  REST, S, Bs) => replaceAtZ(N, REST, S, Bs)
-    requires S <Int N
-  rule replaceAt(SBChunk(#bytes(B)) REST, S, Bs) => replaceAtB(B, REST, S, Bs)
-    requires S <Int lengthBytes(B)
   
-  syntax SparseBytes ::= replaceAtZ(Int, SparseBytes, Int, Bytes)
-    [function, total, symbol, klabel(SparseBytes:replaceAtZ)]
 // ---------------------------------------------------------------
   ////////////// S < 0
   rule replaceAtZ(_, _, S, _) => .SparseBytes 
@@ -155,8 +152,6 @@ module SPARSE-BYTES
      andBool lengthBytes(Bs) >Int N
 
 
-  syntax SparseBytes ::= replaceAtB(Bytes, SparseBytes, Int, Bytes)
-    [function, total, symbol, klabel(SparseBytes:replaceAtB)]
 // ---------------------------------------------------------------
   ////////// S + len(Bs) <= len(MB)
   rule replaceAtB(MB, REST, S, Bs)
@@ -190,5 +185,35 @@ module SPARSE-BYTES
   rule joinUntil(Bs, .SparseBytes, I)
     => SBChunk(#bytes( padRightBytes(Bs, I, 0) ))
     requires I >Int lengthBytes(Bs)
+endmodule
 
+module REPLACE-AT-SYNTAX
+  imports SPARSE-BYTES-SYNTAX
+
+  syntax SparseBytes ::= replaceAt(SparseBytes, Int, Bytes)
+    [function, total, symbol, klabel(SparseBytes:replaceAt)]
+  syntax SparseBytes ::= replaceAtZ(Int, SparseBytes, Int, Bytes)
+    [function, total, symbol, klabel(SparseBytes:replaceAtZ)]
+  syntax SparseBytes ::= replaceAtB(Bytes, SparseBytes, Int, Bytes)
+    [function, total, symbol, klabel(SparseBytes:replaceAtB)]
+endmodule
+
+module REPLACE-AT-CONCRETE  [concrete]
+  imports REPLACE-AT-SYNTAX
+
+  rule replaceAt(SBChunk(#empty(N))  REST, S, Bs) => replaceAtZ(N, REST, S, Bs)
+    requires S <Int N
+  rule replaceAt(SBChunk(#bytes(B)) REST, S, Bs) => replaceAtB(B, REST, S, Bs)
+    requires S <Int lengthBytes(B)
+endmodule
+
+module REPLACE-AT-SYMBOLIC  [symbolic]
+  imports REPLACE-AT-SYNTAX
+
+  rule replaceAt(SBChunk(#empty(N))  REST, S, Bs) => replaceAtZ(N, REST, S, Bs)
+    requires S <Int N
+    [simplification, concrete]
+  rule replaceAt(SBChunk(#bytes(B)) REST, S, Bs) => replaceAtB(B, REST, S, Bs)
+    requires S <Int lengthBytes(B)
+    [simplification, concrete]
 endmodule
