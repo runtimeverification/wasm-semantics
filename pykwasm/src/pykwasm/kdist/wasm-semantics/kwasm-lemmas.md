@@ -187,6 +187,7 @@ We want K to understand what a bit-shift is.
 
     rule (X  >>Int N)          => 0
       requires 0 <=Int N
+        andBool 0 <=Int X
         andBool X <Int 2 ^Int N
       [simplification]
     rule (_X <<Int N) modInt M => 0
@@ -212,9 +213,11 @@ We want K to understand what a bit-shift is.
 ```k
     rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N)
       requires M >=Int N andBool N >=Int 0
+       andBool 0 <=Int X andBool 0 <=Int Y
       [simplification]
     rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N)
       requires M >=Int N andBool N >=Int 0
+       andBool 0 <=Int X andBool 0 <=Int Y
       [simplification]
 ```
 
@@ -241,6 +244,7 @@ The following rules decrease the modulus by rearranging it around a shift.
       requires N  >=Int 0
        andBool POW >Int 0
        andBool POW modInt (2 ^Int N) ==Int 0
+       andBool 0 <=Int X
       [simplification]
 
     rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
@@ -310,8 +314,9 @@ Bounds on `#getRange`:
     rule 0 <=Int VAL1 +Int VAL2     => true requires 0 <=Int VAL1 andBool 0 <=Int VAL2  [simplification]
 
     rule #getRange(_, _, WIDTH)             <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
-    rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX
-      requires 0 <=Int SHIFT
+    rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true
+      requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX
+       andBool 0 <=Int SHIFT
       [simplification]
     rule (#getRange(_, _, WIDTH1) #as VAL1) +Int ((#getRange(_, _, WIDTH2) <<Int SHIFT) #as VAL2) <Int MAX => true
         requires VAL1 <Int MAX
