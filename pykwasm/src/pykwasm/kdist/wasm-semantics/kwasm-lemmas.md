@@ -174,29 +174,48 @@ x mod m + y = r + y
 We want K to understand what a bit-shift is.
 
 ```k
+    // According to domains.md, shifting by negative amounts is #False, so
+    // all simplification rules must take that into account.
+
     rule (_X <<Int N) modInt M => 0
-      requires (2 ^Int N) modInt M ==Int 0
+      requires 0 <=Int N andBool (2 ^Int N) modInt M ==Int 0
       [simplification]
 
     rule #wrap(M, _X <<Int N) => 0
-      requires (M *Int 8) <=Int N
+      requires 0 <=Int N andBool (M *Int 8) <=Int N
       [simplification]
 
-    rule (X  >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
-    rule (_X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
+    rule (X  >>Int N)          => 0
+      requires 0 <=Int N
+        andBool X <Int 2 ^Int N
+      [simplification]
+    rule (_X <<Int N) modInt M => 0
+      requires 0 <=Int N
+        andBool M <Int 2 ^Int N
+      [simplification]
 
-    rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
-    rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
+    rule (X >>Int N) >>Int M => X >>Int (N +Int M)
+      requires 0 <=Int N andBool 0 <=Int M
+      [simplification]
+    rule (X <<Int N) <<Int M => X <<Int (N +Int M)
+      requires 0 <=Int N andBool 0 <=Int M
+      [simplification]
 
-    // The Haskell backend accepts negative shifts (the LLVM backend does not).
-    // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
-    rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
-    rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
+    rule (X <<Int N) >>Int M => X <<Int (N -Int M)
+      requires 0 <=Int M andBool M <=Int N
+      [simplification]
+    rule (X <<Int N) >>Int M => X >>Int (M -Int N)
+      requires 0 <=Int N andBool notBool (N >=Int M)
+      [simplification]
 ```
 
 ```k
-    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
-    rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N)
+      requires M >=Int N andBool N >=Int 0
+      [simplification]
+    rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N)
+      requires M >=Int N andBool N >=Int 0
+      [simplification]
 ```
 
 Proof:
@@ -291,10 +310,13 @@ Bounds on `#getRange`:
     rule 0 <=Int VAL1 +Int VAL2     => true requires 0 <=Int VAL1 andBool 0 <=Int VAL2  [simplification]
 
     rule #getRange(_, _, WIDTH)             <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
-    rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
+    rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX
+      requires 0 <=Int SHIFT
+      [simplification]
     rule (#getRange(_, _, WIDTH1) #as VAL1) +Int ((#getRange(_, _, WIDTH2) <<Int SHIFT) #as VAL2) <Int MAX => true
         requires VAL1 <Int MAX
           andBool VAL2 <Int MAX
+          andBool 0 <=Int SHIFT
           andBool WIDTH1 *Int 8 <=Int SHIFT
           andBool 2 ^Int ((8 *Int WIDTH2) +Int SHIFT) <=Int MAX
         [simplification]
@@ -344,6 +366,7 @@ Arithmetic over `#getRange`:
     rule #setRange(BM, ADDR, (#getRange(_, _, WIDTH1) #as VAL1) +Int (VAL2 <<Int SHIFT), WIDTH)
       => #setRange(#setRange(BM, ADDR, VAL1, minInt(WIDTH1, WIDTH)), ADDR +Int WIDTH1, VAL2, WIDTH -Int WIDTH1)
       requires 0 <=Int ADDR
+       andBool 0 <=Int SHIFT
        andBool 0  <Int WIDTH
        andBool WIDTH1 *Int 8 ==Int SHIFT
       [simplification]
