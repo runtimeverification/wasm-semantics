@@ -1,9 +1,11 @@
 ```k
+requires "int/symbolic.md"
 requires "sparse-bytes/sparse-bytes-lemmas.md"
 
 module WASM-LEMMAS
   imports private CEILS-SYNTAX
   imports private SPARSE-BYTES-LEMMAS
+  imports private WASM-INT-SYMBOLIC
   imports private WASM-TEXT
 
   rule Bytes2Int(#getBytesRange(_:SparseBytes, _:Int, N:Int), _:Endianness, _:Signedness) <Int M:Int

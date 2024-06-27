@@ -88,6 +88,9 @@ module SET-RANGE-LEMMAS  [symbolic]
           andBool functionSparseBytesWellDefined(setRange(Value), Addr, Width)
         [simplification]
 
+    rule updateSparseBytes(setRange(#getRange(M, Addr, Width)), M, Addr, Width) => M
+        [simplification]
+
 endmodule
 
 ```
