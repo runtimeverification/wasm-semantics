@@ -5,7 +5,6 @@ WebAssembly State and Semantics
 requires "data.md"
 requires "data/list-int.k"
 requires "data/list-ref.k"
-requires "data/map-int-to-int.k"
 requires "data/sparse-bytes.k"
 requires "data/tools.k"
 requires "numeric.md"
@@ -184,8 +183,7 @@ Semantics
 module WASM
     imports LIST-INT
     imports LIST-INT-PRIMITIVE
-    imports MAP-INT-TO-INT
-    imports MAP-INT-TO-INT-PRIMITIVE
+    imports MAP
     imports WASM-COMMON-SYNTAX
     imports WASM-INTERNAL-SYNTAX
     imports WASM-DATA
@@ -219,9 +217,9 @@ module WASM
             <tabAddrs>    .Map         </tabAddrs>
             <nextTabIdx>  0            </nextTabIdx>
             <memIds>      .Map         </memIds>
-            <memAddrs>    .MapIntToInt </memAddrs>
+            <memAddrs>    .Map         </memAddrs>
             <elemIds>     .Map         </elemIds>
-            <elemAddrs>   .MapIntToInt </elemAddrs>
+            <elemAddrs>   .Map         </elemAddrs>
             <nextElemIdx> 0            </nextElemIdx>
             <globIds>     .Map         </globIds>
             <globalAddrs> .Map         </globalAddrs>
@@ -943,7 +941,7 @@ The `get` and `set` instructions read and write globals.
         <moduleInst>
           <modIdx>   CUR    </modIdx>
           <tabAddrs>  ... TID |-> TA ... </tabAddrs>
-          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          <elemAddrs> ... EID |-> EA ... </elemAddrs>
           ...
         </moduleInst>
         <elemInst>
@@ -976,7 +974,7 @@ The `get` and `set` instructions read and write globals.
         <curModIdx> CUR </curModIdx>
         <moduleInst>
           <modIdx>   CUR    </modIdx>
-          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          <elemAddrs> ... EID |-> EA ... </elemAddrs>
           ...
         </moduleInst>
         <elemInst>
@@ -1366,7 +1364,7 @@ The importing and exporting parts of specifications are dealt with in the respec
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
-           <memAddrs> .MapIntToInt => (wrap(0) Int2Int|-> wrap(NEXTADDR)) </memAddrs>
+           <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
            ...
          </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
@@ -1397,14 +1395,15 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL (MEMADDRS{{0}} orDefault 0) } ... </instrs>
+    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL ({MEMADDRS[0] orDefault 0}:>Int) } ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
-         requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+         requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1 andBool isInt(MEMADDRS[0] orDefault 0)
+         [preserves-definedness]
 
     rule <instrs> store { WIDTH EA VAL ADDR } => .K ... </instrs>
          <memInst>
@@ -1456,14 +1455,15 @@ Sort `Signedness` is defined in module `BYTES`.
     rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE i16   EA Signed   } ... </instrs>
     rule <instrs> i64   . load32_s EA:Int => load { i64   i32   EA Signed   } ... </instrs>
 
-    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN (MEMADDRS{{0}} orDefault 0)} ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN ({MEMADDRS[0] orDefault 0}:>Int)} ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
-      requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+      requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1 andBool isInt(MEMADDRS[0] orDefault 0)
+      [preserves-definedness]
 
     rule <instrs> load { ITYPE WIDTH EA SIGN ADDR:Int} => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
          <memInst>
@@ -1498,7 +1498,7 @@ The `size` operation returns the size of the memory, measured in pages.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1524,7 +1524,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1540,7 +1540,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1617,7 +1617,7 @@ Element Segments
       <moduleInst>
         <modIdx> CUR </modIdx>
         <funcAddrs> FADDRS </funcAddrs>
-        <elemAddrs> ADDRS => ADDRS {{ NEXTIDX <- NEXTADDR }} </elemAddrs>
+        <elemAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </elemAddrs>
         <nextElemIdx> NEXTIDX => NEXTIDX +Int 1   </nextElemIdx>
         <elemIds>     IDS => #saveId(IDS, OID, 0) </elemIds>
         ...
@@ -1658,7 +1658,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(MEMIDX) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1779,14 +1779,14 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
-           <memAddrs> .MapIntToInt => wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> .Map => 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
-           <memAddrs> ... wrap(#ContextLookup(IDS' , TFIDX)) Int2Int|-> wrap(ADDR) ... </memAddrs>
+           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
            <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
