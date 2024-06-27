@@ -2,11 +2,11 @@
   description = "K Semantics of WebAssembly";
 
   inputs = {
-    k-framework.url = "github:runtimeverification/k/v7.0.130";
+    k-framework.url = "github:runtimeverification/k/v7.1.30";
     nixpkgs.follows = "k-framework/nixpkgs";
     flake-utils.follows = "k-framework/flake-utils";
     rv-utils.follows = "k-framework/rv-utils";
-    pyk.url = "github:runtimeverification/k/v7.0.130?dir=pyk";
+    pyk.url = "github:runtimeverification/k/v7.1.30?dir=pyk";
     nixpkgs-pyk.follows = "pyk/nixpkgs";
     poetry2nix.follows = "pyk/poetry2nix";
   };
@@ -72,14 +72,13 @@
           kwasm-pyk = poetry2nix.mkPoetryApplication {
             python = nixpkgs-pyk.python310;
             projectDir = ./pykwasm;
-            src = rv-utils.lib.mkPykAppSrc {
-              pkgs = import nixpkgs { system = prev.system; };
-              src = ./pykwasm;
-              cleaner = poetry2nix.cleanPythonSources;
-            };
             overrides = poetry2nix.overrides.withDefaults
             (finalPython: prevPython: {
               pyk = nixpkgs-pyk.pyk-python310;
+              pygments = prevPython.pygments.overridePythonAttrs ( old: {
+                buildInputs = (old.buildInputs or [ ])
+                  ++ [ prevPython.hatchling ];
+              });
               xdg-base-dirs = prevPython.xdg-base-dirs.overridePythonAttrs
                 (old: {
                   propagatedBuildInputs = (old.propagatedBuildInputs or [ ])

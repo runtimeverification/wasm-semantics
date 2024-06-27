@@ -447,11 +447,16 @@ The `select` operator picks one of the second or third stack values based on the
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     rule <instrs> select => .K ... </instrs>
-         <valstack> < i32 > C : V2 : V1                  : VALSTACK
-                 => #if C =/=Int 0 #then V1 #else V2 #fi : VALSTACK
+         <valstack> < i32 > C : V2 : V1 : VALSTACK
+                 =>             V2      : VALSTACK
          </valstack>
-      requires #sameType(V1, V2)
+      requires C ==Int 0 andBool #sameType(V1, V2)
 
+    rule <instrs> select => .K ... </instrs>
+         <valstack> < i32 > C : V2 : V1 : VALSTACK
+                 =>                  V1 : VALSTACK
+         </valstack>
+      requires C =/=Int 0 andBool #sameType(V1, V2)
 ```
 
 Structured Control Flow
@@ -518,6 +523,12 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
  // ---------------------------------------------------------------------
     rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenInts(ES) -Int 1))) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
+      requires 0 <=Int VAL
+       andBool #lenInts(ES) >Int 0
+      [preserves-definedness]
+      // preserves-definedness:
+      // - 0 <= VAL and minInt(VAL, #lenInts(ES) -Int 1) ensures #getInts(_) is defined
+
 ```
 
 Finally, we have the conditional and loop instructions.
@@ -1472,6 +1483,11 @@ Sort `Signedness` is defined in module `BYTES`.
       requires (EA +Int #numBytes(WIDTH)) >Int (SIZE *Int #pageSize())
 
     rule <instrs> load { ITYPE WIDTH EA   Signed DATA:SparseBytes } => #chop(< ITYPE > #signed(WIDTH, #getRange(DATA, EA, #numBytes(WIDTH)))) ... </instrs>
+        [preserves-definedness]
+        // #signed(WIDTH, N) is defined for 0 <= N <= #pow(WIDTH)
+        // #pow(WIDTH) == 2 ^ #width(WIDTH) == 2 ^ (#numBytes(WIDTH) * 8)
+        // and #getRange(_, _, SIZE) < 2 ^ (SIZE * 8)
+
     rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:SparseBytes } => < ITYPE > #getRange(DATA, EA, #numBytes(WIDTH)) ... </instrs>
 ```
 
