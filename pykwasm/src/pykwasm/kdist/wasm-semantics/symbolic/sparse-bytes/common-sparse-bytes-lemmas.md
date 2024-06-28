@@ -821,11 +821,11 @@ module EXTRACT-SPARSE-BYTES-LEMMAS
     imports COMMON-SPARSE-BYTES-LEMMAS-SYNTAX
 
     // Final extraction
-    // rule extractSparseBytes(
-    //           F:SBGetFunction, SB:SparseBytes, 0, Len
-    //       ) => SB
-    //     requires Len ==Int size(SB)
-    // [simplification]
+    rule extractSparseBytes(
+              _F:SBGetFunction, SB:SparseBytes, 0, Len
+          ) => SB
+        requires Len ==Int size(SB)
+    [simplification]
 
 
     // ------------------------------------------
