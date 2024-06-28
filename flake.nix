@@ -7,12 +7,11 @@
     flake-utils.follows = "k-framework/flake-utils";
     rv-utils.follows = "k-framework/rv-utils";
     pyk.url = "github:runtimeverification/k/v7.1.38?dir=pyk";
-    nixpkgs-pyk.follows = "pyk/nixpkgs";
     poetry2nix.follows = "pyk/poetry2nix";
   };
 
   outputs =
-    { self, k-framework, nixpkgs, flake-utils, rv-utils, pyk, ... }@inputs:
+    { self, k-framework, nixpkgs, flake-utils, rv-utils, pyk, poetry2nix }:
     let
       overlay = (final: prev:
         let
@@ -23,26 +22,15 @@
           ] ./.);
 
           version = self.rev or "dirty";
-
-          nixpkgs-pyk = import inputs.nixpkgs-pyk {
-            system = prev.system;
-            overlays = [ pyk.overlay ];
-          };
-
-          python310-pyk = nixpkgs-pyk.python310;
-
-          poetry2nix = inputs.poetry2nix.lib.mkPoetry2Nix { pkgs = nixpkgs-pyk; };
         in {
-          pyk = pyk.packages.${prev.system}.pyk;
-
           kwasm = prev.stdenv.mkDerivation {
             pname = "kwasm";
             inherit src version;
 
-            buildInputs = with final; [
+            buildInputs = with prev; [
               k-framework.packages.${system}.k
               final.kwasm-pyk 
-              python310-pyk
+              python310
             ];
 
             nativeBuildInputs = [ prev.makeWrapper ];
@@ -69,29 +57,33 @@
             '';
           };
 
-          kwasm-pyk = poetry2nix.mkPoetryApplication {
-            python = nixpkgs-pyk.python310;
+          kwasm-pyk = prev.poetry2nix.mkPoetryApplication {
+            python = prev.python310;
             projectDir = ./pykwasm;
-            overrides = poetry2nix.overrides.withDefaults
-            (finalPython: prevPython: {
-              pyk = nixpkgs-pyk.pyk-python310;
-              pygments = prevPython.pygments.overridePythonAttrs ( old: {
-                buildInputs = (old.buildInputs or [ ])
-                  ++ [ prevPython.hatchling ];
+
+            overrides = prev.poetry2nix.overrides.withDefaults
+              (finalPython: prevPython: {
+                pyk = prev.pyk-python310;
+
+                pygments = prevPython.pygments.overridePythonAttrs
+                  (old: {
+                    buildInputs = (old.buildInputs or [ ])
+                      ++ [ prevPython.hatchling ];
+                    });
+
+                xdg-base-dirs = prevPython.xdg-base-dirs.overridePythonAttrs
+                  (old: {
+                    propagatedBuildInputs = (old.propagatedBuildInputs or [ ])
+                      ++ [ finalPython.poetry ];
+                  });
+
+                py-wasm = prevPython.py-wasm.overridePythonAttrs
+                  (old: {
+                    buildInputs = (old.buildInputs or [ ])
+                      ++ [ prevPython.setuptools ];
+                  });
               });
-              xdg-base-dirs = prevPython.xdg-base-dirs.overridePythonAttrs
-                (old: {
-                  propagatedBuildInputs = (old.propagatedBuildInputs or [ ])
-                    ++ [ finalPython.poetry ];
-                });
-              py-wasm = prevPython.py-wasm.overridePythonAttrs
-                (
-                  old: {
-                    buildInputs = (old.buildInputs or [ ]) ++ [ prevPython.setuptools ];
-                  }
-                );
-              });
-            groups = [ ];
+
             checkGroups = [ ];
           };
 
@@ -108,11 +100,11 @@
               git
             ];
 
-            patchPhase = ''
+            patchPhase = with final; ''
               substituteInPlace Makefile                                                  \
-                --replace-fail '$(TEST)'        '${final.kwasm}/bin/kwasm'                \
-                --replace-fail '$(KDIST)'       '${nixpkgs-pyk.pyk-python310}/bin/kdist'  \
-                --replace-fail '$(SOURCE_DIR)'  '${final.kwasm}/wasm-semantics/source'
+                --replace-fail '$(TEST)'        '${kwasm}/bin/kwasm'                \
+                --replace-fail '$(KDIST)'       '${pyk-python310}/bin/kdist'  \
+                --replace-fail '$(SOURCE_DIR)'  '${kwasm}/wasm-semantics/source'
             '';
 
             buildPhase = ''
@@ -137,7 +129,11 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ overlay ];
+          overlays = [
+            poetry2nix.overlays.default
+            pyk.overlay
+            overlay
+          ];
         };
       in {
         packages = rec {
