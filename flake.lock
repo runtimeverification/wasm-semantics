@@ -363,10 +363,6 @@
           "k-framework",
           "nixpkgs"
         ],
-        "nixpkgs-pyk": [
-          "pyk",
-          "nixpkgs"
-        ],
         "poetry2nix": [
           "pyk",
           "poetry2nix"
