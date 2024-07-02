@@ -22,3 +22,4 @@ memory.wast
 select.wast
 skip-stack-guard-page.wast
 table_copy.wast
+tokens.wast
