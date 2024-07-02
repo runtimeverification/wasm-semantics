@@ -107,17 +107,29 @@ module WASM-TEXT-COMMON-SYNTAX
                         | "table.grow" Index
                         | "table.fill" Index
                         | "table.copy" Index Index
-                        | "table.copy"               [macro]
                         | "table.init" Index Index
-                        | "table.init" Index        [macro]
                         | "elem.drop" Index
                         | "call_indirect" Index TypeUse
-                        | "call_indirect"       TypeUse  [macro]
- // ---------------------------------------
+ // ---------------------------------------------------
+
  // Abbreviations
+    syntax PlainInstr ::= "table.get"             [macro]
+                        | "table.set"             [macro]
+                        | "table.size"            [macro]
+                        | "table.grow"            [macro]
+                        | "table.fill"            [macro]
+                        | "table.copy"            [macro]
+                        | "table.init" Index      [macro]
+                        | "call_indirect" TypeUse [macro]
+ // -----------------------------------------------------
+    rule table.get    => table.get 0
+    rule table.set    => table.set 0
+    rule table.size   => table.size 0
+    rule table.grow   => table.grow 0
+    rule table.fill   => table.fill 0
+    rule table.copy   => table.copy 0 0
     rule table.init I => table.init 0 I
     rule call_indirect TU:TypeUse => call_indirect 0 TU
-    rule table.copy => table.copy 0 0
 
     syntax PlainInstr ::= IValType  "." StoreOpM
                         | FValType  "." StoreOpM
