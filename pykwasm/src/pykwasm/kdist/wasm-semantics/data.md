@@ -34,7 +34,7 @@ And we use `OptionalId` to handle the case where an identifier could be omitted.
 
 ```k
     syntax Identifier ::= IdentifierToken
-    syntax OptionalId ::= "" [klabel(.Identifier), symbol]
+    syntax OptionalId ::= "" [symbol(.Identifier)]
                         | Identifier
  // --------------------------------
 ```
@@ -88,15 +88,15 @@ WebAssembly has three kinds of [Value types](https://webassembly.github.io/spec/
   3. [Reference types](https://webassembly.github.io/spec/core/syntax/types.html#reference-types)
   
 ```k
-    syntax IValType ::= "i32" [klabel(i32), symbol] | "i64" [klabel(i64), symbol]
-    syntax FValType ::= "f32" [klabel(f32), symbol] | "f64" [klabel(f64), symbol]
-    syntax RefValType ::= "funcref"     [klabel(funcref), symbol]
-                        | "externref"   [klabel(externref), symbol]
+    syntax IValType ::= "i32" [symbol(i32)] | "i64" [symbol(i64)]
+    syntax FValType ::= "f32" [symbol(f32)] | "f64" [symbol(f64)]
+    syntax RefValType ::= "funcref"     [symbol(funcref)]
+                        | "externref"   [symbol(externref)]
     syntax ValType  ::= IValType | FValType | RefValType
  // ---------------------------------------
 
-    syntax HeapType ::= "func"   [klabel(func), symbol]
-                      | "extern" [klabel(extern), symbol]
+    syntax HeapType ::= "func"   [symbol(func)]
+                      | "extern" [symbol(extern)]
 ```
 
 #### Type Constructors
@@ -120,8 +120,8 @@ For the core language, only regular integers are allowed.
 ### Type Mutability
 
 ```k
-    syntax Mut ::= "const" [klabel(mutConst), symbol]
-                 | "var"   [klabel(mutVar), symbol]
+    syntax Mut ::= "const" [symbol(mutConst)]
+                 | "var"   [symbol(mutVar)]
  // -----------------------------------------------
 ```
 
@@ -158,8 +158,8 @@ module WASM-DATA-INTERNAL-SYNTAX
     imports WASM-DATA-COMMON-SYNTAX
     imports BOOL
 
-    syntax ValStack ::= ".ValStack"            [klabel(.ValStack), symbol]
-                      | Val      ":"  ValStack [klabel(concatValStack), symbol]
+    syntax ValStack ::= ".ValStack"            [symbol(.ValStack)]
+                      | Val      ":"  ValStack [symbol(concatValStack)]
 ```
 
 ### Values
@@ -167,10 +167,10 @@ module WASM-DATA-INTERNAL-SYNTAX
 Proper values are numbers annotated with their types.
 
 ```k
-    syntax IVal ::= "<" IValType ">" Int        [klabel(IVal), symbol]
-    syntax FVal ::= "<" FValType ">" Float      [klabel(FVal), symbol]
-    syntax RefVal ::= "<" RefValType ">" Int    [klabel(RefVal), symbol]
-                    | "<" RefValType ">" "null" [klabel(RefValNull), symbol]
+    syntax IVal ::= "<" IValType ">" Int        [symbol(IVal)]
+    syntax FVal ::= "<" FValType ">" Float      [symbol(FVal)]
+    syntax RefVal ::= "<" RefValType ">" Int    [symbol(RefVal)]
+                    | "<" RefValType ">" "null" [symbol(RefValNull)]
     syntax  Val ::= IVal | FVal | RefVal
  // ---------------------------
 
@@ -204,9 +204,9 @@ We also add `undefined` as a value, which makes many partial functions in the se
 There are two basic type-constructors: sequencing (`[_]`) and function spaces (`_->_`).
 
 ```k
-    syntax VecType  ::= "[" ValTypes "]" [klabel(aVecType), symbol]
+    syntax VecType  ::= "[" ValTypes "]" [symbol(aVecType)]
 
-    syntax FuncType ::= VecType "->" VecType [klabel(aFuncType), symbol]
+    syntax FuncType ::= VecType "->" VecType [symbol(aFuncType)]
 ```
 
 All told, a `Type` can be a value type, vector of types, or function type.
@@ -221,7 +221,7 @@ In some cases, an integer is optional, such as when either giving or omitting th
 The sort `OptionalInt` provides this potentially "undefined" `Int`.
 
 ```k
-    syntax OptionalInt ::= Int | ".Int"  [klabel(.Int), symbol]
+    syntax OptionalInt ::= Int | ".Int"  [symbol(.Int)]
 ```
 
 ### Integer bounds
@@ -332,8 +332,8 @@ For `Int`, however, a the context is irrelevant and the index always just resolv
 Tables and memories have limits, defined as either a single `Int` or two `Int`s, representing min and max bounds.
 
 ```k
-    syntax Limits ::= #limitsMin(Int)   [klabel(limitsMin),    symbol]
-                    | #limits(Int, Int) [klabel(limitsMinMax), symbol]
+    syntax Limits ::= #limitsMin(Int)   [symbol(limitsMin)]
+                    | #limits(Int, Int) [symbol(limitsMinMax)]
  // ------------------------------------------------------------------
 ```
 
@@ -360,7 +360,7 @@ Also we can reverse a `ValTypes` with `#revt`
 
 ```k
     syntax ValTypes ::= #revt ( ValTypes )            [function, total]
-                      | #revt ( ValTypes , ValTypes ) [function, total, klabel(#revtAux)]
+                      | #revt ( ValTypes , ValTypes ) [function, total, symbol(#revtAux)]
  // ------------------------------------------------------------------------------------------
     rule #revt(VT) => #revt(VT, .ValTypes)
 
@@ -480,7 +480,7 @@ Some operations extend integers from 1, 2, or 4 bytes, so a special function wit
 Function `#bool` converts a `Bool` into an `Int`.
 
 ```k
-    syntax Int ::= #bool ( Bool ) [function, total, smtlib(boolToInt), symbol, klabel(boolToInt)]
+    syntax Int ::= #bool ( Bool ) [function, total, smtlib(boolToInt), symbol(boolToInt)]
  // ----------------------------------------------------
     rule #bool( B:Bool ) => 1 requires         B
     rule #bool( B:Bool ) => 0 requires notBool B
@@ -511,7 +511,7 @@ Each call site _must_ ensure that this is desired behavior before using these fu
                       | #take ( Int , ValStack )      [function, total]
                       | #drop ( Int , ValStack )      [function, total]
                       | #revs ( ValStack )            [function, total]
-                      | #revs ( ValStack , ValStack ) [function, total, klabel(#revsAux)]
+                      | #revs ( ValStack , ValStack ) [function, total, symbol(#revsAux)]
  // ------------------------------------------------------------------------------------------
     rule #zero(.ValTypes)               => .ValStack
     rule #zero(ITYPE:IValType VTYPES)   => < ITYPE > 0    : #zero(VTYPES)
@@ -538,7 +538,7 @@ Wasm uses a different character escape rule with K, so we need to define the `un
 
 ```k
     syntax String ::= unescape(String)              [function]
-                    | unescape(String, Int, String) [function, klabel(unescapeAux)]
+                    | unescape(String, Int, String) [function, symbol(unescapeAux)]
  // -------------------------------------------------------------------------------
     rule unescape(S         ) => unescape(S, 1, "")
     rule unescape(S, IDX, SB) => SB                 requires IDX ==Int lengthString(S) -Int 1
@@ -616,7 +616,7 @@ The strings to connect needs to be unescaped before concatenated, because the `u
 
 ```k
     syntax String ::= #concatDS ( DataString )         [function]
-                    | #concatDS ( DataString, String ) [function, klabel(#concatDSAux)]
+                    | #concatDS ( DataString, String ) [function, symbol(#concatDSAux)]
  // -----------------------------------------------------------------------------------
     rule #concatDS ( DS ) => #concatDS ( DS, "" )
     rule #concatDS ( .DataString            , S ) => S
@@ -690,7 +690,7 @@ endmodule
 module WASM-DATA-SYMBOLIC  [symbolic]
    imports WASM-DATA-COMMON
 
-   syntax Int ::= #signedTotal ( IValType , Int)  [function, total, klabel(#signedTotal), symbol, no-evaluators, smtlib(signedTotal)]
+   syntax Int ::= #signedTotal ( IValType , Int)  [function, total, symbol(#signedTotal), no-evaluators, smtlib(signedTotal)]
 
    rule #signedTotal(Arg0:IValType, Arg1:Int)
       => #signed(Arg0, Arg1)
