@@ -77,7 +77,7 @@ module WASM-TEXT-COMMON-SYNTAX
     imports WASM-COMMON-SYNTAX
 
     syntax WasmInt ::= Int
-    syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
+    syntax WasmInt ::= WasmIntToken [symbol(WasmInt), avoid, function]
 
     syntax Index ::= Identifier
  // ---------------------------
@@ -209,10 +209,10 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 The following is the text format representation of an import specification.
 
 ```k
-    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
-                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
-                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
-                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [symbol(funcImportDesc)]
+                        | "(" "global" OptionalId TextFormatGlobalType ")" [symbol(globImportDesc)]
+                        | "(" "table"  OptionalId TableType            ")" [symbol( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [symbol( memImportDesc)]
  // -----------------------------------------------------------------------------------------------
 ```
 

@@ -10,96 +10,96 @@ requires "data.md"
 
 module WASM-NUMERIC-SYNTAX
 
-    syntax IUnOp ::= "clz"    [klabel(aClz), symbol]
-                   | "ctz"    [klabel(aCtz), symbol]
-                   | "popcnt" [klabel(aPopcnt), symbol]
+    syntax IUnOp ::= "clz"    [symbol(aClz)]
+                   | "ctz"    [symbol(aCtz)]
+                   | "popcnt" [symbol(aPopcnt)]
  // ---------------------------------------------------
 
-    syntax FUnOp ::= "abs"     [klabel(aAbs)    , symbol]
-                   | "neg"     [klabel(aNeg)    , symbol]
-                   | "sqrt"    [klabel(aSqrt)   , symbol]
-                   | "floor"   [klabel(aFloor)  , symbol]
-                   | "ceil"    [klabel(aCeil)   , symbol]
-                   | "trunc"   [klabel(aTrunc)  , symbol]
-                   | "nearest" [klabel(aNearest), symbol]
+    syntax FUnOp ::= "abs"     [symbol(aAbs)]
+                   | "neg"     [symbol(aNeg)]
+                   | "sqrt"    [symbol(aSqrt)]
+                   | "floor"   [symbol(aFloor)]
+                   | "ceil"    [symbol(aCeil)]
+                   | "trunc"   [symbol(aTrunc)]
+                   | "nearest" [symbol(aNearest)]
  // -----------------------------------------------------
 
-    syntax ExtendS ::= "extend8_s"   [klabel(aExtend8_s) , symbol]
-                     | "extend16_s"  [klabel(aExtend16_s), symbol]
-                     | "extend32_s"  [klabel(aExtend32_s), symbol]
+    syntax ExtendS ::= "extend8_s"   [symbol(aExtend8_s)]
+                     | "extend16_s"  [symbol(aExtend16_s)]
+                     | "extend32_s"  [symbol(aExtend32_s)]
  // ---------------------------------------------------------------
 
-    syntax IBinOp ::= "add" [klabel(intAdd), symbol]
-                    | "sub" [klabel(intSub), symbol]
-                    | "mul" [klabel(intMul), symbol]
-                    | "div_u" [klabel(intDiv_u), symbol]
-                    | "rem_u" [klabel(intRem_u), symbol]
-                    | "div_s" [klabel(intDiv_s), symbol]
-                    | "rem_s" [klabel(intRem_s), symbol]
-                    | "and" [klabel(intAnd), symbol]
-                    | "or" [klabel(intOr), symbol]
-                    | "xor" [klabel(intXor), symbol]
-                    | "shl" [klabel(intShl), symbol]
-                    | "shr_u" [klabel(intShr_u), symbol]
-                    | "shr_s" [klabel(intShr_s), symbol]
-                    | "rotl" [klabel(intRotl), symbol]
-                    | "rotr" [klabel(intRotr), symbol]
+    syntax IBinOp ::= "add" [symbol(intAdd)]
+                    | "sub" [symbol(intSub)]
+                    | "mul" [symbol(intMul)]
+                    | "div_u" [symbol(intDiv_u)]
+                    | "rem_u" [symbol(intRem_u)]
+                    | "div_s" [symbol(intDiv_s)]
+                    | "rem_s" [symbol(intRem_s)]
+                    | "and" [symbol(intAnd)]
+                    | "or" [symbol(intOr)]
+                    | "xor" [symbol(intXor)]
+                    | "shl" [symbol(intShl)]
+                    | "shr_u" [symbol(intShr_u)]
+                    | "shr_s" [symbol(intShr_s)]
+                    | "rotl" [symbol(intRotl)]
+                    | "rotr" [symbol(intRotr)]
  // --------------------------------------------------
 
-    syntax FBinOp ::= "add" [klabel(floatAdd), symbol]
-                    | "sub" [klabel(floatSub), symbol]
-                    | "mul" [klabel(floatMul), symbol]
-                    | "div" [klabel(floatDiv), symbol]
-                    | "min" [klabel(floatMin), symbol]
-                    | "max" [klabel(floatMax), symbol]
-                    | "copysign" [klabel(floatCopysign), symbol]
+    syntax FBinOp ::= "add" [symbol(floatAdd)]
+                    | "sub" [symbol(floatSub)]
+                    | "mul" [symbol(floatMul)]
+                    | "div" [symbol(floatDiv)]
+                    | "min" [symbol(floatMin)]
+                    | "max" [symbol(floatMax)]
+                    | "copysign" [symbol(floatCopysign)]
  // ------------------------------------------------------------
 
-    syntax TestOp ::= "eqz" [klabel(aEqz), symbol]
+    syntax TestOp ::= "eqz" [symbol(aEqz)]
  // ----------------------------------------------
 
-    syntax IRelOp ::= "eq" [klabel(intEq), symbol]
-                    | "ne" [klabel(intNe), symbol]
-                    | "lt_u" [klabel(intLt_u), symbol]
-                    | "gt_u" [klabel(intGt_u), symbol]
-                    | "lt_s" [klabel(intLt_s), symbol]
-                    | "gt_s" [klabel(intGt_s), symbol]
-                    | "le_u" [klabel(intLe_u), symbol]
-                    | "ge_u" [klabel(intGe_u), symbol]
-                    | "le_s" [klabel(intLe_s), symbol]
-                    | "ge_s" [klabel(intGe_s), symbol]
+    syntax IRelOp ::= "eq" [symbol(intEq)]
+                    | "ne" [symbol(intNe)]
+                    | "lt_u" [symbol(intLt_u)]
+                    | "gt_u" [symbol(intGt_u)]
+                    | "lt_s" [symbol(intLt_s)]
+                    | "gt_s" [symbol(intGt_s)]
+                    | "le_u" [symbol(intLe_u)]
+                    | "ge_u" [symbol(intGe_u)]
+                    | "le_s" [symbol(intLe_s)]
+                    | "ge_s" [symbol(intGe_s)]
  // --------------------------------------------------
 
-    syntax FRelOp ::= "lt" [klabel(floatLt), symbol]
-                    | "gt" [klabel(floatGt), symbol]
-                    | "le" [klabel(floatLe), symbol]
-                    | "ge" [klabel(floatGe), symbol]
-                    | "eq" [klabel(floatEq), symbol]
-                    | "ne" [klabel(floatNe), symbol]
+    syntax FRelOp ::= "lt" [symbol(floatLt)]
+                    | "gt" [symbol(floatGt)]
+                    | "le" [symbol(floatLe)]
+                    | "ge" [symbol(floatGe)]
+                    | "eq" [symbol(floatEq)]
+                    | "ne" [symbol(floatNe)]
  // ------------------------------------------------
 
     syntax CvtOp ::= Cvti32Op | Cvti64Op | Cvtf32Op | Cvtf64Op
  // ----------------------------------------------------------
 
-    syntax Cvti32Op ::= "extend_i32_u" [klabel(aExtend_i32_u), symbol]
-                      | "extend_i32_s" [klabel(aExtend_i32_s), symbol]
-                      | "convert_i32_s" [klabel(aConvert_i32_s), symbol]
-                      | "convert_i32_u" [klabel(aConvert_i32_u), symbol]
+    syntax Cvti32Op ::= "extend_i32_u" [symbol(aExtend_i32_u)]
+                      | "extend_i32_s" [symbol(aExtend_i32_s)]
+                      | "convert_i32_s" [symbol(aConvert_i32_s)]
+                      | "convert_i32_u" [symbol(aConvert_i32_u)]
  // --------------------------------------------------------------------
 
-    syntax Cvti64Op ::= "wrap_i64" [klabel(aWrap_i64), symbol]
-                      | "convert_i64_s" [klabel(aConvert_i64_s), symbol]
-                      | "convert_i64_u" [klabel(aConvert_i64_u), symbol]
+    syntax Cvti64Op ::= "wrap_i64" [symbol(aWrap_i64)]
+                      | "convert_i64_s" [symbol(aConvert_i64_s)]
+                      | "convert_i64_u" [symbol(aConvert_i64_u)]
  // --------------------------------------------------------------------
 
-    syntax Cvtf32Op ::= "promote_f32" [klabel(aPromote_f32), symbol]
-                      | "trunc_f32_s" [klabel(aTrunc_f32_s), symbol]
-                      | "trunc_f32_u" [klabel(aTrunc_f32_u), symbol]
+    syntax Cvtf32Op ::= "promote_f32" [symbol(aPromote_f32)]
+                      | "trunc_f32_s" [symbol(aTrunc_f32_s)]
+                      | "trunc_f32_u" [symbol(aTrunc_f32_u)]
  // ----------------------------------------------------------------
 
-    syntax Cvtf64Op ::= "demote_f64" [klabel(aDemote_f64), symbol]
-                      | "trunc_f64_s" [klabel(aTrunc_f64_s), symbol]
-                      | "trunc_f64_u" [klabel(aTrunc_f64_u), symbol]
+    syntax Cvtf64Op ::= "demote_f64" [symbol(aDemote_f64)]
+                      | "trunc_f64_s" [symbol(aTrunc_f64_s)]
+                      | "trunc_f64_u" [symbol(aTrunc_f64_u)]
  // ----------------------------------------------------------------
 
 endmodule
@@ -115,9 +115,9 @@ module WASM-NUMERIC
 `*UnOp` takes one oprand and returns a `Val`.
 
 ```k
-    syntax Val ::= IValType "." IUnOp   Int   [klabel(intUnOp)    , function, total]
-                 | FValType "." FUnOp   Float [klabel(floatUnOp)  , function]
-                 | IValType "." ExtendS Int   [klabel(extendSUnOp), function, total]
+    syntax Val ::= IValType "." IUnOp   Int   [symbol(intUnOp)    , function, total]
+                 | FValType "." FUnOp   Float [symbol(floatUnOp)  , function]
+                 | IValType "." ExtendS Int   [symbol(extendSUnOp), function, total]
  // ---------------------------------------------------------------------------
 ```
 
@@ -216,8 +216,8 @@ There are 3 sign-extension operators for integers.
 A `*BinOp` operator always produces a result of the same type as its operands.
 
 ```k
-    syntax Val ::= IValType "." IBinOp Int   Int   [klabel(intBinOp)  , symbol, function, total]
-                 | FValType "." FBinOp Float Float [klabel(floatBinOp), symbol, function]
+    syntax Val ::= IValType "." IBinOp Int   Int   [symbol(intBinOp), function, total]
+                 | FValType "." FBinOp Float Float [symbol(floatBinOp), function]
  // -----------------------------------------------------------------------------
 ```
 
@@ -347,7 +347,7 @@ Test operations consume one operand and produce a bool, which is an `i32` value.
 There is no test operation for float numbers.
 
 ```k
-    syntax Val ::= IValType "." TestOp Int [klabel(intTestOp), function, total]
+    syntax Val ::= IValType "." TestOp Int [symbol(intTestOp), function, total]
  // --------------------------------------------------------------------
 ```
 
@@ -364,8 +364,8 @@ There is no test operation for float numbers.
 Relationship Operators consume two operands and produce a bool, which is an `i32` value.
 
 ```k
-    syntax Val ::= IValType "." IRelOp Int   Int   [klabel(intRelOp)  , symbol, function, total]
-                 | FValType "." FRelOp Float Float [klabel(floatRelOp), symbol, function]
+    syntax Val ::= IValType "." IRelOp Int   Int   [symbol(intRelOp), function, total]
+                 | FValType "." FRelOp Float Float [symbol(floatRelOp), function]
  // -----------------------------------------------------------------------------
 ```
 
