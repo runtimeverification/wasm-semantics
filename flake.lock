@@ -82,16 +82,16 @@
         "z3": "z3"
       },
       "locked": {
-        "lastModified": 1719489268,
-        "narHash": "sha256-J480ZO5k/WjMbwCIfrhy+Kg4p+r5qgbIbCunkn1DhnA=",
+        "lastModified": 1719881076,
+        "narHash": "sha256-t9RTbVarwaobMiJkQjXykP8Qt+26miKzr3inONULvck=",
         "owner": "runtimeverification",
         "repo": "haskell-backend",
-        "rev": "e82bc74a95ce6a78c6f8fec7cb255a36aa99e0c6",
+        "rev": "11265424aeb138168bc73f1f028273de192b5be4",
         "type": "github"
       },
       "original": {
         "owner": "runtimeverification",
-        "ref": "v0.1.25",
+        "ref": "v0.1.29",
         "repo": "haskell-backend",
         "type": "github"
       }
@@ -126,16 +126,16 @@
         "rv-utils": "rv-utils_3"
       },
       "locked": {
-        "lastModified": 1719952993,
-        "narHash": "sha256-HoN0Dog3caxrSqoxzJ6Qb3ZJudCZHvX0guiEtOibNLs=",
+        "lastModified": 1720086145,
+        "narHash": "sha256-tCHf9gbsFHZH9PM0r65CgmqHQsNfGJCuD7kib7KLELs=",
         "owner": "runtimeverification",
         "repo": "k",
-        "rev": "96a59fd472000912571ce988bbcce00de9ced61c",
+        "rev": "e6d4f896d7c51efd68f11c77141d457625472c43",
         "type": "github"
       },
       "original": {
         "owner": "runtimeverification",
-        "ref": "v7.1.41",
+        "ref": "v7.1.44",
         "repo": "k",
         "type": "github"
       }
@@ -320,17 +320,17 @@
       },
       "locked": {
         "dir": "pyk",
-        "lastModified": 1719952993,
-        "narHash": "sha256-HoN0Dog3caxrSqoxzJ6Qb3ZJudCZHvX0guiEtOibNLs=",
+        "lastModified": 1720086145,
+        "narHash": "sha256-tCHf9gbsFHZH9PM0r65CgmqHQsNfGJCuD7kib7KLELs=",
         "owner": "runtimeverification",
         "repo": "k",
-        "rev": "96a59fd472000912571ce988bbcce00de9ced61c",
+        "rev": "e6d4f896d7c51efd68f11c77141d457625472c43",
         "type": "github"
       },
       "original": {
         "dir": "pyk",
         "owner": "runtimeverification",
-        "ref": "v7.1.41",
+        "ref": "v7.1.44",
         "repo": "k",
         "type": "github"
       }
