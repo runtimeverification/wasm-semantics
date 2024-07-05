@@ -12,4 +12,5 @@ left-to-right.wast
 linking.wast
 memory_redundancy.wast
 memory_trap.wast
+tokens.wast
 traps.wast
