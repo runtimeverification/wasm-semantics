@@ -580,6 +580,7 @@ def I64_LOAD32_S(offset: int) -> KInner:
 
 MEMORY_GROW = KApply('aGrow', [])
 MEMORY_SIZE = KApply('aSize', [])
+MEMORY_FILL = KApply('aFill', [])
 
 #######################
 # Global Instructions #

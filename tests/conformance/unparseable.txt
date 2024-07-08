@@ -16,7 +16,6 @@ if.wast
 imports.wast
 loop.wast
 memory_copy.wast
-memory_fill.wast
 memory_init.wast
 memory.wast
 select.wast

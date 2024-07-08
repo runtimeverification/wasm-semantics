@@ -94,6 +94,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "return"                        [symbol(aReturn)]
                         | "memory.size"                   [symbol(aSize)]
                         | "memory.grow"                   [symbol(aGrow)]
+                        | "memory.fill"                   [symbol(aFill)]
  // -----------------------------------
 
     syntax TypeUse     ::= TypeDecls
@@ -1566,6 +1567,51 @@ The maximum of table size is 2^32 bytes.
     rule #pageSize()      => 65536
     rule #maxMemorySize() => 65536
     rule #maxTableSize()  => 4294967296
+```
+
+`fill` fills a contiguous section of memory with a value.
+When the section specified goes beyond the bounds of the memory region, that causes a trap.
+If the section has length 0, nothing happens.
+The spec states that this is really a sequence of `i32.store8` instructions, but we use `#setBytesRange` here.
+
+```k
+    syntax Instr ::= "fillTrap" Int Int Int
+                   | "fill"     Int Int Int
+ // ---------------------------------------
+    rule <instrs> memory.fill => fillTrap N VAL D ... </instrs>
+         <valstack> < i32 > N : < i32 > VAL : < i32 > D : VALSTACK => VALSTACK </valstack>
+
+    rule <instrs> fillTrap N _VAL D => trap ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires N +Int D >Int SIZE *Int #pageSize()
+
+    rule <instrs> fillTrap N VAL D => fill N VAL D ... </instrs> [owise]
+
+    rule <instrs> fill 0 _VAL _D => .K ... </instrs>
+
+    rule <instrs> fill N VAL D => .K ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mdata> DATA => #setBytesRange(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
+           ...
+         </memInst>
+      requires notBool N ==Int 0
 ```
 
 Element Segments
