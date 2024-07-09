@@ -5,10 +5,6 @@ comments.wast
 conversions.wast
 data.wast
 endianness.wast
-f32.wast
-f32_cmp.wast
-f64.wast
-f64_cmp.wast
 float_exprs.wast
 float_literals.wast
 global.wast
@@ -20,6 +16,4 @@ memory_copy.wast
 memory_fill.wast
 memory_init.wast
 select.wast
-skip-stack-guard-page.wast
-table_copy.wast
 tokens.wast
