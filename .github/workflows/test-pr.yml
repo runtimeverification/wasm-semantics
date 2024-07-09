@@ -1,6 +1,9 @@
 name: 'Run Tests'
 on:
   pull_request:
+  push:
+    branches:
+      - 'master-update'
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
