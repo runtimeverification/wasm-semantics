@@ -95,6 +95,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "memory.size"                   [symbol(aSize)]
                         | "memory.grow"                   [symbol(aGrow)]
                         | "memory.fill"                   [symbol(aFill)]
+                        | "memory.copy"                   [symbol(aCopy)]
  // -----------------------------------
 
     syntax TypeUse     ::= TypeDecls
