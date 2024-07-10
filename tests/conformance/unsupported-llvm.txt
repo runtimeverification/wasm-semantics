@@ -2,7 +2,9 @@ address.wast
 align.wast
 call_indirect.wast
 const.wast
+f32.wast
 f32_bitwise.wast
+f64.wast
 f64_bitwise.wast
 fac.wast
 float_memory.wast
@@ -12,5 +14,4 @@ left-to-right.wast
 linking.wast
 memory_redundancy.wast
 memory_trap.wast
-tokens.wast
 traps.wast

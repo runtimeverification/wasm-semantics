@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING
 
 from pyk.cli.utils import dir_path, file_path
 from pyk.kdist import kdist
-from pyk.ktool.kprint import KAstOutput, _kast
+from pyk.ktool.kprint import KAstInput, KAstOutput, _kast
 from pyk.ktool.kprove import _kprove
 from pyk.ktool.krun import _krun
+from pyk.utils import run_process
 
 from .preprocessor import preprocess
 
@@ -51,9 +52,25 @@ def _exec_run(program: Path) -> None:
 
 def _exec_kast(program: Path, output: KAstOutput | None) -> None:
     definition_dir = kdist.get('wasm-semantics.llvm')
+    pgm_parser = definition_dir / 'parser_PGM'
 
-    with _preprocessed(program) as input_file:
-        proc_res = _kast(input_file, definition_dir=definition_dir, output=output, check=False)
+    with _preprocessed(program) as preprocessed_file:
+        input = KAstInput.PROGRAM
+        input_file = preprocessed_file
+
+        if pgm_parser.exists():
+            f = NamedTemporaryFile()
+            proc_res = run_process([str(pgm_parser), str(input_file)], check=False)
+            if proc_res.returncode != 0:
+                _exit_with_output(proc_res)
+            tmp_file = Path(f.name)
+            tmp_file.write_text(proc_res.stdout)
+
+            input = KAstInput.KORE
+            input_file = tmp_file
+
+        if (not pgm_parser.exists()) or output != KAstOutput.KORE:
+            proc_res = _kast(input_file, definition_dir=definition_dir, input=input, output=output, check=False)
 
     _exit_with_output(proc_res)
 
