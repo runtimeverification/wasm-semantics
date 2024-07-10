@@ -94,6 +94,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "return"                        [symbol(aReturn)]
                         | "memory.size"                   [symbol(aSize)]
                         | "memory.grow"                   [symbol(aGrow)]
+                        | "memory.fill"                   [symbol(aFill)]
  // -----------------------------------
 
     syntax TypeUse     ::= TypeDecls
@@ -1348,6 +1349,7 @@ The `MemorySpec` production is used to define all ways that a global can specifi
 A memory can either be specified by giving its type (limits); by specifying a vector of its initial `data`; or by an import and its expected type.
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
+[Memory Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#memory-instructions)
 
 ```k
     syntax MemoryDefn ::= #memory(limits: Limits, metadata: OptionalId) [symbol(aMemoryDefn)]
@@ -1384,6 +1386,7 @@ The importing and exporting parts of specifications are dealt with in the respec
 The assorted store operations take an address of type `i32` and a value.
 The `storeX` operations first wrap the the value to be stored to the bit wdith `X`.
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
+[Store Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-n-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
     syntax Instr ::= #store(ValType, StoreOp, offset : Int) [symbol(aStore)]
@@ -1436,6 +1439,7 @@ The assorted load operations take an address of type `i32`.
 The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
 The value is fetched from the "effective address", which is the address given on the stack plus offset.
 Sort `Signedness` is defined in module `BYTES`.
+[Load Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-n-mathsf-xref-syntax-instructions-syntax-sx-mathit-sx-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
     syntax Instr ::= #load(ValType, LoadOp, offset : Int) [symbol(aLoad)]
@@ -1492,6 +1496,7 @@ Sort `Signedness` is defined in module `BYTES`.
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
+[Memory Size](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-size)
 
 ```k
     rule <instrs> memory.size => < i32 > SIZE ... </instrs>
@@ -1513,6 +1518,7 @@ Failure to grow is indicated by pushing -1 to the stack.
 Success is indicated by pushing the previous memory size to the stack.
 `grow` is non-deterministic and may fail either due to trying to exceed explicit max values, or because the embedder does not have resources available.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
+[Memory Grow](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-grow)
 
 ```k
     syntax Instr ::= "grow" Int
@@ -1566,6 +1572,52 @@ The maximum of table size is 2^32 bytes.
     rule #pageSize()      => 65536
     rule #maxMemorySize() => 65536
     rule #maxTableSize()  => 4294967296
+```
+
+`fill` fills a contiguous section of memory with a value.
+When the section specified goes beyond the bounds of the memory region, that causes a trap.
+If the section has length 0, nothing happens.
+The spec states that this is really a sequence of `i32.store8` instructions, but we use `#setBytesRange` here.
+[Memory Fill](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-fill)
+
+```k
+    syntax Instr ::= "fillTrap" Int Int Int
+                   | "fill"     Int Int Int
+ // ---------------------------------------
+    rule <instrs> memory.fill => fillTrap N VAL D ... </instrs>
+         <valstack> < i32 > N : < i32 > VAL : < i32 > D : VALSTACK => VALSTACK </valstack>
+
+    rule <instrs> fillTrap N _VAL D => trap ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires N +Int D >Int SIZE *Int #pageSize()
+
+    rule <instrs> fillTrap N VAL D => fill N VAL D ... </instrs> [owise]
+
+    rule <instrs> fill 0 _VAL _D => .K ... </instrs>
+
+    rule <instrs> fill N VAL D => .K ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mdata> DATA => #setBytesRange(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
+           ...
+         </memInst>
+      requires notBool N ==Int 0
 ```
 
 Element Segments
