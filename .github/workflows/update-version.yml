@@ -47,7 +47,6 @@ jobs:
         run: |
           K_VERSION=v"$(cat deps/k_release)"
           sed -i 's!    k-framework.url = "github:runtimeverification/k/v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+"!    k-framework.url = "github:runtimeverification/k/'"${K_VERSION}"'"!' flake.nix
-          sed -i 's!    pyk.url = "github:runtimeverification/k/v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+?dir=pyk"!    pyk.url = "github:runtimeverification/k/'"${K_VERSION}"'?dir=pyk"!' flake.nix
           nix flake update
           git add flake.nix flake.lock && git commit -m 'flake.{nix,lock}: update Nix derivations' || true
       - name: 'Push updates'

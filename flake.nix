@@ -6,12 +6,11 @@
     nixpkgs.follows = "k-framework/nixpkgs";
     flake-utils.follows = "k-framework/flake-utils";
     rv-utils.follows = "k-framework/rv-utils";
-    pyk.url = "github:runtimeverification/k/v7.1.55?dir=pyk";
-    poetry2nix.follows = "pyk/poetry2nix";
+    poetry2nix.follows = "k-framework/poetry2nix";
   };
 
   outputs =
-    { self, k-framework, nixpkgs, flake-utils, rv-utils, pyk, poetry2nix }:
+    { self, k-framework, nixpkgs, flake-utils, rv-utils, poetry2nix }:
     let
       overlay = (final: prev:
         let
@@ -28,7 +27,7 @@
             inherit src version;
 
             buildInputs = with prev; [
-              k-framework.packages.${system}.k
+              k
               final.kwasm-pyk 
               python310
             ];
@@ -50,7 +49,7 @@
                 --prefix PATH : ${
                   prev.lib.makeBinPath [
                     prev.which
-                    k-framework.packages.${prev.system}.k
+                    prev.k
                   ]
                 } \
                 --set KDIST_DIR $out
@@ -131,7 +130,7 @@
           inherit system;
           overlays = [
             poetry2nix.overlays.default
-            pyk.overlay
+            k-framework.overlay
             overlay
           ];
         };
