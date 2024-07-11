@@ -1621,6 +1621,53 @@ The spec states that this is really a sequence of `i32.store8` instructions, but
       requires notBool N ==Int 0
 ```
 
+`copy` will copy a section of memory from one location to another.
+The source and destination segments may overlap.
+Similar to `fill`, we perform the entire copy in one internal operation as opposed to
+performing a series of load and store operations as stated in the spec.
+[Memory Copy](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-copy)
+
+```k
+    syntax Instr ::= "copyTrap" Int Int Int
+                   | "copy" Int Int Int
+ // ---------------------------------------
+    rule <instrs> memory.copy => copyTrap N S D ... </instrs>
+         <valstack> < i32 > N : < i32 > S : < i32 > D : VALSTACK => VALSTACK </valstack>
+
+    rule <instrs> copyTrap N S D => trap ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires D +Int N >Int SIZE *Int #pageSize()
+        orBool S +Int N >Int SIZE *Int #pageSize()
+
+    rule <instrs> copyTrap N S D => copy N S D ... </instrs> [owise]
+
+    rule <instrs> copy 0 _S _D => .K ... </instrs>
+
+    rule <instrs> copy N S D => .K ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mdata> DATA => replaceAt(DATA, D, #getBytesRange(DATA, S, N)) </mdata>
+           ...
+         </memInst>
+      requires notBool N ==Int 0
+```
+
 Element Segments
 ----------------
 
