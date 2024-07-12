@@ -95,6 +95,7 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
                         | "memory.size"                   [symbol(aSize)]
                         | "memory.grow"                   [symbol(aGrow)]
                         | "memory.fill"                   [symbol(aFill)]
+                        | "memory.copy"                   [symbol(aCopy)]
  // -----------------------------------
 
     syntax TypeUse     ::= TypeDecls
@@ -1577,7 +1578,7 @@ The maximum of table size is 2^32 bytes.
 `fill` fills a contiguous section of memory with a value.
 When the section specified goes beyond the bounds of the memory region, that causes a trap.
 If the section has length 0, nothing happens.
-The spec states that this is really a sequence of `i32.store8` instructions, but we use `#setBytesRange` here.
+The spec states that this is really a sequence of `i32.store8` instructions, but we use `replaceAt` here.
 [Memory Fill](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-fill)
 
 ```k
@@ -1614,7 +1615,54 @@ The spec states that this is really a sequence of `i32.store8` instructions, but
          </moduleInst>
          <memInst>
            <mAddr> ADDR </mAddr>
-           <mdata> DATA => #setBytesRange(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
+           <mdata> DATA => replaceAt(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
+           ...
+         </memInst>
+      requires notBool N ==Int 0
+```
+
+`copy` will copy a section of memory from one location to another.
+The source and destination segments may overlap.
+Similar to `fill`, we perform the entire copy in one internal operation as opposed to
+performing a series of load and store operations as stated in the spec.
+[Memory Copy](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-copy)
+
+```k
+    syntax Instr ::= "copyTrap" Int Int Int
+                   | "copy" Int Int Int
+ // ---------------------------------------
+    rule <instrs> memory.copy => copyTrap N S D ... </instrs>
+         <valstack> < i32 > N : < i32 > S : < i32 > D : VALSTACK => VALSTACK </valstack>
+
+    rule <instrs> copyTrap N S D => trap ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires D +Int N >Int SIZE *Int #pageSize()
+        orBool S +Int N >Int SIZE *Int #pageSize()
+
+    rule <instrs> copyTrap N S D => copy N S D ... </instrs> [owise]
+
+    rule <instrs> copy 0 _S _D => .K ... </instrs>
+
+    rule <instrs> copy N S D => .K ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mdata> DATA => replaceAt(DATA, D, #getBytesRange(DATA, S, N)) </mdata>
            ...
          </memInst>
       requires notBool N ==Int 0
