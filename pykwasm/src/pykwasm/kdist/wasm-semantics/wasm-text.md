@@ -1142,6 +1142,7 @@ The `align` parameter is for optimization only and is not allowed to influence t
     rule #t2aInstr<_>(memory.size)                => memory.size
     rule #t2aInstr<_>(memory.grow)                => memory.grow
     rule #t2aInstr<_>(memory.fill)                => memory.fill
+    rule #t2aInstr<_>(memory.copy)                => memory.copy
 
     syntax Int ::= #getOffset ( MemArg ) [function, total]
  // -----------------------------------------------------------
