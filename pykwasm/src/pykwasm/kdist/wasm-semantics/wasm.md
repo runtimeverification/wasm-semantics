@@ -1578,7 +1578,7 @@ The maximum of table size is 2^32 bytes.
 `fill` fills a contiguous section of memory with a value.
 When the section specified goes beyond the bounds of the memory region, that causes a trap.
 If the section has length 0, nothing happens.
-The spec states that this is really a sequence of `i32.store8` instructions, but we use `#setBytesRange` here.
+The spec states that this is really a sequence of `i32.store8` instructions, but we use `replaceAt` here.
 [Memory Fill](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-fill)
 
 ```k
@@ -1615,7 +1615,7 @@ The spec states that this is really a sequence of `i32.store8` instructions, but
          </moduleInst>
          <memInst>
            <mAddr> ADDR </mAddr>
-           <mdata> DATA => #setBytesRange(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
+           <mdata> DATA => replaceAt(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
            ...
          </memInst>
       requires notBool N ==Int 0
