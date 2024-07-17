@@ -1752,6 +1752,21 @@ The `data` initializer simply puts these bytes into the specified memory, starti
     // Default to memory 0.
     rule <instrs> #data(IDX, IS, DATA) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
 
+    rule <instrs> data { MEMIDX DSBYTES } => trap ... </instrs>
+         <valstack> < i32 > OFFSET : _STACK </valstack>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires OFFSET +Int lengthBytes(DSBYTES) >Int SIZE *Int #pageSize()
+
     // For now, deal only with memory 0.
     rule <instrs> data { MEMIDX DSBYTES } => .K ... </instrs>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
@@ -1766,6 +1781,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
            <mdata> DATA => #setRange(DATA, OFFSET, Bytes2Int(DSBYTES, LE, Unsigned), lengthBytes(DSBYTES)) </mdata>
            ...
          </memInst>
+      [owise]
 
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------
@@ -1855,7 +1871,8 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <tabIds> IDS => #saveId(IDS, OID, 0) </tabIds>
-           <tabAddrs> .Map => 0 |-> ADDR </tabAddrs>
+           <tabAddrs> TABADDRS => TABADDRS[NEXT <- ADDR] </tabAddrs>
+           <nextTabIdx> NEXT => NEXT +Int 1 </nextTabIdx>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
