@@ -218,7 +218,7 @@ module WASM
             <tabAddrs>    .Map         </tabAddrs>
             <nextTabIdx>  0            </nextTabIdx>
             <memIds>      .Map         </memIds>
-            <memAddrs>    .Map         </memAddrs>
+            <memAddrs>    .List        </memAddrs>
             <elemIds>     .Map         </elemIds>
             <elemAddrs>   .Map         </elemAddrs>
             <nextElemIdx> 0            </nextElemIdx>
@@ -257,15 +257,7 @@ module WASM
             </tabInst>
           </tabs>
           <nextTabAddr> 0 </nextTabAddr>
-          <mems>
-            <memInst multiplicity="*" type="Map">
-              <mAddr> 0            </mAddr>
-              <mmax>  .Int         </mmax>
-              <msize> 0            </msize>
-              <mdata> .SparseBytes </mdata>
-            </memInst>
-          </mems>
-          <nextMemAddr> 0 </nextMemAddr>
+          <mems> .List </mems>
           <globals>
             <globalInst multiplicity="*" type="Map">
               <gAddr>  0         </gAddr>
@@ -1352,7 +1344,8 @@ The importing and exporting parts of specifications are dealt with in the respec
 ```k
     syntax MemoryDefn ::= #memory(limits: Limits, metadata: OptionalId) [symbol(aMemoryDefn)]
     syntax Alloc ::= allocmemory (OptionalId, Int, OptionalInt)
- // -----------------------------------------------------------
+    syntax KItem ::= memInst(mmax: OptionalInt, msize: Int, mdata: SparseBytes)
+ // ---------------------------------------------------------------------------
     rule <instrs> #memory(... limits: #limitsMin(MIN),   metadata: OID) => allocmemory(OID, MIN, .Int) ... </instrs>
       requires MIN <=Int #maxMemorySize()
     rule <instrs> #memory(... limits: #limits(MIN, MAX), metadata: OID) => allocmemory(OID, MIN, MAX)  ... </instrs>
@@ -1364,21 +1357,10 @@ The importing and exporting parts of specifications are dealt with in the respec
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
-           <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
+           <memAddrs> .List => ListItem(size(MEMS)) </memAddrs>
            ...
          </moduleInst>
-         <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
-         <mems>
-           ( .Bag
-          => <memInst>
-               <mAddr>   NEXTADDR </mAddr>
-               <mmax>    MAX      </mmax>
-               <msize>   MIN      </msize>
-               ...
-             </memInst>
-           )
-           ...
-         </mems>
+         <mems> MEMS => MEMS ListItem(memInst(MAX, MIN, .SparseBytes)) </mems>
 ```
 
 The assorted store operations take an address of type `i32` and a value.
@@ -1396,36 +1378,27 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL ({MEMADDRS[0] orDefault 0}:>Int) } ... </instrs>
+    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL ADDR } ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> MEMADDRS </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1 andBool isInt(MEMADDRS[0] orDefault 0)
-         [preserves-definedness]
 
     rule <instrs> store { WIDTH EA VAL ADDR } => .K ... </instrs>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           <mdata>   DATA => #setRange(DATA, EA, VAL, #numBytes(WIDTH)) </mdata>
-           ...
-         </memInst>
-         requires (EA +Int #numBytes(WIDTH)) <=Int (SIZE *Int #pageSize())
+         <mems> MEMS => MEMS [ ADDR <- #let memInst(MAX, SIZE, DATA) = MEMS[ADDR] #in memInst(MAX, SIZE, #setRange(DATA, EA, VAL, #numBytes(WIDTH))) ] </mems>
+         requires ADDR <Int size(MEMS)
+           andBool (EA +Int #numBytes(WIDTH)) <=Int (msize(MEMS[ADDR]) *Int #pageSize())
          [preserves-definedness]
     // Preserving definedness:
     //   - #setRange is total
     //   - map updates (memInst) preserve definedness.
 
     rule <instrs> store { WIDTH  EA  _ ADDR } => trap ... </instrs>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           ...
-         </memInst>
-         requires (EA +Int #numBytes(WIDTH)) >Int (SIZE *Int #pageSize())
+         <mems> MEMS </mems>
+         requires ADDR <Int size(MEMS)
+           andBool (EA +Int #numBytes(WIDTH)) >Int (msize(MEMS[ADDR]) *Int #pageSize())
 
     rule <instrs> ITYPE . store   EA VAL => store { ITYPE EA VAL           } ... </instrs>
     rule <instrs> _     . store8  EA VAL => store { i8    EA #wrap(1, VAL) } ... </instrs>
@@ -1457,32 +1430,23 @@ Sort `Signedness` is defined in module `BYTES`.
     rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE i16   EA Signed   } ... </instrs>
     rule <instrs> i64   . load32_s EA:Int => load { i64   i32   EA Signed   } ... </instrs>
 
-    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN ({MEMADDRS[0] orDefault 0}:>Int)} ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN ADDR:Int } ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> MEMADDRS </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-      requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1 andBool isInt(MEMADDRS[0] orDefault 0)
-      [preserves-definedness]
 
-    rule <instrs> load { ITYPE WIDTH EA SIGN ADDR:Int} => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           <mdata>   DATA </mdata>
-           ...
-         </memInst>
-      requires (EA +Int #numBytes(WIDTH)) <=Int (SIZE *Int #pageSize())
+    rule <instrs> load { ITYPE WIDTH EA SIGN ADDR:Int} => load { ITYPE WIDTH EA SIGN mdata(MEMS[ADDR]) } ... </instrs>
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+        andBool (EA +Int #numBytes(WIDTH)) <=Int (msize(MEMS[ADDR]) *Int #pageSize())
 
     rule <instrs> load { _ WIDTH EA _ ADDR:Int} => trap ... </instrs>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           ...
-         </memInst>
-      requires (EA +Int #numBytes(WIDTH)) >Int (SIZE *Int #pageSize())
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+        andBool (EA +Int #numBytes(WIDTH)) >Int (msize(MEMS[ADDR]) *Int #pageSize())
 
     rule <instrs> load { ITYPE WIDTH EA   Signed DATA:SparseBytes } => #chop(< ITYPE > #signed(WIDTH, #getRange(DATA, EA, #numBytes(WIDTH)))) ... </instrs>
         [preserves-definedness]
@@ -1497,18 +1461,15 @@ The `size` operation returns the size of the memory, measured in pages.
 [Memory Size](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-size)
 
 ```k
-    rule <instrs> memory.size => < i32 > SIZE ... </instrs>
+    rule <instrs> memory.size => < i32 > msize(MEMS[ADDR]) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <msize>   SIZE </msize>
-           ...
-         </memInst>
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
 ```
 
 `grow` increases the size of memory in units of pages.
@@ -1524,37 +1485,29 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
     rule <instrs> memory.grow => grow N ... </instrs>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> grow N => < i32 > SIZE ... </instrs>
+    rule <instrs> grow N => < i32 > msize(MEMS[ADDR]) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <mmax>    MAX  </mmax>
-           <msize>   SIZE => SIZE +Int N </msize>
-           ...
-         </memInst>
-      requires #growthAllowed(SIZE +Int N, MAX)
+         <mems> MEMS => #let memInst(MAX, SIZE, DATA) = MEMS[ADDR] #in MEMS[ADDR <- memInst(MAX, SIZE +Int N, DATA)] </mems>
+      requires ADDR <Int size(MEMS)
+        andBool (#let memInst(MAX, SIZE, _) = MEMS[ADDR] #in #growthAllowed(SIZE +Int N, MAX))
 
     rule <instrs> grow N => < i32 > #unsigned(i32, -1) ... </instrs>
          <deterministicMemoryGrowth> DET:Bool </deterministicMemoryGrowth>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr>   ADDR </mAddr>
-           <mmax>    MAX  </mmax>
-           <msize>   SIZE </msize>
-           ...
-         </memInst>
-      requires notBool DET
-        orBool notBool #growthAllowed(SIZE +Int N, MAX)
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+        andBool (#let memInst(MAX, SIZE, _) = MEMS[ADDR] #in (notBool DET
+        orBool notBool #growthAllowed(SIZE +Int N, MAX)))
 
     syntax Bool ::= #growthAllowed(Int, OptionalInt) [function, total]
  // -----------------------------------------------------------
@@ -1589,15 +1542,12 @@ The spec states that this is really a sequence of `i32.store8` instructions, but
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr> ADDR </mAddr>
-           <msize> SIZE </msize>
-           ...
-         </memInst>
-      requires N +Int D >Int SIZE *Int #pageSize()
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+       andBool (#let memInst(_, SIZE, _) = MEMS[ADDR] #in N +Int D >Int SIZE *Int #pageSize())
 
     rule <instrs> fillTrap N VAL D => fill N VAL D ... </instrs> [owise]
 
@@ -1607,15 +1557,11 @@ The spec states that this is really a sequence of `i32.store8` instructions, but
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr> ADDR </mAddr>
-           <mdata> DATA => replaceAt(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
-           ...
-         </memInst>
-      requires notBool N ==Int 0
+         <mems> MEMS => MEMS [ ADDR <- #let memInst(MAX, SIZE, DATA) = MEMS[ADDR] #in memInst(MAX, SIZE, replaceAt(DATA, D, padRightBytes(.Bytes, N, VAL))) ] </mems>
+      requires ADDR <Int size(MEMS) andBool notBool N ==Int 0
 ```
 
 `copy` will copy a section of memory from one location to another.
@@ -1635,16 +1581,13 @@ performing a series of load and store operations as stated in the spec.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr> ADDR </mAddr>
-           <msize> SIZE </msize>
-           ...
-         </memInst>
-      requires D +Int N >Int SIZE *Int #pageSize()
-        orBool S +Int N >Int SIZE *Int #pageSize()
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+       andBool (#let memInst(_, SIZE, _) = MEMS[ADDR] #in D +Int N >Int SIZE *Int #pageSize()
+        orBool S +Int N >Int SIZE *Int #pageSize())
 
     rule <instrs> copyTrap N S D => copy N S D ... </instrs> [owise]
 
@@ -1654,15 +1597,11 @@ performing a series of load and store operations as stated in the spec.
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr> ADDR </mAddr>
-           <mdata> DATA => replaceAt(DATA, D, #getBytesRange(DATA, S, N)) </mdata>
-           ...
-         </memInst>
-      requires notBool N ==Int 0
+         <mems> MEMS => MEMS [ ADDR <- #let memInst(MAX, SIZE, DATA) = MEMS[ADDR] #in memInst(MAX, SIZE, replaceAt(DATA, D, #getBytesRange(DATA, S, N))) ] </mems>
+      requires ADDR <Int size(MEMS) andBool notBool N ==Int 0
 ```
 
 Element Segments
@@ -1749,35 +1688,29 @@ The `data` initializer simply puts these bytes into the specified memory, starti
     // Default to memory 0.
     rule <instrs> #data(IDX, IS, DATA) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
 
-    rule <instrs> data { MEMIDX DSBYTES } => trap ... </instrs>
+    rule <instrs> data { 0 DSBYTES } => trap ... </instrs>
          <valstack> < i32 > OFFSET : _STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> MEMIDX |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr> ADDR </mAddr>
-           <msize> SIZE </msize>
-           ...
-         </memInst>
-      requires OFFSET +Int lengthBytes(DSBYTES) >Int SIZE *Int #pageSize()
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+       andBool (#let memInst(_, SIZE, _) = MEMS[ADDR] #in OFFSET +Int lengthBytes(DSBYTES) >Int SIZE *Int #pageSize())
 
     // For now, deal only with memory 0.
-    rule <instrs> data { MEMIDX DSBYTES } => .K ... </instrs>
+    rule <instrs> data { 0 DSBYTES } => .K ... </instrs>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> MEMIDX |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr> ADDR </mAddr>
-           <mdata> DATA => #setRange(DATA, OFFSET, Bytes2Int(DSBYTES, LE, Unsigned), lengthBytes(DSBYTES)) </mdata>
-           ...
-         </memInst>
+         <mems> MEMS => #let memInst(MAX, SIZE, DATA) = MEMS[ADDR] #in MEMS [ ADDR <- memInst(MAX, SIZE, #setRange(DATA, OFFSET, Bytes2Int(DSBYTES, LE, Unsigned), lengthBytes(DSBYTES))) ] </mems>
+      requires ADDR <Int size(MEMS)
       [owise]
 
     syntax Int ::= Int "up/Int" Int [function]
@@ -1893,24 +1826,21 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
-           <memAddrs> .Map => 0 |-> ADDR </memAddrs>
+           <memAddrs> .List => ListItem(ADDRS[#ContextLookup(IDS', TFIDX)]) </memAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
-           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
+           <memAddrs> ADDRS </memAddrs>
            <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
-         <memInst>
-           <mAddr> ADDR </mAddr>
-           <mmax>  MAX  </mmax>
-           <msize> SIZE </msize>
-           ...
-         </memInst>
-       requires #limitsMatchImport(SIZE, MAX, LIM)
+         <mems> MEMS </mems>
+       requires #ContextLookup(IDS', TFIDX) <Int size(ADDRS)
+         andBool {ADDRS[#ContextLookup(IDS', TFIDX)]}:>Int <Int size(MEMS)
+         andBool (#let memInst(MAX, SIZE, _) = MEMS[{ADDRS[#ContextLookup(IDS', TFIDX)]}:>Int] #in #limitsMatchImport(SIZE, MAX, LIM))
 
     rule <instrs> #import(MOD, NAME, #globalDesc(... id: OID, type: MUT TYP) ) => .K ... </instrs>
          <curModIdx> CUR </curModIdx>

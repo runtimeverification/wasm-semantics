@@ -34,8 +34,7 @@ module WASM-AUXIL
            <funcs>           _ => .Bag      </funcs>
            <nextTabAddr>     _ => 0         </nextTabAddr>
            <tabs>            _ => .Bag      </tabs>
-           <nextMemAddr>     _ => 0         </nextMemAddr>
-           <mems>            _ => .Bag      </mems>
+           <mems>            _ => .List     </mems>
            <nextGlobAddr>    _ => 0         </nextGlobAddr>
            <globals>         _ => .Bag      </globals>
            <nextElemAddr>    _ => 0         </nextElemAddr>

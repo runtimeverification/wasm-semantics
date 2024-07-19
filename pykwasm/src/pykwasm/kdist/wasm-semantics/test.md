@@ -570,18 +570,12 @@ This checks that the last allocated memory has the given size and max value.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS </memIds>
-           <memAddrs> #ContextLookup(IDS, TFIDX) |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <mems>
-           <memInst>
-             <mAddr>   ADDR  </mAddr>
-             <mmax>    MAX   </mmax>
-             <msize>   SIZE  </msize>
-             ...
-           </memInst>
-           ...
-         </mems>
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+        andBool #ContextLookup(IDS, TFIDX) ==K 0 andBool (#let memInst(MAX', SIZE', _) = MEMS[ADDR] #in MAX ==K MAX' andBool SIZE ==K SIZE')
 
     rule <instrs> #assertMemoryData (KEY , VAL) MSG => #assertMemoryData CUR (KEY, VAL) MSG ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -589,18 +583,12 @@ This checks that the last allocated memory has the given size and max value.
     rule <instrs> #assertMemoryData MODIDX (KEY , VAL) _MSG => .K ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <memAddrs> 0 |-> ADDR </memAddrs>
+           <memAddrs> ListItem(ADDR) </memAddrs>
            ...
          </moduleInst>
-         <mems>
-           <memInst>
-             <mAddr> ADDR </mAddr>
-             <mdata> BM </mdata>
-             ...
-           </memInst>
-           ...
-         </mems>
-      requires #getRange(BM, KEY, 1) ==Int VAL
+         <mems> MEMS </mems>
+      requires ADDR <Int size(MEMS)
+        andBool (#let memInst(_, _, BM) = MEMS[ADDR] #in #getRange(BM, KEY, 1) ==Int VAL)
 ```
 
 ### Module Assertions

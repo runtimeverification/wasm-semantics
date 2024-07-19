@@ -43,11 +43,8 @@
         0
       </nextTabAddr>
       <mems>
-        .MemInstCellMap
+	.List
       </mems>
-      <nextMemAddr>
-        0
-      </nextMemAddr>
       <globals>
         .GlobalInstCellMap
       </globals>
