@@ -571,13 +571,13 @@ colors = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "kframework"
-version = "7.1.80"
+version = "7.1.81"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "kframework-7.1.80-py3-none-any.whl", hash = "sha256:576dcfd403b9de1bbee7d397bfe34b2720348d3947d1f3a5ab0489c1f6c88fd9"},
-    {file = "kframework-7.1.80.tar.gz", hash = "sha256:6132f3e5ae0f5de4eca001856b2356c8aebadae056e3754182d54af27451e779"},
+    {file = "kframework-7.1.81-py3-none-any.whl", hash = "sha256:b10796b7071f54720d71356d04eb51b5a430365965e987f568fa79bcfe921fb2"},
+    {file = "kframework-7.1.81.tar.gz", hash = "sha256:5ac043a1b20eefd0439f688d447c989a7eb63d9409e2c052208b58cba5b5f7fa"},
 ]
 
 [package.dependencies]
@@ -976,13 +976,13 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "8.3.1"
+version = "8.3.2"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.3.1-py3-none-any.whl", hash = "sha256:e9600ccf4f563976e2c99fa02c7624ab938296551f280835ee6516df8bc4ae8c"},
-    {file = "pytest-8.3.1.tar.gz", hash = "sha256:7e8e5c5abd6e93cb1cc151f23e57adc31fcf8cfd2a3ff2da63e23f732de35db6"},
+    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
+    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
 ]
 
 [package.dependencies]
@@ -1228,4 +1228,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "df27cceac8013ac23f692c5cff6635a0b0a4ca768976c1b6b1a4a98e5befd7e2"
+content-hash = "ffaafa0e5232b3e3d51efd3b6d599eb47bcefcc4d22563ad5469379d799d1086"
