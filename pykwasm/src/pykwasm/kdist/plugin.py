@@ -30,8 +30,16 @@ class KompileTarget(Target):
         self._kompile_args = kompile_args
 
     def build(self, output_dir: Path, deps: dict[str, Path], args: dict[str, Any], verbose: bool) -> None:
+        llvm_proof_hint_debugging = bool(args.get('llvm-proof-hint-debugging', ''))
+        llvm_proof_hint_instrumentation = bool(args.get('llvm-proof-hint-instrumentation', ''))
         kompile_args = self._kompile_args(deps['wasm-semantics.source'])
-        kompile(output_dir=output_dir, verbose=verbose, **kompile_args)
+        kompile(
+            output_dir=output_dir,
+            verbose=verbose,
+            llvm_proof_hint_debugging=llvm_proof_hint_debugging,
+            llvm_proof_hint_instrumentation=llvm_proof_hint_instrumentation,
+            **kompile_args,
+        )
 
     def context(self) -> dict[str, str]:
         return {'k-version': k_version().text}
