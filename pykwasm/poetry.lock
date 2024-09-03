@@ -591,13 +591,13 @@ colors = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "kframework"
-version = "7.1.124"
+version = "7.1.129"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "kframework-7.1.124-py3-none-any.whl", hash = "sha256:cc204189b8d6133aa7933fd96260f0576593d6dee54df588f17b5729630934ad"},
-    {file = "kframework-7.1.124.tar.gz", hash = "sha256:2b5fcba289c67ac2250ed99216b6b0fe71b90b9d1ee14b58cf9a2a0443601caa"},
+    {file = "kframework-7.1.129-py3-none-any.whl", hash = "sha256:640b8485da1704384e25c8570f64c4a4ed9586d0510a9abdca845e908816296b"},
+    {file = "kframework-7.1.129.tar.gz", hash = "sha256:52aeae85efeb7c16c5aff3b985860b6290d10072c3bebdd2acfae7c2b13e65ef"},
 ]
 
 [package.dependencies]
@@ -1105,13 +1105,13 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "setuptools"
-version = "74.0.0"
+version = "74.1.1"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-74.0.0-py3-none-any.whl", hash = "sha256:0274581a0037b638b9fc1c6883cc71c0210865aaa76073f7882376b641b84e8f"},
-    {file = "setuptools-74.0.0.tar.gz", hash = "sha256:a85e96b8be2b906f3e3e789adec6a9323abf79758ecfa3065bd740d81158b11e"},
+    {file = "setuptools-74.1.1-py3-none-any.whl", hash = "sha256:fc91b5f89e392ef5b77fe143b17e32f65d3024744fba66dc3afe07201684d766"},
+    {file = "setuptools-74.1.1.tar.gz", hash = "sha256:2353af060c06388be1cecbf5953dcdb1f38362f87a2356c480b6b4d5fcfc8847"},
 ]
 
 [package.extras]
@@ -1256,4 +1256,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5952d926a03f4266c1b9159a7b70bc44d3008ff5993a518b7abd3902bb9eaa88"
+content-hash = "c86aedef17d3ce7e002a062debe6bc89fae806ff6275c10e1e130944644c4a1f"
