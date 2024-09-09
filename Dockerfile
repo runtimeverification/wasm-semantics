@@ -26,11 +26,12 @@ RUN groupadd -g $GROUP_ID user && useradd -m -u $USER_ID -s /bin/sh -g user user
 USER user:user
 WORKDIR /home/user
 
-RUN    curl -sSL https://install.python-poetry.org | python3 - \
-    && poetry --version
+RUN    curl -sSL https://install.python-poetry.org | python3 -
 
 RUN pip3 install --user  \
            cytoolz       \
            numpy
 
-ENV PATH=/home/user/wabt/build:/home/user/.local/bin:$PATH
+ENV PATH=/home/user/.local/bin:$PATH
+
+RUN poetry --version
