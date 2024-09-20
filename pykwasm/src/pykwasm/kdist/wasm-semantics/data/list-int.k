@@ -12,7 +12,7 @@ module LIST-INT
           [ left, function, total, hook(LIST.concat),
             symbol(_ListInt_), smtlib(smt_seq_concat),
             assoc, unit(.ListInt), element(ListIntItem),
-            format(%1%n%2)
+            format(%1%n%2), update(ListInt:set)
           ]
   syntax ListInt ::= ".ListInt"
           [ function, total, hook(LIST.unit), symbol(.ListInt),
