@@ -12,7 +12,7 @@ module LIST-REF
           [ left, function, total, hook(LIST.concat),
             symbol(_ListRef_), smtlib(smt_seq_concat),
             assoc, unit(.ListRef), element(ListRefItem),
-            format(%1%n%2)
+            format(%1%n%2), update(ListRef:set)
           ]
   syntax ListRef ::= ".ListRef"
           [ function, total, hook(LIST.unit), symbol(.ListRef),
