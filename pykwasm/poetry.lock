@@ -413,17 +413,17 @@ pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
 name = "flake8-bugbear"
-version = "24.8.19"
+version = "24.10.31"
 description = "A plugin for flake8 finding likely bugs and design problems in your program. Contains warnings that don't belong in pyflakes and pycodestyle."
 optional = false
 python-versions = ">=3.8.1"
 files = [
-    {file = "flake8_bugbear-24.8.19-py3-none-any.whl", hash = "sha256:25bc3867f7338ee3b3e0916bf8b8a0b743f53a9a5175782ddc4325ed4f386b89"},
-    {file = "flake8_bugbear-24.8.19.tar.gz", hash = "sha256:9b77627eceda28c51c27af94560a72b5b2c97c016651bdce45d8f56c180d2d32"},
+    {file = "flake8_bugbear-24.10.31-py3-none-any.whl", hash = "sha256:cccf786ccf9b2e1052b1ecfa80fb8f80832d0880425bcbd4cd45d3c8128c2683"},
+    {file = "flake8_bugbear-24.10.31.tar.gz", hash = "sha256:435b531c72b27f8eff8d990419697956b9fd25c6463c5ba98b3991591de439db"},
 ]
 
 [package.dependencies]
-attrs = ">=19.2.0"
+attrs = ">=22.2.0"
 flake8 = ">=6.0.0"
 
 [package.extras]
@@ -585,13 +585,13 @@ colors = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "kframework"
-version = "7.1.169"
+version = "7.1.170"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "kframework-7.1.169-py3-none-any.whl", hash = "sha256:af0419d93285834568f2727bb66af4188736faf625a3bdfc331d9294ade1ea95"},
-    {file = "kframework-7.1.169.tar.gz", hash = "sha256:e8e432466fc0a99fff230d4db826a0f2296899ff4dbd4f1226ab07fded3ce884"},
+    {file = "kframework-7.1.170-py3-none-any.whl", hash = "sha256:f173104997ddbba8213a192e75f5c31b85dba6a9782003a4ba3a29a8c9f4ac65"},
+    {file = "kframework-7.1.170.tar.gz", hash = "sha256:e9550792d3a3f1a3dc00b66875999722224afba5feb4be10ca5726367db9ba1b"},
 ]
 
 [package.dependencies]
@@ -1262,4 +1262,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d182f571bfc08d393d5c010b2129ffb807d9e51dc1b6c6e0c76db2327672ba82"
+content-hash = "6705aa2aacdd9fc0b0808eefdf12019838d92b012ac180a5d8339d585eb57093"
