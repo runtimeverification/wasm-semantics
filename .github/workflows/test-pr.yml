@@ -31,7 +31,7 @@ jobs:
   conformance-tests:
     name: 'Conformance Tests'
     needs: pykwasm-code-quality-checks
-    runs-on: [self-hosted, linux, normal]
+    runs-on: [self-hosted, aws, us-east-2, m6a.4xlarge]
     timeout-minutes: 30
     steps:
       - name: 'Check out code'
