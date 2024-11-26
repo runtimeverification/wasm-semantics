@@ -29,6 +29,117 @@ clean: pykwasm
 	$(KDIST) clean
 
 
+# Building ULM-integrated Definition
+# ----------------------------------
+
+ULM_BUILD_DIR=./build
+ULM_LIB_DIR=$(ULM_BUILD_DIR)/lib
+ULM_DEP_DIR=$(ULM_BUILD_DIR)/deps
+ULM_CXX=$(shell [ $(origin CXX) != default ] && echo $(CXX) )
+ULM_KF_INCLUDE_DIR=$(shell dirname "`which llvm-kompile`")/../include
+
+ULM_WASM_DIR=$(ULM_BUILD_DIR)/wasm
+ULM_WASM_SRC_DIR=pykwasm/src/pykwasm/kdist/wasm-semantics
+ULM_WASM_LIB=libkwasm.so
+ULM_WASM_TARGET=$(ULM_LIB_DIR)/$(ULM_WASM_LIB)
+ULM_WASM_MAIN=$(ULM_WASM_SRC_DIR)/ulm-wasm.md
+ULM_WASM_SRC=$(wildcard $(ULM_WASM_SRC_DIR)/*.md $(ULM_WASM_SRC_DIR)/data/*.k)
+
+ULM_WASM_COMPILER_TARGET=$(ULM_BUILD_DIR)/ulm-contract-compiler
+
+ULM_KRYPTO_DIR=$(ULM_DEP_DIR)/plugin
+ULM_KRYPTO_LIB=krypto.a
+ULM_KRYPTO_TARGET=$(ULM_LIB_DIR)/$(ULM_KRYPTO_LIB)
+
+ULM_HOOKS_CLONE_DIR=$(ULM_DEP_DIR)/ulm
+ULM_HOOKS_DIR=$(ULM_HOOKS_CLONE_DIR)/kllvm
+ULM_HOOKS_SRC=ulm_kllvm.cpp ulm_hooks.cpp ulm_kllvm_c.cpp
+ULM_HOOKS_LIB=libulmkllvm.so
+ULM_HOOKS_TARGET=$(ULM_LIB_DIR)/$(ULM_HOOKS_LIB)
+
+### ULM Crypto Plugin
+
+$(ULM_KRYPTO_DIR)/.git:
+	@mkdir -p $(ULM_DEP_DIR)
+	cd $(ULM_DEP_DIR); \
+	  git clone --depth 1 https://github.com/runtimeverification/blockchain-k-plugin plugin; \
+	  cd plugin; \
+	  git submodule update --init --recursive
+
+$(ULM_KRYPTO_TARGET): | $(ULM_KRYPTO_DIR)/.git
+	@mkdir -p $(ULM_LIB_DIR)
+	$(if $(ULM_CXX), CXX=$(ULM_CXX)) make -C "$(ULM_KRYPTO_DIR)" build
+	cp "$(ULM_KRYPTO_DIR)/build/krypto/lib/krypto.a" "$(ULM_LIB_DIR)"
+
+.PHONY: ulm-krypto-build
+ulm-krypto-build: $(ULM_KRYPTO_TARGET)
+
+### ULM Hooks
+
+$(ULM_HOOKS_CLONE_DIR)/.git:
+	@mkdir -p $(ULM_DEP_DIR)
+	cd $(ULM_DEP_DIR); \
+	  git clone --depth 1 https://github.com/pi-squared-inc/ulm
+
+$(ULM_HOOKS_TARGET): | $(ULM_HOOKS_CLONE_DIR)/.git
+	@mkdir -p $(ULM_LIB_DIR)
+	cd $(ULM_HOOKS_DIR); \
+	  $(CXX) -shared -o "$(ULM_HOOKS_LIB)" $(ULM_HOOKS_SRC) -I "$(ULM_KF_INCLUDE_DIR)" -I "$(ULM_KF_INCLUDE_DIR)/kllvm" \
+	    -fPIC -lcryptopp -lgmp -std=c++20 -Wall -Werror -g -fno-omit-frame-pointer -Wno-return-type-c-linkage $(CPPFLAGS)
+	cp "$(ULM_HOOKS_DIR)/$(ULM_HOOKS_LIB)" "$(ULM_LIB_DIR)"
+
+.PHONY: ulm-hooks-build
+ulm-hooks-build: $(ULM_HOOKS_TARGET)
+
+### ULM Wasm
+
+$(ULM_WASM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) $(ULM_WASM_SRC)
+	kompile \
+	  --hook-namespaces 'KRYPTO ULM' \
+	  -O2 \
+	  -ccopt -g \
+	  -ccopt -std=c++20 \
+	  -ccopt -lcrypto \
+	  -ccopt -lsecp256k1 \
+	  -ccopt -lssl \
+	  -ccopt "$(ULM_KRYPTO_TARGET)" \
+	  -ccopt -L"$(ULM_LIB_DIR)" \
+	  -ccopt -lulmkllvm \
+	  -ccopt "$(ULM_HOOKS_DIR)/lang/ulm_language_entry.cpp" \
+	  -ccopt -I"$(ULM_HOOKS_DIR)" \
+	  -ccopt -DULM_LANG_ID=wasm \
+	  -ccopt -shared \
+	  -ccopt -fPIC \
+	  --llvm-hidden-visibility \
+	  --llvm-kompile-type library \
+	  --llvm-kompile-output "$(ULM_WASM_LIB)" \
+	  -I "$(ULM_HOOKS_DIR)" \
+	  -I "$(ULM_KRYPTO_DIR)/plugin" \
+	  -v \
+	  $(ULM_WASM_MAIN) \
+	  -o $(ULM_WASM_DIR)
+	cp "$(ULM_WASM_DIR)/$(ULM_WASM_LIB)" "$(ULM_LIB_DIR)"
+
+.PHONY: ulm-wasm
+ulm-wasm: $(ULM_WASM_TARGET)
+
+### ULM Wasm Contract Compiler
+
+$(ULM_WASM_COMPILER_TARGET): $(ULM_WASM_TARGET)
+	$(CXX) "$(ULM_HOOKS_DIR)/emit_contract_bytes.cpp" \
+	  -I "$(ULM_KF_INCLUDE_DIR)" \
+	  -I "$(ULM_KF_INCLUDE_DIR)/kllvm" \
+	  -std=c++20 \
+	  -DULM_LANG_ID=wasm \
+	  -Wno-return-type-c-linkage \
+	  -L"$(ULM_LIB_DIR)" \
+	  -lulmkllvm \
+	  -lkwasm \
+	  -o "$(ULM_WASM_COMPILER_TARGET)"
+
+.PHONY: ulm-contract-compiler
+ulm-contract-compiler: $(ULM_WASM_COMPILER_TARGET)
+
 # Testing
 # -------
 
