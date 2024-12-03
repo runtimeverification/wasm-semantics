@@ -27,6 +27,8 @@ jobs:
         run: make -C pykwasm pyupgrade
       - name: 'Run unit tests'
         run: make -C pykwasm cov-unit
+      - name: 'Run Rust unit-tests'
+        run: make rust-tests
 
   conformance-tests:
     name: 'Conformance Tests'
