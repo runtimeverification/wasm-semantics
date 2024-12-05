@@ -1,17 +1,8 @@
 
-#[cfg(not(test))]
-use core::panic::PanicInfo;
-
 use crate::ulm_hooks;
 
 pub fn fail(msg: &str) -> ! {
   ulm_hooks::failWrapper(msg);
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-pub fn panic(_info: &PanicInfo) -> ! {
-  fail("Panic")
 }
 
 #[macro_export]

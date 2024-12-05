@@ -2,12 +2,16 @@
 // therefore useful for testing the wasm semantics. A proper implementation
 // should probably use something like ruint2::Uint<..., ...> or uint256::Uint256.
 
+use bytes::{Bytes, Buf};
 use core::cmp::Ordering;
 use core::ops::Add;
 use core::ops::Sub;
 
 use crate::assertions::fail;
 use crate::require;
+use crate::encoder::{Encodable, EncodingType, EncodingType::FixedSize};
+use crate::decoder::Decodable;
+use crate::predicate::{Satisfied};
 
 #[derive(Debug)]
 pub struct Unsigned<const N: usize> {
@@ -70,6 +74,55 @@ impl<const N: usize> Unsigned<N> {
         } else {
             Unsigned::from_unsigned(&Unsigned::<8>::from_u64(value))
         }
+    }
+
+    pub fn try_to_u64(&self) -> Result<u64, &'static str> {
+        let useful_length =
+            if 8 < N {
+                for i in 8 .. N {
+                    if self.chunks[i] != 0 {
+                        return Err("Overflow when converting to u64");
+                    }
+                }
+                8
+            } else {
+                N
+            };
+        let mut value = 0_u64;
+        for i in (0 .. useful_length).rev() {
+            value = value << 8;
+            value += self.chunks[i] as u64;
+        }
+        Ok(value)
+    }
+}
+
+impl<const N: usize> TryFrom<&Unsigned<N>> for u64 {
+    type Error = &'static str;
+    fn try_from(value: &Unsigned<N>) -> Result<Self, Self::Error> {
+        value.try_to_u64()
+    }
+}
+impl<const N: usize> TryFrom<Unsigned<N>> for u64 {
+    type Error = &'static str;
+    fn try_from(value: Unsigned<N>) -> Result<Self, Self::Error> {
+        (&value).try_into()
+    }
+}
+impl<const N: usize> TryFrom<&Unsigned<N>> for usize {
+    type Error = &'static str;
+    fn try_from(value: &Unsigned<N>) -> Result<Self, Self::Error> {
+        let value_u64: u64 = value.try_into()?;
+        match value_u64.try_into() {
+            Ok(v) => Ok(v),
+            Err(_) => Err("Error converting u64 to usize")
+        }
+    }
+}
+impl<const N: usize> TryFrom<Unsigned<N>> for usize {
+    type Error = &'static str;
+    fn try_from(value: Unsigned<N>) -> Result<Self, Self::Error> {
+        (&value).try_into()
     }
 }
 
@@ -179,3 +232,88 @@ impl<const N: usize> Clone for Unsigned<N> {
         Unsigned { chunks: self.chunks.clone() }
     }
 }
+
+impl Encodable for U256
+{
+    fn encode(&self) -> (EncodingType, Bytes) {
+        let mut encoded = [0_u8; 32];
+        for i in 0 .. 32 {
+            encoded[i] = self.chunks[31 - i];
+        }
+        (FixedSize, Bytes::copy_from_slice(&encoded))
+    }
+}
+impl Decodable for U256
+{
+    fn encoding_type() -> EncodingType {
+        FixedSize
+    }
+    fn head_size() -> usize {
+        32
+    }
+    fn decode(bytes: Bytes) -> Self {
+        let encoded = bytes.chunk();
+        require!(32 == encoded.len(), "Wrong length to decode");
+        let mut value: U256 = U256::from_u64(0);
+        for i in 0 .. 32 {
+            value.chunks[31 - i] = encoded[i];
+        }
+        value
+    }
+}
+impl<const N: usize> Encodable for Unsigned<N>
+where
+    SmallerThan32<N>: Satisfied
+{
+    fn encode(&self) -> (EncodingType, Bytes) {
+        U256::from_unsigned(self).encode()
+    }
+}
+impl<const N: usize> Decodable for Unsigned<N>
+where
+    SmallerThan32<N>: Satisfied
+{
+    fn encoding_type() -> EncodingType {
+        U256::encoding_type()
+    }
+    fn head_size() -> usize {
+        U256::head_size()
+    }
+    fn decode(bytes: Bytes) -> Self {
+        let value_u256 = U256::decode(bytes);
+        Unsigned::<N>::from_unsigned(&value_u256)
+    }
+}
+
+pub enum SmallerThan32<const EXPRESSION: usize> {}
+impl Satisfied for SmallerThan32<1> {}
+impl Satisfied for SmallerThan32<2> {}
+impl Satisfied for SmallerThan32<3> {}
+impl Satisfied for SmallerThan32<4> {}
+impl Satisfied for SmallerThan32<5> {}
+impl Satisfied for SmallerThan32<6> {}
+impl Satisfied for SmallerThan32<7> {}
+impl Satisfied for SmallerThan32<8> {}
+impl Satisfied for SmallerThan32<9> {}
+impl Satisfied for SmallerThan32<10> {}
+impl Satisfied for SmallerThan32<11> {}
+impl Satisfied for SmallerThan32<12> {}
+impl Satisfied for SmallerThan32<13> {}
+impl Satisfied for SmallerThan32<14> {}
+impl Satisfied for SmallerThan32<15> {}
+impl Satisfied for SmallerThan32<16> {}
+impl Satisfied for SmallerThan32<17> {}
+impl Satisfied for SmallerThan32<18> {}
+impl Satisfied for SmallerThan32<19> {}
+impl Satisfied for SmallerThan32<20> {}
+impl Satisfied for SmallerThan32<21> {}
+impl Satisfied for SmallerThan32<22> {}
+impl Satisfied for SmallerThan32<23> {}
+impl Satisfied for SmallerThan32<24> {}
+impl Satisfied for SmallerThan32<25> {}
+impl Satisfied for SmallerThan32<26> {}
+impl Satisfied for SmallerThan32<27> {}
+impl Satisfied for SmallerThan32<28> {}
+impl Satisfied for SmallerThan32<29> {}
+impl Satisfied for SmallerThan32<30> {}
+impl Satisfied for SmallerThan32<31> {}
