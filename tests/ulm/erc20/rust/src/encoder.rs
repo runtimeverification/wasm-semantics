@@ -27,7 +27,7 @@ pub trait Encodable {
 impl Encodable for String {
     fn encode(&self) -> (EncodingType, Bytes) {
         let bytes = self.as_bytes();
-        let total_bytes_length = 32 + ((bytes.len() + 31) / 32) * 32; 
+        let total_bytes_length = 32 + ((bytes.len() + 31) / 32) * 32;
         let mut result = BytesMut::with_capacity(total_bytes_length);
         let (_, len_bytes) = U256::from_u64(bytes.len() as u64).encode();
 

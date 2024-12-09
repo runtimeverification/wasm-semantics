@@ -44,7 +44,7 @@ pub type U160 = Unsigned<20>;
 pub type U256 = Unsigned<32>;
 
 impl<const N: usize> Unsigned<N> {
-    pub fn from_unsigned<const M: usize>(value: &Unsigned<M>) -> Unsigned<N> {
+    pub fn try_from_unsigned<const M: usize>(value: &Unsigned<M>) -> Result<Unsigned<N>, &'static str> {
         let mut chunks = [0_u8; N];
         if M <= N {
             for i in 0 .. M {
@@ -55,9 +55,15 @@ impl<const N: usize> Unsigned<N> {
                 chunks[i] = value.chunks[i];
             }
             for i in N .. M {
-                require!(value.chunks[i] == 0, "Value too large to cast");
+                if value.chunks[i] != 0 {
+                    return Err("Value too large to cast");
+                }
             }
         }
+        Ok (Unsigned { chunks })
+    }
+
+    pub fn from_array_le(chunks: [u8; N]) -> Unsigned<N> {
         Unsigned { chunks }
     }
 
@@ -72,8 +78,15 @@ impl<const N: usize> Unsigned<N> {
             require!(to_process == 0, "Unprocessed bits in value.");
             Unsigned { chunks }
         } else {
-            Unsigned::from_unsigned(&Unsigned::<8>::from_u64(value))
+            match Unsigned::try_from_unsigned(&Unsigned::<8>::from_u64(value)) {
+                Ok(v) => v,
+                Err(msg) => fail(msg),
+            }
         }
+    }
+
+    pub fn copy_to_array_le(&self, chunks: &mut [u8; N]) {
+        chunks.copy_from_slice(&self.chunks);
     }
 
     pub fn try_to_u64(&self) -> Result<u64, &'static str> {
@@ -125,6 +138,63 @@ impl<const N: usize> TryFrom<Unsigned<N>> for usize {
         (&value).try_into()
     }
 }
+impl<const N: usize, const M: usize> TryFrom<&Unsigned<N>> for Unsigned<M> {
+    type Error = &'static str;
+    fn try_from(value: &Unsigned<N>) -> Result<Self, Self::Error> {
+        Unsigned::try_from_unsigned(value)
+    }
+}
+
+#[macro_export]
+macro_rules! try_from_u256 {
+    ( $size:expr ) => {
+        impl TryFrom<U256> for Unsigned<$size>
+        {
+            type Error = &'static str;
+            fn try_from(value: U256) -> Result<Self, Self::Error> {
+                (&value).try_into()
+            }
+        }
+        impl From<Unsigned<$size>> for U256
+            where SmallerThan32<$size>: Satisfied
+        {
+            fn from(value: Unsigned<$size>) -> Self {
+                (&value).try_into().unwrap()
+            }
+        }
+    }
+}
+try_from_u256!(1);
+try_from_u256!(2);
+try_from_u256!(3);
+try_from_u256!(4);
+try_from_u256!(5);
+try_from_u256!(6);
+try_from_u256!(7);
+try_from_u256!(8);
+try_from_u256!(9);
+try_from_u256!(10);
+try_from_u256!(11);
+try_from_u256!(12);
+try_from_u256!(13);
+try_from_u256!(14);
+try_from_u256!(15);
+try_from_u256!(16);
+try_from_u256!(17);
+try_from_u256!(18);
+try_from_u256!(19);
+try_from_u256!(20);
+try_from_u256!(21);
+try_from_u256!(22);
+try_from_u256!(23);
+try_from_u256!(24);
+try_from_u256!(25);
+try_from_u256!(26);
+try_from_u256!(27);
+try_from_u256!(28);
+try_from_u256!(29);
+try_from_u256!(30);
+try_from_u256!(31);
 
 impl<const N: usize> Add for &Unsigned<N> {
     type Output = Unsigned<N>;
@@ -266,7 +336,10 @@ where
     SmallerThan32<N>: Satisfied
 {
     fn encode(&self) -> (EncodingType, Bytes) {
-        U256::from_unsigned(self).encode()
+        match U256::try_from_unsigned(self) {
+            Ok(v) => v.encode(),
+            Err(msg) => fail(msg),
+        }
     }
 }
 impl<const N: usize> Decodable for Unsigned<N>
@@ -281,7 +354,10 @@ where
     }
     fn decode(bytes: Bytes) -> Self {
         let value_u256 = U256::decode(bytes);
-        Unsigned::<N>::from_unsigned(&value_u256)
+        match Unsigned::<N>::try_from_unsigned(&value_u256) {
+            Ok(v) => v,
+            Err(msg) => fail(msg),
+        }
     }
 }
 

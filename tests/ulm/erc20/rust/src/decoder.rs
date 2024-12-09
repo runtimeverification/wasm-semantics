@@ -17,7 +17,7 @@
 // let (value_n, decoder) = decoder.decode();
 //
 // At the end, it's good practice to check that you have decoded everything
-// you wanted. The following will not compile if decoding didn't finish.    
+// you wanted. The following will not compile if decoding didn't finish.
 //
 // decoder.check_done();
 

@@ -71,6 +71,6 @@ mod unsigned_tests {
 
     #[test]
     fn from_unsigned() {
-        assert_eq!(U256::from_u64(5), U256::from_unsigned(&U160::from_u64(5)));
+        assert_eq!(U256::from_u64(5), U256::try_from_unsigned(&U160::from_u64(5)).unwrap());
     }
 }
