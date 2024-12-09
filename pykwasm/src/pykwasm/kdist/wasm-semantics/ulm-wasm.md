@@ -90,10 +90,46 @@ Passing Control
 ---------------
 
 The embedder loads the module to be executed and then resolves the entrypoint function.
+Currently, only the local Wasm VM initialization is supported.
+
+```local
+    rule <k> PGM:PgmEncoding => #resolveCurModuleFuncExport(FUNCNAME) </k>
+         <entry> FUNCNAME </entry>
+         <instrs> .K => decodePgm(PGM) </instrs>
+```
+
+Note that entrypoint resolution must occur _after_ the Wasm module has been loaded.
+This is ensured by requiring that the `<instrs>` cell is empty during resolution.
+
+```local
+    syntax Initializer ::= #resolveCurModuleFuncExport(String)
+                         | #resolveModuleFuncExport(Int, String)
+                         | #resolveFunc(Int, ListInt)
+    // ----------------------------------------------
+    rule <k> #resolveCurModuleFuncExport(FUNCNAME) => #resolveModuleFuncExport(MODIDX, FUNCNAME) </k>
+         <instrs> .K </instrs>
+         <curModIdx> MODIDX:Int </curModIdx>
+
+    rule <k> #resolveModuleFuncExport(MODIDX, FUNCNAME) => #resolveFunc(FUNCIDX, FUNCADDRS) </k>
+         <instrs> .K </instrs>
+         <moduleInst>
+           <modIdx> MODIDX </modIdx>
+           <exports> ... FUNCNAME |-> FUNCIDX ... </exports>
+           <funcAddrs> FUNCADDRS </funcAddrs>
+           ...
+         </moduleInst>
+
+    rule <k> #resolveFunc(FUNCIDX, FUNCADDRS) => .K </k>
+         <instrs> .K => (invoke FUNCADDRS {{ FUNCIDX }} orDefault -1 ):Instr </instrs>
+         requires isListIndex(FUNCIDX, FUNCADDRS)
+```
+
+Here we handle the case when entrypoint resolution fails.
+
+**TODO:** Decide how to handle failure case.
 
 ```k
-    rule <k> PGM:PgmEncoding => . </k>
-         <instrs> .K => decodePgm(PGM) </instrs>
+    // rule <k> Init:Initializer => . </k> [owise]
 ```
 
 ULM Hook Behavior

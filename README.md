@@ -171,6 +171,18 @@ The target `test` contains all the currently passing tests.
 make test
 ```
 
+To execute the Wasm VM locally, you can use the `wasm` Poetry script from the repo root as follows:
+
+```sh
+poetry -C pykwasm run wasm <llvm-build-dir> <wasm-file> [-cellname:sort=cellvalue...]
+```
+
+For example, after locally building the ULM-integrated Wasm, the local build of the ULM-integrated Wasm can be executed as follows:
+
+```sh
+poetry -C pykwasm run wasm ./build/wasm pykwasm/src/tests/integration/binary/basic-features.wat -gas:Int=0 -create:Bool=false -entry:String=init
+```
+
 Resources
 ---------
 

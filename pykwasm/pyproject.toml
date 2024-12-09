@@ -11,6 +11,7 @@ authors = [
 ]
 
 [tool.poetry.scripts]
+wasm = "pykwasm.run_wasm:main"
 wasm2kast = "pykwasm.wasm2kast:main"
 kwasm = "pykwasm.scripts.kwasm:main"
 kwasm-convert = "pykwasm.scripts.convert:main"
@@ -65,6 +66,7 @@ disallow_untyped_defs = true
 # TODO fix type errors
 exclude = [
     'src/pykwasm/wasm2kast\.py',
+    'src/pykwasm/run_wasm\.py',
     'src/wasm/*',
     'src/tests/unit/test_wasm2kast\.py',
 ]
