@@ -137,6 +137,14 @@ make build
 
 To only build a specific backend, you can do `make build-llvm` or `make build-haskell`.
 
+#### ULM-Integrated Wasm Building
+
+To locally build the ULM-integrated version of the semantics, run:
+
+```sh
+make ULM_TEST=1 ulm-wasm
+```
+
 ### Media and documents
 
 The `media/` directory contains presentations and reports about about KWasm.

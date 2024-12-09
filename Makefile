@@ -41,6 +41,7 @@ ULM_KF_INCLUDE_DIR=$(shell dirname "`which llvm-kompile`")/../include
 ULM_WASM_DIR=$(ULM_BUILD_DIR)/wasm
 ULM_WASM_SRC_DIR=pykwasm/src/pykwasm/kdist/wasm-semantics
 ULM_WASM_LIB=libkwasm.so
+ULM_WASM_BIN=interpreter
 ULM_WASM_TARGET=$(ULM_LIB_DIR)/$(ULM_WASM_LIB)
 ULM_WASM_MAIN=$(ULM_WASM_SRC_DIR)/ulm-wasm.md
 ULM_WASM_SRC=$(wildcard $(ULM_WASM_SRC_DIR)/*.md $(ULM_WASM_SRC_DIR)/data/*.k)
@@ -93,32 +94,40 @@ ulm-hooks-build: $(ULM_HOOKS_TARGET)
 
 ### ULM Wasm
 
+ULM_WASM_TYPE = $(if $(ULM_TEST),main,library)
+ULM_WASM_OUT  = $(if $(ULM_TEST),$(ULM_WASM_BIN),$(ULM_WASM_LIB))
+ULM_WASM_SEL  = $(if $(ULM_TEST),k|local,k|remote)
+ULM_LIB_FLAGS = $(if $(ULM_TEST),,-ccopt -L"$(ULM_LIB_DIR)" -ccopt -lulmkllvm -ccopt -shared -ccopt -fPIC -ccopt "$(ULM_HOOKS_DIR)/lang/ulm_language_entry.cpp")
+ULM_HOOK_NMSP = $(if $(ULM_TEST),,ULM)
+
 $(ULM_WASM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) $(ULM_WASM_SRC)
 	kompile \
-	  --hook-namespaces 'KRYPTO ULM' \
-	  -O2 \
+	  --hook-namespaces 'KRYPTO $(ULM_HOOK_NMSP)' \
+	  $(if $(DEBUG),-ccopt -O0) \
 	  -ccopt -g \
 	  -ccopt -std=c++20 \
 	  -ccopt -lcrypto \
 	  -ccopt -lsecp256k1 \
 	  -ccopt -lssl \
 	  -ccopt "$(ULM_KRYPTO_TARGET)" \
-	  -ccopt -L"$(ULM_LIB_DIR)" \
-	  -ccopt -lulmkllvm \
-	  -ccopt "$(ULM_HOOKS_DIR)/lang/ulm_language_entry.cpp" \
+	  $(ULM_LIB_FLAGS) \
 	  -ccopt -I"$(ULM_HOOKS_DIR)" \
 	  -ccopt -DULM_LANG_ID=wasm \
-	  -ccopt -shared \
-	  -ccopt -fPIC \
 	  --llvm-hidden-visibility \
-	  --llvm-kompile-type library \
-	  --llvm-kompile-output "$(ULM_WASM_LIB)" \
+	  --llvm-kompile-type $(ULM_WASM_TYPE) \
+	  --llvm-kompile-output "$(ULM_WASM_OUT)" \
+	  -O2 \
 	  -I "$(ULM_HOOKS_DIR)" \
 	  -I "$(ULM_KRYPTO_DIR)/plugin" \
 	  -v \
 	  $(ULM_WASM_MAIN) \
+	  --md-selector "$(ULM_WASM_SEL)" \
+	  --main-module ULM-WASM \
+	  --syntax-module ULM-WASM-SYNTAX \
+	  --emit-json \
+	  $(if $(DEBUG),--debug) \
 	  -o $(ULM_WASM_DIR)
-	cp "$(ULM_WASM_DIR)/$(ULM_WASM_LIB)" "$(ULM_LIB_DIR)"
+	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/$(ULM_WASM_OUT)" "$(ULM_LIB_DIR)")
 
 .PHONY: ulm-wasm
 ulm-wasm: $(ULM_WASM_TARGET)
