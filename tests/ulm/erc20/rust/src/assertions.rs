@@ -1,8 +1,8 @@
 
-use crate::ulm_hooks;
+use crate::ulm;
 
 pub fn fail(msg: &str) -> ! {
-  ulm_hooks::failWrapper(msg);
+  ulm::failWrapper(msg);
 }
 
 #[macro_export]

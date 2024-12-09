@@ -35,7 +35,6 @@ use crate::encoder::Encodable;
 use crate::encoder::Encoder;
 use crate::unsigned::U256;
 use crate::ulm;
-use crate::ulm_hooks;
 
 pub struct SingleChunkStorage<'a, ValueType>
     where
@@ -74,7 +73,6 @@ pub struct SingleChunkStorageBuilder<'a, ValueType>
 {
     phantom_value: PhantomData<&'a ValueType>,
     api: Rc<RefCell<dyn ulm::Ulm>>,
-    hooks_api: Rc<RefCell<dyn ulm_hooks::UlmHooks>>,
     encoder: Encoder,
 }
 
@@ -82,17 +80,16 @@ impl<'a, ValueType> SingleChunkStorageBuilder<'a, ValueType>
     where
         ValueType: Into<U256> + TryFrom<U256>,
 {
-    pub fn new(api: Rc<RefCell<dyn ulm::Ulm>>, hooks_api: Rc<RefCell<dyn ulm_hooks::UlmHooks>>, name: &String) -> Self {
+    pub fn new(api: Rc<RefCell<dyn ulm::Ulm>>, name: &String) -> Self {
         let mut encoder = Encoder::new();
         encoder.add(name);
-        Self::from_encoder(api, hooks_api, encoder)
+        Self::from_encoder(api, encoder)
     }
 
-    fn from_encoder(api: Rc<RefCell<dyn ulm::Ulm>>, hooks_api: Rc<RefCell<dyn ulm_hooks::UlmHooks>>, encoder: Encoder) -> Self {
+    fn from_encoder(api: Rc<RefCell<dyn ulm::Ulm>>, encoder: Encoder) -> Self {
         SingleChunkStorageBuilder::<ValueType> {
             phantom_value: PhantomData,
             api,
-            hooks_api,
             encoder,
         }
     }
@@ -103,7 +100,7 @@ impl<'a, ValueType> SingleChunkStorageBuilder<'a, ValueType>
 
     pub fn build(&mut self) -> SingleChunkStorage<ValueType> {
         let bytes = self.encoder.encode();
-        let fingerprint = ulm_hooks::keccak_hash_int(&*self.hooks_api.borrow(), &bytes);
+        let fingerprint = ulm::keccak_hash_int(&*self.api.borrow(), &bytes);
         SingleChunkStorage::new(self.api.clone(), fingerprint)
     }
 }

@@ -2,14 +2,12 @@
 mod encoding_tests {
     use crate::storage::*;
     use crate::ulm;
-    use crate::ulm_hooks;
     use crate::unsigned::*;
 
     #[test]
     fn read_value_not_set() {
         let api = ulm::mock::UlmMock::new();
-        let hooks_api = ulm_hooks::mock::UlmHooksMock::new();
-        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, hooks_api, &("my_storage".to_string()));
+        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
 
         let storage = builder.build();
         let value: U256 = storage.get();
@@ -20,8 +18,7 @@ mod encoding_tests {
     #[test]
     fn write_read_u256() {
         let api = ulm::mock::UlmMock::new();
-        let hooks_api = ulm_hooks::mock::UlmHooksMock::new();
-        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, hooks_api, &("my_storage".to_string()));
+        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
 
         let mut storage = builder.build();
         storage.set(U256::from_u64(123456789));
@@ -33,8 +30,7 @@ mod encoding_tests {
     #[test]
     fn write_read_u8() {
         let api = ulm::mock::UlmMock::new();
-        let hooks_api = ulm_hooks::mock::UlmHooksMock::new();
-        let mut builder = SingleChunkStorageBuilder::<Unsigned::<1>>::new(api, hooks_api, &("my_storage".to_string()));
+        let mut builder = SingleChunkStorageBuilder::<Unsigned::<1>>::new(api, &("my_storage".to_string()));
 
         let mut storage = builder.build();
         storage.set(Unsigned::<1>::from_u64(123));
@@ -46,9 +42,8 @@ mod encoding_tests {
     #[test]
     fn write_read_args() {
         let api = ulm::mock::UlmMock::new();
-        let hooks_api = ulm_hooks::mock::UlmHooksMock::new();
 
-        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, hooks_api, &("my_storage".to_string()));
+        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
 
         builder.add_arg(&U256::from_u64(5));
 
@@ -62,13 +57,12 @@ mod encoding_tests {
     #[test]
     fn no_confusion() {
         let api = ulm::mock::UlmMock::new();
-        let hooks_api = ulm_hooks::mock::UlmHooksMock::new();
 
-        let mut builder1 = SingleChunkStorageBuilder::<U256>::new(api.clone(), hooks_api.clone(), &("my_storage".to_string()));
-        let mut builder2 = SingleChunkStorageBuilder::<U256>::new(api.clone(), hooks_api.clone(), &("my_storage1".to_string()));
-        let mut builder3 = SingleChunkStorageBuilder::<U256>::new(api.clone(), hooks_api.clone(), &("my_storage".to_string()));
-        let mut builder4 = SingleChunkStorageBuilder::<U256>::new(api.clone(), hooks_api.clone(), &("my_storage".to_string()));
-        let mut builder5 = SingleChunkStorageBuilder::<U256>::new(api, hooks_api, &("my_storage".to_string()));
+        let mut builder1 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage".to_string()));
+        let mut builder2 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage1".to_string()));
+        let mut builder3 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage".to_string()));
+        let mut builder4 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage".to_string()));
+        let mut builder5 = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
 
         builder3.add_arg(&U256::from_u64(3));
         builder4.add_arg(&U256::from_u64(4));
