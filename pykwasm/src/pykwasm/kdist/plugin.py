@@ -33,13 +33,20 @@ class KompileTarget(Target):
         llvm_proof_hint_debugging = bool(args.get('llvm-proof-hint-debugging', ''))
         llvm_proof_hint_instrumentation = bool(args.get('llvm-proof-hint-instrumentation', ''))
         kompile_args = self._kompile_args(deps['wasm-semantics.source'])
-        kompile(
-            output_dir=output_dir,
-            verbose=verbose,
-            llvm_proof_hint_debugging=llvm_proof_hint_debugging,
-            llvm_proof_hint_instrumentation=llvm_proof_hint_instrumentation,
-            **kompile_args,
-        )
+        if kompile_args['backend'] == PykBackend.LLVM:
+            kompile(
+                output_dir=output_dir,
+                verbose=verbose,
+                llvm_proof_hint_debugging=llvm_proof_hint_debugging,
+                llvm_proof_hint_instrumentation=llvm_proof_hint_instrumentation,
+                **kompile_args,
+            )
+        else:
+            kompile(
+                output_dir=output_dir,
+                verbose=verbose,
+                **kompile_args,
+            )
 
     def context(self) -> dict[str, str]:
         return {'k-version': k_version().text}
