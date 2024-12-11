@@ -1,0 +1,20 @@
+#!/bin/bash
+set -eu
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+[ -n "${DEBUG+x}"   ] && FLAGS+=" --debugger"
+set +u
+export LD_LIBRARY_PATH="$SCRIPT_DIR/../build/lib:$LD_LIBRARY_PATH"
+set -u
+FLAGS=(--dev --allow-insecure-unlock\
+       --gcmode archive\
+       --dev.period 5\
+       --http\
+       --http.addr 0.0.0.0\
+       --http.corsdomain '*'\
+       --http.vhosts '*'\
+       --http.api debug,personal,web3,eth,net,txpool\
+       --ws\
+       --ws.addr 0.0.0.0\
+       --ws.origins '*')
+[ -n "${VERBOSE+x}" ] && set -x
+"$SCRIPT_DIR/../build/geth" "${FLAGS[@]}" "$@"
