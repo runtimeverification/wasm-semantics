@@ -153,8 +153,8 @@ $(ULM_GETH_TARGET): $(ULM_KEVM_TARGET) | $(ULM_CLONE_DIR)
 	cd $(ULM_CLONE_DIR)/op-geth && make
 	cp $(ULM_CLONE_DIR)/op-geth/build/bin/geth $(ULM_BUILD_DIR)
 
-.PHONY: geth-build
-geth-build: $(ULM_GETH_TARGET)
+.PHONY: ulm-build
+ulm-build: $(ULM_GETH_TARGET)
 
 ### ULM Wasm
 
