@@ -98,9 +98,9 @@ impl<'a, ValueType> SingleChunkStorageBuilder<'a, ValueType>
         self.encoder.add(arg);
     }
 
-    pub fn build(&mut self) -> SingleChunkStorage<ValueType> {
+    pub fn build(self) -> SingleChunkStorage<'a, ValueType> {
         let bytes = self.encoder.encode();
         let fingerprint = ulm::keccak_hash_int(&*self.api.borrow(), &bytes);
-        SingleChunkStorage::new(self.api.clone(), fingerprint)
+        SingleChunkStorage::new(self.api, fingerprint)
     }
 }

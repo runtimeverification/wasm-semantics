@@ -84,6 +84,18 @@ impl<const N: usize> Unsigned<N> {
             }
         }
     }
+    pub fn from_bool(value:bool) -> Self {
+        Self::from_u64(if value {0} else {1})
+    }
+    pub fn from_u8(value:u8) -> Self {
+        Self::from_u64(value as u64)
+    }
+    pub fn from_u16(value:u16) -> Self {
+        Self::from_u64(value as u64)
+    }
+    pub fn from_u32(value:u32) -> Self {
+        Self::from_u64(value as u64)
+    }
 
     pub fn copy_to_array_le(&self, chunks: &mut [u8; N]) {
         chunks.copy_from_slice(&self.chunks);

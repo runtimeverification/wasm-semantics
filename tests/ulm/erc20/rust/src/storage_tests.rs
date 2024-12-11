@@ -7,7 +7,7 @@ mod encoding_tests {
     #[test]
     fn read_value_not_set() {
         let api = ulm::mock::UlmMock::new();
-        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
+        let builder = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
 
         let storage = builder.build();
         let value: U256 = storage.get();
@@ -18,7 +18,7 @@ mod encoding_tests {
     #[test]
     fn write_read_u256() {
         let api = ulm::mock::UlmMock::new();
-        let mut builder = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
+        let builder = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
 
         let mut storage = builder.build();
         storage.set(U256::from_u64(123456789));
@@ -30,7 +30,7 @@ mod encoding_tests {
     #[test]
     fn write_read_u8() {
         let api = ulm::mock::UlmMock::new();
-        let mut builder = SingleChunkStorageBuilder::<Unsigned::<1>>::new(api, &("my_storage".to_string()));
+        let builder = SingleChunkStorageBuilder::<Unsigned::<1>>::new(api, &("my_storage".to_string()));
 
         let mut storage = builder.build();
         storage.set(Unsigned::<1>::from_u64(123));
@@ -58,8 +58,8 @@ mod encoding_tests {
     fn no_confusion() {
         let api = ulm::mock::UlmMock::new();
 
-        let mut builder1 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage".to_string()));
-        let mut builder2 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage1".to_string()));
+        let builder1 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage".to_string()));
+        let builder2 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage1".to_string()));
         let mut builder3 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage".to_string()));
         let mut builder4 = SingleChunkStorageBuilder::<U256>::new(api.clone(), &("my_storage".to_string()));
         let mut builder5 = SingleChunkStorageBuilder::<U256>::new(api, &("my_storage".to_string()));
