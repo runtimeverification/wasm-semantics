@@ -145,6 +145,12 @@ To locally build the ULM-integrated version of the semantics, run:
 make ULM_TEST=1 ulm-wasm
 ```
 
+To build the remote ULM-integrated version of the semantics, run:
+
+```sh
+make ulm-wasm
+```
+
 ### Media and documents
 
 The `media/` directory contains presentations and reports about about KWasm.
@@ -171,6 +177,8 @@ The target `test` contains all the currently passing tests.
 make test
 ```
 
+### ULM-Integrated Wasm Local Testing
+
 To execute the Wasm VM locally, you can use the `wasm` Poetry script from the repo root as follows:
 
 ```sh
@@ -182,6 +190,25 @@ For example, after locally building the ULM-integrated Wasm, the local build of 
 ```sh
 poetry -C pykwasm run wasm ./build/wasm pykwasm/src/tests/integration/binary/basic-features.wat -gas:Int=0 -create:Bool=false -entry:String=init
 ```
+
+### ULM-Integrated Wasm Remote Testing
+
+To execute the Wasm VM remotely, you need to build the ULM by running:
+
+```sh
+make ulm-build
+```
+
+Then, you can start the ULM locally and load the Wasm VM into it by running:
+
+```sh
+./scripts/run-dev-ulm &
+./scripts/ulm-load-lang ./build/lib/libwasm.so
+```
+
+Then, you can invoke Wasm programs by doing the following:
+
+**TODO**
 
 Resources
 ---------

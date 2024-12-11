@@ -48,15 +48,28 @@ ULM_WASM_SRC=$(wildcard $(ULM_WASM_SRC_DIR)/*.md $(ULM_WASM_SRC_DIR)/data/*.k)
 
 ULM_WASM_COMPILER_TARGET=$(ULM_BUILD_DIR)/ulm-contract-compiler
 
+## Depedencies
+
 ULM_KRYPTO_DIR=$(ULM_DEP_DIR)/plugin
 ULM_KRYPTO_LIB=krypto.a
 ULM_KRYPTO_TARGET=$(ULM_LIB_DIR)/$(ULM_KRYPTO_LIB)
 
-ULM_HOOKS_CLONE_DIR=$(ULM_DEP_DIR)/ulm
-ULM_HOOKS_DIR=$(ULM_HOOKS_CLONE_DIR)/kllvm
+ULM_KEVM_DIR=$(ULM_DEP_DIR)/evm-semantics
+ULM_KEVM_BUILD_DIR=$(ULM_KEVM_DIR)/libkevm
+ULM_KEVM_BRANCH=ulm
+ULM_KEVM_LIB=libkevm.so
+ULM_KEVM_TARGET=$(ULM_LIB_DIR)/$(ULM_KEVM_LIB)
+
+ULM_CLONE_DIR=$(ULM_DEP_DIR)/ulm
+ULM_HOOKS_DIR=$(ULM_CLONE_DIR)/kllvm
 ULM_HOOKS_SRC=ulm_kllvm.cpp ulm_hooks.cpp ulm_kllvm_c.cpp
 ULM_HOOKS_LIB=libulmkllvm.so
 ULM_HOOKS_TARGET=$(ULM_LIB_DIR)/$(ULM_HOOKS_LIB)
+
+ULM_SRC_GETH=$(shell find "$(ULM_CLONE_DIR)/op-geth" -type f -a '(' -name '*.cpp' -or -name '*.h' -or -name '*.go' ')')
+ULM_SRC_HOOKS=$(shell find "$(ULM_CLONE_DIR)/kllvm" -type f -a '(' -name '*.cpp' -or -name '*.h' -or -name '*.k' ')')
+
+ULM_GETH_TARGET=$(ULM_BUILD_DIR)/geth
 
 ### ULM Crypto Plugin
 
@@ -69,7 +82,7 @@ $(ULM_KRYPTO_DIR)/.git:
 
 $(ULM_KRYPTO_TARGET): | $(ULM_KRYPTO_DIR)/.git
 	@mkdir -p $(ULM_LIB_DIR)
-	$(if $(ULM_CXX), CXX=$(ULM_CXX)) make -C "$(ULM_KRYPTO_DIR)" build
+	$(if $(ULM_CXX), CXX=$(ULM_CXX)) $(MAKE) -C "$(ULM_KRYPTO_DIR)" build
 	cp "$(ULM_KRYPTO_DIR)/build/krypto/lib/krypto.a" "$(ULM_LIB_DIR)"
 
 .PHONY: ulm-krypto-build
@@ -77,12 +90,12 @@ ulm-krypto-build: $(ULM_KRYPTO_TARGET)
 
 ### ULM Hooks
 
-$(ULM_HOOKS_CLONE_DIR)/.git:
+$(ULM_CLONE_DIR)/.git:
 	@mkdir -p $(ULM_DEP_DIR)
 	cd $(ULM_DEP_DIR); \
 	  git clone --depth 1 https://github.com/pi-squared-inc/ulm
 
-$(ULM_HOOKS_TARGET): | $(ULM_HOOKS_CLONE_DIR)/.git
+$(ULM_HOOKS_TARGET): $(ULM_SRC_HOOKS) | $(ULM_CLONE_DIR)/.git
 	@mkdir -p $(ULM_LIB_DIR)
 	cd $(ULM_HOOKS_DIR); \
 	  $(CXX) -shared -o "$(ULM_HOOKS_LIB)" $(ULM_HOOKS_SRC) -I "$(ULM_KF_INCLUDE_DIR)" -I "$(ULM_KF_INCLUDE_DIR)/kllvm" \
@@ -91,6 +104,60 @@ $(ULM_HOOKS_TARGET): | $(ULM_HOOKS_CLONE_DIR)/.git
 
 .PHONY: ulm-hooks-build
 ulm-hooks-build: $(ULM_HOOKS_TARGET)
+
+### KEVM
+
+$(ULM_KEVM_DIR)/.git:
+	@mkdir -p $(ULM_DEP_DIR)
+	cd $(ULM_DEP_DIR); \
+	  git clone --depth 1 https://github.com/pi-squared-inc/evm-semantics -b $(ULM_KEVM_BRANCH) evm-semantics
+
+$(ULM_KEVM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) | $(ULM_KEVM_DIR)/.git
+	@mkdir -p $(ULM_LIB_DIR)
+	kompile "$(ULM_KEVM_DIR)/kevm-pyk/src/kevm_pyk/kproj/evm-semantics/evm.md" \
+	--main-module EVM \
+	--syntax-module EVM \
+	-I "$(ULM_KEVM_DIR)/kevm-pyk/src/kevm_pyk/kproj/evm-semantics" \
+	-I "$(ULM_KRYPTO_DIR)" \
+	-I "$(ULM_HOOKS_DIR)" \
+	--md-selector 'k & ! symbolic' \
+	--hook-namespaces 'JSON KRYPTO ULM' \
+	--backend llvm \
+	-O3 \
+	-ccopt -std=c++20 \
+	-ccopt -lssl \
+	-ccopt -lcrypto \
+	-ccopt -lsecp256k1 \
+	-ccopt "$(ULM_LIB_DIR)/krypto.a" \
+	-ccopt -Wno-deprecated-declarations \
+	--output-definition "$(ULM_KEVM_BUILD_DIR)" \
+	--type-inference-mode simplesub \
+	--verbose \
+	-ccopt -L"$(ULM_LIB_DIR)" \
+	-ccopt -lulmkllvm \
+	--llvm-kompile-type library \
+	--llvm-kompile-output libkevm.so \
+	-ccopt -g \
+	--llvm-mutable-bytes \
+	-ccopt "$(ULM_HOOKS_DIR)/lang/ulm_language_entry.cpp" \
+	-ccopt -I"$(ULM_HOOKS_DIR)" \
+	-ccopt -DULM_LANG_ID=kevm \
+	--llvm-hidden-visibility \
+	-ccopt -fPIC \
+	-ccopt -shared
+	cp "$(ULM_KEVM_BUILD_DIR)"/libkevm.so "$(ULM_LIB_DIR)"
+
+.PHONY: kevm-build
+kevm-build: $(ULM_KEVM_TARGET)
+
+### ULM
+
+$(ULM_GETH_TARGET): $(ULM_KEVM_TARGET) $(ULM_SRC_HOOKS) $(ULM_SRC_GETH) | $(ULM_CLONE_DIR)/.git
+	cd $(ULM_CLONE_DIR)/op-geth && $(MAKE)
+	cp $(ULM_CLONE_DIR)/op-geth/build/bin/geth $(ULM_BUILD_DIR)
+
+.PHONY: ulm-build
+ulm-build: $(ULM_GETH_TARGET)
 
 ### ULM Wasm
 
