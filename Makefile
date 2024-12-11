@@ -54,17 +54,19 @@ ULM_KRYPTO_DIR=$(ULM_DEP_DIR)/plugin
 ULM_KRYPTO_LIB=krypto.a
 ULM_KRYPTO_TARGET=$(ULM_LIB_DIR)/$(ULM_KRYPTO_LIB)
 
-ULM_HOOKS_CLONE_DIR=$(ULM_DEP_DIR)/ulm
-ULM_HOOKS_DIR=$(ULM_HOOKS_CLONE_DIR)/kllvm
+ULM_KEVM_DIR=$(ULM_DEP_DIR)/evm-semantics
+ULM_KEVM_BUILD_DIR=$(ULM_KEVM_DIR)/libkevm
+ULM_KEVM_BRANCH=ulm
+ULM_KEVM_LIB=libkevm.so
+ULM_KEVM_TARGET=$(ULM_LIB_DIR)/$(ULM_KEVM_LIB)
+
+ULM_CLONE_DIR=$(ULM_DEP_DIR)/ulm
+ULM_HOOKS_DIR=$(ULM_CLONE_DIR)/kllvm
 ULM_HOOKS_SRC=ulm_kllvm.cpp ulm_hooks.cpp ulm_kllvm_c.cpp
 ULM_HOOKS_LIB=libulmkllvm.so
 ULM_HOOKS_TARGET=$(ULM_LIB_DIR)/$(ULM_HOOKS_LIB)
 
-ULM_KEVM_DIR=$(ULM_DEP_DIR)/kevm
-ULM_KEVM_BUILD_DIR=$(ULM_BUILD_DIR)/kevm
-ULM_KEVM_BRANCH=ulm
-ULM_KEVM_LIB=libkevm.so
-ULM_KEVM_TARGET=$(ULM_LIB_DIR)/$(ULM_KEVM_LIB)
+ULM_GETH_TARGET=$(ULM_BUILD_DIR)/geth
 
 ### ULM Crypto Plugin
 
@@ -85,12 +87,12 @@ ulm-krypto-build: $(ULM_KRYPTO_TARGET)
 
 ### ULM Hooks
 
-$(ULM_HOOKS_CLONE_DIR)/.git:
+$(ULM_CLONE_DIR)/.git:
 	@mkdir -p $(ULM_DEP_DIR)
 	cd $(ULM_DEP_DIR); \
 	  git clone --depth 1 https://github.com/pi-squared-inc/ulm
 
-$(ULM_HOOKS_TARGET): | $(ULM_HOOKS_CLONE_DIR)/.git
+$(ULM_HOOKS_TARGET): | $(ULM_CLONE_DIR)/.git
 	@mkdir -p $(ULM_LIB_DIR)
 	cd $(ULM_HOOKS_DIR); \
 	  $(CXX) -shared -o "$(ULM_HOOKS_LIB)" $(ULM_HOOKS_SRC) -I "$(ULM_KF_INCLUDE_DIR)" -I "$(ULM_KF_INCLUDE_DIR)/kllvm" \
@@ -105,7 +107,7 @@ ulm-hooks-build: $(ULM_HOOKS_TARGET)
 $(ULM_KEVM_DIR)/.git:
 	@mkdir -p $(ULM_DEP_DIR)
 	cd $(ULM_DEP_DIR); \
-	  git clone --depth 1 https://github.com/pi-squared-inc/evm-semantics -b $(ULM_KEVM_BRANCH) kevm
+	  git clone --depth 1 https://github.com/pi-squared-inc/evm-semantics -b $(ULM_KEVM_BRANCH) evm-semantics
 
 $(ULM_KEVM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) | $(ULM_KEVM_DIR)/.git
 	@mkdir -p $(ULM_LIB_DIR)
@@ -144,6 +146,15 @@ $(ULM_KEVM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) | $(ULM_KEVM_DIR)/.
 
 .PHONY: kevm-build
 kevm-build: $(ULM_KEVM_TARGET)
+
+### ULM
+
+$(ULM_GETH_TARGET): $(ULM_KEVM_TARGET) | $(ULM_CLONE_DIR)
+	cd $(ULM_CLONE_DIR)/op-geth && make
+	cp $(ULM_CLONE_DIR)/op-geth/build/bin/geth $(ULM_BUILD_DIR)
+
+.PHONY: geth-build
+geth-build: $(ULM_GETH_TARGET)
 
 ### ULM Wasm
 
