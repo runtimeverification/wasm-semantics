@@ -20,9 +20,15 @@ endif
 pykwasm:
 	$(POETRY) install
 
-.PHONY: build
+.PHONY: build build-simple build-prove
 build: pykwasm
 	$(KDIST) -v build -j3
+
+build-simple: pykwasm
+	$(KDIST) -v build wasm-semantics.llvm -j3
+
+build-prove: pykwasm
+	$(KDIST) -v build wasm-semantics.kwasm-lemmas -j3
 
 .PHONY: clean
 clean: pykwasm
@@ -245,7 +251,7 @@ tests/%.parse: tests/%
 	K_OPTS='-Xmx16G -Xss512m' $(TEST) kast --output kore $< > $@-out
 	rm -rf $@-out
 
-tests/%.prove: tests/%
+tests/%.prove: tests/% build-prove
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
 	$(TEST) prove $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e
 
