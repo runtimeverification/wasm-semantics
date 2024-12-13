@@ -30,6 +30,9 @@ build-simple: pykwasm
 build-prove: pykwasm
 	$(KDIST) -v build wasm-semantics.kwasm-lemmas -j3
 
+build-wrc20: pykwasm
+	$(KDIST) -v build wasm-semantics.wrc20 -j3
+
 .PHONY: clean
 clean: pykwasm
 	$(KDIST) clean
@@ -235,7 +238,7 @@ test: test-execution test-prove
 
 # Generic Test Harnesses
 
-tests/%.run: tests/%
+tests/%.run: tests/% build-simple
 	$(TEST) run $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/success-$(TEST_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
@@ -255,7 +258,7 @@ tests/%.prove: tests/% build-prove
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
 	$(TEST) prove $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e
 
-tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
+tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k build-wrc20
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
 	$(TEST) prove $< wrc20 -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
 

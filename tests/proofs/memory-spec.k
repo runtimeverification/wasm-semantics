@@ -7,32 +7,24 @@ module MEMORY-SPEC
           <curModIdx> CUR </curModIdx>
           <moduleInst>
             <modIdx> CUR </modIdx>
-            <memAddrs> 0 |-> MEMADDR </memAddrs>
+           <memAddrs> ListItem(MEMADDR) </memAddrs>
             ...
           </moduleInst>
-          <memInst>
-            <mAddr> MEMADDR </mAddr>
-            <msize> SIZE    </msize>
-            <mdata> _BM      </mdata>
-            ...
-          </memInst>
+          <mems> MEMS1:List ListItem(memInst(_, SIZE, _)) _:List </mems>
         requires
-         ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
-         andBool #inUnsignedRange(i32, ADDR)
+         #inUnsignedRange(i32, ADDR)
+         andBool size(MEMS1) ==Int MEMADDR
+         andBool ADDR +Int #numBytes(i64) <=Int SIZE *Int #pageSize()
 
     claim <instrs>  i32.const ADDR ~> i32.const ADDR ~> #load(ITYPE:IValType, load, 0) ~> #store(ITYPE, store, 0) => .K ... </instrs>
           <curModIdx> CUR </curModIdx>
           <moduleInst>
             <modIdx> CUR </modIdx>
-            <memAddrs> 0 |-> MEMADDR </memAddrs>
+            <memAddrs> ListItem(MEMADDR) </memAddrs>
             ...
           </moduleInst>
-          <memInst>
-            <mAddr> MEMADDR </mAddr>
-            <msize> SIZE    </msize>
-            <mdata> _BM      </mdata>
-            ...
-          </memInst>
+          <mems> MEMS1:List ListItem(memInst(_, SIZE, _)) _:List </mems>
         requires
-         #get(#chop(<i32> ADDR)) +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
+         size(MEMS1) ==Int MEMADDR
+         andBool #get(#chop(<i32> ADDR)) +Int #numBytes(ITYPE) <=Int SIZE *Int #pageSize()
 endmodule

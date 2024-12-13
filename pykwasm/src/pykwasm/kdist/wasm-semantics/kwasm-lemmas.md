@@ -267,11 +267,45 @@ In this case, it's simpler (and safe) to simply discard the `#chop`, instead of 
     rule #minSigned(ITYPE) => 0 -Int #pow1(ITYPE)
 ```
 
-Lookups
--------
+Map Lookups
+-----------
 
 ```k
     rule (_MAP:Map [KEY <- VAL])[KEY] => VAL [simplification]
+```
+
+List Operations
+---------------
+
+These should probably be integrated into `domains.md`
+
+```k
+    rule (L1:List ListItem(X:KItem) _:List)[size(L1)] => X
+      [simplification]
+
+    rule (L1:List ListItem(_:KItem) L2:List)[size(L1) <- V] =>
+      L1:List ListItem(V) L2:List
+      [simplification]
+
+    rule (ListItem(X:KItem) _:List)[0] => X
+      [simplification]
+
+    rule (ListItem(_) L:List)[N:Int] => L[ N -Int 1]
+      requires N >Int 0
+      [simplification]
+
+    rule (ListItem(_) L:List)[0 <- X:KItem] => ListItem(X) L
+      [simplification]
+
+    rule (ListItem(A) L:List)[N:Int <- X:KItem] => ListItem(A) (L[ N -Int 1 <- X])
+      requires N >Int 0
+      [simplification]
+
+    rule size(L1:List L2:List) =>
+      size(L1) +Int size(L2)
+      [simplification]
+
+    rule size(_:List) >=Int 0 => true [simplification, smt-lemma]
 ```
 
 Memory
