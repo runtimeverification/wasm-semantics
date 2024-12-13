@@ -3,12 +3,14 @@
 
 *.pdf
 *.sty
+*.log
 
 .krun*
 .kprove*
 .kompile*
 
 .envrc
+.vscode/
 result
 
 build

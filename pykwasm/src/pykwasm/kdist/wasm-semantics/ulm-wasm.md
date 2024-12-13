@@ -61,13 +61,18 @@ Here we define the initial configuration.
 Note that the default status code indicates an internal error; this is used defensively, since if we ever get stuck, an error will always be indicated.
 Similarly, we define a default null output which may indicate internal errors.
 
+We need to have a `<generatedTop>` cell that is available for the rules below.
+If we have at least two top level entries in the configuration above, K will
+infer that this must be the top configuration, so it will wrap it in
+`<generatedTop>` early, making it available.
+
 ```k
     syntax OutputData ::= "NO_OUTPUT"
                         | Bytes
 
     configuration
+      <k> $PGM:PgmEncoding </k>
       <ulmWasm>
-        <k> $PGM:PgmEncoding </k>
         <wasm/>
         <create> $CREATE:Bool </create>
         <gas> $GAS:Int </gas>
@@ -141,22 +146,35 @@ These rules define various integration points between the ULM and our Wasm inter
           because parse errors were encountered when writing `<generatedTopCell>` literals.
 
 ```k
-    syntax Int ::= #getGasLeft() [function, total]
-    rule [[ #getGasLeft() => Gas ]]
-         <gas> Gas:Int </gas>
 
-    syntax Bytes ::= #getOutput() [function, total]
-    rule [[ #getOutput() => #if OutVal ==K NO_OUTPUT #then .Bytes #else {OutVal}:>Bytes #fi ]]
-         <output> OutVal:OutputData </output>
-
-    syntax Int ::= #getStatus() [function, total]
-    rule [[ #getStatus() => #if OutVal ==K NO_OUTPUT #then EVMC_INTERNAL_ERROR #else Status #fi ]]
-         <output> OutVal:OutputData </output>
-         <status> Status:Int </status>
-
-    rule getGasLeft(_) => #getGasLeft()
-    rule getOutput(_)  => #getOutput()
-    rule getStatus(_)  => #getStatus()
+    rule getGasLeft(
+        <generatedTop>
+            <ulmWasm>
+                <gas> Gas:Int </gas>
+                ...
+            </ulmWasm>
+            ...
+        </generatedTop>
+    ) => Gas
+    rule getOutput(
+        <generatedTop>
+            <ulmWasm>
+                <output> OutVal:OutputData </output>
+                ...
+            </ulmWasm>
+            ...
+        </generatedTop>
+    )  => #if OutVal ==K NO_OUTPUT #then .Bytes #else {OutVal}:>Bytes #fi
+    rule getStatus(
+        <generatedTop>
+            <ulmWasm>
+                <output> OutVal:OutputData </output>
+                <status> Status:Int </status>
+                ...
+            </ulmWasm>
+            ...
+        </generatedTop>
+    )  => #if OutVal ==K NO_OUTPUT #then EVMC_INTERNAL_ERROR #else Status #fi
 ```
 
 ```k
