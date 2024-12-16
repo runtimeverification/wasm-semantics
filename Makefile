@@ -203,7 +203,9 @@ $(ULM_WASM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) $(ULM_WASM_SRC)
 	  --emit-json \
 	  $(if $(DEBUG),--debug) \
 	  -o $(ULM_WASM_DIR)
-	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/$(ULM_WASM_OUT)" "$(ULM_LIB_DIR)")
+	kore-rich-header "$(ULM_WASM_DIR)/definition.kore" -o "$(ULM_WASM_DIR)/header.bin"
+	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/$(ULM_WASM_OUT)" "$(ULM_LIB_DIR)";)
+	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/header.bin"      "$(ULM_LIB_DIR)";)
 
 .PHONY: ulm-wasm
 ulm-wasm: $(ULM_WASM_TARGET)

@@ -91,22 +91,38 @@ A special configuration cell is added in the local case to support VM initializa
       </ulmWasm>
 ```
 
+Obtaining the Entrypoint
+------------------------
+
+In the standalone semantics, the Wasm VM obtains an entrypoint from the configuration.
+
+```local
+    syntax String ::= #getEntryPoint() [function, total]
+    rule #getEntryPoint() => FUNCNAME
+         [[ <entry> FUNCNAME </entry> ]]
+```
+
+In the remote semantics, the Wasm VM has a fixed entrypoint.
+
+```remote
+    syntax String ::= #getEntryPoint() [function, total]
+    rule #getEntryPoint() => "ulmDispatchCaller"
+```
+
 Passing Control
 ---------------
 
 The embedder loads the module to be executed and then resolves the entrypoint function.
-Currently, only the local Wasm VM initialization is supported.
 
-```local
-    rule <k> PGM:PgmEncoding => #resolveCurModuleFuncExport(FUNCNAME) </k>
-         <entry> FUNCNAME </entry>
+```k
+    rule <k> PGM:PgmEncoding => #resolveCurModuleFuncExport(#getEntryPoint()) </k>
          <instrs> .K => decodePgm(PGM) </instrs>
 ```
 
 Note that entrypoint resolution must occur _after_ the Wasm module has been loaded.
 This is ensured by requiring that the `<instrs>` cell is empty during resolution.
 
-```local
+```k
     syntax Initializer ::= #resolveCurModuleFuncExport(String)
                          | #resolveModuleFuncExport(Int, String)
                          | #resolveFunc(Int, ListInt)
@@ -141,9 +157,6 @@ ULM Hook Behavior
 -----------------
 
 These rules define various integration points between the ULM and our Wasm interpreter.
-
-**Note**: the first three rules hooks below are written with helper functions
-          because parse errors were encountered when writing `<generatedTopCell>` literals.
 
 ```k
 

@@ -3,15 +3,24 @@ name = "erc20"
 version = "0.1.0"
 edition = "2021"
 
-#[profile.dev]
-#panic = "abort"
-
-#[profile.release]
-#panic = "abort"
-
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 wasm-bindgen = "0.2"
 bytes = "1.9"
+
+#[profile.dev]
+#panic = "abort"
+
+[profile.release]
+# this flag removes debug symbols
+strip = true
+# this flag and the one below optimizes for size, experiment with both and find the one that works better!
+# opt-level = "z"
+opt-level = "s"
+# the flags below instruct the compiler to try harder to do whole-program optimization
+lto = true
+codegen-units = 1
+# this flag tells the compiler to replace helpful debug behavior with calls to abort
+panic = "abort"
