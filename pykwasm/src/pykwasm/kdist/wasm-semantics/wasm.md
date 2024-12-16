@@ -572,6 +572,7 @@ The `*_local` instructions are defined here.
     rule <instrs> #local.get(I) => .K ... </instrs>
          <valstack> VALSTACK => {LOCALS [ I ]}:>Val : VALSTACK </valstack>
          <locals> LOCALS </locals>
+         requires isVal(LOCALS [ I ])  // requires needed to make rule valid
 
     rule <instrs> #local.set(I) => .K ... </instrs>
          <valstack> VALUE : VALSTACK => VALSTACK </valstack>
@@ -623,7 +624,7 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </globals>
       requires #typeMatches(TYP, VAL)
-    
+
 ```
 
 The `get` and `set` instructions read and write globals.
@@ -704,7 +705,7 @@ The `get` and `set` instructions read and write globals.
         </tabInst>
       requires 0 <=Int I
        andBool I <Int size(TDATA)
-        
+
     rule [tableGet-trap]:
         <instrs> #tableGet( TADDR, I) => trap ... </instrs>
         <tabInst>
@@ -732,7 +733,7 @@ The `get` and `set` instructions read and write globals.
           <tabAddrs> ... TID |-> TADDR ... </tabAddrs>
           ...
         </moduleInst>
-    
+
     rule [tableSet-oob]:
         <instrs> #tableSet(TADDR, _VAL, I) => trap ... </instrs>
         <tabInst>
@@ -840,7 +841,7 @@ The `get` and `set` instructions read and write globals.
  // ------------------------------------------------------
     rule [tableFill-zero]:
         <instrs> #tableFill(_, 0, _, _) => .K ... </instrs>
-    
+
     rule [tableFill-loop]:
         <instrs> #tableFill(TID, N, RVAL, I)
               => <i32> I
@@ -1617,7 +1618,7 @@ Element Segments
     syntax Alloc ::= allocelem(RefValType, ListRef, OptionalId)
  // -----------------------------------------------------
     rule [elem-active]:
-        <instrs> #elem(TYPE:RefValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId) 
+        <instrs> #elem(TYPE:RefValType, INIT:ListRef, MODE:ElemMode, OID:OptionalId)
               => allocelem(TYPE, INIT, OID)
               ~> #elemAux(size(INIT), MODE)
                  ...
@@ -1668,11 +1669,11 @@ Element Segments
     syntax ListRef ::= resolveAddrs(ListInt, ListRef)  [function]
  // -----------------------------------------------------------
     rule resolveAddrs(_, .ListRef) => .ListRef
-    rule resolveAddrs(FADDRS, ListItem(<TYP> I) IS) 
-      => ListItem(<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS) 
-    rule resolveAddrs(FADDRS, ListItem(<TYP> null) IS) 
-      => ListItem(<TYP> null)                        resolveAddrs(FADDRS, IS) 
-    
+    rule resolveAddrs(FADDRS, ListItem(<TYP> I) IS)
+      => ListItem(<TYP> FADDRS {{ I }} orDefault -1) resolveAddrs(FADDRS, IS)
+    rule resolveAddrs(FADDRS, ListItem(<TYP> null) IS)
+      => ListItem(<TYP> null)                        resolveAddrs(FADDRS, IS)
+
 ```
 
 Data Segments

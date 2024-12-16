@@ -20,9 +20,18 @@ endif
 pykwasm:
 	$(POETRY) install
 
-.PHONY: build
+.PHONY: build build-simple build-prove build-wrc20
 build: pykwasm
 	$(KDIST) -v build -j3
+
+build-simple: pykwasm
+	$(KDIST) -v build wasm-semantics.llvm -j3
+
+build-prove: pykwasm
+	$(KDIST) -v build wasm-semantics.kwasm-lemmas -j3
+
+build-wrc20: pykwasm
+	$(KDIST) -v build wasm-semantics.wrc20 -j3
 
 .PHONY: clean
 clean: pykwasm
@@ -229,27 +238,27 @@ test: test-execution test-prove
 
 # Generic Test Harnesses
 
-tests/%.run: tests/%
+tests/%.run: tests/% build-simple
 	$(TEST) run $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/success-$(TEST_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 
-tests/%.run-term: tests/%
+tests/%.run-term: tests/% build-simple
 	$(TEST) run $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	grep --after-context=2 "<instrs>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out-term tests/success-k.out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 
-tests/%.parse: tests/%
+tests/%.parse: tests/% build-simple
 	K_OPTS='-Xmx16G -Xss512m' $(TEST) kast --output kore $< > $@-out
 	rm -rf $@-out
 
-tests/%.prove: tests/%
+tests/%.prove: tests/% build-prove
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
 	$(TEST) prove $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e
 
-tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
+tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k build-wrc20
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
 	$(TEST) prove $< wrc20 -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
 
