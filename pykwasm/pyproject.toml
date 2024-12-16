@@ -11,7 +11,9 @@ authors = [
 ]
 
 [tool.poetry.scripts]
+deploy = "pykwasm.deploy_contract:main"
 wasm = "pykwasm.run_wasm:main"
+wasm2kore = "pykwasm.wasm2kore:main"
 wasm2kast = "pykwasm.wasm2kast:main"
 kwasm = "pykwasm.scripts.kwasm:main"
 kwasm-convert = "pykwasm.scripts.convert:main"
@@ -26,6 +28,7 @@ cytoolz = "^0.12.1"
 numpy = "^1.24.2"
 kframework = "7.1.149"
 py-wasm = { git = "https://github.com/runtimeverification/py-wasm.git", tag="0.2.1" }
+web3 = "7.6.0"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "*"
@@ -66,7 +69,9 @@ disallow_untyped_defs = true
 # TODO fix type errors
 exclude = [
     'src/pykwasm/wasm2kast\.py',
+    'src/pykwasm/wasm2kore\.py',
     'src/pykwasm/run_wasm\.py',
+    'src/pykwasm/deploy_contract\.py',
     'src/wasm/*',
     'src/tests/unit/test_wasm2kast\.py',
 ]

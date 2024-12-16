@@ -196,7 +196,7 @@ poetry -C pykwasm run wasm ./build/wasm pykwasm/src/tests/integration/binary/bas
 To execute the Wasm VM remotely, you need to build the ULM by running:
 
 ```sh
-make ulm-build
+CXX=clang++-16 make ulm-wasm ulm-contract-compiler ulm-build -j8
 ```
 
 Then, you can start the ULM locally and load the Wasm VM into it by running:
@@ -206,9 +206,37 @@ Then, you can start the ULM locally and load the Wasm VM into it by running:
 ./scripts/ulm-load-lang ./build/lib/libwasm.so
 ```
 
-Then, you can invoke Wasm programs by doing the following:
+As an example, to deploy a Wasm contract, you can do the following:
 
-**TODO**
+1.  Install the python scripts:
+
+    ```sh
+    poetry -C pykwasm install
+    ```
+
+2.  Compile the contract:
+
+    ```sh
+    # compile Rust to Wasm
+    pushd tests/ulm/erc20/
+    cargo build --target=wasm32-unknown-unknown --release
+    cp target/wasm32-unknown-unknown/release/erc20.wasm ./
+    popd
+    # convert the Wasm to Kore
+    poetry -C pykwasm run wasm2kore build/wasm tests/ulm/erc20/erc20.wasm tests/ulm/erc20/erc20.kore
+    # convert the Kore to binary
+    scripts/compile-contract tests/ulm/erc20/erc20.kore > tests/ulm/erc20/erc20.bin
+    ```
+
+3.  Deploy the compiled Wasm contract:
+
+    ```sh
+    poetry -C pykwasm run deploy tests/ulm/erc20/erc20.bin
+    ```
+
+To invoke a deployed Wasm contract, do the following:
+
+**TODO:** add instructions.
 
 Resources
 ---------

@@ -102,7 +102,7 @@ ulm-krypto-build: $(ULM_KRYPTO_TARGET)
 $(ULM_CLONE_DIR)/.git:
 	@mkdir -p $(ULM_DEP_DIR)
 	cd $(ULM_DEP_DIR); \
-	  git clone --depth 1 https://github.com/pi-squared-inc/ulm
+	  git clone --depth 1 --branch contract-size-limits https://github.com/pi-squared-inc/ulm
 
 $(ULM_HOOKS_TARGET): $(ULM_SRC_HOOKS) | $(ULM_CLONE_DIR)/.git
 	@mkdir -p $(ULM_LIB_DIR)
