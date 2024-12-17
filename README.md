@@ -218,9 +218,9 @@ As an example, to deploy a Wasm contract, you can do the following:
 
     ```sh
     # compile Rust to Wasm
-    pushd tests/ulm/erc20/
+    pushd tests/ulm/erc20/rust
     cargo build --target=wasm32-unknown-unknown --release
-    cp target/wasm32-unknown-unknown/release/erc20.wasm ./
+    cp target/wasm32-unknown-unknown/release/erc20.wasm ../
     popd
     # convert the Wasm to Kore
     poetry -C pykwasm run wasm2kore build/wasm tests/ulm/erc20/erc20.wasm tests/ulm/erc20/erc20.kore
