@@ -26,7 +26,7 @@ wasm-semantics = "pykwasm.kdist.plugin"
 python = "^3.10"
 cytoolz = "^0.12.1"
 numpy = "^1.24.2"
-kframework = "7.1.149"
+kframework = "7.1.191"
 py-wasm = { git = "https://github.com/runtimeverification/py-wasm.git", tag="0.2.1" }
 web3 = "7.6.0"
 

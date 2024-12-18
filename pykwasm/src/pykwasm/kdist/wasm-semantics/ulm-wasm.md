@@ -184,8 +184,8 @@ In the standalone semantics, the Wasm VM obtains an entrypoint from the configur
 
 ```local
     syntax WasmString ::= #getEntryPoint() [function, total]
-    rule #getEntryPoint() => FUNCNAME
-         [[ <entry> FUNCNAME </entry> ]]
+    rule [[ #getEntryPoint() => FUNCNAME ]]
+         <entry> FUNCNAME </entry>
 ```
 
 In the remote semantics, the Wasm VM has a fixed entrypoint.

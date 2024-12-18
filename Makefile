@@ -170,45 +170,16 @@ ulm-build: $(ULM_GETH_TARGET)
 
 ### ULM Wasm
 
-ULM_WASM_TYPE = $(if $(ULM_TEST),main,library)
-ULM_WASM_OUT  = $(if $(ULM_TEST),$(ULM_WASM_BIN),$(ULM_WASM_LIB))
-ULM_WASM_SEL  = $(if $(ULM_TEST),k|local,k|remote)
-ULM_LIB_FLAGS = $(if $(ULM_TEST),,-ccopt -L"$(ULM_LIB_DIR)" -ccopt -lulmkllvm -ccopt -shared -ccopt -fPIC -ccopt "$(ULM_HOOKS_DIR)/lang/ulm_language_entry.cpp")
-ULM_HOOK_NMSP = $(if $(ULM_TEST),,ULM)
-
-$(ULM_WASM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) $(ULM_WASM_SRC)
-	kompile \
-	  --hook-namespaces 'KRYPTO $(ULM_HOOK_NMSP)' \
-	  $(if $(DEBUG),-ccopt -O0) \
-	  -ccopt -g \
-	  -ccopt -std=c++20 \
-	  -ccopt -lcrypto \
-	  -ccopt -lsecp256k1 \
-	  -ccopt -lssl \
-	  -ccopt "$(ULM_KRYPTO_TARGET)" \
-	  $(ULM_LIB_FLAGS) \
-	  -ccopt -I"$(ULM_HOOKS_DIR)" \
-	  -ccopt -DULM_LANG_ID=wasm \
-	  --llvm-hidden-visibility \
-	  --llvm-kompile-type $(ULM_WASM_TYPE) \
-	  --llvm-kompile-output "$(ULM_WASM_OUT)" \
-	  -O2 \
-	  -I "$(ULM_HOOKS_DIR)" \
-	  -I "$(ULM_KRYPTO_DIR)/plugin" \
-	  -v \
-	  $(ULM_WASM_MAIN) \
-	  --md-selector "$(ULM_WASM_SEL)" \
-	  --main-module ULM-WASM \
-	  --syntax-module ULM-WASM-SYNTAX \
-	  --emit-json \
-	  $(if $(DEBUG),--debug) \
-	  -o $(ULM_WASM_DIR)
-	kore-rich-header "$(ULM_WASM_DIR)/definition.kore" -o "$(ULM_WASM_DIR)/header.bin"
-	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/$(ULM_WASM_OUT)" "$(ULM_LIB_DIR)";)
-	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/header.bin"      "$(ULM_LIB_DIR)";)
+ULM_WASM_TARGET_NAME = ulm-wasm$(if $(ULM_TEST),-test,)
 
 .PHONY: ulm-wasm
-ulm-wasm: $(ULM_WASM_TARGET)
+ulm-wasm: $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) $(ULM_WASM_SRC) pykwasm
+	$(KDIST) -v build wasm-semantics.$(ULM_WASM_TARGET_NAME) -j3
+	$(eval ULM_WASM_DIR := $(shell $(KDIST) which wasm-semantics.$(ULM_WASM_TARGET_NAME)))
+	kore-rich-header "$(ULM_WASM_DIR)/definition.kore" -o "$(ULM_WASM_DIR)/header.bin"
+	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/$(ULM_WASM_LIB)" "$(ULM_LIB_DIR)";)
+	$(if $(ULM_TEST),,cp "$(ULM_WASM_DIR)/header.bin"      "$(ULM_LIB_DIR)";)
+
 
 ### ULM Wasm Contract Compiler
 

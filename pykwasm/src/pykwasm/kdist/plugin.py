@@ -55,6 +55,47 @@ class KompileTarget(Target):
         return ('wasm-semantics.source',)
 
 
+def ulm_wasm_args(src_dir: Path, ulm_test: bool = False) -> dict[str, Any]:
+    build_dir = Path(__file__).parent.parent.parent.parent.parent / 'build'
+    ulm_lib_ccopts = []
+    if not ulm_test:
+        ulm_lib_ccopts = [
+            '-L' + str(build_dir / 'lib'),
+            '-lulmkllvm',
+            '-shared',
+            '-fPIC',
+            str(build_dir / 'deps' / 'ulm' / 'kllvm' / 'lang' / 'ulm_language_entry.cpp'),
+        ]
+    return {
+        'backend': PykBackend.LLVM,
+        'hook_namespaces': ['KRYPTO'] + ([] if ulm_test else ['ULM']),
+        'ccopts': [
+            '-g',
+            '-std=c++20',
+            '-lcrypto',
+            '-lsecp256k1',
+            '-lssl',
+            str(build_dir / 'lib' / 'krypto.a'),
+        ]
+        + ulm_lib_ccopts
+        + [
+            '-I' + str(build_dir / 'deps' / 'ulm' / 'kllvm'),
+            '-DULM_LANG_ID=wasm',
+        ],
+        'llvm_hidden_visibility': True,
+        'llvm_kompile_type': 'main' if ulm_test else 'library',
+        'llvm_kompile_output': 'interpreter' if ulm_test else 'libkwasm.so',
+        'opt_level': 2,
+        'include_dirs': [build_dir / 'deps' / 'ulm' / 'kllvm', build_dir / 'deps' / 'plugin' / 'plugin'],
+        'main_file': src_dir / 'wasm-semantics/ulm-wasm.md',
+        'md_selector': 'k|' + ('local' if ulm_test else 'remote'),
+        'main_module': 'ULM-WASM',
+        'syntax_module': 'ULM-WASM-SYNTAX',
+        'emit_json': True,
+        'warnings_to_errors': not ulm_test,
+    }
+
+
 __TARGETS__: Final = {
     'source': SourceTarget(),
     'llvm': KompileTarget(
@@ -89,5 +130,11 @@ __TARGETS__: Final = {
             'md_selector': 'k',
             'warnings_to_errors': True,
         },
+    ),
+    'ulm-wasm': KompileTarget(
+        lambda src_dir: ulm_wasm_args(src_dir),
+    ),
+    'ulm-wasm-test': KompileTarget(
+        lambda src_dir: ulm_wasm_args(src_dir, ulm_test=True),
     ),
 }
