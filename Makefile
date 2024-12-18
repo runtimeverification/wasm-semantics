@@ -173,7 +173,9 @@ ulm-build: $(ULM_GETH_TARGET)
 ULM_WASM_TARGET_NAME = ulm-wasm$(if $(ULM_TEST),-test,)
 
 .PHONY: ulm-wasm
-ulm-wasm: $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) $(ULM_WASM_SRC) pykwasm
+ulm-wasm: $(ULM_WASM_TARGET)
+
+$(ULM_WASM_TARGET): $(ULM_KRYPTO_TARGET) $(ULM_HOOKS_TARGET) $(ULM_WASM_SRC) pykwasm
 	$(KDIST) -v build wasm-semantics.$(ULM_WASM_TARGET_NAME) -j3
 	$(eval ULM_WASM_DIR := $(shell $(KDIST) which wasm-semantics.$(ULM_WASM_TARGET_NAME)))
 	kore-rich-header "$(ULM_WASM_DIR)/definition.kore" -o "$(ULM_WASM_DIR)/header.bin"
@@ -197,6 +199,30 @@ $(ULM_WASM_COMPILER_TARGET): $(ULM_WASM_TARGET)
 
 .PHONY: ulm-contract-compiler
 ulm-contract-compiler: $(ULM_WASM_COMPILER_TARGET)
+
+ERC20_DIR=tests/ulm/erc20/rust
+ERC20_SRC=$(shell find "$(ERC20_DIR)" -type f -a '(' -name '*.rs' -or -name '*.toml' -or -name '*.lock' ')')
+
+ERC20_BUILD_DIR=build/erc20
+
+ERC20_BIN_TARGET= $(ERC20_BUILD_DIR)/erc20.bin
+ERC20_WASM_TARGET= $(ERC20_BUILD_DIR)/erc20.wasm
+
+$(ERC20_BUILD_DIR):
+	mkdir -p $@
+
+$(ERC20_WASM_TARGET): $(ERC20_SRC) $(ERC20_BUILD_DIR)
+	cd $(ERC20_DIR) && cargo build --target=wasm32-unknown-unknown --release
+	cp $(ERC20_DIR)/target/wasm32-unknown-unknown/release/erc20.wasm $@
+
+$(ERC20_BIN_TARGET): $(ERC20_WASM_TARGET) $(ULM_WASM_COMPILER_TARGET) $(ULM_WASM_TARGET)
+	$(eval ULM_WASM_DIR := $(shell $(KDIST) which wasm-semantics.$(ULM_WASM_TARGET_NAME)))
+	poetry -C pykwasm run wasm2kore $(ULM_WASM_DIR) $< $(ERC20_BUILD_DIR)/erc20.kore
+	scripts/compile-contract $(ERC20_BUILD_DIR)/erc20.kore > $@
+
+.PHONY: erc20-bin
+erc20-bin: $(ERC20_BIN_TARGET)
+
 
 # Testing
 # -------

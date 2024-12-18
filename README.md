@@ -217,21 +217,13 @@ As an example, to deploy a Wasm contract, you can do the following:
 2.  Compile the contract:
 
     ```sh
-    # compile Rust to Wasm
-    pushd tests/ulm/erc20/rust
-    cargo build --target=wasm32-unknown-unknown --release
-    cp target/wasm32-unknown-unknown/release/erc20.wasm ../
-    popd
-    # convert the Wasm to Kore
-    poetry -C pykwasm run wasm2kore build/wasm tests/ulm/erc20/erc20.wasm tests/ulm/erc20/erc20.kore
-    # convert the Kore to binary
-    scripts/compile-contract tests/ulm/erc20/erc20.kore > tests/ulm/erc20/erc20.bin
+    make erc20-bin
     ```
 
 3.  Deploy the compiled Wasm contract:
 
     ```sh
-    poetry -C pykwasm run deploy tests/ulm/erc20/erc20.bin
+    poetry -C pykwasm run deploy build/erc20/erc20.bin
     ```
 
 To invoke a deployed Wasm contract, do the following:
