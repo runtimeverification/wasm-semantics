@@ -13,6 +13,7 @@ FLAGS=(--dev --allow-insecure-unlock\
        --http.corsdomain '*'\
        --http.vhosts '*'\
        --http.api debug,personal,web3,eth,net,txpool\
+       --dev.gaslimit 1000000000 \
        --ws\
        --ws.addr 0.0.0.0\
        --ws.origins '*')

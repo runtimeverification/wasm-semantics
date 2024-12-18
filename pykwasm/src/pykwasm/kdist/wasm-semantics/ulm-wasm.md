@@ -205,6 +205,7 @@ The embedder loads the module to be executed and then calls the entrypoint funct
         <k> PGM:PgmEncoding
             => setContractModIdx
                 ~> #resolveCurModuleFuncExport(#getEntryPoint())
+                ~> remoteSetOutputOnCreate(PGM)
                 ~> setSuccessStatus
         </k>
         <instrs> .K => decodePgm(PGM) </instrs>
@@ -218,6 +219,7 @@ This is ensured by requiring that the `<instrs>` cell is empty during resolution
                          | #resolveModuleFuncExport(Int, WasmString)
                          | #resolveFunc(Int, ListInt)
                          | "setContractModIdx"
+                         | remoteSetOutputOnCreate(PgmEncoding)
                          | "setSuccessStatus"
     // ----------------------------------------------
     rule <k>
@@ -261,7 +263,28 @@ in the `contractModIdx` cell.
         <instrs> .K </instrs>
         <curModIdx> MODIDX:Int </curModIdx>
         <contractModIdx> _ => MODIDX </contractModIdx>
+```
 
+`remoteSetOutputOnCreate` will do nothing on local but will set the output to
+its argument on remote, but only if the `<create>` cell holds `true`.
+
+```local
+    rule remoteSetOutputOnCreate(_) => .K
+```
+
+```remote
+    rule
+        <k> remoteSetOutputOnCreate(Out:Bytes) => .K ... </k>
+        <instrs> .K </instrs>
+        <create> true </create>
+        <output> _ => Out </output>
+
+    rule
+        <k> remoteSetOutputOnCreate(_) => .K ... </k>
+        <create> false </create>
+```
+
+```k
     rule
         // setSuccessStatus should only be used after everything finished executing,
         // so we are checking that it is the only thing left in the <k> cell.
@@ -575,6 +598,26 @@ Handle the actual hook calls.
         <output>
             _ => BYTES
         </output>
+
+
+    rule
+        <instrs>
+            hostCall("env", "fail", [ i32 i32 .ValTypes ] -> [ .ValTypes ])
+            => #memLoad(OFFSET, LENGTH) ~> #fail
+            ...
+        </instrs>
+        <locals>
+            ListItem(<i32> OFFSET:Int) ListItem(<i32> LENGTH:Int)
+        </locals>
+
+
+    syntax InternalInstr ::= "#fail"
+
+    rule
+        <instrs>
+            BYTES:Bytes ~> #fail => #throwException(EVMC_FAILURE, Bytes2String(BYTES))
+            ...
+        </instrs>
 ```
 
 ```k

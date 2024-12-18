@@ -241,7 +241,7 @@ pub fn caller(api: &dyn Ulm) -> Address {
 
 pub fn call_data(api: &dyn Ulm) -> Bytes {
     let length: usize = api.call_data_length().try_into().unwrap();
-    let mut buf = Vec::<u8>::with_capacity(length);
+    let mut buf : Vec<u8> = vec![0; length];
     api.call_data(buf.as_mut_slice());
     Bytes::copy_from_slice(buf.as_slice())
 }
