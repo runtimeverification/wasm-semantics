@@ -86,7 +86,7 @@ def ulm_wasm_args(src_dir: Path, ulm_test: bool = False) -> dict[str, Any]:
         'llvm_kompile_type': 'main' if ulm_test else 'library',
         'llvm_kompile_output': 'interpreter' if ulm_test else 'libkwasm.so',
         'opt_level': 2,
-        'include_dirs': [build_dir / 'deps' / 'ulm' / 'kllvm', build_dir / 'deps' / 'plugin' / 'plugin'],
+        'include_dirs': [build_dir / 'deps' / 'ulm' / 'kllvm', build_dir / 'deps' / 'plugin'],
         'main_file': src_dir / 'wasm-semantics/ulm-wasm.md',
         'md_selector': 'k|' + ('local' if ulm_test else 'remote'),
         'main_module': 'ULM-WASM',

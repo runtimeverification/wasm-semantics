@@ -1,11 +1,13 @@
 ```k
 requires "wasm.md"
 requires "ulm.k"
+requires "plugin/krypto.md"
 ```
 
 ```k
 module ULM-WASM-SYNTAX
     imports WASM
+    imports KRYPTO
 ```
 
 Program Encoding
@@ -618,6 +620,78 @@ Handle the actual hook calls.
             BYTES:Bytes ~> #fail => #throwException(EVMC_FAILURE, Bytes2String(BYTES))
             ...
         </instrs>
+
+
+    rule
+        <instrs>
+            hostCall("env", "keccakHash", [ i32 i32 i32 .ValTypes ] -> [ .ValTypes ])
+            => #memLoad(OFFSET, LENGTH) ~> #keccakHash(RESULT_OFFSET)
+            ...
+        </instrs>
+        <locals>
+            ListItem(<i32> OFFSET:Int) ListItem(<i32> LENGTH:Int) ListItem(<i32> RESULT_OFFSET:Int)
+        </locals>
+
+    syntax InternalInstr ::= #keccakHash(Int)
+
+    rule
+        <instrs>
+            BYTES:Bytes ~> #keccakHash(RESULT_OFFSET:Int)
+            => #memStore(RESULT_OFFSET, Keccak256raw(BYTES))
+            ...
+        </instrs>
+
+
+    rule
+        <instrs>
+            hostCall("env", "GetAccountStorage", [ i32 i32 .ValTypes ] -> [ .ValTypes ])
+            => #memLoad(IN_OFFSET, 32) ~> #getAccountStorage(RESULT_OFFSET)
+            ...
+        </instrs>
+        <locals>
+            ListItem(<i32> IN_OFFSET:Int) ListItem(<i32> RESULT_OFFSET:Int)
+        </locals>
+
+    syntax InternalInstr ::= #getAccountStorage(Int)
+
+    rule
+        <instrs>
+            BYTES:Bytes ~> #getAccountStorage(RESULT_OFFSET:Int)
+            => #memStore
+                ( RESULT_OFFSET
+                , Int2Bytes(32, GetAccountStorage(Bytes2Int(BYTES, LE, Unsigned)), LE)
+                )
+            ...
+        </instrs>
+
+
+    rule
+        <instrs>
+            hostCall("env", "SetAccountStorage", [ i32 i32 .ValTypes ] -> [ .ValTypes ])
+            => #memLoad(KEY_OFFSET, 32) ~> #setAccountStorageValue(VALUE_OFFSET)
+            ...
+        </instrs>
+        <locals>
+            ListItem(<i32> KEY_OFFSET:Int) ListItem(<i32> VALUE_OFFSET:Int)
+        </locals>
+
+    syntax InternalInstr  ::= #setAccountStorageValue(Int)
+                            | #setAccountStorage(Bytes)
+
+    rule
+        <instrs>
+            KEY:Bytes ~> #setAccountStorageValue(VALUE_OFFSET:Int)
+            => #memLoad(VALUE_OFFSET, 32) ~> #setAccountStorage(KEY)
+            ...
+        </instrs>
+
+    rule
+        <instrs>
+            VALUE:Bytes ~> #setAccountStorage(KEY:Bytes)
+            => SetAccountStorage(Bytes2Int(KEY, LE, Unsigned), Bytes2Int(VALUE, LE, Unsigned))
+            ...
+        </instrs>
+
 ```
 
 ```k
