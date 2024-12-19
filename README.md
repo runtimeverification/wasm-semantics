@@ -206,7 +206,7 @@ Then, you can start the ULM locally and load the Wasm VM into it by running:
 ./scripts/ulm-load-lang ./build/lib/libwasm.so
 ```
 
-As an example, to deploy a Wasm contract, you can do the following:
+As an example, to deploy a Wasm contract and invoke a function on it, you can do the following:
 
 1.  Install the python scripts:
 
@@ -220,15 +220,29 @@ As an example, to deploy a Wasm contract, you can do the following:
     make erc20-bin
     ```
 
-3.  Deploy the compiled Wasm contract:
+3.  Generate an account for use in the test
 
     ```sh
-    poetry -C pykwasm run deploy build/erc20/erc20.bin
+    poetry -C pykwasm run mkacct | cut -d' ' -f2 > pk_file
     ```
 
-To invoke a deployed Wasm contract, do the following:
+4.  Fund the new account
 
-**TODO:** add instructions.
+    ```sh
+    poetry -C pykwasm fund pk_file http://localhost:8545
+    ```
+
+5.  Deploy the compiled Wasm contract from the funded account:
+
+    ```sh
+    poetry -C pykwasm run deploy build/erc20/erc20.bin http://localhost:8545 pk_file > contract_addr
+    ```
+
+6.  Invoke a contract function from the funded account:
+
+    ```sh
+    poetry -C pykwasm run call http://localhost:8545 erc20 $(cat contract_addr) pk_file 0 decimals
+    ```
 
 Resources
 ---------

@@ -11,6 +11,9 @@ authors = [
 ]
 
 [tool.poetry.scripts]
+mkacct = "pykwasm.mkacct:main"
+call = "pykwasm.call:main"
+fund = "pykwasm.fund_acct:main"
 deploy = "pykwasm.deploy_contract:main"
 wasm = "pykwasm.run_wasm:main"
 wasm2kore = "pykwasm.wasm2kore:main"
@@ -68,10 +71,13 @@ skip-string-normalization = true
 disallow_untyped_defs = true
 # TODO fix type errors
 exclude = [
+    'src/pykwasm/mkacct\.py',
     'src/pykwasm/wasm2kast\.py',
     'src/pykwasm/wasm2kore\.py',
     'src/pykwasm/run_wasm\.py',
+    'src/pykwasm/fund_acct\.py',
     'src/pykwasm/deploy_contract\.py',
+    'src/pykwasm/call\.py',
     'src/wasm/*',
     'src/tests/unit/test_wasm2kast\.py',
 ]

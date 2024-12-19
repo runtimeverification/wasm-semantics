@@ -4,4 +4,9 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 [ -n "${VERBOSE+x}" ] && set -x
 [ $# -ne 1 ] && { echo "usage: $(basename $0) <path/to/ulm-lang-lib.so>"; echo "       NOTE: requires a running ULM server"; exit 1; }
 LANG=$1
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"debug_loadLanguage","params":["'"$LANG"'"],"id":1}' localhost:8545
+set +e
+output=$(curl --no-progress-meter -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"debug_loadLanguage","params":["'"$LANG"'"],"id":1}' localhost:8545 2>&1)
+status=$?
+set -e
+[ $status -ne 0 ] && echo "$output"
+exit $status
