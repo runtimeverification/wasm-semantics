@@ -337,7 +337,7 @@ These rules define various integration points between the ULM and our Wasm inter
             </ulmWasm>
             ...
         </generatedTop>
-    )  => #if OutVal ==K NO_OUTPUT #then EVMC_INTERNAL_ERROR #else Status #fi
+    )  => #if Status ==Int EVMC_SUCCESS andBool OutVal ==K NO_OUTPUT #then EVMC_INTERNAL_ERROR #else Status #fi
 ```
 
 Hooks implementation
@@ -629,7 +629,7 @@ Handle the actual hook calls.
 
     rule
         <instrs>
-            #fail(ulmBytes(BYTES:Bytes)) => #throwException(EVMC_FAILURE, Bytes2String(BYTES))
+            #fail(ulmBytes(BYTES:Bytes)) => #throwException(EVMC_REVERT, Bytes2String(BYTES))
             ...
         </instrs>
 

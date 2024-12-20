@@ -5,7 +5,7 @@ from pathlib import Path
 from eth_account import Account
 from requests.exceptions import ConnectionError
 from web3 import Web3
-from web3.exceptions import BadFunctionCallOutput, Web3RPCError
+from web3.exceptions import BadFunctionCallOutput, ContractLogicError, Web3RPCError
 from web3.middleware import SignAndSendRawMiddlewareBuilder
 
 ABI_MAP = {
@@ -106,6 +106,9 @@ def run_method(w3, contract, sender, eth, method, params):
         else:
             msg = f'Node RPC encountered an error: {e.message}'
         print(msg, file=sys.stderr)
+        sys.exit(1)
+    except ContractLogicError as e:
+        print(f'Contract logic error: {e.message}', file=sys.stderr)
         sys.exit(1)
 
     return (view_like, result_or_receipt)
