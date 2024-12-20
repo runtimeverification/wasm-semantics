@@ -469,7 +469,7 @@ Helpers: loading bytes from memory.
 
 ```remote
 
-    syntax InternalInstr ::= #memLoad ( offset: Int , length: Int )
+    syntax UlmExpr ::= #memLoad ( offset: Int , length: Int )
  // ---------------------------------------------------------------
 
     rule [memLoad-wrong-index]:
@@ -535,10 +535,16 @@ Helpers: loading bytes from memory.
             )
 
     rule [memLoad]:
-        <instrs> #memLoad(OFFSET, LENGTH) => #getBytesRange(
-            #let memInst(_MAX, _SIZE, DATA) = MEMS[ADDR]
-            #in DATA,
-            OFFSET, LENGTH)
+        <instrs>
+            #memLoad(OFFSET, LENGTH)
+            =>
+            ulmBytes(
+                #getBytesRange(
+                    #let memInst(_MAX, _SIZE, DATA) = MEMS[ADDR]
+                    #in DATA,
+                    OFFSET, LENGTH
+                )
+            )
             ...
         </instrs>
         <contractModIdx> MODIDX:Int </contractModIdx>
@@ -583,18 +589,21 @@ Handle the actual hook calls.
     rule
         <instrs>
             hostCall("env", "setOutput", [ i32 i32 .ValTypes ] -> [ .ValTypes ])
-            => #memLoad(OFFSET, LENGTH) ~> #setOutput
+            => #setOutput(#memLoad(OFFSET, LENGTH))
             ...
         </instrs>
         <locals>
             ListItem(<i32> OFFSET:Int) ListItem(<i32> LENGTH:Int)
         </locals>
 
-    syntax InternalInstr ::= "#setOutput"
+    syntax InternalInstr ::= #setOutput(UlmExpr) // [strict]
+
+    rule <instrs> (.K => HOLE) ~> #setOutput(HOLE:UlmExpr) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #setOutput(_ => HOLE) ... </instrs> [cool]
 
     rule
         <instrs>
-            BYTES:Bytes ~> #setOutput => .K
+            #setOutput(ulmBytes(BYTES:Bytes)) => .K
             ...
         </instrs>
         <output>
@@ -605,7 +614,7 @@ Handle the actual hook calls.
     rule
         <instrs>
             hostCall("env", "fail", [ i32 i32 .ValTypes ] -> [ .ValTypes ])
-            => #memLoad(OFFSET, LENGTH) ~> #fail
+            => #fail(#memLoad(OFFSET, LENGTH))
             ...
         </instrs>
         <locals>
@@ -613,11 +622,14 @@ Handle the actual hook calls.
         </locals>
 
 
-    syntax InternalInstr ::= "#fail"
+    syntax InternalInstr ::= #fail(UlmExpr) // [strict]
+
+    rule <instrs> (.K => HOLE) ~> #fail(HOLE:UlmExpr) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #fail(_ => HOLE) ... </instrs> [cool]
 
     rule
         <instrs>
-            BYTES:Bytes ~> #fail => #throwException(EVMC_FAILURE, Bytes2String(BYTES))
+            #fail(ulmBytes(BYTES:Bytes)) => #throwException(EVMC_FAILURE, Bytes2String(BYTES))
             ...
         </instrs>
 
@@ -625,18 +637,21 @@ Handle the actual hook calls.
     rule
         <instrs>
             hostCall("env", "keccakHash", [ i32 i32 i32 .ValTypes ] -> [ .ValTypes ])
-            => #memLoad(OFFSET, LENGTH) ~> #keccakHash(RESULT_OFFSET)
+            => #keccakHash(#memLoad(OFFSET, LENGTH), RESULT_OFFSET)
             ...
         </instrs>
         <locals>
             ListItem(<i32> OFFSET:Int) ListItem(<i32> LENGTH:Int) ListItem(<i32> RESULT_OFFSET:Int)
         </locals>
 
-    syntax InternalInstr ::= #keccakHash(Int)
+    syntax InternalInstr ::= #keccakHash(UlmExpr, Int) // [strict(1)]
+
+    rule <instrs> (.K => HOLE) ~> #keccakHash(HOLE:UlmExpr, _) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #keccakHash(_ => HOLE, _) ... </instrs> [cool]
 
     rule
         <instrs>
-            BYTES:Bytes ~> #keccakHash(RESULT_OFFSET:Int)
+            #keccakHash(ulmBytes(BYTES:Bytes), RESULT_OFFSET:Int)
             => #memStore(RESULT_OFFSET, Keccak256raw(BYTES))
             ...
         </instrs>
@@ -645,21 +660,24 @@ Handle the actual hook calls.
     rule
         <instrs>
             hostCall("env", "GetAccountStorage", [ i32 i32 .ValTypes ] -> [ .ValTypes ])
-            => #memLoad(IN_OFFSET, 32) ~> #getAccountStorage(RESULT_OFFSET)
+            => #getAccountStorage(#memLoadInt(IN_OFFSET), RESULT_OFFSET)
             ...
         </instrs>
         <locals>
             ListItem(<i32> IN_OFFSET:Int) ListItem(<i32> RESULT_OFFSET:Int)
         </locals>
 
-    syntax InternalInstr ::= #getAccountStorage(Int)
+    syntax InternalInstr ::= #getAccountStorage(UlmExpr, Int) // [strict(1)]
+
+    rule <instrs> (.K => HOLE) ~> #getAccountStorage(HOLE:UlmExpr, _) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #getAccountStorage(_ => HOLE, _) ... </instrs> [cool]
 
     rule
         <instrs>
-            BYTES:Bytes ~> #getAccountStorage(RESULT_OFFSET:Int)
+            #getAccountStorage(ulmInt(KEY:Int), RESULT_OFFSET:Int)
             => #memStore
                 ( RESULT_OFFSET
-                , Int2Bytes(32, GetAccountStorage(Bytes2Int(BYTES, LE, Unsigned)), LE)
+                , Int2Bytes(32, GetAccountStorage(KEY), LE)
                 )
             ...
         </instrs>
@@ -668,27 +686,98 @@ Handle the actual hook calls.
     rule
         <instrs>
             hostCall("env", "SetAccountStorage", [ i32 i32 .ValTypes ] -> [ .ValTypes ])
-            => #memLoad(KEY_OFFSET, 32) ~> #setAccountStorageValue(VALUE_OFFSET)
+            => #setAccountStorageValue(#memLoadInt(KEY_OFFSET), #memLoadInt(VALUE_OFFSET))
             ...
         </instrs>
         <locals>
             ListItem(<i32> KEY_OFFSET:Int) ListItem(<i32> VALUE_OFFSET:Int)
         </locals>
 
-    syntax InternalInstr  ::= #setAccountStorageValue(Int)
-                            | #setAccountStorage(Bytes)
+    syntax InternalInstr  ::= #setAccountStorageValue(UlmExpr, UlmExpr) // [seqstrict]
+
+    rule <instrs> (.K => HOLE) ~> #setAccountStorageValue(HOLE:UlmExpr, _) ... </instrs> [heat]
+    rule <instrs> (HOLE => .K) ~> #setAccountStorageValue(NV => HOLE, _) ... </instrs>
+        requires notBool isUlmVal(NV)
+        [cool]
+
+    rule <instrs> (.K => HOLE) ~> #setAccountStorageValue(_:UlmVal, HOLE:UlmExpr) ... </instrs> [heat]
+    rule <instrs> (HOLE => .K) ~> #setAccountStorageValue(_:UlmVal, NV => HOLE) ... </instrs>
+        requires notBool isUlmVal(NV)
+        [cool]
 
     rule
         <instrs>
-            KEY:Bytes ~> #setAccountStorageValue(VALUE_OFFSET:Int)
-            => #memLoad(VALUE_OFFSET, 32) ~> #setAccountStorage(KEY)
+            #setAccountStorageValue(ulmInt(KEY:Int), ulmInt(VALUE:Int))
+            => SetAccountStorage(KEY, VALUE)
             ...
         </instrs>
 
+
     rule
         <instrs>
-            VALUE:Bytes ~> #setAccountStorage(KEY:Bytes)
-            => SetAccountStorage(Bytes2Int(KEY, LE, Unsigned), Bytes2Int(VALUE, LE, Unsigned))
+            hostCall("env", "Caller", [ i32 .ValTypes ] -> [ .ValTypes ])
+            => #memStore(RESULT_OFFSET, Int2Bytes(20, Caller(), LE))
+            ...
+        </instrs>
+        <locals>
+            ListItem(<i32> RESULT_OFFSET:Int)
+        </locals>
+        requires 0 <=Int Caller() andBool Caller() <Int 1 <<Int 160
+
+    rule
+        <instrs>
+            hostCall("env", "Log3", [ i32 i32 i32 i32 i32 .ValTypes ] -> [ .ValTypes ])
+            => #log3(#memLoadInt(DATA1_OFFSET), #memLoadInt(DATA2_OFFSET), #memLoadInt(DATA3_OFFSET), #memLoad(BYTES_OFFSET, BYTES_LENGTH))
+            ...
+        </instrs>
+        <locals>
+            ListItem(<i32> DATA1_OFFSET:Int)
+            ListItem(<i32> DATA2_OFFSET:Int)
+            ListItem(<i32> DATA3_OFFSET:Int)
+            ListItem(<i32> BYTES_OFFSET:Int)
+            ListItem(<i32> BYTES_LENGTH:Int)
+        </locals>
+
+    syntax UlmVal ::= ulmBytes(Bytes) | ulmInt(Int)
+    syntax KResult ::= UlmVal
+    syntax UlmExpr ::= UlmVal
+
+    syntax InternalInstr ::= #log3(UlmExpr, UlmExpr, UlmExpr, UlmExpr) // [seqstrict]
+
+    rule <instrs> (.K => HOLE) ~> #log3(HOLE:UlmExpr, _, _, _) ... </instrs> [heat]
+    rule <instrs> (HOLE => .K) ~> #log3(NV => HOLE, _, _, _) ... </instrs>
+        requires notBool isUlmVal(NV)
+        [cool]
+
+    rule <instrs> (.K => HOLE) ~> #log3(_:UlmVal, HOLE:UlmExpr, _, _) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #log3(_:UlmVal, NV => HOLE, _, _) ... </instrs>
+        requires notBool isUlmVal(NV)
+        [cool]
+
+    rule <instrs> (.K => HOLE) ~> #log3(_:UlmVal, _:UlmVal, HOLE:UlmExpr, _) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #log3(_:UlmVal, _:UlmVal, NV => HOLE, _) ... </instrs>
+        requires notBool isUlmVal(NV)
+        [cool]
+
+    rule <instrs> (.K => HOLE) ~> #log3(_:UlmVal, _:UlmVal, _:UlmVal, HOLE:UlmExpr) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #log3(_:UlmVal, _:UlmVal, _:UlmVal, NV => HOLE) ... </instrs>
+        requires notBool isUlmVal(NV)
+        [cool]
+
+    syntax UlmExpr ::= #memLoadInt(Int)
+    rule <instrs> #memLoadInt(OFFSET) => #toInt(#memLoad(OFFSET, 32)) ... </instrs>
+
+    syntax UlmExpr ::= #toInt(UlmExpr) // [strict]
+
+    rule <instrs> (.K => HOLE) ~> #toInt(HOLE:UlmExpr) ... </instrs> [heat]
+    rule <instrs> (HOLE:UlmVal => .K) ~> #toInt(_ => HOLE) ... </instrs> [cool]
+
+    rule <instrs> #toInt(ulmBytes(BYTES:Bytes)) => ulmInt(Bytes2Int(BYTES, LE, Unsigned)) ...</instrs>
+
+    rule
+        <instrs>
+            #log3(ulmInt(DATA1:Int), ulmInt(DATA2:Int), ulmInt(DATA3:Int), ulmBytes(BYTES:Bytes)) =>
+            Log3(DATA1, DATA2, DATA3, BYTES)
             ...
         </instrs>
 
