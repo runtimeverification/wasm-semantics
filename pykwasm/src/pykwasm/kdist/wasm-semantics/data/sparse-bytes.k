@@ -2,8 +2,8 @@ module SPARSE-BYTES-SYNTAX
   imports BYTES
   imports INT
 
-  syntax SBItem ::= #empty(Int)      [symbol, klabel(SBItem:empty)]
-                  | #bytes(Bytes)    [symbol, klabel(SBItem:bytes)]
+  syntax SBItem ::= #empty(Int)      [symbol(SBItem:empty)]
+                  | #bytes(Bytes)    [symbol(SBItem:bytes)]
 
 
   syntax SBItemChunk ::= SBChunk(SBItem)
@@ -39,7 +39,7 @@ module SPARSE-BYTES
   rule unwrap(.SparseBytes)       => .Bytes
 
   syntax SparseBytes ::= fromBytes(Bytes)
-    [function, total, symbol, klabel(SparseBytes:fromBytes)]
+    [function, total, symbol(SparseBytes:fromBytes)]
 // ---------------------------------------------------------
   rule fromBytes(Bs) => SBChunk(#bytes(Bs))
 
@@ -67,7 +67,7 @@ module SPARSE-BYTES
 
 
   syntax SparseBytes ::= substrSparseBytes(SparseBytes, from: Int, to: Int)
-    [function, total, klabel(SparseBytes:substr), symbol]
+    [function, total, symbol(SparseBytes:substr)]
 // ------------------------------------------------------------------------
   rule substrSparseBytes(_, S, E) => .SparseBytes
     requires notBool( 0 <=Int S andBool S <=Int E )
@@ -86,7 +86,7 @@ module SPARSE-BYTES
      andBool size(SBI) >Int S
 
   syntax SparseBytes ::= substrSBItem(SBItem, from: Int, to: Int)
-    [function, total, klabel(SBItem:substr), symbol]
+    [function, total, symbol(SBItem:substr)]
 // -------------------------------------------------------------
   rule substrSBItem(_SBI, S, E)      => .SparseBytes
     requires S <Int 0 orBool E <Int S
@@ -115,7 +115,7 @@ module REPLACE-AT-COMMON
   imports SPARSE-BYTES-SYNTAX
 
   syntax SparseBytes ::= replaceAt(SparseBytes, Int, Bytes)
-    [function, total, symbol, klabel(SparseBytes:replaceAt)]
+    [function, total, symbol(SparseBytes:replaceAt)]
 // --------------------------------------------------------
   // invalid argument
   rule replaceAt(_, S, _) => .SparseBytes
@@ -135,7 +135,7 @@ module REPLACE-AT-COMMON
     requires size(SBI) <=Int S
 
   syntax SparseBytes ::= replaceAtZ(Int, SparseBytes, Int, Bytes)
-    [function, total, symbol, klabel(SparseBytes:replaceAtZ)]
+    [function, total, symbol(SparseBytes:replaceAtZ)]
 // ---------------------------------------------------------------
   ////////////// S < 0
   rule replaceAtZ(_, _, S, _) => .SparseBytes
@@ -176,7 +176,7 @@ module REPLACE-AT-COMMON
 
 
   syntax SparseBytes ::= replaceAtB(Bytes, SparseBytes, Int, Bytes)
-    [function, total, symbol, klabel(SparseBytes:replaceAtB)]
+    [function, total, symbol(SparseBytes:replaceAtB)]
 // ---------------------------------------------------------------
   ////////// S + len(Bs) <= len(MB)
   rule replaceAtB(MB, REST, S, Bs)

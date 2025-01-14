@@ -10,22 +10,22 @@ module LIST-REF
   syntax ListRef [hook(LIST.List)]
   syntax ListRef ::= ListRef ListRef
           [ left, function, total, hook(LIST.concat),
-            klabel(_ListRef_), symbol, smtlib(smt_seq_concat),
+            symbol(_ListRef_), smtlib(smt_seq_concat),
             assoc, unit(.ListRef), element(ListRefItem),
-            format(%1%n%2)
+            format(%1%n%2), update(ListRef:set)
           ]
   syntax ListRef ::= ".ListRef"
-          [ function, total, hook(LIST.unit), klabel(.ListRef),
-            symbol, smtlib(smt_seq_nil)
+          [ function, total, hook(LIST.unit), symbol(.ListRef),
+            smtlib(smt_seq_nil)
           ]
   syntax ListRef ::= ListItem(RefVal)
-          [ function, total, hook(LIST.element), klabel(ListRefItem),
-            symbol, smtlib(smt_seq_elem)
+          [ function, total, hook(LIST.element), symbol(ListRefItem),
+            smtlib(smt_seq_elem)
           ]
   syntax RefVal ::= ListRef "[" Int "]"
-          [ function, hook(LIST.get), klabel(ListRef:get), symbol ]
+          [ function, hook(LIST.get), symbol(ListRef:get) ]
   syntax ListRef ::= ListRef "[" index: Int "<-" value: RefVal "]"
-          [function, hook(LIST.update), symbol, klabel(ListRef:set)]
+          [function, hook(LIST.update), symbol(ListRef:set)]
   syntax ListRef ::= makeListRef(length: Int, value: RefVal)
           [function, hook(LIST.make)]
   syntax ListRef ::= updateList(dest: ListRef, index: Int, src: ListRef)
@@ -33,11 +33,11 @@ module LIST-REF
   syntax ListRef ::= fillList(ListRef, index: Int, length: Int, value: RefVal)
           [function, hook(LIST.fill)]
   syntax ListRef ::= range(ListRef, fromFront: Int, fromBack: Int)
-          [function, hook(LIST.range), klabel(ListRef:range), symbol]
+          [function, hook(LIST.range), symbol(ListRef:range)]
   syntax Bool ::= RefVal "in" ListRef
-          [function, total, hook(LIST.in), symbol, klabel(_inListRef_)]
+          [function, total, hook(LIST.in), symbol(_inListRef_)]
   syntax Int ::= size(ListRef)
-          [function, total, hook(LIST.size), symbol, klabel (sizeListRef), smtlib(smt_seq_len)]
+          [function, total, hook(LIST.size), symbol(sizeListRef), smtlib(smt_seq_len)]
 endmodule
 
 module LIST-REF-EXTENSIONS
@@ -46,7 +46,7 @@ module LIST-REF-EXTENSIONS
   imports INT
 
   syntax RefVal ::= ListRef "[" Int "]" "orDefault" RefVal
-          [ function, total, klabel(ListRef:getOrDefault), symbol ]
+          [ function, total, symbol(ListRef:getOrDefault) ]
 // ----------------------------------------------------------------
   rule ListItem(V:RefVal) _:ListRef [0] orDefault _:RefVal
       => V
@@ -66,12 +66,12 @@ module LIST-REF-EXTENSIONS
     [simplification]
 
   syntax RefVal ::= getRefOrNull(ListRef, Int)
-          [ function, total, klabel(ListRef:getOrNull), symbol ]
+          [ function, total, symbol(ListRef:getOrNull) ]
 // -------------------------------------------------------------
   rule getRefOrNull(L, N) => L [N] orDefault (<funcref> null)
 
   syntax ListRef ::= makeListRefTotal(Int, RefVal)
-      [function, total, klabel(ListRef:makeTotal), symbol]
+      [function, total, symbol(ListRef:makeTotal)]
 // ----------------------------------------------------
   rule makeListRefTotal(N, V) => makeListRef(N, V)
     requires N >=Int 0
@@ -79,7 +79,7 @@ module LIST-REF-EXTENSIONS
     requires N <Int 0
   
   syntax ListRef ::= dropListRef(Int, ListRef)
-      [function, total, klabel(ListRef:drop), symbol]
+      [function, total, symbol(ListRef:drop)]
 // --------------------------------------------------------------
   rule dropListRef(N, ListItem(_) L) => dropListRef(N -Int 1, L)
     requires N >Int 0

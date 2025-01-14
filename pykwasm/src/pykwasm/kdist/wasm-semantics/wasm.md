@@ -5,7 +5,6 @@ WebAssembly State and Semantics
 requires "data.md"
 requires "data/list-int.k"
 requires "data/list-ref.k"
-requires "data/map-int-to-int.k"
 requires "data/sparse-bytes.k"
 requires "data/tools.k"
 requires "numeric.md"
@@ -76,29 +75,31 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
 **TODO**: Implement `Float` in the format of `-nan`, `nan:0x n:hexnum` and `hexfloat`.
 
 ```k
-    syntax PlainInstr ::= IValType "." "const" WasmInt    [klabel(aIConst), symbol]
-                        | FValType "." "const" Number     [klabel(aFConst), symbol]
-                        | "ref.null" HeapType             [klabel(aRef.null), symbol]
-                        | IValType "." IUnOp              [klabel(aIUnOp), symbol]
-                        | FValType "." FUnOp              [klabel(aFUnOp), symbol]
-                        | IValType "." ExtendS            [klabel(aExtendS), symbol] // TODO this is more permissive than the official spec as it allows 'i32.extend32_s'
-                        | IValType "." IBinOp             [klabel(aIBinOp), symbol]
-                        | FValType "." FBinOp             [klabel(aFBinOp), symbol]
-                        | IValType "." TestOp             [klabel(aTestOp), symbol]
-                        | IValType "." IRelOp             [klabel(aIRelOp), symbol]
-                        | FValType "." FRelOp             [klabel(aFRelOp), symbol]
-                        | ValType "." CvtOp               [klabel(aCvtOp), symbol]
-                        | "drop"                          [klabel(aDrop), symbol]
-                        | "select"                        [klabel(aSelect), symbol]
-                        | "nop"                           [klabel(aNop), symbol]
-                        | "unreachable"                   [klabel(aUnreachable), symbol]
-                        | "return"                        [klabel(aReturn), symbol]
-                        | "memory.size"                   [klabel(aSize), symbol]
-                        | "memory.grow"                   [klabel(aGrow), symbol]
+    syntax PlainInstr ::= IValType "." "const" WasmInt    [symbol(aIConst)]
+                        | FValType "." "const" Number     [symbol(aFConst)]
+                        | "ref.null" HeapType             [symbol(aRef.null)]
+                        | IValType "." IUnOp              [symbol(aIUnOp)]
+                        | FValType "." FUnOp              [symbol(aFUnOp)]
+                        | IValType "." ExtendS            [symbol(aExtendS)] // TODO this is more permissive than the official spec as it allows 'i32.extend32_s'
+                        | IValType "." IBinOp             [symbol(aIBinOp)]
+                        | FValType "." FBinOp             [symbol(aFBinOp)]
+                        | IValType "." TestOp             [symbol(aTestOp)]
+                        | IValType "." IRelOp             [symbol(aIRelOp)]
+                        | FValType "." FRelOp             [symbol(aFRelOp)]
+                        | ValType "." CvtOp               [symbol(aCvtOp)]
+                        | "drop"                          [symbol(aDrop)]
+                        | "select"                        [symbol(aSelect)]
+                        | "nop"                           [symbol(aNop)]
+                        | "unreachable"                   [symbol(aUnreachable)]
+                        | "return"                        [symbol(aReturn)]
+                        | "memory.size"                   [symbol(aSize)]
+                        | "memory.grow"                   [symbol(aGrow)]
+                        | "memory.fill"                   [symbol(aFill)]
+                        | "memory.copy"                   [symbol(aCopy)]
  // -----------------------------------
 
     syntax TypeUse     ::= TypeDecls
-                         | "(type" Index ")"           [prefer, klabel(aTypeUseIndex), symbol] // TODO: Remove and move to wasm-text.
+                         | "(type" Index ")"           [prefer, symbol(aTypeUseIndex)] // TODO: Remove and move to wasm-text.
                          | "(type" Index ")" TypeDecls
     syntax TypeKeyWord ::= "param" | "result"
     syntax TypeDecl    ::= "(" TypeDecl ")"     [bracket]
@@ -107,17 +108,17 @@ The sorts `EmptyStmt` and `EmptyStmts` are administrative so that the empty list
     syntax TypeDecls   ::= List{TypeDecl , ""} [symbol(listTypeDecl), terminator-symbol(".List{\"listTypeDecl\"}")]
  // -----------------------------------------------------------------
 
-    syntax StoreOp ::= "store"    [klabel(storeOpStore),   symbol]
-                     | "store8"   [klabel(storeOpStore8),  symbol]
-                     | "store16"  [klabel(storeOpStore16), symbol]
-                     | "store32"  [klabel(storeOpStore32), symbol]
-    syntax LoadOp  ::= "load"     [klabel(loadOpLoad), symbol]
-                     | "load8_u"  [klabel(loadOpLoad8_u), symbol]
-                     | "load16_u" [klabel(loadOpLoad16_u), symbol]
-                     | "load32_u" [klabel(loadOpLoad32_u), symbol]
-                     | "load8_s"  [klabel(loadOpLoad8_s), symbol]
-                     | "load16_s" [klabel(loadOpLoad16_s), symbol]
-                     | "load32_s" [klabel(loadOpLoad32_s), symbol]
+    syntax StoreOp ::= "store"    [symbol(storeOpStore)]
+                     | "store8"   [symbol(storeOpStore8)]
+                     | "store16"  [symbol(storeOpStore16)]
+                     | "store32"  [symbol(storeOpStore32)]
+    syntax LoadOp  ::= "load"     [symbol(loadOpLoad)]
+                     | "load8_u"  [symbol(loadOpLoad8_u)]
+                     | "load16_u" [symbol(loadOpLoad16_u)]
+                     | "load32_u" [symbol(loadOpLoad32_u)]
+                     | "load8_s"  [symbol(loadOpLoad8_s)]
+                     | "load16_s" [symbol(loadOpLoad16_s)]
+                     | "load32_s" [symbol(loadOpLoad32_s)]
  // --------------------------------------------------------------
 ```
 
@@ -184,8 +185,7 @@ Semantics
 module WASM
     imports LIST-INT
     imports LIST-INT-PRIMITIVE
-    imports MAP-INT-TO-INT
-    imports MAP-INT-TO-INT-PRIMITIVE
+    imports MAP
     imports WASM-COMMON-SYNTAX
     imports WASM-INTERNAL-SYNTAX
     imports WASM-DATA
@@ -219,9 +219,9 @@ module WASM
             <tabAddrs>    .Map         </tabAddrs>
             <nextTabIdx>  0            </nextTabIdx>
             <memIds>      .Map         </memIds>
-            <memAddrs>    .MapIntToInt </memAddrs>
+            <memAddrs>    .Map         </memAddrs>
             <elemIds>     .Map         </elemIds>
-            <elemAddrs>   .MapIntToInt </elemAddrs>
+            <elemAddrs>   .Map         </elemAddrs>
             <nextElemIdx> 0            </nextElemIdx>
             <globIds>     .Map         </globIds>
             <globalAddrs> .Map         </globalAddrs>
@@ -449,11 +449,16 @@ The `select` operator picks one of the second or third stack values based on the
          <valstack> _ : VALSTACK => VALSTACK </valstack>
 
     rule <instrs> select => .K ... </instrs>
-         <valstack> < i32 > C : V2 : V1                  : VALSTACK
-                 => #if C =/=Int 0 #then V1 #else V2 #fi : VALSTACK
+         <valstack> < i32 > C : V2 : V1 : VALSTACK
+                 =>             V2      : VALSTACK
          </valstack>
-      requires #sameType(V1, V2)
+      requires C ==Int 0 andBool #sameType(V1, V2)
 
+    rule <instrs> select => .K ... </instrs>
+         <valstack> < i32 > C : V2 : V1 : VALSTACK
+                 =>                  V1 : VALSTACK
+         </valstack>
+      requires C =/=Int 0 andBool #sameType(V1, V2)
 ```
 
 Structured Control Flow
@@ -487,7 +492,7 @@ It simply executes the block then records a label with an empty continuation.
     syntax BlockMetaData ::= OptionalInt
  // ------------------------------------
 
-    syntax Instr ::= #block(VecType, Instrs, BlockMetaData) [klabel(aBlock), symbol]
+    syntax Instr ::= #block(VecType, Instrs, BlockMetaData) [symbol(aBlock)]
  // --------------------------------------------------------------------------------
     rule <instrs> #block(VECTYP, IS, _) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
@@ -499,7 +504,7 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax Instr ::= #br( Int ) [klabel(aBr), symbol]
+    syntax Instr ::= #br( Int ) [symbol(aBr)]
  // -------------------------------------------------
     rule <instrs> #br(_IDX) ~> (_S:Stmt => .K) ... </instrs>
     rule <instrs> #br(0   ) ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
@@ -507,7 +512,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
     rule <instrs> #br(N:Int) ~> _L:Label => #br(N -Int 1) ... </instrs>
       requires N >Int 0
 
-    syntax Instr ::= "#br_if" "(" Int ")" [klabel(aBr_if), symbol]
+    syntax Instr ::= "#br_if" "(" Int ")" [symbol(aBr_if)]
  // --------------------------------------------------------------
     rule <instrs> #br_if(IDX) => #br(IDX) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
@@ -516,16 +521,22 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
-    syntax Instr ::= "#br_table" "(" Ints ")" [klabel(aBr_table), symbol]
+    syntax Instr ::= "#br_table" "(" Ints ")" [symbol(aBr_table)]
  // ---------------------------------------------------------------------
     rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenInts(ES) -Int 1))) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
+      requires 0 <=Int VAL
+       andBool #lenInts(ES) >Int 0
+      [preserves-definedness]
+      // preserves-definedness:
+      // - 0 <= VAL and minInt(VAL, #lenInts(ES) -Int 1) ensures #getInts(_) is defined
+
 ```
 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs, blockInfo: BlockMetaData) [klabel(aIf), symbol]
+    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs, blockInfo: BlockMetaData) [symbol(aIf)]
  // ------------------------------------------------------------------------------------------------------------
     rule <instrs> #if(VECTYP, IS, _, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
@@ -535,7 +546,7 @@ Finally, we have the conditional and loop instructions.
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL ==Int 0
 
-    syntax Instr ::= #loop(VecType, Instrs, BlockMetaData) [klabel(aLoop), symbol]
+    syntax Instr ::= #loop(VecType, Instrs, BlockMetaData) [symbol(aLoop)]
  // ------------------------------------------------------------------------------
     rule <instrs> #loop(VECTYP, IS, BLOCKMETA) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS, BLOCKMETA) } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
@@ -565,9 +576,9 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax Instr ::= "#local.get" "(" Int ")" [klabel(aLocal.get), symbol]
-                   | "#local.set" "(" Int ")" [klabel(aLocal.set), symbol]
-                   | "#local.tee" "(" Int ")" [klabel(aLocal.tee), symbol]
+    syntax Instr ::= "#local.get" "(" Int ")" [symbol(aLocal.get)]
+                   | "#local.set" "(" Int ")" [symbol(aLocal.set)]
+                   | "#local.tee" "(" Int ")" [symbol(aLocal.tee)]
  // ----------------------------------------------------------------------
     rule <instrs> #local.get(I) => .K ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
@@ -593,10 +604,10 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax GlobalType ::= Mut ValType [klabel(aGlobalType), symbol]
+    syntax GlobalType ::= Mut ValType [symbol(aGlobalType)]
  // ---------------------------------------------------------------
 
-    syntax GlobalDefn ::= #global(type: GlobalType, init: Instrs, metadata: OptionalId) [klabel(aGlobalDefn), symbol]
+    syntax GlobalDefn ::= #global(type: GlobalType, init: Instrs, metadata: OptionalId) [symbol(aGlobalDefn)]
     syntax Alloc      ::= allocglobal (OptionalId, GlobalType)
  // ----------------------------------------------------------
     rule <instrs> #global(... type: TYP, init: IS, metadata: OID) => sequenceInstrs(IS) ~> allocglobal(OID, TYP) ... </instrs>
@@ -629,8 +640,8 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax Instr ::= "#global.get" "(" Int ")" [klabel(aGlobal.get), symbol]
-                   | "#global.set" "(" Int ")" [klabel(aGlobal.set), symbol]
+    syntax Instr ::= "#global.get" "(" Int ")" [symbol(aGlobal.get)]
+                   | "#global.set" "(" Int ")" [symbol(aGlobal.set)]
  // ------------------------------------------------------------------------
     rule <instrs> #global.get(IDX) => .K ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
@@ -670,14 +681,14 @@ The `get` and `set` instructions read and write globals.
 - [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#table-instructions)
 
 ```k
-    syntax Instr ::= "#table.get"  "(" Int ")"          [klabel(aTable.get), symbol]
-                   | "#table.set"  "(" Int ")"          [klabel(aTable.set), symbol]
-                   | "#table.size" "(" Int ")"          [klabel(aTable.size), symbol]
-                   | "#table.grow" "(" Int ")"          [klabel(aTable.grow), symbol]
-                   | "#table.fill" "(" Int ")"          [klabel(aTable.fill), symbol]
-                   | "#table.copy" "(" Int "," Int ")"  [klabel(aTable.copy), symbol]
-                   | "#table.init" "(" Int "," Int ")"  [klabel(aTable.init), symbol]
-                   | "#elem.drop"  "(" Int ")"          [klabel(aElem.drop), symbol]
+    syntax Instr ::= "#table.get"  "(" Int ")"          [symbol(aTable.get)]
+                   | "#table.set"  "(" Int ")"          [symbol(aTable.set)]
+                   | "#table.size" "(" Int ")"          [symbol(aTable.size)]
+                   | "#table.grow" "(" Int ")"          [symbol(aTable.grow)]
+                   | "#table.fill" "(" Int ")"          [symbol(aTable.fill)]
+                   | "#table.copy" "(" Int "," Int ")"  [symbol(aTable.copy)]
+                   | "#table.init" "(" Int "," Int ")"  [symbol(aTable.init)]
+                   | "#elem.drop"  "(" Int ")"          [symbol(aElem.drop)]
  // ---------------------------------------------------------------------------------
 ```
 
@@ -932,7 +943,7 @@ The `get` and `set` instructions read and write globals.
         <moduleInst>
           <modIdx>   CUR    </modIdx>
           <tabAddrs>  ... TID |-> TA ... </tabAddrs>
-          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          <elemAddrs> ... EID |-> EA ... </elemAddrs>
           ...
         </moduleInst>
         <elemInst>
@@ -965,7 +976,7 @@ The `get` and `set` instructions read and write globals.
         <curModIdx> CUR </curModIdx>
         <moduleInst>
           <modIdx>   CUR    </modIdx>
-          <elemAddrs> ... wrap(EID) Int2Int|-> wrap(EA) ... </elemAddrs>
+          <elemAddrs> ... EID |-> EA ... </elemAddrs>
           ...
         </moduleInst>
         <elemInst>
@@ -1017,8 +1028,8 @@ The `get` and `set` instructions read and write globals.
 - [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#reference-instructions)
 
 ```k
-    syntax Instr ::= "#ref.is_null"               [klabel(aRef.is_null), symbol]
-                   | "#ref.func" "(" Int ")"    [klabel(aRef.func), symbol]
+    syntax Instr ::= "#ref.is_null"               [symbol(aRef.is_null)]
+                   | "#ref.func" "(" Int ")"    [symbol(aRef.func)]
  // ------------------------------------------------------------------------
 
     rule [ref.null.func]:
@@ -1074,8 +1085,8 @@ It may optionally be augmented by explicit inlined parameter and result declarat
 A type use should start with `'(' 'type' x:typeidx ')'` followed by a group of inlined parameter or result declarations.
 
 ```k
-    syntax FuncType ::= asFuncType ( TypeDecls )         [function, klabel(TypeDeclsAsFuncType)]
-                      | asFuncType ( Map, Map, TypeUse ) [function, klabel(TypeUseAsFuncType)  ]
+    syntax FuncType ::= asFuncType ( TypeDecls )         [function, symbol(TypeDeclsAsFuncType)]
+                      | asFuncType ( Map, Map, TypeUse ) [function, symbol(TypeUseAsFuncType)  ]
  // --------------------------------------------------------------------------------------------
     rule asFuncType(TDECLS:TypeDecls)                       => gatherTypes(param, TDECLS) -> gatherTypes(result, TDECLS)
     rule asFuncType(   _   ,   _  , TDECLS:TypeDecls)       => asFuncType(TDECLS)
@@ -1091,7 +1102,7 @@ Type could be declared explicitly and could optionally bind with an identifier.
 When defining `TypeDefn`, the `identifier` for `param` will be ignored and will not be saved into the module instance.
 
 ```k
-    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId) [klabel(aTypeDefn), symbol]
+    syntax TypeDefn ::= #type(type: FuncType, metadata: OptionalId) [symbol(aTypeDefn)]
     syntax Alloc    ::= alloctype (OptionalId, FuncType)
  // ----------------------------------------------------
     rule <instrs> #type(... type: TYPE, metadata: OID) => alloctype(OID, TYPE) ... </instrs>
@@ -1120,7 +1131,7 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata) [klabel(aFuncDefn), symbol]
+    syntax FuncDefn ::= #func(type: Int, locals: VecType, body: Instrs, metadata: FuncMetadata) [symbol(aFuncDefn)]
     syntax Alloc    ::= allocfunc ( Int , Int , FuncType , VecType , Instrs , FuncMetadata )
  // ----------------------------------------------------------------------------------------
     rule <instrs> #func(... type: TYPIDX, locals: LOCALS, body: INSTRS, metadata: META) => allocfunc(CUR, NEXTADDR, TYPE, LOCALS, INSTRS, META) ... </instrs>
@@ -1153,7 +1164,7 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </funcs>
 
-    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map) [klabel(funcMeta), symbol]
+    syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map) [symbol(funcMeta)]
  // ---------------------------------------------------------------------------------------
 ```
 
@@ -1208,7 +1219,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 `call funcidx` and `call_indirect tableidx typeuse` are 2 control instructions that invoke a function in the current frame.
 
 ```k
-    syntax Instr ::= #call(Int) [klabel(aCall), symbol]
+    syntax Instr ::= #call(Int) [symbol(aCall)]
  // ---------------------------------------------------
     rule <instrs> #call(IDX) => ( invoke FUNCADDRS {{ IDX }} orDefault 0 ) ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -1221,7 +1232,7 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```
 
 ```k
-    syntax Instr ::= "#call_indirect" "(" Int "," TypeUse ")" [klabel(aCall_indirect), symbol]
+    syntax Instr ::= "#call_indirect" "(" Int "," TypeUse ")" [symbol(aCall_indirect)]
  // ------------------------------------------------------------------------------
 ```
 
@@ -1296,7 +1307,7 @@ The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
 
 ```k
-    syntax TableDefn ::= #table (limits: Limits, type: RefValType, metadata: OptionalId) [klabel(aTableDefn), symbol]
+    syntax TableDefn ::= #table (limits: Limits, type: RefValType, metadata: OptionalId) [symbol(aTableDefn)]
     syntax Alloc ::= alloctable (OptionalId, Int, OptionalInt, RefValType)
  // --------------------------------------------------------------------
     rule <instrs> #table(... limits: #limitsMin(MIN), type: TYP, metadata: OID)   => alloctable(OID, MIN, .Int, TYP) ... </instrs>
@@ -1339,9 +1350,10 @@ The `MemorySpec` production is used to define all ways that a global can specifi
 A memory can either be specified by giving its type (limits); by specifying a vector of its initial `data`; or by an import and its expected type.
 The specification can also include export directives.
 The importing and exporting parts of specifications are dealt with in the respective sections for import and export.
+[Memory Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#memory-instructions)
 
 ```k
-    syntax MemoryDefn ::= #memory(limits: Limits, metadata: OptionalId) [klabel(aMemoryDefn), symbol]
+    syntax MemoryDefn ::= #memory(limits: Limits, metadata: OptionalId) [symbol(aMemoryDefn)]
     syntax Alloc ::= allocmemory (OptionalId, Int, OptionalInt)
  // -----------------------------------------------------------
     rule <instrs> #memory(... limits: #limitsMin(MIN),   metadata: OID) => allocmemory(OID, MIN, .Int) ... </instrs>
@@ -1355,7 +1367,7 @@ The importing and exporting parts of specifications are dealt with in the respec
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
-           <memAddrs> .MapIntToInt => (wrap(0) Int2Int|-> wrap(NEXTADDR)) </memAddrs>
+           <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
            ...
          </moduleInst>
          <nextMemAddr> NEXTADDR => NEXTADDR +Int 1 </nextMemAddr>
@@ -1375,9 +1387,10 @@ The importing and exporting parts of specifications are dealt with in the respec
 The assorted store operations take an address of type `i32` and a value.
 The `storeX` operations first wrap the the value to be stored to the bit wdith `X`.
 The value is encoded as bytes and stored at the "effective address", which is the address given on the stack plus offset.
+[Store Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-n-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
-    syntax Instr ::= #store(ValType, StoreOp, offset : Int) [klabel(aStore), symbol]
+    syntax Instr ::= #store(ValType, StoreOp, offset : Int) [symbol(aStore)]
                    | IValType "." StoreOp Int Int
  //                | FValType "." StoreOp Int Float
                    | "store" "{" IWidth Int Number "}"
@@ -1386,14 +1399,15 @@ The value is encoded as bytes and stored at the "effective address", which is th
     rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
-    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL (MEMADDRS{{0}} orDefault 0) } ... </instrs>
+    rule <instrs> store { WIDTH EA VAL } => store { WIDTH EA VAL ({MEMADDRS[0] orDefault 0}:>Int) } ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
-         requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+         requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1 andBool isInt(MEMADDRS[0] orDefault 0)
+         [preserves-definedness]
 
     rule <instrs> store { WIDTH EA VAL ADDR } => .K ... </instrs>
          <memInst>
@@ -1426,9 +1440,10 @@ The assorted load operations take an address of type `i32`.
 The `loadX_sx` operations loads `X` bits from memory, and extend it to the right length for the return value, interpreting the bytes as either signed or unsigned according to `sx`.
 The value is fetched from the "effective address", which is the address given on the stack plus offset.
 Sort `Signedness` is defined in module `BYTES`.
+[Load Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-n-mathsf-xref-syntax-instructions-syntax-sx-mathit-sx-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
-    syntax Instr ::= #load(ValType, LoadOp, offset : Int) [klabel(aLoad), symbol]
+    syntax Instr ::= #load(ValType, LoadOp, offset : Int) [symbol(aLoad)]
                    | "load" "{" IValType IWidth Int Signedness"}"
                    | "load" "{" IValType IWidth Int Signedness Int"}"
                    | "load" "{" IValType IWidth Int Signedness SparseBytes"}"
@@ -1445,14 +1460,15 @@ Sort `Signedness` is defined in module `BYTES`.
     rule <instrs> ITYPE . load16_s EA:Int => load { ITYPE i16   EA Signed   } ... </instrs>
     rule <instrs> i64   . load32_s EA:Int => load { i64   i32   EA Signed   } ... </instrs>
 
-    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN (MEMADDRS{{0}} orDefault 0)} ... </instrs>
+    rule <instrs> load { ITYPE WIDTH EA SIGN } => load { ITYPE WIDTH EA SIGN ({MEMADDRS[0] orDefault 0}:>Int)} ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memAddrs> MEMADDRS </memAddrs>
            ...
          </moduleInst>
-      requires 0 in_keys{{MEMADDRS}} andBool size(MEMADDRS) ==Int 1
+      requires 0 in_keys(MEMADDRS) andBool size(MEMADDRS) ==Int 1 andBool isInt(MEMADDRS[0] orDefault 0)
+      [preserves-definedness]
 
     rule <instrs> load { ITYPE WIDTH EA SIGN ADDR:Int} => load { ITYPE WIDTH EA SIGN DATA } ... </instrs>
          <memInst>
@@ -1472,17 +1488,23 @@ Sort `Signedness` is defined in module `BYTES`.
       requires (EA +Int #numBytes(WIDTH)) >Int (SIZE *Int #pageSize())
 
     rule <instrs> load { ITYPE WIDTH EA   Signed DATA:SparseBytes } => #chop(< ITYPE > #signed(WIDTH, #getRange(DATA, EA, #numBytes(WIDTH)))) ... </instrs>
+        [preserves-definedness]
+        // #signed(WIDTH, N) is defined for 0 <= N <= #pow(WIDTH)
+        // #pow(WIDTH) == 2 ^ #width(WIDTH) == 2 ^ (#numBytes(WIDTH) * 8)
+        // and #getRange(_, _, SIZE) < 2 ^ (SIZE * 8)
+
     rule <instrs> load { ITYPE WIDTH EA Unsigned DATA:SparseBytes } => < ITYPE > #getRange(DATA, EA, #numBytes(WIDTH)) ... </instrs>
 ```
 
 The `size` operation returns the size of the memory, measured in pages.
+[Memory Size](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-size)
 
 ```k
     rule <instrs> memory.size => < i32 > SIZE ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1497,6 +1519,7 @@ Failure to grow is indicated by pushing -1 to the stack.
 Success is indicated by pushing the previous memory size to the stack.
 `grow` is non-deterministic and may fail either due to trying to exceed explicit max values, or because the embedder does not have resources available.
 By setting the `<deterministicMemoryGrowth>` field in the configuration to `true`, the sematnics ensure memory growth only fails if the memory in question would exceed max bounds.
+[Memory Grow](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-grow)
 
 ```k
     syntax Instr ::= "grow" Int
@@ -1508,7 +1531,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1524,7 +1547,7 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1552,15 +1575,108 @@ The maximum of table size is 2^32 bytes.
     rule #maxTableSize()  => 4294967296
 ```
 
+`fill` fills a contiguous section of memory with a value.
+When the section specified goes beyond the bounds of the memory region, that causes a trap.
+If the section has length 0, nothing happens.
+The spec states that this is really a sequence of `i32.store8` instructions, but we use `replaceAt` here.
+[Memory Fill](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-fill)
+
+```k
+    syntax Instr ::= "fillTrap" Int Int Int
+                   | "fill"     Int Int Int
+ // ---------------------------------------
+    rule <instrs> memory.fill => fillTrap N VAL D ... </instrs>
+         <valstack> < i32 > N : < i32 > VAL : < i32 > D : VALSTACK => VALSTACK </valstack>
+
+    rule <instrs> fillTrap N _VAL D => trap ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires N +Int D >Int SIZE *Int #pageSize()
+
+    rule <instrs> fillTrap N VAL D => fill N VAL D ... </instrs> [owise]
+
+    rule <instrs> fill 0 _VAL _D => .K ... </instrs>
+
+    rule <instrs> fill N VAL D => .K ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mdata> DATA => replaceAt(DATA, D, padRightBytes(.Bytes, N, VAL)) </mdata>
+           ...
+         </memInst>
+      requires notBool N ==Int 0
+```
+
+`copy` will copy a section of memory from one location to another.
+The source and destination segments may overlap.
+Similar to `fill`, we perform the entire copy in one internal operation as opposed to
+performing a series of load and store operations as stated in the spec.
+[Memory Copy](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-copy)
+
+```k
+    syntax Instr ::= "copyTrap" Int Int Int
+                   | "copy" Int Int Int
+ // ---------------------------------------
+    rule <instrs> memory.copy => copyTrap N S D ... </instrs>
+         <valstack> < i32 > N : < i32 > S : < i32 > D : VALSTACK => VALSTACK </valstack>
+
+    rule <instrs> copyTrap N S D => trap ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires D +Int N >Int SIZE *Int #pageSize()
+        orBool S +Int N >Int SIZE *Int #pageSize()
+
+    rule <instrs> copyTrap N S D => copy N S D ... </instrs> [owise]
+
+    rule <instrs> copy 0 _S _D => .K ... </instrs>
+
+    rule <instrs> copy N S D => .K ... </instrs>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> 0 |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <mdata> DATA => replaceAt(DATA, D, #getBytesRange(DATA, S, N)) </mdata>
+           ...
+         </memInst>
+      requires notBool N ==Int 0
+```
+
 Element Segments
 ----------------
 
 ```k
-    syntax ElemDefn ::= #elem(type: RefValType, elemSegment: ListRef, mode: ElemMode, oid: OptionalId)  [klabel(aElemDefn), symbol]
+    syntax ElemDefn ::= #elem(type: RefValType, elemSegment: ListRef, mode: ElemMode, oid: OptionalId)  [symbol(aElemDefn)]
                       | #elemAux(segmentLen: Int, mode: ElemMode)
-    syntax ElemMode ::= #elemActive(table: Int, offset: Instrs)                           [klabel(aElemActive), symbol]
-                      | "#elemPassive"        [klabel(aElemPassive), symbol]
-                      | "#elemDeclarative"    [klabel(aElemDeclarative), symbol]
+    syntax ElemMode ::= #elemActive(table: Int, offset: Instrs)                           [symbol(aElemActive)]
+                      | "#elemPassive"        [symbol(aElemPassive)]
+                      | "#elemDeclarative"    [symbol(aElemDeclarative)]
 
     syntax Alloc ::= allocelem(RefValType, ListRef, OptionalId)
  // -----------------------------------------------------
@@ -1601,7 +1717,7 @@ Element Segments
       <moduleInst>
         <modIdx> CUR </modIdx>
         <funcAddrs> FADDRS </funcAddrs>
-        <elemAddrs> ADDRS => ADDRS {{ NEXTIDX <- NEXTADDR }} </elemAddrs>
+        <elemAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR ] </elemAddrs>
         <nextElemIdx> NEXTIDX => NEXTIDX +Int 1   </nextElemIdx>
         <elemIds>     IDS => #saveId(IDS, OID, 0) </elemIds>
         ...
@@ -1630,11 +1746,26 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax DataDefn ::= #data(index : Int, offset : Instrs, data : Bytes) [klabel(aDataDefn), symbol]
+    syntax DataDefn ::= #data(index : Int, offset : Instrs, data : Bytes) [symbol(aDataDefn)]
                       | "data" "{" Int Bytes "}"
  // --------------------------------------------
     // Default to memory 0.
     rule <instrs> #data(IDX, IS, DATA) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
+
+    rule <instrs> data { MEMIDX DSBYTES } => trap ... </instrs>
+         <valstack> < i32 > OFFSET : _STACK </valstack>
+         <curModIdx> CUR </curModIdx>
+         <moduleInst>
+           <modIdx> CUR </modIdx>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
+           ...
+         </moduleInst>
+         <memInst>
+           <mAddr> ADDR </mAddr>
+           <msize> SIZE </msize>
+           ...
+         </memInst>
+      requires OFFSET +Int lengthBytes(DSBYTES) >Int SIZE *Int #pageSize()
 
     // For now, deal only with memory 0.
     rule <instrs> data { MEMIDX DSBYTES } => .K ... </instrs>
@@ -1642,7 +1773,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memAddrs> wrap(MEMIDX) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> MEMIDX |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <memInst>
@@ -1650,6 +1781,7 @@ The `data` initializer simply puts these bytes into the specified memory, starti
            <mdata> DATA => #setRange(DATA, OFFSET, Bytes2Int(DSBYTES, LE, Unsigned), lengthBytes(DSBYTES)) </mdata>
            ...
          </memInst>
+      [owise]
 
     syntax Int ::= Int "up/Int" Int [function]
  // ------------------------------------------
@@ -1662,7 +1794,7 @@ Start Function
 The `start` component of a module declares the function index of a `start function` that is automatically invoked when the module is instantiated, after `tables` and `memories` have been initialized.
 
 ```k
-    syntax StartDefn ::= #start(Int) [klabel(aStartDefn), symbol]
+    syntax StartDefn ::= #start(Int) [symbol(aStartDefn)]
  // -------------------------------------------------------------
     rule <instrs> #start(IDX) => ( invoke FUNCADDRS {{ IDX }} orDefault -1 ) ... </instrs>
          <curModIdx> CUR </curModIdx>
@@ -1680,7 +1812,7 @@ Export
 Exports make functions, tables, memories and globals available for importing into other modules.
 
 ```k
-    syntax ExportDefn ::= #export(name : WasmString, index : Int) [klabel(aExportDefn), symbol]
+    syntax ExportDefn ::= #export(name : WasmString, index : Int) [symbol(aExportDefn)]
     syntax Alloc ::= ExportDefn
  // ---------------------------
     rule <instrs> #export(ENAME, IDX) => .K ... </instrs>
@@ -1700,12 +1832,12 @@ That an import is really a subtype of the declared import needs to be checked at
 The value of a global gets copied when it is imported.
 
 ```k
-    syntax ImportDefn ::= #import(mod : WasmString, name : WasmString, ImportDesc) [klabel(aImportDefn), symbol]
-                        | #importHelper(ImportDesc, importedAddr:Int) [klabel(aImportDefnHelper), symbol]
-    syntax ImportDesc ::= #funcDesc   (id: OptionalId, type: Int)                  [klabel(aFuncDesc),   symbol]
-                        | #globalDesc (id: OptionalId, type: GlobalType)           [klabel(aGlobalDesc), symbol]
-                        | #tableDesc  (id: OptionalId, type: Limits)               [klabel(aTableDesc),  symbol]
-                        | #memoryDesc (id: OptionalId, type: Limits)               [klabel(aMemoryDesc), symbol]
+    syntax ImportDefn ::= #import(mod : WasmString, name : WasmString, ImportDesc) [symbol(aImportDefn)]
+                        | #importHelper(ImportDesc, importedAddr:Int) [symbol(aImportDefnHelper)]
+    syntax ImportDesc ::= #funcDesc   (id: OptionalId, type: Int)                  [symbol(aFuncDesc)]
+                        | #globalDesc (id: OptionalId, type: GlobalType)           [symbol(aGlobalDesc)]
+                        | #tableDesc  (id: OptionalId, type: Limits)               [symbol(aTableDesc)]
+                        | #memoryDesc (id: OptionalId, type: Limits)               [symbol(aMemoryDesc)]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
     rule <instrs> #import(MOD, NAME, #funcDesc(...) #as FD ) => #importHelper(FD, FS2 {{ IDX }} orDefault -1) ... </instrs>
@@ -1739,7 +1871,8 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <tabIds> IDS => #saveId(IDS, OID, 0) </tabIds>
-           <tabAddrs> .Map => 0 |-> ADDR </tabAddrs>
+           <tabAddrs> TABADDRS => TABADDRS[NEXT <- ADDR] </tabAddrs>
+           <nextTabIdx> NEXT => NEXT +Int 1 </nextTabIdx>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
@@ -1763,14 +1896,14 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> CUR </modIdx>
            <memIds> IDS => #saveId(IDS, OID, 0) </memIds>
-           <memAddrs> .MapIntToInt => wrap(0) Int2Int|-> wrap(ADDR) </memAddrs>
+           <memAddrs> .Map => 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
          <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
-           <memAddrs> ... wrap(#ContextLookup(IDS' , TFIDX)) Int2Int|-> wrap(ADDR) ... </memAddrs>
+           <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
            <exports>  ... NAME |-> TFIDX                        ... </exports>
            ...
          </moduleInst>
@@ -1837,15 +1970,15 @@ A subtle point is related to tables with inline `elem` definitions: since these 
 The groups are chosen to represent different stages of allocation and instantiation.
 
 ```k
-    syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata) [klabel(aModuleDecl), symbol]
+    syntax ModuleDecl ::= #module ( types: Defns, funcs: Defns, tables: Defns, mems: Defns, globals: Defns, elem: Defns, data: Defns, start: Defns, importDefns: Defns, exports: Defns, metadata: ModuleMetadata) [symbol(aModuleDecl)]
  // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     syntax ModuleDecl ::= #emptyModule(OptionalId) [function, total]
  // ---------------------------------------------------------------------
     rule #emptyModule(OID) =>  #module (... types: .Defns, funcs: .Defns, tables: .Defns, mems: .Defns, globals: .Defns, elem: .Defns, data: .Defns, start: .Defns, importDefns: .Defns, exports: .Defns, metadata: #meta(... id: OID, funcIds: .Map, filename: .String))
 
-    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map, filename : OptionalString) [klabel(moduleMeta), symbol]
-    syntax OptionalString ::= ".String" [klabel(.String), symbol] | String
+    syntax ModuleMetadata ::= #meta(id: OptionalId, funcIds: Map, filename : OptionalString) [symbol(moduleMeta)]
+    syntax OptionalString ::= ".String" [symbol(.String)] | String
  // ----------------------------------------------------------------------
 ```
 

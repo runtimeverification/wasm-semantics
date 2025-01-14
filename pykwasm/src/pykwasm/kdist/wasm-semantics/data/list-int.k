@@ -10,22 +10,22 @@ module LIST-INT
   syntax ListInt [hook(LIST.List)]
   syntax ListInt ::= ListInt ListInt
           [ left, function, total, hook(LIST.concat),
-            klabel(_ListInt_), symbol, smtlib(smt_seq_concat),
+            symbol(_ListInt_), smtlib(smt_seq_concat),
             assoc, unit(.ListInt), element(ListIntItem),
-            format(%1%n%2)
+            format(%1%n%2), update(ListInt:set)
           ]
   syntax ListInt ::= ".ListInt"
-          [ function, total, hook(LIST.unit), klabel(.ListInt),
-            symbol, smtlib(smt_seq_nil)
+          [ function, total, hook(LIST.unit), symbol(.ListInt),
+            smtlib(smt_seq_nil)
           ]
   syntax ListInt ::= ListItem(WrappedInt)
-          [ function, total, hook(LIST.element), klabel(ListIntItem),
-            symbol, smtlib(smt_seq_elem)
+          [ function, total, hook(LIST.element), symbol(ListIntItem),
+            smtlib(smt_seq_elem)
           ]
   syntax WrappedInt ::= ListInt "[" Int "]"
-          [ function, hook(LIST.get), klabel(ListInt:get), symbol ]
+          [ function, hook(LIST.get), symbol(ListInt:get) ]
   syntax ListInt ::= ListInt "[" index: Int "<-" value: WrappedInt "]"
-          [function, hook(LIST.update), symbol, klabel(ListInt:set)]
+          [function, hook(LIST.update), symbol(ListInt:set)]
   syntax ListInt ::= makeListInt(length: Int, value: WrappedInt)
           [function, hook(LIST.make)]
   syntax ListInt ::= updateList(dest: ListInt, index: Int, src: ListInt)
@@ -33,11 +33,11 @@ module LIST-INT
   syntax ListInt ::= fillList(ListInt, index: Int, length: Int, value: WrappedInt)
           [function, hook(LIST.fill)]
   syntax ListInt ::= range(ListInt, fromFront: Int, fromBack: Int)
-          [function, hook(LIST.range), klabel(ListInt:range), symbol]
+          [function, hook(LIST.range), symbol(ListInt:range)]
   syntax Bool ::= WrappedInt "in" ListInt
-          [function, total, hook(LIST.in), symbol, klabel(_inListInt_)]
+          [function, total, hook(LIST.in), symbol(_inListInt_)]
   syntax Int ::= size(ListInt)
-          [function, total, hook(LIST.size), symbol, klabel (sizeListInt), smtlib(smt_seq_len)]
+          [function, total, hook(LIST.size), symbol(sizeListInt), smtlib(smt_seq_len)]
 endmodule
 
 module LIST-INT-PRIMITIVE
@@ -46,15 +46,15 @@ module LIST-INT-PRIMITIVE
   imports LIST-INT
 
   syntax WrappedInt ::= ListInt "[" Int "]" "orDefault" WrappedInt
-          [ function, total, klabel(ListInt:getOrDefault), symbol ]
+          [ function, total, symbol(ListInt:getOrDefault) ]
 
   syntax Int ::= ListInt "{{" Int "}}"
-                 [function, symbol, klabel(ListInt:primitiveLookup)]
+                 [function, symbol(ListInt:primitiveLookup)]
 // -----------------------------------------------------------
   rule L:ListInt {{ I:Int }} => unwrap( L[ I ] )
-  
+
   syntax Int ::= ListInt "{{" Int "}}" "orDefault" Int
-                 [ function, total, symbol, klabel(ListInt:primitiveLookupOrDefault) ]
+                 [ function, total, symbol(ListInt:primitiveLookupOrDefault) ]
 // -----------------------------------------------------------------------------
   rule L:ListInt {{ I:Int }} orDefault Value:Int
       => unwrap( L [I] orDefault wrap(Value) )
@@ -77,12 +77,12 @@ module LIST-INT-PRIMITIVE
     [simplification]
 
   syntax ListInt ::= ListItemWrap( Int )
-      [function, total, symbol, klabel(ListIntItemWrap)]
+      [function, total, symbol(ListIntItemWrap)]
   rule ListItemWrap( B:Int ) => ListItem(wrap(B))
 
 
   syntax ListInt ::= ListInt "{{" Int "<-" Int "}}"
-                 [function, symbol, klabel(ListInt:primitiveSet)]
+                 [function, symbol(ListInt:primitiveSet)]
 // -----------------------------------------------------------
   rule L:ListInt {{ I:Int <- V:Int }}
       => L[ I <- wrap(V)]
