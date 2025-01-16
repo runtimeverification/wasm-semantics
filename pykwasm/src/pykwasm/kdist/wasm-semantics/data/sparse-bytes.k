@@ -11,18 +11,18 @@ module SPARSE-BYTES-SYNTAX
   syntax SparseBytes ::= List{SBItemChunk, ""}
 
   syntax Bytes ::= unwrap(SparseBytes)
-    [function, total, symbol, klabel(SparseBytes:unwrap)]
+    [function, total, symbol(SparseBytes:unwrap)]
 
   syntax Bytes ::= unwrap(SBItem)
-    [function, total, symbol, klabel(SBItem:unwrap)]
+    [function, total, symbol(SBItem:unwrap)]
 
   syntax Int ::= size(SparseBytes)
-    [function, total, klabel(SparseBytes:size), symbol]
+    [function, total, symbol(SparseBytes:size)]
 
   syntax Int ::= size(SBItem)
-    [function, total, symbol, klabel(SBItem:size)]
+    [function, total, symbol(SBItem:size)]
 
-  syntax Bytes ::= zeros(Int) [function, total, symbol, klabel(zeros)]
+  syntax Bytes ::= zeros(Int) [function, total, symbol(zeros)]
 endmodule
 
 module SPARSE-BYTES
@@ -33,7 +33,7 @@ module SPARSE-BYTES
   imports REPLACE-AT-SYMBOLIC
 
   // syntax Bytes ::= unwrap(SparseBytes)
-  //   [function, total, symbol, klabel(SparseBytes:unwrap)]
+  //   [function, total, symbol(SparseBytes:unwrap)]
 // -----------------------------------------------------------------
   rule unwrap(SBChunk(SBI) REST) => unwrap(SBI) +Bytes unwrap(REST)
   rule unwrap(.SparseBytes)       => .Bytes
@@ -44,23 +44,23 @@ module SPARSE-BYTES
   rule fromBytes(Bs) => SBChunk(#bytes(Bs))
 
   // syntax Bytes ::= unwrap(SBItem)
-  //   [function, total, symbol, klabel(SBItem:unwrap)]
+  //   [function, total, symbol(SBItem:unwrap)]
 // -----------------------------------------------
   rule unwrap(#bytes(Bs)) => Bs
   rule unwrap(#empty(N))  => zeros(N)
 
-  // syntax Bytes ::= zeros(Int) [function, total, symbol, klabel(zeros)]
+  // syntax Bytes ::= zeros(Int) [function, total, symbol(zeros)]
 // -------------------------------------------------------------------
   rule zeros(N) => padLeftBytes(.Bytes, size(#empty(N)), 0)
 
   // syntax Int ::= size(SparseBytes)
-  //   [function, total, klabel(SparseBytes:size), symbol]
+  //   [function, total, symbol(SparseBytes:size)]
 // ---------------------------------------------------
   rule size(SBChunk(SBI)  SBS) => size(SBI) +Int size(SBS)
   rule size(.SparseBytes)       => 0
 
   // syntax Int ::= size(SBItem)
-  //   [function, total, symbol, klabel(SBItem:size)]
+  //   [function, total, symbol(SBItem:size)]
 // -----------------------------------------------
   rule size(#bytes(Bs)) => lengthBytes(Bs)
   rule size(#empty(N))   => maxInt(N,0)
