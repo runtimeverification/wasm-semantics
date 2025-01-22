@@ -634,7 +634,11 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </globals>
       requires #typeMatches(TYP, VAL)
-    
+      [preserves-definedness]
+      // Uncertain about definedness of rule due to:
+      //   non-total symbol Lbl_ModuleInstCellMap_ ,
+      //   non-total symbol Lbl_GlobalInstCellMap_
+
 ```
 
 The `get` and `set` instructions read and write globals.
@@ -1144,6 +1148,11 @@ The importing and exporting parts of specifications are dealt with in the respec
            ...
          </moduleInst>
          <nextFuncAddr> NEXTADDR => NEXTADDR +Int 1 </nextFuncAddr>
+      [preserves-definedness]
+      // Uncertain about definedness of rule due to: 
+      //   non-total symbol Lbl_ModuleInstCellMap_ , 
+      //   non-total symbol Lbl_Map_ , 
+      //   non-total symbol LblsetExtend(_,_,_,_)_WASM-DATA-TOOLS_ListInt_ListInt_Int_Int_Int
 
     rule <instrs> allocfunc(MOD, ADDR, TYPE, LOCALS, INSTRS, #meta(... id: OID, localIds: LIDS)) => .K ... </instrs>
          <funcs>
@@ -1163,6 +1172,8 @@ The importing and exporting parts of specifications are dealt with in the respec
            )
            ...
          </funcs>
+      [preserves-definedness]
+      // Uncertain about definedness of rule due to: non-total symbol Lbl_FuncDefCellMap_
 
     syntax FuncMetadata ::= #meta(id: OptionalId, localIds: Map) [symbol(funcMeta)]
  // ---------------------------------------------------------------------------------------
@@ -1382,6 +1393,11 @@ The importing and exporting parts of specifications are dealt with in the respec
            )
            ...
          </mems>
+      [preserves-definedness]
+      // Uncertain about definedness of rule due to:
+      //   non-total symbol Lbl_ModuleInstCellMap_ ,
+      //   non-total symbol Lbl_MemInstCellMap_
+
 ```
 
 The assorted store operations take an address of type `i32` and a value.
@@ -1865,6 +1881,10 @@ The value of a global gets copied when it is imported.
            ...
          </funcDef>
       requires FTYPE ==K TYPES[TIDX]
+      [preserves-definedness]
+      // Uncertain about definedness of rule due to: 
+      //   non-total symbol Lbl_ModuleInstCellMap_ , 
+      //   non-total symbol LblsetExtend(_,_,_,_)_WASM-DATA-TOOLS_ListInt_ListInt_Int_Int_Int
 
     rule <instrs> #import(MOD, NAME, #tableDesc(... id: OID, type: LIM) ) => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
