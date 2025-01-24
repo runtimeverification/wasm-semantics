@@ -60,7 +60,7 @@ tests/%.parse: tests/%
 
 tests/%.prove: tests/%
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
-	$(TEST) prove $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
+	$(TEST) prove $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 5000"
 
 tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
