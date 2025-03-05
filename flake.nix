@@ -2,16 +2,14 @@
   description = "K Semantics of WebAssembly";
 
   inputs = {
-    k-framework.url = "github:runtimeverification/k/v7.1.38";
+    k-framework.url = "github:runtimeverification/k/v7.1.191";
     nixpkgs.follows = "k-framework/nixpkgs";
     flake-utils.follows = "k-framework/flake-utils";
     rv-utils.follows = "k-framework/rv-utils";
-    pyk.url = "github:runtimeverification/k/v7.1.38?dir=pyk";
-    poetry2nix.follows = "pyk/poetry2nix";
+    poetry2nix.follows = "k-framework/poetry2nix";
   };
 
-  outputs =
-    { self, k-framework, nixpkgs, flake-utils, rv-utils, pyk, poetry2nix }:
+  outputs = { self, k-framework, nixpkgs, flake-utils, rv-utils, ... }@inputs:
     let
       overlay = (final: prev:
         let
@@ -20,18 +18,14 @@
             "flake.lock"
             ./.gitignore
           ] ./.);
-
+          poetry2nix = inputs.poetry2nix.lib.mkPoetry2Nix { pkgs = prev; };
           version = self.rev or "dirty";
         in {
           kwasm = prev.stdenv.mkDerivation {
             pname = "kwasm";
             inherit src version;
 
-            buildInputs = with prev; [
-              k-framework.packages.${system}.k
-              final.kwasm-pyk 
-              python310
-            ];
+            buildInputs = with prev; [ k final.kwasm-pyk python310 ];
 
             nativeBuildInputs = [ prev.makeWrapper ];
 
@@ -47,41 +41,22 @@
               cp -r ./kdist-*/* $out/
               mkdir -p $out/bin
               makeWrapper ${final.kwasm-pyk}/bin/kwasm $out/bin/kwasm \
-                --prefix PATH : ${
-                  prev.lib.makeBinPath [
-                    prev.which
-                    k-framework.packages.${prev.system}.k
-                  ]
-                } \
+                --prefix PATH : ${prev.lib.makeBinPath [ prev.which prev.k ]} \
                 --set KDIST_DIR $out
             '';
           };
 
-          kwasm-pyk = prev.poetry2nix.mkPoetryApplication {
+          kwasm-pyk = poetry2nix.mkPoetryApplication {
             python = prev.python310;
             projectDir = ./pykwasm;
 
-            overrides = prev.poetry2nix.overrides.withDefaults
+            overrides = poetry2nix.overrides.withDefaults
               (finalPython: prevPython: {
-                pyk = prev.pyk-python310;
-
-                pygments = prevPython.pygments.overridePythonAttrs
-                  (old: {
-                    buildInputs = (old.buildInputs or [ ])
-                      ++ [ prevPython.hatchling ];
-                    });
-
-                xdg-base-dirs = prevPython.xdg-base-dirs.overridePythonAttrs
-                  (old: {
-                    propagatedBuildInputs = (old.propagatedBuildInputs or [ ])
-                      ++ [ finalPython.poetry ];
-                  });
-
-                py-wasm = prevPython.py-wasm.overridePythonAttrs
-                  (old: {
-                    buildInputs = (old.buildInputs or [ ])
-                      ++ [ prevPython.setuptools ];
-                  });
+                kframework = prev.pyk-python310;
+                py-wasm = prevPython.py-wasm.overridePythonAttrs (old: {
+                  buildInputs = (old.buildInputs or [ ])
+                    ++ [ prevPython.setuptools ];
+                });
               });
 
             checkGroups = [ ];
@@ -93,12 +68,7 @@
             pname = "kwasm-test";
             src = final.kwasm.src;
 
-            buildInputs = with final; [
-              kwasm
-              kwasm-pyk
-              which
-              git
-            ];
+            buildInputs = with final; [ kwasm kwasm-pyk which git ];
 
             patchPhase = with final; ''
               substituteInPlace Makefile                                                  \
@@ -129,18 +99,14 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            poetry2nix.overlays.default
-            pyk.overlay
-            overlay
-          ];
+          overlays = [ k-framework.overlay overlay ];
         };
       in {
         packages = rec {
           inherit (pkgs) kwasm kwasm-pyk kwasm-test;
           default = kwasm;
         };
-    }) // {
-      overlays.default = overlay;
-    };
+      }) // {
+        overlays.default = overlay;
+      };
 }

@@ -77,7 +77,7 @@ module WASM-TEXT-COMMON-SYNTAX
     imports WASM-COMMON-SYNTAX
 
     syntax WasmInt ::= Int
-    syntax WasmInt ::= WasmIntToken [klabel(WasmInt), avoid, symbol, function]
+    syntax WasmInt ::= WasmIntToken [symbol(WasmInt), avoid, function]
 
     syntax Index ::= Identifier
  // ---------------------------
@@ -107,17 +107,29 @@ module WASM-TEXT-COMMON-SYNTAX
                         | "table.grow" Index
                         | "table.fill" Index
                         | "table.copy" Index Index
-                        | "table.copy"               [macro]
                         | "table.init" Index Index
-                        | "table.init" Index        [macro]
                         | "elem.drop" Index
                         | "call_indirect" Index TypeUse
-                        | "call_indirect"       TypeUse  [macro]
- // ---------------------------------------
+ // ---------------------------------------------------
+
  // Abbreviations
+    syntax PlainInstr ::= "table.get"             [macro]
+                        | "table.set"             [macro]
+                        | "table.size"            [macro]
+                        | "table.grow"            [macro]
+                        | "table.fill"            [macro]
+                        | "table.copy"            [macro]
+                        | "table.init" Index      [macro]
+                        | "call_indirect" TypeUse [macro]
+ // -----------------------------------------------------
+    rule table.get    => table.get 0
+    rule table.set    => table.set 0
+    rule table.size   => table.size 0
+    rule table.grow   => table.grow 0
+    rule table.fill   => table.fill 0
+    rule table.copy   => table.copy 0 0
     rule table.init I => table.init 0 I
     rule call_indirect TU:TypeUse => call_indirect 0 TU
-    rule table.copy => table.copy 0 0
 
     syntax PlainInstr ::= IValType  "." StoreOpM
                         | FValType  "." StoreOpM
@@ -209,10 +221,10 @@ Imports can be declared like regular functions, memories, etc., by giving an inl
 The following is the text format representation of an import specification.
 
 ```k
-    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [klabel(funcImportDesc)]
-                        | "(" "global" OptionalId TextFormatGlobalType ")" [klabel(globImportDesc)]
-                        | "(" "table"  OptionalId TableType            ")" [klabel( tabImportDesc)]
-                        | "(" "memory" OptionalId MemType              ")" [klabel( memImportDesc)]
+    syntax ImportDesc ::= "(" "func"   OptionalId TypeUse              ")" [symbol(funcImportDesc)]
+                        | "(" "global" OptionalId TextFormatGlobalType ")" [symbol(globImportDesc)]
+                        | "(" "table"  OptionalId TableType            ")" [symbol( tabImportDesc)]
+                        | "(" "memory" OptionalId MemType              ")" [symbol( memImportDesc)]
  // -----------------------------------------------------------------------------------------------
 ```
 
@@ -1129,6 +1141,8 @@ The `align` parameter is for optimization only and is not allowed to influence t
     rule #t2aInstr<_>(FTYPE:FValType.OP:LoadOp MemArg)  => #load(FTYPE, OP, #getOffset(MemArg))
     rule #t2aInstr<_>(memory.size)                => memory.size
     rule #t2aInstr<_>(memory.grow)                => memory.grow
+    rule #t2aInstr<_>(memory.fill)                => memory.fill
+    rule #t2aInstr<_>(memory.copy)                => memory.copy
 
     syntax Int ::= #getOffset ( MemArg ) [function, total]
  // -----------------------------------------------------------

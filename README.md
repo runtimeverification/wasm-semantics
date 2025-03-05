@@ -6,8 +6,9 @@ KWasm: Semantics of WebAssembly in K
 
 ---
 
-This repository presents a prototype formal semantics of [WebAssembly].
-It is currently under construction.
+This repository presents the formal semantics of [WebAssembly].
+KWasm is a mature and production-ready semantics for WebAssembly, actively developed and maintained since 2019.
+
 For examples of current capabilities, see the unit tests under the `tests/simple` directory.
 
 Repository Structure
