@@ -746,14 +746,14 @@ pyreadline3 = {version = "*", markers = "sys_platform == \"win32\" and python_ve
 
 [[package]]
 name = "hypothesis"
-version = "6.127.6"
+version = "6.128.2"
 description = "A library for property-based testing"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "hypothesis-6.127.6-py3-none-any.whl", hash = "sha256:4967702ee2f8c8d7d0d50f14940c3496bd32ac8b8a2b362ace34c722e842d00b"},
-    {file = "hypothesis-6.127.6.tar.gz", hash = "sha256:9b5292f3f2d505bf0f3e060b1c12f3643fa9b7cd036f41f3456c5f7cc7f73164"},
+    {file = "hypothesis-6.128.2-py3-none-any.whl", hash = "sha256:a4815dfb8bccfe26ccffa26e4c50d2f07adb45b1b4c66f4dd23ffbfb8cbf8ed3"},
+    {file = "hypothesis-6.128.2.tar.gz", hash = "sha256:a6e0e61bdb9ee6d1459687e4169e76a7bce830bb88f7e9948c2c1c4c39dd74b3"},
 ]
 
 [package.dependencies]
@@ -848,14 +848,14 @@ plugins = ["setuptools"]
 
 [[package]]
 name = "jinja2"
-version = "3.1.5"
+version = "3.1.6"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "jinja2-3.1.5-py3-none-any.whl", hash = "sha256:aba0f4dc9ed8013c424088f68a5c226f7d6097ed89b246d7749c2ec4175c6adb"},
-    {file = "jinja2-3.1.5.tar.gz", hash = "sha256:8fefff8dc3034e27bb80d67c671eb8a9bc424c0ef4c0826edbff304cceff43bb"},
+    {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
+    {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
 ]
 
 [package.dependencies]
@@ -866,14 +866,14 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "kframework"
-version = "7.1.218"
+version = "7.1.219"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "kframework-7.1.218-py3-none-any.whl", hash = "sha256:948429480d14bf4ca8b2945805d830a403345c97fbafef58d6c917c4afade514"},
-    {file = "kframework-7.1.218.tar.gz", hash = "sha256:35e420b022d9cbd379dff6db86610a660d11780eb7f586fd0bf677e1f33e5210"},
+    {file = "kframework-7.1.219-py3-none-any.whl", hash = "sha256:989b5fe5df38b80a37d2bcdc6bed0cea89dc7791f898194b14551e867933e96c"},
+    {file = "kframework-7.1.219.tar.gz", hash = "sha256:e1847e8616dff71ded542d39ee1033e013c1d405f59a118f0cb3f3e33263a98a"},
 ]
 
 [package.dependencies]
@@ -1611,14 +1611,14 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "setuptools"
-version = "75.8.2"
+version = "76.0.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "setuptools-75.8.2-py3-none-any.whl", hash = "sha256:558e47c15f1811c1fa7adbd0096669bf76c1d3f433f58324df69f3f5ecac4e8f"},
-    {file = "setuptools-75.8.2.tar.gz", hash = "sha256:4880473a969e5f23f2a2be3646b2dfd84af9028716d398e46192f84bc36900d2"},
+    {file = "setuptools-76.0.0-py3-none-any.whl", hash = "sha256:199466a166ff664970d0ee145839f5582cb9bca7a0a3a2e795b6a9cb2308e9c6"},
+    {file = "setuptools-76.0.0.tar.gz", hash = "sha256:43b4ee60e10b0d0ee98ad11918e114c70701bc6051662a9a675a0496c1a158f4"},
 ]
 
 [package.extras]
@@ -1858,4 +1858,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "d7961bdf3558d1b824a4db43dc13a260ffc832f8c07ba15148319a9f1a9b14ee"
+content-hash = "1e89030adce8fe2800b3f991fa654e1dd955b0c76fbd06670d4b015968aa73b3"
