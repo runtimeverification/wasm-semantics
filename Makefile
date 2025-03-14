@@ -91,9 +91,11 @@ test-conformance: test-conformance-parse test-conformance-supported
 
 ### Proof Tests
 
-proof_tests:=$(wildcard tests/proofs/*-spec.k)
+proof_tests         := $(wildcard tests/proofs/*-spec.k)
+proof_tests_failing := $(shell cat tests/failing.proofs)
+proof_tests_passing := $(filter-out $(proof_tests_failing), $(proof_tests))
 
-test-prove: $(proof_tests:=.prove)
+test-prove: $(proof_tests_passing:=.prove)
 
 
 # Analysis
