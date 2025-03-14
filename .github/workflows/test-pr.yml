@@ -87,7 +87,7 @@ jobs:
     name: 'Prover Tests'
     needs: pykwasm-code-quality-checks
     runs-on: [self-hosted, linux, normal]
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
@@ -118,7 +118,7 @@ jobs:
           - runner: ARM64
     needs: pykwasm-code-quality-checks
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3

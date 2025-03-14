@@ -6,8 +6,8 @@ KBYTES_TEST_DATA = (
     (bytes([0x0, 0x41, 0xFF]), 'b"\\x00A\\xff"'),
     (bytes([]), 'b""'),
     (b'WASM', 'b"WASM"'),
-    (b'foo\xAA\x01barbaz', 'b"foo\\xaa\\x01barbaz"'),
-    (b'foo\xAAbar\x01baz', 'b"foo\\xaabar\\x01baz"'),
+    (b'foo\xaa\x01barbaz', 'b"foo\\xaa\\x01barbaz"'),
+    (b'foo\xaabar\x01baz', 'b"foo\\xaabar\\x01baz"'),
     (b'abcdefghijklmnopqrstuvwxyz', 'b"abcdefghijklmnopqrstuvwxyz"'),
     (
         0x11223344556677889900AABBCCDDEEFF.to_bytes(length=16, byteorder='big'),
