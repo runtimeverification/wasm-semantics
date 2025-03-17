@@ -6,12 +6,19 @@ They are part of the *trusted* base, and so should be scrutinized carefully.
 
 ```k
 requires "wasm-text.md"
+requires "symbolic/symbolic.md"
 
-module KWASM-LEMMAS [symbolic]
+module KWASM-LEMMAS
+    imports WASM-SYMBOLIC
+    imports KWASM-LEMMAS-SYMBOLIC
+endmodule
+
+module KWASM-LEMMAS-SYMBOLIC [symbolic]
     imports WASM-TEXT
     imports BYTES-KORE
     imports INT-SYMBOLIC
     imports MAP-SYMBOLIC
+    imports CEILS-SYNTAX
 ```
 
 Basic logic
@@ -48,14 +55,14 @@ These are given in pure modulus form, and in form with `#wrap`, which is modulus
        andBool X  <Int (1 <<Int (N *Int 8))
       [simplification]
 
-    rule _X modInt 1 => 0
+    rule _X modIntTotal 1 => 0
       [simplification]
 ```
 
 `modInt` selects the least non-negative representative of a congruence class modulo `N`.
 
 ```k
-    rule (X modInt M) modInt N => X modInt M
+    rule (X modIntTotal M) modIntTotal N => X modInt M
       requires M >Int 0
        andBool M <=Int N
       [simplification]
@@ -72,7 +79,7 @@ Since 0 <= x mod m < m <= n, (x mod m) mod n = x mod m
 ```
 
 ```k
-    rule (X modInt M) modInt N => X modInt N
+    rule (X modIntTotal M) modIntTotal N => X modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
@@ -98,24 +105,24 @@ x = m * q + r, for a unique q and r s.t. 0 <= r < m
 #### Modulus Over Addition
 
 ```k
-    rule (_X *Int M +Int Y) modInt N => Y modInt N
+    rule (_X *Int M +Int Y) modIntTotal N => Y modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
 
-    rule (Y +Int _X *Int M) modInt N => Y modInt N
+    rule (Y +Int _X *Int M) modIntTotal N => Y modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
 
-    rule #wrap(N, (_X <<Int M) +Int Y) => #wrap(N, Y)
+    rule #wrap(N, (_X <<IntTotal M) +Int Y) => #wrap(N, Y)
       requires 0 <=Int M
        andBool (N *Int 8) <=Int M
       [simplification]
 
-    rule #wrap(N, Y +Int (_X <<Int M)) => #wrap(N, Y)
+    rule #wrap(N, Y +Int (_X <<IntTotal M)) => #wrap(N, Y)
       requires 0 <=Int M
        andBool (N *Int 8) <=Int M
       [simplification]
@@ -129,13 +136,13 @@ x * m + y mod n = x * (k * n) + y mod n = y mod n
 ```
 
 ```k
-    rule ((X modInt M) +Int Y) modInt N => (X +Int Y) modInt N
+    rule ((X modIntTotal M) +Int Y) modIntTotal N => (X +Int Y) modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
       [simplification]
 
-    rule (X +Int (Y modInt M)) modInt N => (X +Int Y) modInt N
+    rule (X +Int (Y modIntTotal M)) modIntTotal N => (X +Int Y) modInt N
       requires M >Int 0
        andBool N >Int 0
        andBool M modInt N ==Int 0
@@ -168,29 +175,51 @@ x mod m + y = r + y
 We want K to understand what a bit-shift is.
 
 ```k
-    rule (_X <<Int N) modInt M => 0
-      requires (2 ^Int N) modInt M ==Int 0
+    // According to domains.md, shifting by negative amounts is #False, so
+    // all simplification rules must take that into account.
+
+    rule (_X <<IntTotal N) modIntTotal M => 0
+      requires 0 <=Int N andBool (2 ^Int N) modInt M ==Int 0
       [simplification]
 
-    rule #wrap(M, _X <<Int N) => 0
-      requires (M *Int 8) <=Int N
+    rule #wrap(M, _X <<IntTotal N) => 0
+      requires 0 <=Int N andBool (M *Int 8) <=Int N
       [simplification]
 
-    rule (X  >>Int N)          => 0 requires X <Int 2 ^Int N [simplification]
-    rule (_X <<Int N) modInt M => 0 requires M <Int 2 ^Int N [simplification]
+    rule (X  >>IntTotal N)          => 0
+      requires 0 <=Int N
+        andBool 0 <=Int X
+        andBool X <Int 2 ^Int N
+      [simplification]
+    rule (_X <<IntTotal N) modIntTotal M => 0
+      requires 0 <=Int N
+        andBool M <Int 2 ^Int N
+      [simplification]
 
-    rule (X >>Int N) >>Int M => X >>Int (N +Int M) [simplification]
-    rule (X <<Int N) <<Int M => X <<Int (N +Int M) [simplification]
+    rule (X >>IntTotal N) >>IntTotal M => X >>Int (N +Int M)
+      requires 0 <=Int N andBool 0 <=Int M
+      [simplification]
+    rule (X <<IntTotal N) <<IntTotal M => X <<Int (N +Int M)
+      requires 0 <=Int N andBool 0 <=Int M
+      [simplification]
 
-    // The Haskell backend accepts negative shifts (the LLVM backend does not).
-    // So removing the side conditions and keeping one of each rule here could give faster symbolic execution.
-    rule (X <<Int N) >>Int M => X <<Int (N -Int M)   requires          N >=Int M  [simplification]
-    rule (X <<Int N) >>Int M => X >>Int (M -Int N)   requires notBool (N >=Int M) [simplification]
+    rule (X <<IntTotal N) >>IntTotal M => X <<Int (N -Int M)
+      requires 0 <=Int M andBool M <=Int N
+      [simplification]
+    rule (X <<IntTotal N) >>IntTotal M => X >>Int (M -Int N)
+      requires 0 <=Int N andBool notBool (N >=Int M)
+      [simplification]
 ```
 
 ```k
-    rule ((X <<Int M) +Int Y) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
-    rule (Y +Int (X <<Int M)) >>Int N => (X <<Int (M -Int N)) +Int (Y >>Int N) requires M >=Int N [simplification]
+    rule ((X <<IntTotal M) +Int Y) >>IntTotal N => (X <<Int (M -Int N)) +Int (Y >>Int N)
+      requires M >=Int N andBool N >=Int 0
+       andBool 0 <=Int X andBool 0 <=Int Y
+      [simplification]
+    rule (Y +Int (X <<IntTotal M)) >>IntTotal N => (X <<Int (M -Int N)) +Int (Y >>Int N)
+      requires M >=Int N andBool N >=Int 0
+       andBool 0 <=Int X andBool 0 <=Int Y
+      [simplification]
 ```
 
 Proof:
@@ -212,13 +241,14 @@ Let x' = x << m
 The following rules decrease the modulus by rearranging it around a shift.
 
 ```k
-    rule (X modInt POW) >>Int N => (X >>Int N) modInt (POW /Int (2 ^Int N))
+    rule (X modIntTotal POW) >>IntTotal N => (X >>Int N) modInt (POW /Int (2 ^Int N))
       requires N  >=Int 0
        andBool POW >Int 0
        andBool POW modInt (2 ^Int N) ==Int 0
+       andBool 0 <=Int X
       [simplification]
 
-    rule (X <<Int N) modInt POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
+    rule (X <<IntTotal N) modIntTotal POW => (X modInt (POW /Int (2 ^Int N))) <<Int N
       requires N  >=Int 0
        andBool POW >Int 0
        andBool POW modInt (2 ^Int N) ==Int 0
@@ -231,13 +261,13 @@ Therefore, we may as well shift first and then take the modulus, only we need to
 The argument for the left shift is similar.
 
 ```k
-    rule (X +Int (_Y <<Int N)) modInt POW => X modInt POW
+    rule (X +Int (_Y <<IntTotal N)) modIntTotal POW => X modInt POW
       requires N  >=Int 0
        andBool POW >Int 0
        andBool (2 ^Int N) modInt POW ==Int 0
       [simplification]
 
-    rule ((_Y <<Int N) +Int X) modInt POW => X modInt POW
+    rule ((_Y <<IntTotal N) +Int X) modIntTotal POW => X modInt POW
       requires N  >=Int 0
        andBool POW >Int 0
        andBool (2 ^Int N) modInt POW ==Int 0
@@ -252,7 +282,7 @@ When reasoning about `#chop`, it's often the case that the precondition to the p
 In this case, it's simpler (and safe) to simply discard the `#chop`, instead of evaluating it.
 
 ```k
-    rule X modInt #pow(ITYPE) => #unsigned(ITYPE, X)
+    rule X modIntTotal #pow(ITYPE) => #unsigned(ITYPE, X)
       requires #inSignedRange (ITYPE, X)
       [simplification]
 
@@ -280,15 +310,19 @@ Memory
 Bounds on `#getRange`:
 
 ```k
-    rule 0 <=Int #getRange(_, _, _) => true                                             [simplification]
-    rule 0 <=Int VAL <<Int SHIFT    => true requires 0 <=Int VAL  andBool 0 <=Int SHIFT [simplification]
-    rule 0 <=Int VAL1 +Int VAL2     => true requires 0 <=Int VAL1 andBool 0 <=Int VAL2  [simplification]
+    rule 0 <=Int #getRange(_, _, _)      => true                                             [simplification]
+    rule 0 <=Int VAL <<IntTotal SHIFT    => true requires 0 <=Int VAL  andBool 0 <=Int SHIFT [simplification]
+    rule 0 <=Int VAL1 +Int VAL2          => true requires 0 <=Int VAL1 andBool 0 <=Int VAL2  [simplification]
 
-    rule #getRange(_, _, WIDTH)             <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
-    rule #getRange(_, _, WIDTH) <<Int SHIFT <Int MAX => true requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX                          [simplification]
-    rule (#getRange(_, _, WIDTH1) #as VAL1) +Int ((#getRange(_, _, WIDTH2) <<Int SHIFT) #as VAL2) <Int MAX => true
+    rule #getRange(_, _, WIDTH)                  <Int MAX => true requires 2 ^Int (8 *Int WIDTH) <=Int MAX                                       [simplification]
+    rule #getRange(_, _, WIDTH) <<IntTotal SHIFT <Int MAX => true
+      requires 2 ^Int ((8 *Int WIDTH) +Int SHIFT) <=Int MAX
+       andBool 0 <=Int SHIFT
+      [simplification]
+    rule (#getRange(_, _, WIDTH1) #as VAL1) +Int ((#getRange(_, _, WIDTH2) <<IntTotal SHIFT) #as VAL2) <Int MAX => true
         requires VAL1 <Int MAX
           andBool VAL2 <Int MAX
+          andBool 0 <=Int SHIFT
           andBool WIDTH1 *Int 8 <=Int SHIFT
           andBool 2 ^Int ((8 *Int WIDTH2) +Int SHIFT) <=Int MAX
         [simplification]
@@ -305,13 +339,13 @@ Bounds on `#getRange`:
 Arithmetic over `#getRange`:
 
 ```k
-    rule #getRange(BM, ADDR, WIDTH) >>Int SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
+    rule #getRange(BM, ADDR, WIDTH) >>IntTotal SHIFT => #getRange(BM, ADDR +Int 1, WIDTH -Int 1) >>Int (SHIFT -Int 8)
       requires 0 <=Int ADDR
        andBool 0  <Int WIDTH
        andBool 8 <=Int SHIFT
       [simplification]
 
-    rule #getRange(BM, ADDR, WIDTH) modInt MAX => #getRange(BM, ADDR, WIDTH -Int 1) modInt MAX
+    rule #getRange(BM, ADDR, WIDTH) modIntTotal MAX => #getRange(BM, ADDR, WIDTH -Int 1) modInt MAX
       requires 0 <Int MAX andBool 0 <Int WIDTH
        andBool 2 ^Int (8 *Int (WIDTH -Int 1)) modInt MAX ==Int 0
       [simplification]
@@ -335,9 +369,10 @@ Arithmetic over `#getRange`:
 
 ```k
     rule #setRange(BM, ADDR, #getRange(BM, ADDR, WIDTH), WIDTH) => BM [simplification]
-    rule #setRange(BM, ADDR, (#getRange(_, _, WIDTH1) #as VAL1) +Int (VAL2 <<Int SHIFT), WIDTH)
+    rule #setRange(BM, ADDR, (#getRange(_, _, WIDTH1) #as VAL1) +Int (VAL2 <<IntTotal SHIFT), WIDTH)
       => #setRange(#setRange(BM, ADDR, VAL1, minInt(WIDTH1, WIDTH)), ADDR +Int WIDTH1, VAL2, WIDTH -Int WIDTH1)
       requires 0 <=Int ADDR
+       andBool 0 <=Int SHIFT
        andBool 0  <Int WIDTH
        andBool WIDTH1 *Int 8 ==Int SHIFT
       [simplification]
