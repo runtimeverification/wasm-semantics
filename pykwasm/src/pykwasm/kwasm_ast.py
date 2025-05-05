@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pyk.kast.inner import KApply, KToken
-from pyk.prelude.bytes import bytesToken
+from pyk.kast.prelude.utils import bytesToken
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
