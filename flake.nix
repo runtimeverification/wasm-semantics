@@ -57,6 +57,10 @@
                   buildInputs = (old.buildInputs or [ ])
                     ++ [ prevPython.setuptools ];
                 });
+                mypy-extensions = prevPython.mypy-extensions.overridePythonAttrs (old: {
+                  buildInputs = (old.buildInputs or [ ])
+                    ++ [ prevPython.flit-core ];
+                });
               });
 
             checkGroups = [ ];
