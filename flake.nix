@@ -2,7 +2,7 @@
   description = "K Semantics of WebAssembly";
 
   inputs = {
-    k-framework.url = "github:runtimeverification/k/v7.1.241";
+    k-framework.url = "github:runtimeverification/k/v7.1.253";
     nixpkgs.follows = "k-framework/nixpkgs";
     flake-utils.follows = "k-framework/flake-utils";
     rv-utils.follows = "k-framework/rv-utils";
@@ -56,6 +56,13 @@
                 py-wasm = prevPython.py-wasm.overridePythonAttrs (old: {
                   buildInputs = (old.buildInputs or [ ])
                     ++ [ prevPython.setuptools ];
+                });
+                mypy-extensions = prevPython.mypy-extensions.overridePythonAttrs (old: {
+                  buildInputs = (old.buildInputs or [ ])
+                    ++ [ prevPython.flit-core ];
+                  patches = (old.patches or [ ]) ++ [
+                    ./nix/resources/mypy-extensions-pyproject.toml.patch
+                  ];
                 });
               });
 
