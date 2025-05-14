@@ -817,6 +817,7 @@ python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
     {file = "kframework-7.1.254-py3-none-any.whl", hash = "sha256:54c0b5c21ad9050be64c524205d2778fedb9ea7a903277a643687a5fe2cf994b"},
+    {file = "kframework-7.1.254.tar.gz", hash = "sha256:9d8fc6ce05c0fd07043f2cc99770534a20ba1fc4cd60c1cfbbfdd6b7dcb91a78"},
 ]
 
 [package.dependencies]
