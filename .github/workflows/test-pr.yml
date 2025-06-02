@@ -10,7 +10,7 @@ jobs:
 
   version-bump:
     name: 'Version Bump'
-    runs-on: [self-hosted, linux, flyweight-ephemeral]
+    runs-on: [self-hosted, linux, flyweight]
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v3
