@@ -481,13 +481,13 @@ Since the inserted type is module-level, any subsequent functions declaring the 
          #unfoldDefns(DS, I, TI)
       requires notBool isTypeDecls(TUSE)
 
-    rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
-      => (import MOD NAME (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS ))
+    rule #unfoldDefns(( import MDL NAME (func OID:OptionalId TDECLS:TypeDecls )) DS, I, #ti(... t2i: M) #as TI)
+      => (import MDL NAME (func OID (type {M [asFuncType(TDECLS)]}:>Int) TDECLS ))
          #unfoldDefns(DS, I, TI)
       requires         asFuncType(TDECLS) in_keys(M)
 
-    rule #unfoldDefns(( import MOD NAME (func OID:OptionalId TDECLS:TypeDecls)) DS, I, #ti(... t2i: M, count: N))
-      => (import MOD NAME (func OID (type N) TDECLS))
+    rule #unfoldDefns(( import MDL NAME (func OID:OptionalId TDECLS:TypeDecls)) DS, I, #ti(... t2i: M, count: N))
+      => (import MDL NAME (func OID (type N) TDECLS))
          #unfoldDefns(DS appendDefn (type (func TDECLS)), I, #ti(... t2i: M [asFuncType(TDECLS) <- N], count: N +Int 1))
       requires notBool asFuncType(TDECLS) in_keys(M)
 
@@ -508,8 +508,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 #### Functions
 
 ```k
-    rule #unfoldDefns(( func OID:OptionalId (import MOD NAME) TUSE) DS, I, M)
-      => #unfoldDefns(( import MOD NAME (func OID TUSE) ) DS, I, M)
+    rule #unfoldDefns(( func OID:OptionalId (import MDL NAME) TUSE) DS, I, M)
+      => #unfoldDefns(( import MDL NAME (func OID TUSE) ) DS, I, M)
 
     rule #unfoldDefns(( func EXPO:InlineExport SPEC:FuncSpec ) DS, I, M)
       => #unfoldDefns(( func #freshId(I) EXPO  SPEC) DS, I +Int 1, M)
@@ -544,8 +544,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #lenElemExprs(.ElemExprs) => 0
     rule #lenElemExprs(_ EE)       => 1 +Int #lenElemExprs(EE)
 
-    rule #unfoldDefns(( table OID:OptionalId (import MOD NAME) TT:TableType ) DS, I, M)
-      => #unfoldDefns(( import MOD NAME (table OID TT) ) DS, I, M)
+    rule #unfoldDefns(( table OID:OptionalId (import MDL NAME) TT:TableType ) DS, I, M)
+      => #unfoldDefns(( import MDL NAME (table OID TT) ) DS, I, M)
 
     rule #unfoldDefns(( table EXPO:InlineExport SPEC:TableSpec ) DS, I, M)
       => #unfoldDefns(( table #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
@@ -565,8 +565,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
          ( data   IDENT (offset (i32.const 0) .Instrs) DATA )
          #unfoldDefns(DS, I, M)
 
-    rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I, M)
-      => #unfoldDefns(( import MOD NAME (memory OID MT  ) ) DS, I, M)
+    rule #unfoldDefns(( memory OID:OptionalId (import MDL NAME) MT:MemType ) DS, I, M)
+      => #unfoldDefns(( import MDL NAME (memory OID MT  ) ) DS, I, M)
 
     rule #unfoldDefns(( memory EXPO:InlineExport SPEC:MemorySpec ) DS, I, M)
       => #unfoldDefns(( memory #freshId(I:Int) EXPO SPEC ) DS, I +Int 1, M)
@@ -589,8 +589,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
 
     rule #unfoldDefns((( global OID TYP:TextFormatGlobalType IS:Instr) => #global(... type: asGMut(TYP), init: unfoldInstrs(IS .Instrs), metadata: OID)) _DS, _I, _M)
 
-    rule #unfoldDefns(( global OID:OptionalId (import MOD NAME) TYP ) DS, I, M)
-      => #unfoldDefns(( import MOD NAME (global OID TYP ) ) DS, I, M)
+    rule #unfoldDefns(( global OID:OptionalId (import MDL NAME) TYP ) DS, I, M)
+      => #unfoldDefns(( import MDL NAME (global OID TYP ) ) DS, I, M)
 
     rule #unfoldDefns(( global EXPO:InlineExport SPEC:GlobalSpec ) DS, I, M)
       => #unfoldDefns(( global #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
@@ -870,15 +870,15 @@ Since we do not have polymorphic functions available, we define one function per
 #### Imports
 
 ```k
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type IDENT:Identifier)            ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[IDENT]}:>Int))
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type IDENT:Identifier) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[IDENT]}:>Int))
-    rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int)                  ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
-    rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MDL NAME (func   OID:OptionalId (type IDENT:Identifier)            ))) => #import(MDL, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[IDENT]}:>Int))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MDL NAME (func   OID:OptionalId (type IDENT:Identifier) _:TypeDecls))) => #import(MDL, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[IDENT]}:>Int))
+    rule #t2aDefn<_                     >(( import MDL NAME (func   OID:OptionalId (type IDX:Int)                  ))) => #import(MDL, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
+    rule #t2aDefn<_                     >(( import MDL NAME (func   OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => #import(MDL, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
 
-    rule #t2aDefn<_                     >(( import MOD NAME (global OID:OptionalId TYP:TextFormatGlobalType)))         => #import(MOD, NAME, #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)))
+    rule #t2aDefn<_                     >(( import MDL NAME (global OID:OptionalId TYP:TextFormatGlobalType)))         => #import(MDL, NAME, #globalDesc(... id: OID:OptionalId, type: asGMut(TYP)))
 
-    rule #t2aDefn<_                     >(( import MOD NAME (table  OID:OptionalId LIM:TextLimits _:RefValType)))        => #import(MOD, NAME, #tableDesc(...  id: OID:OptionalId, type: t2aLimits(LIM)))
-    rule #t2aDefn<_                     >(( import MOD NAME (memory OID:OptionalId LIM:TextLimits        )))           => #import(MOD, NAME, #memoryDesc(... id: OID:OptionalId, type: t2aLimits(LIM)))
+    rule #t2aDefn<_                     >(( import MDL NAME (table  OID:OptionalId LIM:TextLimits _:RefValType)))        => #import(MDL, NAME, #tableDesc(...  id: OID:OptionalId, type: t2aLimits(LIM)))
+    rule #t2aDefn<_                     >(( import MDL NAME (memory OID:OptionalId LIM:TextLimits        )))           => #import(MDL, NAME, #memoryDesc(... id: OID:OptionalId, type: t2aLimits(LIM)))
 ```
 
 #### Globals

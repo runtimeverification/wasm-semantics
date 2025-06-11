@@ -1154,7 +1154,7 @@ The importing and exporting parts of specifications are dealt with in the respec
       //   non-total symbol Lbl_Map_ , 
       //   non-total symbol LblsetExtend(_,_,_,_)_WASM-DATA-TOOLS_ListInt_ListInt_Int_Int_Int
 
-    rule <instrs> allocfunc(MOD, ADDR, TYPE, LOCALS, INSTRS, #meta(... id: OID, localIds: LIDS)) => .K ... </instrs>
+    rule <instrs> allocfunc(MDL, ADDR, TYPE, LOCALS, INSTRS, #meta(... id: OID, localIds: LIDS)) => .K ... </instrs>
          <funcs>
            ( .Bag
           => <funcDef>
@@ -1162,7 +1162,7 @@ The importing and exporting parts of specifications are dealt with in the respec
                <fCode>    INSTRS   </fCode>
                <fType>    TYPE     </fType>
                <fLocal>   LOCALS   </fLocal>
-               <fModInst> MOD      </fModInst>
+               <fModInst> MDL      </fModInst>
                <funcMetadata>
                  <funcId> OID </funcId>
                  <localIds> LIDS </localIds>
@@ -1856,8 +1856,8 @@ The value of a global gets copied when it is imported.
                         | #memoryDesc (id: OptionalId, type: Limits)               [symbol(aMemoryDesc)]
     syntax Alloc      ::= ImportDefn
  // --------------------------------
-    rule <instrs> #import(MOD, NAME, #funcDesc(...) #as FD ) => #importHelper(FD, FS2 {{ IDX }} orDefault -1) ... </instrs>
-         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+    rule <instrs> #import(MDL, NAME, #funcDesc(...) #as FD ) => #importHelper(FD, FS2 {{ IDX }} orDefault -1) ... </instrs>
+         <moduleRegistry> ... MDL |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <funcAddrs> FS2 </funcAddrs>
@@ -1886,7 +1886,7 @@ The value of a global gets copied when it is imported.
       //   non-total symbol Lbl_ModuleInstCellMap_ , 
       //   non-total symbol LblsetExtend(_,_,_,_)_WASM-DATA-TOOLS_ListInt_ListInt_Int_Int_Int
 
-    rule <instrs> #import(MOD, NAME, #tableDesc(... id: OID, type: LIM) ) => .K ... </instrs>
+    rule <instrs> #import(MDL, NAME, #tableDesc(... id: OID, type: LIM) ) => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1895,7 +1895,7 @@ The value of a global gets copied when it is imported.
            <nextTabIdx> NEXT => NEXT +Int 1 </nextTabIdx>
            ...
          </moduleInst>
-         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleRegistry> ... MDL |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <tabIds> IDS' </tabIds>
@@ -1911,7 +1911,7 @@ The value of a global gets copied when it is imported.
          </tabInst>
        requires #limitsMatchImport(size(TDATA), MAX, LIM)
 
-    rule <instrs> #import(MOD, NAME, #memoryDesc(... id: OID, type: LIM) ) => .K ... </instrs>
+    rule <instrs> #import(MDL, NAME, #memoryDesc(... id: OID, type: LIM) ) => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1919,7 +1919,7 @@ The value of a global gets copied when it is imported.
            <memAddrs> .Map => 0 |-> ADDR </memAddrs>
            ...
          </moduleInst>
-         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleRegistry> ... MDL |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
@@ -1935,7 +1935,7 @@ The value of a global gets copied when it is imported.
          </memInst>
        requires #limitsMatchImport(SIZE, MAX, LIM)
 
-    rule <instrs> #import(MOD, NAME, #globalDesc(... id: OID, type: MUT TYP) ) => .K ... </instrs>
+    rule <instrs> #import(MDL, NAME, #globalDesc(... id: OID, type: MUT TYP) ) => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
@@ -1944,7 +1944,7 @@ The value of a global gets copied when it is imported.
            <nextGlobIdx> NEXT => NEXT +Int 1 </nextGlobIdx>
            ...
          </moduleInst>
-         <moduleRegistry> ... MOD |-> MODIDX ... </moduleRegistry>
+         <moduleRegistry> ... MDL |-> MODIDX ... </moduleRegistry>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <globIds> IDS' </globIds>
