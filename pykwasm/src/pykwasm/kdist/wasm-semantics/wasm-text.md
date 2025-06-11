@@ -422,8 +422,8 @@ In the text format, we extend indices to incorporate identifiers.
 We also enable context lookups with identifiers.
 
 ```k
-    rule #ContextLookup(IDS:Map, ID:Identifier) => {IDS [ ID ]}:>Int
-      requires ID in_keys(IDS)
+    rule #ContextLookup(IDS:Map, IDENT:Identifier) => {IDS [ IDENT ]}:>Int
+      requires IDENT in_keys(IDS)
 ```
 
 ### Desugaring
@@ -514,8 +514,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldDefns(( func EXPO:InlineExport SPEC:FuncSpec ) DS, I, M)
       => #unfoldDefns(( func #freshId(I) EXPO  SPEC) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( func ID:Identifier ( export ENAME ) SPEC:FuncSpec ) DS, I, M)
-      => ( export ENAME ( func ID ) ) #unfoldDefns(( func ID SPEC ) DS, I, M)
+    rule #unfoldDefns(( func IDENT:Identifier ( export ENAME ) SPEC:FuncSpec ) DS, I, M)
+      => ( export ENAME ( func IDENT ) ) #unfoldDefns(( func IDENT SPEC ) DS, I, M)
 ```
 
 #### Tables
@@ -529,14 +529,14 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldDefns(( table funcref ( elem ELEM:ElemExprs ) ) DS, I, M)
       => #unfoldDefns(( table #freshId(I) funcref ( elem ELEM ) ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( table ID:Identifier funcref ( elem ELEM:ElemSegment ) ) DS, I, M)
-      => ( table ID #lenElemSegment(ELEM) #lenElemSegment(ELEM) funcref ):TableDefn
-         ( elem  ID (offset (i32.const 0) .Instrs) func ELEM )
+    rule #unfoldDefns(( table IDENT:Identifier funcref ( elem ELEM:ElemSegment ) ) DS, I, M)
+      => ( table IDENT #lenElemSegment(ELEM) #lenElemSegment(ELEM) funcref ):TableDefn
+         ( elem  IDENT (offset (i32.const 0) .Instrs) func ELEM )
          #unfoldDefns(DS, I, M)
 
-    rule #unfoldDefns(( table ID:Identifier funcref ( elem ELEM:ElemExprs ) ) DS, I, M)
-      => ( table ID #lenElemExprs(ELEM) #lenElemExprs(ELEM) funcref ):TableDefn
-         ( elem  ID (offset (i32.const 0) .Instrs) funcref ELEM )
+    rule #unfoldDefns(( table IDENT:Identifier funcref ( elem ELEM:ElemExprs ) ) DS, I, M)
+      => ( table IDENT #lenElemExprs(ELEM) #lenElemExprs(ELEM) funcref ):TableDefn
+         ( elem  IDENT (offset (i32.const 0) .Instrs) funcref ELEM )
          #unfoldDefns(DS, I, M)
 
     syntax Int ::= #lenElemExprs(ElemExprs)   [function, total]
@@ -550,8 +550,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldDefns(( table EXPO:InlineExport SPEC:TableSpec ) DS, I, M)
       => #unfoldDefns(( table #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( table ID:Identifier ( export ENAME ) SPEC:TableSpec ) DS, I, M)
-      => ( export ENAME ( table ID ) ) #unfoldDefns(( table ID SPEC ) DS, I, M)
+    rule #unfoldDefns(( table IDENT:Identifier ( export ENAME ) SPEC:TableSpec ) DS, I, M)
+      => ( export ENAME ( table IDENT ) ) #unfoldDefns(( table IDENT SPEC ) DS, I, M)
 ```
 
 #### Memories
@@ -560,9 +560,9 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldDefns(( memory ( data DATA ) ) DS, I, M)
       => #unfoldDefns(( memory #freshId(I) ( data DATA ) ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( memory ID:Identifier ( data DATA ) ) DS, I, M)
-      => ( memory ID #lengthDataPages(DATA) #lengthDataPages(DATA) ):MemoryDefn
-         ( data   ID (offset (i32.const 0) .Instrs) DATA )
+    rule #unfoldDefns(( memory IDENT:Identifier ( data DATA ) ) DS, I, M)
+      => ( memory IDENT #lengthDataPages(DATA) #lengthDataPages(DATA) ):MemoryDefn
+         ( data   IDENT (offset (i32.const 0) .Instrs) DATA )
          #unfoldDefns(DS, I, M)
 
     rule #unfoldDefns(( memory OID:OptionalId (import MOD NAME) MT:MemType ) DS, I, M)
@@ -571,8 +571,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldDefns(( memory EXPO:InlineExport SPEC:MemorySpec ) DS, I, M)
       => #unfoldDefns(( memory #freshId(I:Int) EXPO SPEC ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( memory ID:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I, M)
-      => ( export ENAME ( memory ID ) ) #unfoldDefns( ( memory ID SPEC ) DS, I, M)
+    rule #unfoldDefns(( memory IDENT:Identifier ( export ENAME ) SPEC:MemorySpec ) DS, I, M)
+      => ( export ENAME ( memory IDENT ) ) #unfoldDefns( ( memory IDENT SPEC ) DS, I, M)
 
     syntax Int ::= #lengthDataPages ( DataString ) [function]
  // ---------------------------------------------------------
@@ -595,8 +595,8 @@ Since the inserted type is module-level, any subsequent functions declaring the 
     rule #unfoldDefns(( global EXPO:InlineExport SPEC:GlobalSpec ) DS, I, M)
       => #unfoldDefns(( global #freshId(I) EXPO SPEC ) DS, I +Int 1, M)
 
-    rule #unfoldDefns(( global ID:Identifier ( export ENAME ) SPEC:GlobalSpec ) DS, I, M)
-      => ( export ENAME ( global ID ) ) #unfoldDefns(( global ID SPEC ) DS, I, M)
+    rule #unfoldDefns(( global IDENT:Identifier ( export ENAME ) SPEC:GlobalSpec ) DS, I, M)
+      => ( export ENAME ( global IDENT ) ) #unfoldDefns(( global IDENT SPEC ) DS, I, M)
 ```
 
 #### Element Segments
@@ -666,17 +666,17 @@ In the text format, block instructions can have identifiers attached to them, an
 Branching with an identifier is the same as branching to the label with that identifier.
 The correct label index is calculated by looking at whih depth the index occured and what depth execution is currently at.
 
-Conceptually, `br ID => br CURRENT_EXECUTION_DEPTH -Int IDENTIFIER_LABEL_DEPTH -Int 1`.
+Conceptually, `br IDENT => br CURRENT_EXECUTION_DEPTH -Int IDENTIFIER_LABEL_DEPTH -Int 1`.
 
 ```k
-    rule #unfoldInstrs(br       ID:Identifier  IS, DEPTH, M) => br      DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
-    rule #unfoldInstrs(br_if    ID:Identifier  IS, DEPTH, M) => br_if   DEPTH -Int {M [ ID ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br       IDENT:Identifier  IS, DEPTH, M) => br      DEPTH -Int {M [ IDENT ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
+    rule #unfoldInstrs(br_if    IDENT:Identifier  IS, DEPTH, M) => br_if   DEPTH -Int {M [ IDENT ]}:>Int -Int 1 #unfoldInstrs(IS, DEPTH, M)
     rule #unfoldInstrs(br_table ES:ElemSegment IS, DEPTH, M) => br_table elemSegment2Indices(ES, DEPTH, M) #unfoldInstrs(IS, DEPTH, M)
 
     syntax ElemSegment ::= elemSegment2Indices( ElemSegment, Int, Map ) [function]
  // ------------------------------------------------------------------------------
     rule elemSegment2Indices(.ElemSegment    , _DEPTH, _M) => .ElemSegment
-    rule elemSegment2Indices(ID:Identifier ES,  DEPTH,  M) => DEPTH -Int {M [ ID ]}:>Int -Int 1 elemSegment2Indices(ES, DEPTH, M)
+    rule elemSegment2Indices(IDENT:Identifier ES,  DEPTH,  M) => DEPTH -Int {M [ IDENT ]}:>Int -Int 1 elemSegment2Indices(ES, DEPTH, M)
     rule elemSegment2Indices(E             ES,  DEPTH,  M) => E                                 elemSegment2Indices(ES, DEPTH, M) [owise]
 ```
 
@@ -685,16 +685,16 @@ The same identifier can optionally be repeated at the end of the block instructi
 `if` blocks may omit the `else`-branch, as long as the type declaration is empty.
 
 ```k
-    rule #unfoldInstrs( (block ID:Identifier TDS IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs( (block IDENT:Identifier TDS IS end _OID' => block    TDS IS end) _IS',  DEPTH,  M => M [ IDENT <- DEPTH ])
     rule #unfoldInstrs(block TDS:TypeDecls IS end IS', DEPTH, M) => block TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
-    rule #unfoldInstrs( (loop ID:Identifier TDS IS end _OID' => loop    TDS IS end) _IS',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs( (loop IDENT:Identifier TDS IS end _OID' => loop    TDS IS end) _IS',  DEPTH,  M => M [ IDENT <- DEPTH ])
     rule #unfoldInstrs(loop TDS:TypeDecls IS end IS', DEPTH, M) => loop TDS #unfoldInstrs(IS, DEPTH +Int 1, M) end #unfoldInstrs(IS', DEPTH, M)
 
    // TODO: Only unfold empty else-branch if the type declaration is empty.
-    rule #unfoldInstrs( (if ID:Identifier  TDS      IS                                   end _OID'' => if  ID TDS IS else .Instrs end) _IS'', _DEPTH, _M)
-    rule #unfoldInstrs( (if                TDS      IS                                   end _OID'' => if     TDS IS else .Instrs end) _IS'', _DEPTH, _M)
-    rule #unfoldInstrs( (if ID:Identifier  TDS      IS         else _OID':OptionalId IS' end _OID'' => if     TDS IS else IS'     end) _IS'',  DEPTH,  M => M [ ID <- DEPTH ])
+    rule #unfoldInstrs( (if IDENT:Identifier  TDS      IS                                   end _OID'' => if  IDENT TDS IS else .Instrs end) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs( (if                   TDS      IS                                   end _OID'' => if        TDS IS else .Instrs end) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs( (if IDENT:Identifier  TDS      IS         else _OID':OptionalId IS' end _OID'' => if        TDS IS else IS'     end) _IS'',  DEPTH,  M => M [ IDENT <- DEPTH ])
     rule #unfoldInstrs(if TDS IS else IS' end IS'', DEPTH, M) => if TDS #unfoldInstrs(IS, DEPTH +Int 1, M) else #unfoldInstrs(IS', DEPTH +Int 1, M) end #unfoldInstrs(IS'', DEPTH, M)
 ```
 
@@ -713,15 +713,15 @@ The same identifier can optionally be repeated at the end of the block instructi
 Another type of folded instruction is control flow blocks wrapped in parentheses, in which case the `end` keyword is omitted.
 
 ```k
-    rule #unfoldInstrs(((block ID:Identifier TDS IS)          => block ID TDS IS end) _IS', _DEPTH, _M)
-    rule #unfoldInstrs(((block               TDS IS)          => block    TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs(((block IDENT:Identifier TDS IS) => block IDENT TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs(((block                  TDS IS) => block    TDS IS end) _IS', _DEPTH, _M)
 
-    rule #unfoldInstrs(((loop ID:Identifier TDS IS)          => loop ID TDS IS end) _IS', _DEPTH, _M)
-    rule #unfoldInstrs(((loop               TDS IS)          => loop    TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs(((loop IDENT:Identifier TDS IS)  => loop IDENT TDS IS end) _IS', _DEPTH, _M)
+    rule #unfoldInstrs(((loop                  TDS IS)  => loop    TDS IS end) _IS', _DEPTH, _M)
 
-    rule #unfoldInstrs(((if OID:OptionalId TDS COND (then IS)) => (if OID TDS COND (then IS) (else .Instrs))) _IS'', _DEPTH, _M)
-    rule #unfoldInstrs(((if ID:Identifier  TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if ID TDS IS else IS' end IS''), _DEPTH, _M)
-    rule #unfoldInstrs(((if                TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if    TDS IS else IS' end IS''), _DEPTH, _M)
+    rule #unfoldInstrs(((if OID:OptionalId    TDS COND (then IS))                         => (if OID TDS COND (then IS) (else .Instrs))) _IS'', _DEPTH, _M)
+    rule #unfoldInstrs(((if IDENT:Identifier  TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if IDENT TDS IS else IS' end IS''), _DEPTH, _M)
+    rule #unfoldInstrs(((if                   TDS COND (then IS) (else IS')) IS'':Instrs) => (COND appendInstrs if       TDS IS else IS' end IS''), _DEPTH, _M)
 ```
 
 #### Structuring Modules
@@ -870,8 +870,8 @@ Since we do not have polymorphic functions available, we define one function per
 #### Imports
 
 ```k
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type ID:Identifier)            ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
-    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type ID:Identifier) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[ID]}:>Int))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type IDENT:Identifier)            ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[IDENT]}:>Int))
+    rule #t2aDefn<ctx(... typeIds: TIDS)>(( import MOD NAME (func   OID:OptionalId (type IDENT:Identifier) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: {TIDS[IDENT]}:>Int))
     rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int)                  ))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
     rule #t2aDefn<_                     >(( import MOD NAME (func   OID:OptionalId (type IDX:Int      ) _:TypeDecls))) => #import(MOD, NAME, #funcDesc(... id: OID:OptionalId, type: IDX))
 
@@ -903,8 +903,8 @@ After unfolding, each type use in a function starts with an explicit reference t
  // -----------------------------------------------------------
     rule typeUse2typeIdx( (type IDX ) _:TypeDecls => (type IDX), _TIDS )
 
-    rule typeUse2typeIdx( (type ID:Identifier )  ,  TIDS ) => {TIDS [ ID ]}:>Int
-    rule typeUse2typeIdx( (type IDX:Int       )  , _TIDS ) => IDX
+    rule typeUse2typeIdx( (type IDENT:Identifier )  ,  TIDS ) => {TIDS [ IDENT ]}:>Int
+    rule typeUse2typeIdx( (type IDX:Int          )  , _TIDS ) => IDX
 
     syntax VecType ::=  locals2vectype ( LocalDecls            ) [function]
                      | #locals2vectype ( LocalDecls , ValTypes ) [function]
@@ -939,8 +939,8 @@ After unfolding, each type use in a function starts with an explicit reference t
 #### Start Function
 
 ```k
-    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start ID:Identifier )) => #start({FIDS[ID]}:>Int)
-      requires ID in_keys(FIDS)
+    rule #t2aDefn<ctx(... funcIds: FIDS)>(( start IDENT:Identifier )) => #start({FIDS[IDENT]}:>Int)
+      requires IDENT in_keys(FIDS)
     rule #t2aDefn<_>(( start I:Int )) => #start(I)
 ```
 
@@ -975,17 +975,17 @@ Wasm currently supports only one table, so we do not need to resolve any identif
     rule #t2aElemList<C>(_TYP:RefValType ES) => #t2aElemExprs<C>(ES)
      
     rule #t2aElemSegment<_C>(.ElemSegment) => .ListRef
-    rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(ID:Index ES) 
-      => ListItem(<funcref> idxLookup(FIDS, ID)) #t2aElemSegment<C>(ES)
-      requires validIdx(FIDS, ID)
+    rule #t2aElemSegment<ctx(... funcIds: FIDS) #as C>(IDENT:Index ES) 
+      => ListItem(<funcref> idxLookup(FIDS, IDENT)) #t2aElemSegment<C>(ES)
+      requires validIdx(FIDS, IDENT)
 
     rule #t2aElemExprs<C>(E:ElemExpr ES:ElemExprs)
       => ListItem(#t2aElemExpr<C>(E)) #t2aElemExprs<C>(ES)
     rule #t2aElemExprs<_>(.ElemExprs) => .ListRef
     
-    rule #t2aElemExpr<ctx(... funcIds: FIDS)>((item ref.func ID)) 
-      => <funcref> idxLookup(FIDS, ID)
-      requires validIdx(FIDS, ID)
+    rule #t2aElemExpr<ctx(... funcIds: FIDS)>((item ref.func IDENT)) 
+      => <funcref> idxLookup(FIDS, IDENT)
+      requires validIdx(FIDS, IDENT)
 
     rule #t2aElemExpr<_>((item ref.null func))   => <funcref> null
     rule #t2aElemExpr<_>((item ref.null extern)) => <externref> null
@@ -1004,8 +1004,8 @@ Wasm currently supports only one memory, so we do not need to resolve any identi
 #### Exports
 
 ```k
-    rule #t2aDefn<ctx(...   funcIds: IDS)>(( export ENAME ( func   ID:Identifier ) )) => #export(ENAME, {IDS[ID]}:>Int) requires ID in_keys(IDS)
-    rule #t2aDefn<ctx(... globalIds: IDS)>(( export ENAME ( global ID:Identifier ) )) => #export(ENAME, {IDS[ID]}:>Int) requires ID in_keys(IDS)
+    rule #t2aDefn<ctx(...   funcIds: IDS)>(( export ENAME ( func   IDENT:Identifier ) )) => #export(ENAME, {IDS[IDENT]}:>Int) requires IDENT in_keys(IDS)
+    rule #t2aDefn<ctx(... globalIds: IDS)>(( export ENAME ( global IDENT:Identifier ) )) => #export(ENAME, {IDS[IDENT]}:>Int) requires IDENT in_keys(IDS)
     rule #t2aDefn<_>(( export ENAME ( func   I:Int ) )) => #export(ENAME, I)
     rule #t2aDefn<_>(( export ENAME ( global I:Int ) )) => #export(ENAME, I)
 
@@ -1038,8 +1038,8 @@ Wasm currently supports only one memory, so we do not need to resolve any identi
     rule #t2aInstr<_>(br_table ES) => #br_table(elemSegment2Ints(ES))
     rule #t2aInstr<_>(return)      => return
 
-    rule #t2aInstr<ctx(... funcIds: FIDS)>(call ID:Identifier) => #call({FIDS[ID]}:>Int)
-      requires ID in_keys(FIDS)
+    rule #t2aInstr<ctx(... funcIds: FIDS)>(call IDENT:Identifier) => #call({FIDS[IDENT]}:>Int)
+      requires IDENT in_keys(FIDS)
     rule #t2aInstr<_>                     (call I:Int)         => #call(I)
 
     rule #t2aInstr<_>(call_indirect TX:Int TU) => #call_indirect(TX, TU)
@@ -1058,21 +1058,21 @@ Wasm currently supports only one memory, so we do not need to resolve any identi
 #### Variable Instructions
 
 ```k
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get ID:Identifier) => #local.get({LIDS[ID]}:>Int)
-      requires ID in_keys(LIDS)
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set ID:Identifier) => #local.set({LIDS[ID]}:>Int)
-      requires ID in_keys(LIDS)
-    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee ID:Identifier) => #local.tee({LIDS[ID]}:>Int)
-      requires ID in_keys(LIDS)
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.get IDENT:Identifier) => #local.get({LIDS[IDENT]}:>Int)
+      requires IDENT in_keys(LIDS)
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.set IDENT:Identifier) => #local.set({LIDS[IDENT]}:>Int)
+      requires IDENT in_keys(LIDS)
+    rule #t2aInstr<ctx(... localIds: LIDS)>(local.tee IDENT:Identifier) => #local.tee({LIDS[IDENT]}:>Int)
+      requires IDENT in_keys(LIDS)
 
     rule #t2aInstr<_>(local.get I:Int) => #local.get(I)
     rule #t2aInstr<_>(local.set I:Int) => #local.set(I)
     rule #t2aInstr<_>(local.tee I:Int) => #local.tee(I)
 
-    rule #t2aInstr<ctx(... globalIds: GIDS)>(global.get ID:Identifier) => #global.get({GIDS[ID]}:>Int)
-      requires ID in_keys(GIDS)
-    rule #t2aInstr<ctx(... globalIds: GIDS)>(global.set ID:Identifier) => #global.set({GIDS[ID]}:>Int)
-      requires ID in_keys(GIDS)
+    rule #t2aInstr<ctx(... globalIds: GIDS)>(global.get IDENT:Identifier) => #global.get({GIDS[IDENT]}:>Int)
+      requires IDENT in_keys(GIDS)
+    rule #t2aInstr<ctx(... globalIds: GIDS)>(global.set IDENT:Identifier) => #global.set({GIDS[IDENT]}:>Int)
+      requires IDENT in_keys(GIDS)
 
     rule #t2aInstr<_>(global.get I:Int) => #global.get(I)
     rule #t2aInstr<_>(global.set I:Int) => #global.set(I)
@@ -1222,7 +1222,7 @@ The following are helper functions for gathering and updating context.
  // ----------------------------------------------------------
     rule #idcTypes(DEFNS) => #idcTypesAux(DEFNS, 0, .Map)
 
-    rule #idcTypesAux((type ID:Identifier (func _)) TS => TS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcTypesAux((type IDENT:Identifier (func _)) TS => TS, IDX => IDX +Int 1,  ACC => ACC [ IDENT <- IDX ]) requires notBool IDENT in_keys(ACC)
     rule #idcTypesAux((type               (func _)) TS => TS, IDX => IDX +Int 1, _ACC)
     rule #idcTypesAux(.Defns, _, ACC) => ACC
 
@@ -1231,11 +1231,11 @@ The following are helper functions for gathering and updating context.
  // -----------------------------------------------------------------
     rule #idcFuncs(IMPORTS, DEFNS) => #idcFuncsAux(IMPORTS, DEFNS, 0, .Map)
 
-    rule #idcFuncsAux((import _ _ (func ID:Identifier _)) IS => IS, _FS,  IDX => IDX +Int 1,  ACC => ACC [ ID <-IDX ]) requires notBool ID in_keys(ACC)
-    rule #idcFuncsAux((import _ _ (func               _)) IS => IS, _FS,  IDX => IDX +Int 1, _ACC)
-    rule #idcFuncsAux(_I                                  IS => IS, _FS, _IDX              , _ACC) [owise]
+    rule #idcFuncsAux((import _ _ (func IDENT:Identifier _)) IS => IS, _FS,  IDX => IDX +Int 1,  ACC => ACC [ IDENT <-IDX ]) requires notBool IDENT in_keys(ACC)
+    rule #idcFuncsAux((import _ _ (func                  _)) IS => IS, _FS,  IDX => IDX +Int 1, _ACC)
+    rule #idcFuncsAux(_I                                     IS => IS, _FS, _IDX              , _ACC) [owise]
 
-    rule #idcFuncsAux(.Defns, (func ID:Identifier _) FS => FS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcFuncsAux(.Defns, (func IDENT:Identifier _) FS => FS, IDX => IDX +Int 1,  ACC => ACC [ IDENT <- IDX ]) requires notBool IDENT in_keys(ACC)
     rule #idcFuncsAux(.Defns, (func      _:FuncSpec) FS => FS, IDX => IDX +Int 1, _ACC)
     rule #idcFuncsAux(.Defns, .Defns, _, ACC) => ACC
 
@@ -1312,11 +1312,11 @@ The following are helper functions for gathering and updating context.
  // -------------------------------------------------------------------
     rule #idcGlobals(IMPORTS, DEFNS) => #idcGlobalsAux(IMPORTS, DEFNS, 0, .Map)
 
-    rule #idcGlobalsAux((import _ _ (global ID:Identifier _)) IS => IS, _GS,  IDX => IDX +Int 1,  ACC => ACC [ ID <-IDX ]) requires notBool ID in_keys(ACC)
-    rule #idcGlobalsAux((import _ _ (global               _)) IS => IS, _GS,  IDX => IDX +Int 1, _ACC)
-    rule #idcGlobalsAux(_I                                    IS => IS, _GS, _IDX              , _ACC) [owise]
+    rule #idcGlobalsAux((import _ _ (global IDENT:Identifier _)) IS => IS, _GS,  IDX => IDX +Int 1,  ACC => ACC [ IDENT <-IDX ]) requires notBool IDENT in_keys(ACC)
+    rule #idcGlobalsAux((import _ _ (global                  _)) IS => IS, _GS,  IDX => IDX +Int 1, _ACC)
+    rule #idcGlobalsAux(_I                                       IS => IS, _GS, _IDX              , _ACC) [owise]
 
-    rule #idcGlobalsAux(.Defns, #global(... metadata: ID:Identifier) GS => GS, IDX => IDX +Int 1,  ACC => ACC [ ID <- IDX ]) requires notBool ID in_keys(ACC)
+    rule #idcGlobalsAux(.Defns, #global(... metadata: IDENT:Identifier) GS => GS, IDX => IDX +Int 1,  ACC => ACC [ IDENT <- IDX ]) requires notBool IDENT in_keys(ACC)
     rule #idcGlobalsAux(.Defns, #global(...) GS => GS, IDX => IDX +Int 1, _ACC) [owise]
     rule #idcGlobalsAux(.Defns, .Defns, _, ACC) => ACC
 
@@ -1329,13 +1329,13 @@ The following are helper functions for gathering and updating context.
     rule #ids2Idxs(N, (type _)    , LDS) => #ids2Idxs(N, .TypeDecls, LDS)
     rule #ids2Idxs(N, (type _) TDS, LDS) => #ids2Idxs(N, TDS       , LDS)
 
-    rule #ids2Idxs(N, (param ID:Identifier _) TDS, LDS)
-      => (ID |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
+    rule #ids2Idxs(N, (param IDENT:Identifier _) TDS, LDS)
+      => (IDENT |-> N) #ids2Idxs(N +Int 1, TDS, LDS)
     rule #ids2Idxs(N,  (param _)   TDS, LDS) => #ids2Idxs(N +Int 1, TDS, LDS)
     rule #ids2Idxs(N, _TD:TypeDecl TDS, LDS) => #ids2Idxs(N       , TDS, LDS) [owise]
 
-    rule #ids2Idxs(N, .TypeDecls, local ID:Identifier _ LDS:LocalDecls)
-      => (ID |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
+    rule #ids2Idxs(N, .TypeDecls, local IDENT:Identifier _ LDS:LocalDecls)
+      => (IDENT |-> N) #ids2Idxs(N +Int 1, .TypeDecls, LDS)
     rule #ids2Idxs(N, .TypeDecls, _LD:LocalDecl LDS) => #ids2Idxs(N +Int 1, .TypeDecls, LDS) [owise]
 ```
 

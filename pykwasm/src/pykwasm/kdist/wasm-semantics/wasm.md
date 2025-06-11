@@ -1327,11 +1327,11 @@ The importing and exporting parts of specifications are dealt with in the respec
       requires MIN <=Int #maxTableSize()
        andBool MAX <=Int #maxTableSize()
 
-    rule <instrs> alloctable(ID, MIN, MAX, TYP) => .K ... </instrs>
+    rule <instrs> alloctable(IDENT, MIN, MAX, TYP) => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <tabIds> IDS => #saveId(IDS, ID, NEXTIDX) </tabIds>
+           <tabIds> IDS => #saveId(IDS, IDENT, NEXTIDX) </tabIds>
            <tabAddrs> ADDRS => ADDRS [ NEXTIDX <- NEXTADDR] </tabAddrs>
            <nextTabIdx> NEXTIDX => NEXTIDX +Int 1 </nextTabIdx>
            ...
@@ -1373,11 +1373,11 @@ The importing and exporting parts of specifications are dealt with in the respec
       requires MIN <=Int #maxMemorySize()
        andBool MAX <=Int #maxMemorySize()
 
-    rule <instrs> allocmemory(ID, MIN, MAX) => .K ... </instrs>
+    rule <instrs> allocmemory(IDENT, MIN, MAX) => .K ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
            <modIdx> CUR </modIdx>
-           <memIds> IDS => #saveId(IDS, ID, 0) </memIds>
+           <memIds> IDS => #saveId(IDS, IDENT, 0) </memIds>
            <memAddrs> .Map => (0 |-> NEXTADDR) </memAddrs>
            ...
          </moduleInst>

@@ -211,8 +211,8 @@ We allow 2 kinds of actions:
     rule <instrs> ( invoke ENAME:WasmString .Instrs ) => invoke CUR ENAME ... </instrs>
          <curModIdx> CUR </curModIdx>
 
-    rule <instrs> ( invoke ID:Identifier ENAME:WasmString .Instrs ) => invoke MODIDX ENAME ... </instrs>
-         <moduleIds> ... ID |-> MODIDX ... </moduleIds>
+    rule <instrs> ( invoke IDENT:Identifier ENAME:WasmString .Instrs ) => invoke MODIDX ENAME ... </instrs>
+         <moduleIds> ... IDENT |-> MODIDX ... </moduleIds>
 
     rule <instrs> invoke MODIDX:Int ENAME:WasmString => ( invoke FUNCADDRS {{ IDX }} orDefault -1 ):Instr ... </instrs>
          <moduleInst>
@@ -254,8 +254,8 @@ We will reference modules by name in imports.
          <nextModuleIdx> NEXT </nextModuleIdx>
       requires NEXT >Int 0
 
-    rule <instrs> ( register S ID:Identifier ) => ( register S IDX ) ... </instrs>
-         <moduleIds> ... ID |-> IDX ... </moduleIds>
+    rule <instrs> ( register S IDENT:Identifier ) => ( register S IDX ) ... </instrs>
+         <moduleIds> ... IDENT |-> IDX ... </moduleIds>
 
     rule <instrs> ( register S:WasmString IDX:Int ) => .K ... </instrs>
          <moduleRegistry> ... .Map => S |-> IDX ... </moduleRegistry>
