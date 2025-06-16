@@ -6,7 +6,7 @@
     nixpkgs.follows = "rv-nix-tools/nixpkgs";
 
 
-    k-framework.url = "github:runtimeverification/k/v7.1.265";
+    k-framework.url = "github:runtimeverification/k/v7.1.268";
     k-framework.inputs.nixpkgs.follows = "nixpkgs";
 
     flake-utils.follows = "k-framework/flake-utils";
