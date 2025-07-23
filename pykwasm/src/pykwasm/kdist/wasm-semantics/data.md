@@ -277,11 +277,11 @@ This rule handles adding an `OptionalId` as a map key, but only when it is a pro
     syntax Map  ::= #saveId    (Map, OptionalId, Int) [function, total]
     syntax Bool ::= #canSaveId (Map, OptionalId)      [function, total]
  // -------------------------------------------------------
-    rule #saveId (MAP, ID:OptionalId, _)   => MAP             requires notBool isIdentifier(ID)
-    rule #saveId (MAP, ID:Identifier, IDX) => MAP [ID <- IDX]
+    rule #saveId (MAP, IDENT:OptionalId, _)   => MAP             requires notBool isIdentifier(IDENT)
+    rule #saveId (MAP, IDENT:Identifier, IDX) => MAP [IDENT <- IDX]
 
-    rule #canSaveId (_,   ID:OptionalId) => true                     requires notBool isIdentifier(ID)
-    rule #canSaveId (MAP, ID:Identifier) => notBool ID in_keys(MAP)
+    rule #canSaveId (_,   IDENT:OptionalId) => true                     requires notBool isIdentifier(IDENT)
+    rule #canSaveId (MAP, IDENT:Identifier) => notBool IDENT in_keys(MAP)
 ```
 
 `Int` is the basic form of index, and indices always need to resolve to integers.
