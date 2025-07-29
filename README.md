@@ -18,9 +18,9 @@ Repository Structure
 
 The following files constitute the KWasm semantics:
 
--   [wasm-data.md](wasm-data.md) provides the (functional) data of WebAssembly (basic types, type constructors, and values).
--   [numeric.md](numeric.md) provides the functional rules for numeric operators.
--   [wasm.md](wasm.md) is the main KWasm semantics, containing the configuration and transition rules of WebAssembly.
+-   [wasm-data.md](pykwasm/src/pykwasm/kdist/wasm-semantics/wasm-data.md) provides the (functional) data of WebAssembly (basic types, type constructors, and values).
+-   [numeric.md](pykwasm/src/pykwasm/kdist/wasm-semantics/numeric.md) provides the functional rules for numeric operators.
+-   [wasm.md](pykwasm/src/pykwasm/kdist/wasm-semantics/wasm.md) is the main KWasm semantics, containing the configuration and transition rules of WebAssembly.
 
 These additional files extend the semantics to make the repository more useful:
 
