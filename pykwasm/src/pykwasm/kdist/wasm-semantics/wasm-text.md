@@ -3,7 +3,7 @@ WebAssembly Text Format
 
 ```k
 requires "wasm.md"
-requires "data.md"
+requires "wasm-data.md"
 
 module WASM-TEXT-SYNTAX
     imports WASM-SYNTAX

@@ -2,11 +2,11 @@ WebAssembly State and Semantics
 ===============================
 
 ```k
-requires "data.md"
-requires "data/list-int.k"
-requires "data/list-ref.k"
-requires "data/sparse-bytes.k"
-requires "data/tools.k"
+requires "wasm-data.md"
+requires "wasm-data/list-int.k"
+requires "wasm-data/list-ref.k"
+requires "wasm-data/sparse-bytes.k"
+requires "wasm-data/tools.k"
 requires "numeric.md"
 
 module WASM-SYNTAX

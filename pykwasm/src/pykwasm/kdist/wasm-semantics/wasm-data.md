@@ -2,7 +2,7 @@ WebAssembly Data
 ================
 
 ```k
-requires "data/sparse-bytes.k"
+requires "wasm-data/sparse-bytes.k"
 
 module WASM-DATA-SYNTAX
     imports WASM-DATA-COMMON-SYNTAX
