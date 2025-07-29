@@ -18,7 +18,7 @@ Repository Structure
 
 The following files constitute the KWasm semantics:
 
--   [data.md](data.md) provides the (functional) data of WebAssembly (basic types, type constructors, and values).
+-   [wasm-data.md](wasm-data.md) provides the (functional) data of WebAssembly (basic types, type constructors, and values).
 -   [numeric.md](numeric.md) provides the functional rules for numeric operators.
 -   [wasm.md](wasm.md) is the main KWasm semantics, containing the configuration and transition rules of WebAssembly.
 
