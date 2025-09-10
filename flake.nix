@@ -10,7 +10,7 @@
     k-framework.inputs.nixpkgs.follows = "nixpkgs";
 
     flake-utils.follows = "k-framework/flake-utils";
-    poetry2nix.follows = "k-framework/poetry2nix";
+    poetry2nix.url = "github:nix-community/poetry2nix";
     poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
