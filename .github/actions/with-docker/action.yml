@@ -16,8 +16,12 @@ runs:
 
       TAG=runtimeverificationinc/${CONTAINER_NAME}
       K_COMMIT=$(cat ./deps/k_release)
+      UV_VERSION=$(cat deps/uv_release)
 
-      docker build . --tag ${TAG} --build-arg K_COMMIT=${K_COMMIT}
+      docker build . \
+        --tag ${TAG} \
+        --build-arg K_COMMIT=${K_COMMIT} \
+        --build-arg UV_VERSION=$(UV_VERSION)
 
       docker run                 \
         --name ${CONTAINER_NAME} \
