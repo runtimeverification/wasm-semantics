@@ -26,7 +26,7 @@ let
         # TODO: for new projects, add your submodule directories that are not required for nix builds here!
         # e.g., `"/docs/external-computation"` with `external-computation` being a git submodule directory
         # "/docs/external-computation"
-      ] ../..
+      ] ../../pykwasm
     );
   };
 

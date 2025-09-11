@@ -5,16 +5,28 @@
     rv-nix-tools.url = "github:runtimeverification/rv-nix-tools/854d4f05ea78547d46e807b414faad64cea10ae4";
     nixpkgs.follows = "rv-nix-tools/nixpkgs";
 
+    flake-utils.url = "github:numtide/flake-utils";
 
     k-framework.url = "github:runtimeverification/k/v7.1.268";
     k-framework.inputs.nixpkgs.follows = "nixpkgs";
 
-    flake-utils.follows = "k-framework/flake-utils";
-    poetry2nix.follows = "k-framework/poetry2nix";
-    poetry2nix.inputs.nixpkgs.follows = "nixpkgs";
+    uv2nix.url = "github:pyproject-nix/uv2nix/680e2f8e637bc79b84268949d2f2b2f5e5f1d81c";
+    # stale nixpkgs is missing the alias `lib.match` -> `builtins.match`
+    # therefore point uv2nix to a patched nixpkgs, which introduces this alias
+    # this is a temporary solution until nixpkgs us up-to-date again
+    uv2nix.inputs.nixpkgs.url = "github:runtimeverification/nixpkgs/libmatch";
+    # uv2nix.inputs.nixpkgs.follows = "nixpkgs";
+    pyproject-build-systems.url = "github:pyproject-nix/build-system-pkgs/7dba6dbc73120e15b558754c26024f6c93015dd7";
+    pyproject-build-systems = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.pyproject-nix.follows = "uv2nix/pyproject-nix";
+    };
+    pyproject-nix.follows = "uv2nix/pyproject-nix";
+
   };
 
-  outputs = { self, k-framework, nixpkgs, flake-utils, rv-nix-tools, ... }@inputs:
+  outputs = { self, rv-nix-tools, nixpkgs, flake-utils, k-framework, uv2nix, pyproject-nix, pyproject-build-systems }@inputs:
     let
       overlay = (final: prev:
         let
@@ -23,8 +35,8 @@
             "flake.lock"
             ./.gitignore
           ] ./.);
-          poetry2nix = inputs.poetry2nix.lib.mkPoetry2Nix { pkgs = prev; };
           version = self.rev or "dirty";
+          pythonVer = "310";
         in {
           kwasm = prev.stdenv.mkDerivation {
             pname = "kwasm";
@@ -51,27 +63,9 @@
             '';
           };
 
-          kwasm-pyk = poetry2nix.mkPoetryApplication {
-            python = prev.python310;
-            projectDir = ./pykwasm;
-
-            overrides = poetry2nix.overrides.withDefaults
-              (finalPython: prevPython: {
-                kframework = prev.pyk-python310;
-                py-wasm = prevPython.py-wasm.overridePythonAttrs (old: {
-                  buildInputs = (old.buildInputs or [ ])
-                    ++ [ prevPython.setuptools ];
-                });
-                mypy-extensions = prevPython.mypy-extensions.overridePythonAttrs (old: {
-                  buildInputs = (old.buildInputs or [ ])
-                    ++ [ prevPython.flit-core ];
-                  patches = (old.patches or [ ]) ++ [
-                    ./nix/resources/mypy-extensions-pyproject.toml.patch
-                  ];
-                });
-              });
-
-            checkGroups = [ ];
+          kwasm-pyk = final.callPackage ./nix/kwasm-pyk {
+            inherit pyproject-nix pyproject-build-systems uv2nix;
+            python = final."python${pythonVer}";
           };
 
           kwasm-test = prev.stdenv.mkDerivation {
