@@ -56,7 +56,7 @@ jobs:
       - name: 'Update uv files'
         run: |
           K_VERSION=$(cat deps/k_release)
-          sed -i 's!    "kframework==v[0-9\.]*",!    "kframework==v'${K_VERSION}'",!'    pykwasm/pyproject.toml
+          sed -i 's!    "kframework>=[0-9\.]*",!    "kframework>='${K_VERSION}'",!'    pykwasm/pyproject.toml
           uv lock --upgrade
           git add pykwasm/ && git commit -m "pykwasm/: sync uv files ${K_VERSION}" || true
       - name: 'Update Nix flake inputs'
