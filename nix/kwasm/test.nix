@@ -29,8 +29,7 @@ stdenv.mkDerivation {
     substituteInPlace Makefile                                         \
       --replace-fail '$(TEST)'        '${kwasm}/bin/kwasm'             \
       --replace-fail '$(KDIST)'       '${kwasm-pyk}/bin/kwasm-kdist'   \
-      --replace-fail '$(SOURCE_DIR)'  '${kwasm}/wasm-semantics/source' \
-      --replace-fail '../$<'          '$<'
+      --replace-fail '$(SOURCE_DIR)'  '${kwasm}/wasm-semantics/source'
     runHook postPatch
   '';
 

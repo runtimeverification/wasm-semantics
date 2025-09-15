@@ -15,7 +15,7 @@ all: build
 # -------------------
 
 ifneq ($(NIX),1)
-UV     := uv --directory pykwasm
+UV     := uv --project pykwasm
 UV_RUN := $(UV) run --
 KDIST      := $(UV_RUN) kdist
 endif
@@ -43,28 +43,28 @@ test: test-execution test-prove
 # Generic Test Harnesses
 
 tests/%.run: tests/%
-	$(TEST) run ../$< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	$(TEST) run $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out tests/success-$(TEST_CONCRETE_BACKEND).out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 
 tests/%.run-term: tests/%
-	$(TEST) run ../$< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
+	$(TEST) run $< > tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	grep --after-context=2 "<instrs>" tests/$*.$(TEST_CONCRETE_BACKEND)-out > tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 	$(CHECK) tests/$*.$(TEST_CONCRETE_BACKEND)-out-term tests/success-k.out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out
 	rm -rf tests/$*.$(TEST_CONCRETE_BACKEND)-out-term
 
 tests/%.parse: tests/%
-	K_OPTS='-Xmx16G -Xss512m' $(TEST) kast --output kore ../$< > $@-out
+	K_OPTS='-Xmx16G -Xss512m' $(TEST) kast --output kore $< > $@-out
 	rm -rf $@-out
 
 tests/%.prove: tests/%
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
-	$(TEST) prove ../$< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 5000"
+	$(TEST) prove $< kwasm-lemmas -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 5000"
 
 tests/proofs/wrc20-spec.k.prove: tests/proofs/wrc20-spec.k
 	$(eval SOURCE_DIR := $(shell $(KDIST) which wasm-semantics.source))
-	$(TEST) prove ../$< wrc20 -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
+	$(TEST) prove $< wrc20 -I $(SOURCE_DIR)/wasm-semantics -w2e --haskell-backend-command "kore-exec --smt-timeout 500"
 
 ### Execution Tests
 
