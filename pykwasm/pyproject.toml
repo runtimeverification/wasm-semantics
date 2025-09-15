@@ -22,6 +22,7 @@ wasm2kast = "pykwasm.wasm2kast:main"
 kwasm = "pykwasm.scripts.kwasm:main"
 kwasm-convert = "pykwasm.scripts.convert:main"
 kwasm-preprocess = "pykwasm.scripts.preprocessor:main"
+kwasm-kdist = "pyk.kdist.__main__:main"
 
 [project.entry-points.kdist]
 wasm-semantics = "pykwasm.kdist.plugin"

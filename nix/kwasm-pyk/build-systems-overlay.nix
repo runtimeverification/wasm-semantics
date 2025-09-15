@@ -12,6 +12,7 @@ let
   buildSystemOverrides = {
     # add dependencies here, e.g.:
     # pyperclip.setuptools = [ ];
+    py-wasm.setuptools = [ ];
   };
 in
 mapAttrs (
