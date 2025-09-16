@@ -1,3 +1,7 @@
+UV     := uv
+UV_RUN := $(UV) run --
+
+
 .PHONY: all                                                                \
         test test-execution test-simple test-prove                         \
         test-conformance test-conformance-parse test-conformance-supported \
@@ -11,28 +15,24 @@ all: build
 # -------------------
 
 ifneq ($(NIX),1)
-POETRY     := poetry -C pykwasm
-POETRY_RUN := $(POETRY) run --
-KDIST      := $(POETRY_RUN) kdist
+UV     := uv --project pykwasm
+UV_RUN := $(UV) run --
+KDIST      := $(UV_RUN) kdist
 endif
 
-.PHONY: pykwasm
-pykwasm:
-	$(POETRY) install
-
 .PHONY: build
-build: pykwasm
-	$(KDIST) -v build -j3
+build:
+	$(KDIST) -v build -j3 wasm-semantics.*
 
 .PHONY: clean
-clean: pykwasm
+clean:
 	$(KDIST) clean
 
 
 # Testing
 # -------
 
-TEST  := $(POETRY_RUN) kwasm
+TEST  := $(UV_RUN) kwasm
 CHECK := git --no-pager diff --no-index --ignore-all-space -R
 
 TEST_CONCRETE_BACKEND := llvm
