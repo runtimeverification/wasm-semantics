@@ -41,10 +41,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
-      - name: 'Install Poetry'
-        uses: Gr1N/setup-poetry@v8
-      - name: 'Build pykwasm'
-        run: poetry -C pykwasm install
+      - name: 'Get uv release'
+        id: uv_release
+        run: |
+          echo uv_version=$(cat deps/uv_release) >> "${GITHUB_OUTPUT}"
+      - name: 'Install uv'
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ steps.uv_release.outputs.uv_version }}
       - name: 'Run code quality checks'
         run: make -C pykwasm check
       - name: 'Run pyupgrade'
@@ -66,10 +70,8 @@ jobs:
         uses: ./.github/actions/with-docker
         with:
           container-name: kwasm-ci-conformance-${{ github.sha }}
-      - name: 'Build pykwasm'
-        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} poetry -C pykwasm install
-      - name: 'Build LLVM definition'
-        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} poetry -C pykwasm run kdist -v build wasm-semantics.llvm
+      - name: 'Build KWasm definitions'
+        run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make build
       - name: 'Run integration tests'
         run: docker exec -u user kwasm-ci-conformance-${GITHUB_SHA} make -C pykwasm cov-integration
       - name: 'Run simple tests'
@@ -97,10 +99,8 @@ jobs:
         uses: ./.github/actions/with-docker
         with:
           container-name: kwasm-ci-prove-${{ github.sha }}
-      - name: 'Build pykwasm'
-        run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} poetry -C pykwasm install
-      - name: 'Build Haskell definitions'
-        run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} poetry -C pykwasm run kdist -v build wasm-semantics.{kwasm-lemmas,wrc20} -j2
+      - name: 'Build KWasm definitions'
+        run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} make build
       - name: 'Run prover tests'
         run: docker exec -u user kwasm-ci-prove-${GITHUB_SHA} make -j6 test-prove
       - name: 'Tear down Docker'
