@@ -53,7 +53,7 @@ jobs:
         if: ${{ contains(matrix.os, 'macos') }}
         run: brew install bash
       - name: 'Build and cache KWASM'
-        uses: workflow/nix-shell-action@v3.0.3
+        uses: workflow/nix-shell-action@v3.4.0
         env:
           GC_DONT_GC: 1
           CACHIX_AUTH_TOKEN: '${{ secrets.CACHIX_PUBLIC_TOKEN }}'
