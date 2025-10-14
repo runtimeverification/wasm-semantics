@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pykwasm"
-version = "0.1.137"
+version = "0.1.138"
 description = ""
 readme = "README.md"
 requires-python = "~=3.10"
