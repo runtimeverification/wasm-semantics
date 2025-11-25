@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pykwasm"
-version = "0.1.141"
+version = "0.1.142"
 description = ""
 readme = "README.md"
 requires-python = "~=3.10"
 dependencies = [
-    "kframework>=7.1.288",
+    "kframework>=7.1.289",
     "py-wasm@git+https://github.com/runtimeverification/py-wasm.git@0.2.1"
 ]
 
