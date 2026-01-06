@@ -9,7 +9,7 @@ description = ""
 readme = "README.md"
 requires-python = "~=3.10"
 dependencies = [
-    "kframework>=7.1.289",
+    "kframework>=7.1.310",
     "py-wasm@git+https://github.com/runtimeverification/py-wasm.git@0.2.1"
 ]
 
