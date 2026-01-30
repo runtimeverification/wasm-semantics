@@ -594,7 +594,7 @@ wheels = [
 
 [[package]]
 name = "kframework"
-version = "7.1.312"
+version = "7.1.313"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "coloredlogs" },
@@ -611,9 +611,9 @@ dependencies = [
     { name = "tomli" },
     { name = "xdg-base-dirs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/05/3d8f05e4f5f94155c901f0d237c533bc3b3f0d2ec161fa7bc3ba851cabef/kframework-7.1.312.tar.gz", hash = "sha256:4828f4d95c0014876cce4b417e62f475ab76e79304b4e78490a76a982943bc3b", size = 243274, upload-time = "2026-01-30T13:11:10.761Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a7/18/6d044d1b811af1ad389e660e3983951fa0cf8bce024a1758b28fcb0fb6f0/kframework-7.1.313.tar.gz", hash = "sha256:0f789bb179b1a84736c8bf4ece81e34c4df43157bffdf54c97a41d84aa87757f", size = 243276, upload-time = "2026-01-30T16:00:44.161Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/71/fe3895adefcad83bca767a0f8b7b2759b8a95db5ee413f682b6b2a91b888/kframework-7.1.312-py3-none-any.whl", hash = "sha256:dcb43fdd486fa0a8871dbba9ee2367d66a314c7dddbe8cbc9033bce01d765c5a", size = 294467, upload-time = "2026-01-30T13:11:09.047Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/63/f6e4ed348d77fe72b6bfd285cb3a100843e316c4c035203fe283b9800aa3/kframework-7.1.313-py3-none-any.whl", hash = "sha256:488e3983d3e62b277f0505e0ccc4b470c73d1e68a9c7ce327f2f6881fcce115a", size = 294467, upload-time = "2026-01-30T16:00:42.823Z" },
 ]
 
 [[package]]
@@ -1083,7 +1083,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "kframework", specifier = ">=7.1.312" },
+    { name = "kframework", specifier = ">=7.1.313" },
     { name = "py-wasm", git = "https://github.com/runtimeverification/py-wasm.git?rev=0.2.1" },
 ]
 
@@ -1377,7 +1377,7 @@ wheels = [
 
 [[package]]
 name = "textual"
-version = "7.4.0"
+version = "7.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py", extra = ["linkify"] },
@@ -1387,9 +1387,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/8d/2fbd6b8652f4cabf9cb0852d7af1aa45b6cad32d0f50735856e8f9e41719/textual-7.4.0.tar.gz", hash = "sha256:1a9598e485492f9a8f033c7ec5e59528df3ab0742fda925681acf78b0fb210de", size = 1592252, upload-time = "2026-01-25T19:57:04.624Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/38/7d169a765993efde5095c70a668bf4f5831bb7ac099e932f2783e9b71abf/textual-7.5.0.tar.gz", hash = "sha256:c730cba1e3d704e8f1ca915b6a3af01451e3bca380114baacf6abf87e9dac8b6", size = 1592319, upload-time = "2026-01-30T13:46:39.881Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/9c/4169ccffed6d53f78e3175eae0cd649990071c6e24b6ad8830812ebab726/textual-7.4.0-py3-none-any.whl", hash = "sha256:41a066cae649654d4ecfe53b8316f5737c0042d1693ce50690b769a7840780ac", size = 717985, upload-time = "2026-01-25T19:57:02.966Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/78/96ddb99933e11d91bc6e05edae23d2687e44213066bcbaca338898c73c47/textual-7.5.0-py3-none-any.whl", hash = "sha256:849dfee9d705eab3b2d07b33152b7bd74fb1f5056e002873cc448bce500c6374", size = 718164, upload-time = "2026-01-30T13:46:37.635Z" },
 ]
 
 [[package]]
