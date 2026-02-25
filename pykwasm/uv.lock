@@ -1055,7 +1055,7 @@ wheels = [
 
 [[package]]
 name = "pykwasm"
-version = "0.1.146"
+version = "0.1.148"
 source = { editable = "." }
 dependencies = [
     { name = "kframework" },
@@ -1083,7 +1083,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "kframework", specifier = ">=7.1.313" },
+    { name = "kframework", specifier = ">=7.1.304" },
     { name = "py-wasm", git = "https://github.com/runtimeverification/py-wasm.git?rev=f894c1f7361a681cd663a528d837ffb6a993633e" },
 ]
 
