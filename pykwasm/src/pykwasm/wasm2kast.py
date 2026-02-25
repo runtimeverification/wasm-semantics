@@ -341,7 +341,14 @@ def instr(i):
         return a.TABLE_SIZE(i.tableidx)
     if isinstance(i, instructions.TableFill):
         return a.TABLE_FILL(i.tableidx)
-
+    if isinstance(i, instructions.MemoryCopy):
+        # TODO add memory index arguments when multi-memory is implemented
+        # a.MEMORY_COPY(i.x1, i.x2)
+        return a.MEMORY_COPY
+    if isinstance(i, instructions.MemoryFill):
+        # TODO add memory index arguments when multi-memory is implemented
+        # a.MEMORY_FILL(i.x1)
+        return a.MEMORY_FILL
     # Catch all for operations without direct arguments.
     return eval('a.' + i.opcode.name)
 

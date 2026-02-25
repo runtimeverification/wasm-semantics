@@ -155,6 +155,8 @@
         i64.store32 offset=10        drop
         memory.size
         memory.grow
+        memory.copy
+        memory.fill
         ;; --
         unreachable
 
