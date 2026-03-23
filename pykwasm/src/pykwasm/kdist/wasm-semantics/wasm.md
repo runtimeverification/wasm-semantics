@@ -495,8 +495,8 @@ It simply executes the block then records a label with an empty continuation.
     syntax BlockMetaData ::= OptionalInt
  // ------------------------------------
 
-    syntax HelperInstr ::= #block(VecType, Instrs, BlockMetaData) [symbol(aBlock)]
- // ------------------------------------------------------------------------------
+    syntax Instr ::= #block(VecType, Instrs, BlockMetaData) [symbol(aBlock)]
+ // ------------------------------------------------------------------------
     rule <instrs> #block(VECTYP, IS, _) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
@@ -507,16 +507,16 @@ Upon reaching it, the label itself is executed.
 Note that, unlike in the WebAssembly specification document, we do not need the special "context" operator here because the value and instruction stacks are separate.
 
 ```k
-    syntax HelperInstr ::= #br( Int ) [symbol(aBr)]
- // -----------------------------------------------
+    syntax Instr ::= #br( Int ) [symbol(aBr)]
+ // -----------------------------------------
     rule <instrs> #br(_IDX) ~> (_S:Stmt => .K) ... </instrs>
     rule <instrs> #br(0   ) ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
     rule <instrs> #br(N:Int) ~> _L:Label => #br(N -Int 1) ... </instrs>
       requires N >Int 0
 
-    syntax HelperInstr ::= "#br_if" "(" Int ")" [symbol(aBr_if)]
- // ------------------------------------------------------------
+    syntax Instr ::= "#br_if" "(" Int ")" [symbol(aBr_if)]
+ // ------------------------------------------------------
     rule <instrs> #br_if(IDX) => #br(IDX) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
@@ -524,8 +524,8 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires VAL  ==Int 0
 
-    syntax HelperInstr ::= "#br_table" "(" Ints ")" [symbol(aBr_table)]
- // -------------------------------------------------------------------
+    syntax Instr ::= "#br_table" "(" Ints ")" [symbol(aBr_table)]
+ // -------------------------------------------------------------
     rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenInts(ES) -Int 1))) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires 0 <=Int VAL
@@ -539,8 +539,8 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax HelperInstr ::= #if( VecType, then : Instrs, else : Instrs, blockInfo: BlockMetaData) [symbol(aIf)]
- // ----------------------------------------------------------------------------------------------------------
+    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs, blockInfo: BlockMetaData) [symbol(aIf)]
+ // ----------------------------------------------------------------------------------------------------
     rule <instrs> #if(VECTYP, IS, _, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
@@ -549,8 +549,8 @@ Finally, we have the conditional and loop instructions.
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL ==Int 0
 
-    syntax HelperInstr ::= #loop(VecType, Instrs, BlockMetaData) [symbol(aLoop)]
- // ----------------------------------------------------------------------------
+    syntax Instr ::= #loop(VecType, Instrs, BlockMetaData) [symbol(aLoop)]
+ // ----------------------------------------------------------------------
     rule <instrs> #loop(VECTYP, IS, BLOCKMETA) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS, BLOCKMETA) } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
@@ -579,10 +579,10 @@ The various `init_local` variants assist in setting up the `locals` cell.
 The `*_local` instructions are defined here.
 
 ```k
-    syntax HelperInstr ::= "#local.get" "(" Int ")" [symbol(aLocal.get)]
-                         | "#local.set" "(" Int ")" [symbol(aLocal.set)]
-                         | "#local.tee" "(" Int ")" [symbol(aLocal.tee)]
- // --------------------------------------------------------------------
+    syntax Instr ::= "#local.get" "(" Int ")" [symbol(aLocal.get)]
+                   | "#local.set" "(" Int ")" [symbol(aLocal.set)]
+                   | "#local.tee" "(" Int ")" [symbol(aLocal.tee)]
+ // --------------------------------------------------------------
     rule <instrs> #local.get(I) => .K ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... I |-> VALUE ... </locals>
@@ -647,9 +647,9 @@ The importing and exporting parts of specifications are dealt with in the respec
 The `get` and `set` instructions read and write globals.
 
 ```k
-    syntax HelperInstr ::= "#global.get" "(" Int ")" [symbol(aGlobal.get)]
-                         | "#global.set" "(" Int ")" [symbol(aGlobal.set)]
- // ----------------------------------------------------------------------
+    syntax Instr ::= "#global.get" "(" Int ")" [symbol(aGlobal.get)]
+                   | "#global.set" "(" Int ")" [symbol(aGlobal.set)]
+ // ----------------------------------------------------------------
     rule <instrs> #global.get(IDX) => .K ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
@@ -688,15 +688,15 @@ The `get` and `set` instructions read and write globals.
 - [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#table-instructions)
 
 ```k
-    syntax HelperInstr ::= "#table.get"  "(" Int ")"          [symbol(aTable.get)]
-                         | "#table.set"  "(" Int ")"          [symbol(aTable.set)]
-                         | "#table.size" "(" Int ")"          [symbol(aTable.size)]
-                         | "#table.grow" "(" Int ")"          [symbol(aTable.grow)]
-                         | "#table.fill" "(" Int ")"          [symbol(aTable.fill)]
-                         | "#table.copy" "(" Int "," Int ")"  [symbol(aTable.copy)]
-                         | "#table.init" "(" Int "," Int ")"  [symbol(aTable.init)]
-                         | "#elem.drop"  "(" Int ")"          [symbol(aElem.drop)]
- // ------------------------------------------------------------------------------
+    syntax Instr ::= "#table.get"  "(" Int ")"          [symbol(aTable.get)]
+                   | "#table.set"  "(" Int ")"          [symbol(aTable.set)]
+                   | "#table.size" "(" Int ")"          [symbol(aTable.size)]
+                   | "#table.grow" "(" Int ")"          [symbol(aTable.grow)]
+                   | "#table.fill" "(" Int ")"          [symbol(aTable.fill)]
+                   | "#table.copy" "(" Int "," Int ")"  [symbol(aTable.copy)]
+                   | "#table.init" "(" Int "," Int ")"  [symbol(aTable.init)]
+                   | "#elem.drop"  "(" Int ")"          [symbol(aElem.drop)]
+ // ------------------------------------------------------------------------
 ```
 
 #### `table.get`
@@ -1036,9 +1036,9 @@ The `get` and `set` instructions read and write globals.
 - [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#reference-instructions)
 
 ```k
-    syntax HelperInstr ::= "#ref.is_null"          [symbol(aRef.is_null)]
-                         | "#ref.func" "(" Int ")" [symbol(aRef.func)]
- // ------------------------------------------------------------------
+    syntax Instr ::= "#ref.is_null"              [symbol(aRef.is_null)]
+                   | "#ref.func" "(" Int ")"     [symbol(aRef.func)]
+ // ----------------------------------------------------------------
 
     rule [ref.null.func]:
         <instrs> ref.null func => <funcref> null ... </instrs>
@@ -1234,8 +1234,8 @@ The `#take` function will return the parameter stack in the reversed order, then
 `call funcidx` and `call_indirect tableidx typeuse` are 2 control instructions that invoke a function in the current frame.
 
 ```k
-    syntax HelperInstr ::= #call(Int) [symbol(aCall)]
- // -------------------------------------------------
+    syntax Instr ::= #call(Int)     [symbol(aCall)]
+ // -----------------------------------------------
     rule <instrs> #call(IDX) => ( invoke FUNCADDRS {{ IDX }} orDefault 0 ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1247,8 +1247,8 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```
 
 ```k
-    syntax HelperInstr ::= "#call_indirect" "(" Int "," TypeUse ")" [symbol(aCall_indirect)]
- // ----------------------------------------------------------------------------------------
+    syntax Instr ::= "#call_indirect" "(" Int "," TypeUse ")"     [symbol(aCall_indirect)]
+ // --------------------------------------------------------------------------------------
 ```
 
 TODO: This is kept for compatibility with the text format.
@@ -1410,8 +1410,8 @@ The value is encoded as bytes and stored at the "effective address", which is th
 [Store Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-n-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
-    syntax HelperInstr ::= #store(ValType, StoreOp, offset : Int) [symbol(aStore)]
-                         | IValType "." StoreOp Int Int
+    syntax Instr ::= #store(ValType, StoreOp, offset : Int)     [symbol(aStore)]
+    syntax HelperInstr ::= IValType "." StoreOp Int Int
  //                      | FValType "." StoreOp Int Float
                          | "store" "{" IWidth Int Number "}"
                          | "store" "{" IWidth Int Number Int "}"
@@ -1463,8 +1463,8 @@ Sort `Signedness` is defined in module `BYTES`.
 [Load Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-n-mathsf-xref-syntax-instructions-syntax-sx-mathit-sx-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
-    syntax HelperInstr ::= #load(ValType, LoadOp, offset : Int) [symbol(aLoad)]
-                         | "load" "{" IValType IWidth Int Signedness"}"
+    syntax Instr ::= #load(ValType, LoadOp, offset : Int)     [symbol(aLoad)]
+    syntax HelperInstr ::= "load" "{" IValType IWidth Int Signedness"}"
                          | "load" "{" IValType IWidth Int Signedness Int"}"
                          | "load" "{" IValType IWidth Int Signedness SparseBytes"}"
                          | IValType "." LoadOp Int
