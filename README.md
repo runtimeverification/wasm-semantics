@@ -1,11 +1,6 @@
 KWasm: Semantics of WebAssembly in K
 ====================================
 
-### Want to Support KWasm Development?
-[Contribute to our Gitcoin Grant.](https://gitcoin.co/grants/592/kewasm-and-kwasm)
-
----
-
 This repository presents the formal semantics of [WebAssembly].
 KWasm is a mature and production-ready semantics for WebAssembly, actively developed and maintained since 2019.
 
