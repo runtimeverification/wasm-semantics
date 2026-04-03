@@ -165,10 +165,13 @@ Internal Syntax
 module WASM-INTERNAL-SYNTAX
     imports WASM-DATA-INTERNAL-SYNTAX
 
-    syntax Instr ::=  "init_local"  Int Val
-                   |  "init_locals"     ValStack
-                   | "#init_locals" Int ValStack
- // --------------------------------------------
+    syntax Instr ::= HelperInstr
+ // ----------------------------
+
+    syntax HelperInstr ::=  "init_local"  Int Val
+                         |  "init_locals"     ValStack
+                         | "#init_locals" Int ValStack
+ // --------------------------------------------------
 
     syntax Int ::= #pageSize()      [function, total]
     syntax Int ::= #maxMemorySize() [function, total]
@@ -493,7 +496,7 @@ It simply executes the block then records a label with an empty continuation.
  // ------------------------------------
 
     syntax Instr ::= #block(VecType, Instrs, BlockMetaData) [symbol(aBlock)]
- // --------------------------------------------------------------------------------
+ // ------------------------------------------------------------------------
     rule <instrs> #block(VECTYP, IS, _) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
@@ -505,7 +508,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 
 ```k
     syntax Instr ::= #br( Int ) [symbol(aBr)]
- // -------------------------------------------------
+ // -----------------------------------------
     rule <instrs> #br(_IDX) ~> (_S:Stmt => .K) ... </instrs>
     rule <instrs> #br(0   ) ~> label [ TYPES ] { IS } VALSTACK' => sequenceInstrs(IS) ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
@@ -513,7 +516,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
       requires N >Int 0
 
     syntax Instr ::= "#br_if" "(" Int ")" [symbol(aBr_if)]
- // --------------------------------------------------------------
+ // ------------------------------------------------------
     rule <instrs> #br_if(IDX) => #br(IDX) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
@@ -522,7 +525,7 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
       requires VAL  ==Int 0
 
     syntax Instr ::= "#br_table" "(" Ints ")" [symbol(aBr_table)]
- // ---------------------------------------------------------------------
+ // -------------------------------------------------------------
     rule <instrs> #br_table(ES) => #br(#getInts(ES, minInt(VAL, #lenInts(ES) -Int 1))) ... </instrs>
          <valstack> <i32> VAL : VALSTACK => VALSTACK </valstack>
       requires 0 <=Int VAL
@@ -537,7 +540,7 @@ Finally, we have the conditional and loop instructions.
 
 ```k
     syntax Instr ::= #if( VecType, then : Instrs, else : Instrs, blockInfo: BlockMetaData) [symbol(aIf)]
- // ------------------------------------------------------------------------------------------------------------
+ // ----------------------------------------------------------------------------------------------------
     rule <instrs> #if(VECTYP, IS, _, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
@@ -547,7 +550,7 @@ Finally, we have the conditional and loop instructions.
       requires VAL ==Int 0
 
     syntax Instr ::= #loop(VecType, Instrs, BlockMetaData) [symbol(aLoop)]
- // ------------------------------------------------------------------------------
+ // ----------------------------------------------------------------------
     rule <instrs> #loop(VECTYP, IS, BLOCKMETA) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS, BLOCKMETA) } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
@@ -579,7 +582,7 @@ The `*_local` instructions are defined here.
     syntax Instr ::= "#local.get" "(" Int ")" [symbol(aLocal.get)]
                    | "#local.set" "(" Int ")" [symbol(aLocal.set)]
                    | "#local.tee" "(" Int ")" [symbol(aLocal.tee)]
- // ----------------------------------------------------------------------
+ // --------------------------------------------------------------
     rule <instrs> #local.get(I) => .K ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <locals> ... I |-> VALUE ... </locals>
@@ -646,7 +649,7 @@ The `get` and `set` instructions read and write globals.
 ```k
     syntax Instr ::= "#global.get" "(" Int ")" [symbol(aGlobal.get)]
                    | "#global.set" "(" Int ")" [symbol(aGlobal.set)]
- // ------------------------------------------------------------------------
+ // ----------------------------------------------------------------
     rule <instrs> #global.get(IDX) => .K ... </instrs>
          <valstack> VALSTACK => VALUE : VALSTACK </valstack>
          <curModIdx> CUR </curModIdx>
@@ -693,7 +696,7 @@ The `get` and `set` instructions read and write globals.
                    | "#table.copy" "(" Int "," Int ")"  [symbol(aTable.copy)]
                    | "#table.init" "(" Int "," Int ")"  [symbol(aTable.init)]
                    | "#elem.drop"  "(" Int ")"          [symbol(aElem.drop)]
- // ---------------------------------------------------------------------------------
+ // ------------------------------------------------------------------------
 ```
 
 #### `table.get`
@@ -709,7 +712,8 @@ The `get` and `set` instructions read and write globals.
           ...
         </moduleInst>
 
-    syntax Instr ::= #tableGet( addr: Int, index: Int)
+    syntax HelperInstr ::= #tableGet( addr: Int, index: Int)
+ // --------------------------------------------------------
     rule [tableGet]:
         <instrs> #tableGet( TADDR, I) => getRefOrNull(TDATA, I) ... </instrs>
         <tabInst>
@@ -734,8 +738,8 @@ The `get` and `set` instructions read and write globals.
 #### `table.set`
 
 ```k
-    syntax Instr ::= #tableSet( addr: Int , val: RefVal , idx: Int )
- // -----------------------------------------
+    syntax HelperInstr ::= #tableSet( addr: Int , val: RefVal , idx: Int )
+ // ----------------------------------------------------------------------
     rule [table.set]:
         <instrs> #table.set( TID )
               => #tableSet(TADDR, VAL, I) ...
@@ -851,8 +855,8 @@ The `get` and `set` instructions read and write globals.
           ...
         </moduleInst>
 
-    syntax Instr ::= #tableFill(Int, Int, RefVal, Int)
- // ------------------------------------------------------
+    syntax HelperInstr ::= #tableFill(Int, Int, RefVal, Int)
+ // --------------------------------------------------------
     rule [tableFill-zero]:
         <instrs> #tableFill(_, 0, _, _) => .K ... </instrs>
     
@@ -900,8 +904,8 @@ The `get` and `set` instructions read and write globals.
           ...
         </moduleInst>
 
-    syntax Instr ::= #tableCopy(tix: Int, tiy: Int, n: Int, s: Int, d: Int)
- // -----------------------------------------------------------------------
+    syntax HelperInstr ::= #tableCopy(tix: Int, tiy: Int, n: Int, s: Int, d: Int)
+ // -----------------------------------------------------------------------------
     rule [tableCopy-zero]:
         <instrs> #tableCopy(_, _, 0, _, _) => .K ... </instrs>
 
@@ -956,8 +960,8 @@ The `get` and `set` instructions read and write globals.
           ...
         </elemInst>
 
-    syntax Instr ::= #tableInit(tidx: Int, n: Int, d: Int, es: ListRef)
- // ----------------------------------------------------
+    syntax HelperInstr ::= #tableInit(tidx: Int, n: Int, d: Int, es: ListRef)
+ // -------------------------------------------------------------------------
     rule [tableInit-done]:
         <instrs> #tableInit(_, 0, _, _) => .K ... </instrs>
 
@@ -994,8 +998,8 @@ The `get` and `set` instructions read and write globals.
 #### Misc
 
 ```k
-    syntax Instr ::= #tableCheckSizeGTE(addr: Int, n: Int)
- // -------------------------------------------------------
+    syntax HelperInstr ::= #tableCheckSizeGTE(addr: Int, n: Int)
+ // ------------------------------------------------------------
     rule [tableCheckSizeGTE-pass]:
         <instrs> #tableCheckSizeGTE(ADDR, N) => .K ... </instrs>
         <tabInst>
@@ -1010,8 +1014,8 @@ The `get` and `set` instructions read and write globals.
       [owise]
 
 
-    syntax Instr ::= #elemCheckSizeGTE(addr: Int, n: Int)
- // -------------------------------------------------------
+    syntax HelperInstr ::= #elemCheckSizeGTE(addr: Int, n: Int)
+ // -----------------------------------------------------------
     rule [elemCheckSizeGTE-pass]:
         <instrs> #elemCheckSizeGTE(ADDR, N) => .K ... </instrs>
         <elemInst>
@@ -1032,9 +1036,9 @@ The `get` and `set` instructions read and write globals.
 - [Execution](https://webassembly.github.io/spec/core/exec/instructions.html#reference-instructions)
 
 ```k
-    syntax Instr ::= "#ref.is_null"               [symbol(aRef.is_null)]
-                   | "#ref.func" "(" Int ")"    [symbol(aRef.func)]
- // ------------------------------------------------------------------------
+    syntax Instr ::= "#ref.is_null"              [symbol(aRef.is_null)]
+                   | "#ref.func" "(" Int ")"     [symbol(aRef.func)]
+ // ----------------------------------------------------------------
 
     rule [ref.null.func]:
         <instrs> ref.null func => <funcref> null ... </instrs>
@@ -1230,8 +1234,8 @@ The `#take` function will return the parameter stack in the reversed order, then
 `call funcidx` and `call_indirect tableidx typeuse` are 2 control instructions that invoke a function in the current frame.
 
 ```k
-    syntax Instr ::= #call(Int) [symbol(aCall)]
- // ---------------------------------------------------
+    syntax Instr ::= #call(Int)     [symbol(aCall)]
+ // -----------------------------------------------
     rule <instrs> #call(IDX) => ( invoke FUNCADDRS {{ IDX }} orDefault 0 ) ... </instrs>
          <curModIdx> CUR </curModIdx>
          <moduleInst>
@@ -1243,8 +1247,8 @@ The `#take` function will return the parameter stack in the reversed order, then
 ```
 
 ```k
-    syntax Instr ::= "#call_indirect" "(" Int "," TypeUse ")" [symbol(aCall_indirect)]
- // ------------------------------------------------------------------------------
+    syntax Instr ::= "#call_indirect" "(" Int "," TypeUse ")"     [symbol(aCall_indirect)]
+ // --------------------------------------------------------------------------------------
 ```
 
 TODO: This is kept for compatibility with the text format.
@@ -1276,8 +1280,8 @@ The types need to be inserted at the definitions level, if a previously undeclar
         </tabInst>
 
 
-    syntax Instr ::= #callIndirect(RefVal, FuncType)
- // ------------------------------------------
+    syntax HelperInstr ::= #callIndirect(RefVal, FuncType)
+ // ------------------------------------------------------
     rule [callIndirect-invoke]:
         <instrs> #callIndirect(<funcref> FADDR, ETYPE)
               => ( invoke FADDR ) ...
@@ -1406,12 +1410,12 @@ The value is encoded as bytes and stored at the "effective address", which is th
 [Store Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-store-n-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
-    syntax Instr ::= #store(ValType, StoreOp, offset : Int) [symbol(aStore)]
-                   | IValType "." StoreOp Int Int
- //                | FValType "." StoreOp Int Float
-                   | "store" "{" IWidth Int Number "}"
-                   | "store" "{" IWidth Int Number Int "}"
- // -----------------------------------------------
+    syntax Instr ::= #store(ValType, StoreOp, offset : Int)     [symbol(aStore)]
+    syntax HelperInstr ::= IValType "." StoreOp Int Int
+ //                      | FValType "." StoreOp Int Float
+                         | "store" "{" IWidth Int Number "}"
+                         | "store" "{" IWidth Int Number Int "}"
+ // ------------------------------------------------------------
     rule <instrs> #store(ITYPE:IValType, SOP, OFFSET) => ITYPE . SOP (IDX +Int OFFSET) VAL ... </instrs>
          <valstack> < ITYPE > VAL : < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
@@ -1459,12 +1463,12 @@ Sort `Signedness` is defined in module `BYTES`.
 [Load Instructions](https://webassembly.github.io/spec/core/exec/instructions.html#t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-xref-syntax-instructions-syntax-memarg-mathit-memarg-and-t-mathsf-xref-syntax-instructions-syntax-instr-memory-mathsf-load-n-mathsf-xref-syntax-instructions-syntax-sx-mathit-sx-xref-syntax-instructions-syntax-memarg-mathit-memarg)
 
 ```k
-    syntax Instr ::= #load(ValType, LoadOp, offset : Int) [symbol(aLoad)]
-                   | "load" "{" IValType IWidth Int Signedness"}"
-                   | "load" "{" IValType IWidth Int Signedness Int"}"
-                   | "load" "{" IValType IWidth Int Signedness SparseBytes"}"
-                   | IValType "." LoadOp Int
- // ----------------------------------------
+    syntax Instr ::= #load(ValType, LoadOp, offset : Int)     [symbol(aLoad)]
+    syntax HelperInstr ::= "load" "{" IValType IWidth Int Signedness"}"
+                         | "load" "{" IValType IWidth Int Signedness Int"}"
+                         | "load" "{" IValType IWidth Int Signedness SparseBytes"}"
+                         | IValType "." LoadOp Int
+ // ----------------------------------------------
     rule <instrs> #load(ITYPE:IValType, LOP, OFFSET) => ITYPE . LOP (IDX +Int OFFSET)  ... </instrs>
          <valstack> < i32 > IDX : VALSTACK => VALSTACK </valstack>
 
@@ -1538,8 +1542,8 @@ By setting the `<deterministicMemoryGrowth>` field in the configuration to `true
 [Memory Grow](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-grow)
 
 ```k
-    syntax Instr ::= "grow" Int
- // ---------------------------
+    syntax HelperInstr ::= "grow" Int
+ // ---------------------------------
     rule <instrs> memory.grow => grow N ... </instrs>
          <valstack> < i32 > N : VALSTACK => VALSTACK </valstack>
 
@@ -1598,9 +1602,9 @@ The spec states that this is really a sequence of `i32.store8` instructions, but
 [Memory Fill](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-fill)
 
 ```k
-    syntax Instr ::= "fillTrap" Int Int Int
-                   | "fill"     Int Int Int
- // ---------------------------------------
+    syntax HelperInstr ::= "fillTrap" Int Int Int
+                         | "fill"     Int Int Int
+ // ---------------------------------------------
     rule <instrs> memory.fill => fillTrap N VAL D ... </instrs>
          <valstack> < i32 > N : < i32 > VAL : < i32 > D : VALSTACK => VALSTACK </valstack>
 
@@ -1644,9 +1648,9 @@ performing a series of load and store operations as stated in the spec.
 [Memory Copy](https://webassembly.github.io/spec/core/exec/instructions.html#xref-syntax-instructions-syntax-instr-memory-mathsf-memory-copy)
 
 ```k
-    syntax Instr ::= "copyTrap" Int Int Int
-                   | "copy" Int Int Int
- // ---------------------------------------
+    syntax HelperInstr ::= "copyTrap" Int Int Int
+                         | "copy" Int Int Int
+ // -----------------------------------------
     rule <instrs> memory.copy => copyTrap N S D ... </instrs>
          <valstack> < i32 > N : < i32 > S : < i32 > D : VALSTACK => VALSTACK </valstack>
 
