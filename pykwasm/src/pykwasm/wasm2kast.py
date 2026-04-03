@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from wasm import instructions
 from wasm.datatypes import GlobalType, MemoryType, Mutability, TableType, TypeIdx, ValType, addresses
 from wasm.datatypes.element_segment import ElemModeActive, ElemModeDeclarative, ElemModePassive
+from wasm.instructions import InstructionWithPos
 from wasm.opcodes import BinaryOpcode
 from wasm.parsers import parse_module
 
@@ -141,8 +142,11 @@ def elem_mode(m: ElemMode) -> KInner:
 def elem_init(init: tuple[Iterable[BaseInstruction], ...]) -> Iterable[int | None]:
     def expr_to_int(expr: Iterable[BaseInstruction]) -> int | None:
         # 'expr' must be a constant expression consisting of a reference instruction
-        assert len(expr) == 1 or len(expr) == 2 and isinstance(expr[1], instructions.End), expr
+        assert len(expr) == 1 or len(expr) == 2 and expr[1].opcode == BinaryOpcode.END, expr
         instr = expr[0]
+
+        if isinstance(instr, InstructionWithPos):
+            instr = instr.instruction
 
         if isinstance(instr, instructions.RefFunc):
             return instr.funcidx
@@ -212,6 +216,9 @@ def instr(i):
     B = BinaryOpcode
     global block_id
     # TODO rewrite 'i.opcode == _' conditions as isinstance for better type-checking
+    if isinstance(i, InstructionWithPos):
+        inner = instr(i.instruction)
+        return a.INSTR_WITH_POS(inner, i.pos[0], i.pos[1])
     if i.opcode == B.BLOCK:
         cur_block_id = block_id
         block_id += 1

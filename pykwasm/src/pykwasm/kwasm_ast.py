@@ -189,6 +189,11 @@ def global_type(mut: KInner, valtype: KInner) -> KInner:
 # Instrs #
 ##########
 
+
+def INSTR_WITH_POS(instruction: KInner, start: int, end: int) -> KInner:
+    return KApply('aInstrWithPos', [instruction, KInt(start), KInt(end)])
+
+
 ########################
 # Control Instructions #
 ########################
