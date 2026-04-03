@@ -1762,11 +1762,14 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax DataDefn ::= #data(index : Int, offset : Instrs, data : Bytes) [symbol(aDataDefn)]
-                      | "data" "{" Int Bytes "}"
+    syntax DataDefn ::= #data(data: Bytes, mode: DataMode)              [symbol(aDataDefn)]
+    syntax DataMode ::= #active(memidx: Int, offset: Instrs)            [symbol(aDataModeActive)]
+                      | "#passive"                                      [symbol(aDataModePassive)]
  // --------------------------------------------
-    // Default to memory 0.
-    rule <instrs> #data(IDX, IS, DATA) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
+    syntax KItem ::= "data" "{" Int Bytes "}"
+
+    rule <instrs> #data(DATA, #active(IDX, IS)) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
+    rule <instrs> #data(_DATA, #passive)        => .K ... </instrs>
 
     rule <instrs> data { MEMIDX DSBYTES } => trap ... </instrs>
          <valstack> < i32 > OFFSET : _STACK </valstack>
@@ -1783,7 +1786,6 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          </memInst>
       requires OFFSET +Int lengthBytes(DSBYTES) >Int SIZE *Int #pageSize()
 
-    // For now, deal only with memory 0.
     rule <instrs> data { MEMIDX DSBYTES } => .K ... </instrs>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
@@ -1828,7 +1830,12 @@ Export
 Exports make functions, tables, memories and globals available for importing into other modules.
 
 ```k
-    syntax ExportDefn ::= #export(name : WasmString, index : Int) [symbol(aExportDefn)]
+    syntax ExportDefn ::= #export(name : WasmString, index : ExternIdx) [symbol(aExportDefn)]
+    syntax ExternIdx  ::= #externIdxFunc(Int)                           [symbol(aExternIdxFunc)]
+                        | #externIdxTable(Int)                          [symbol(aExternIdxTable)]
+                        | #externIdxMemory(Int)                         [symbol(aExternIdxMemory)]
+                        | #externIdxGlobal(Int)                         [symbol(aExternIdxGlobal)]
+                        | #externIdxTag(Int)                            [symbol(aExternIdxTag)]
     syntax Alloc ::= ExportDefn
  // ---------------------------
     rule <instrs> #export(ENAME, IDX) => .K ... </instrs>
