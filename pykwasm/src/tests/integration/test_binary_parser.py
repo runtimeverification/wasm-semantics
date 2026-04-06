@@ -106,15 +106,15 @@ def run_module(krun: KRun, parsed_module: KInner) -> Pattern:
 
 def remove_block_ids(k: KInner) -> KInner:
     match k:
-        
+
         case KApply(KLabel('aBlock'), (vec_type, instrs, _)):
             return KApply('aBlock', (vec_type, remove_block_ids(instrs), token(0)))
-        
+
         case KApply(KLabel('aIf'), (vec_type, then_instrs, else_instrs, _)):
             return KApply('aIf', (vec_type, remove_block_ids(then_instrs), remove_block_ids(else_instrs), token(0)))
-        
+
         case KApply(KLabel('aLoop'), (vec_type, instrs, _)):
             return KApply(KLabel('aLoop'), (vec_type, remove_block_ids(instrs), token(0)))
-        
+
         case _:
             return k.map_inner(remove_block_ids)

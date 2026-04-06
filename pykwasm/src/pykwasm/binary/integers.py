@@ -60,7 +60,8 @@ def u64(s: InputStream) -> int:
 def to_uninterpreted(bits: int, x: int) -> int:
     if 0 <= x:
         return x
-    return x + 2 ** bits
+    return x + 2**bits
+
 
 def parse_iint(bits: int, s: InputStream) -> int:
     i = parse_sint(bits, s)
