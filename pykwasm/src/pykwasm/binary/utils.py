@@ -1,4 +1,5 @@
-from typing import BinaryIO, Callable, TypeAlias, TypeVar
+from typing import BinaryIO, TypeAlias, TypeVar
+from collections.abc import Callable
 
 InputStream: TypeAlias = BinaryIO
 
