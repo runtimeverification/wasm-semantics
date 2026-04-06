@@ -1,11 +1,16 @@
-from typing import BinaryIO, TypeAlias, TypeVar
-from collections.abc import Callable
+from __future__ import annotations
 
-InputStream: TypeAlias = BinaryIO
+from typing import TYPE_CHECKING
 
-A = TypeVar('A')
-Parser: TypeAlias = Callable[[InputStream], A]
-NParser: TypeAlias = Callable[[int, InputStream], A]
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import TYPE_CHECKING, BinaryIO, TypeAlias, TypeVar
+
+    InputStream: TypeAlias = BinaryIO
+
+    A = TypeVar('A')
+    Parser: TypeAlias = Callable[[InputStream], A]
+    NParser: TypeAlias = Callable[[int, InputStream], A]
 
 
 def read_bytes(n: int, s: InputStream) -> bytes:
