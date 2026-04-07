@@ -217,7 +217,7 @@ We allow 2 kinds of actions:
     rule <instrs> invoke MODIDX:Int ENAME:WasmString => ( invoke FUNCADDRS {{ IDX }} orDefault -1 ):Instr ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <exports> ... ENAME |-> IDX ... </exports>
+           <exports> ... ENAME |-> #externIdxFunc( IDX ) ... </exports>
            <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
@@ -232,7 +232,7 @@ We allow 2 kinds of actions:
     rule <instrs> get MODIDX:Int NAME:WasmString => VAL ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <exports> ... NAME |-> TFIDX ... </exports>
+           <exports> ... NAME |-> #externIdxGlobal( TFIDX ) ... </exports>
            <globIds> IDS </globIds>
            <globalAddrs> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalAddrs>
            ...
@@ -321,19 +321,19 @@ The conformance tests contain imports of the `"spectest"` module.
             start: .EmptyStmts , 
             importDefns: .EmptyStmts , 
             exports: 
-                #export (... name: #token("\"global_i32\""    , "WasmStringToken") , index: 0 )  
-                #export (... name: #token("\"global_i64\""    , "WasmStringToken") , index: 1 )  
-                #export (... name: #token("\"global_f32\""    , "WasmStringToken") , index: 2 )  
-                #export (... name: #token("\"global_f64\""    , "WasmStringToken") , index: 3 )  
-                #export (... name: #token("\"table\""    , "WasmStringToken") , index: 0 )  
-                #export (... name: #token("\"memory\""    , "WasmStringToken") , index: 0 )  
-                #export (... name: #token("\"print\""    , "WasmStringToken") , index: 0 )  
-                #export (... name: #token("\"print_i32\""    , "WasmStringToken") , index: 1 )  
-                #export (... name: #token("\"print_i64\""    , "WasmStringToken") , index: 2 )  
-                #export (... name: #token("\"print_f32\""    , "WasmStringToken") , index: 3 )  
-                #export (... name: #token("\"print_f64\""    , "WasmStringToken") , index: 4 )  
-                #export (... name: #token("\"print_i32_f32\""    , "WasmStringToken") , index: 5 )  
-                #export (... name: #token("\"print_f64_f64\""    , "WasmStringToken") , index: 6 )  
+                #export (... name: #token("\"global_i32\""    , "WasmStringToken") , index: #externIdxGlobal(0) )  
+                #export (... name: #token("\"global_i64\""    , "WasmStringToken") , index: #externIdxGlobal(1) )  
+                #export (... name: #token("\"global_f32\""    , "WasmStringToken") , index: #externIdxGlobal(2) )  
+                #export (... name: #token("\"global_f64\""    , "WasmStringToken") , index: #externIdxGlobal(3) )  
+                #export (... name: #token("\"table\""         , "WasmStringToken") , index: #externIdxTable(0) )  
+                #export (... name: #token("\"memory\""        , "WasmStringToken") , index: #externIdxMemory(0) )  
+                #export (... name: #token("\"print\""         , "WasmStringToken") , index: #externIdxFunc(0) )  
+                #export (... name: #token("\"print_i32\""     , "WasmStringToken") , index: #externIdxFunc(1) )  
+                #export (... name: #token("\"print_i64\""     , "WasmStringToken") , index: #externIdxFunc(2) )  
+                #export (... name: #token("\"print_f32\""     , "WasmStringToken") , index: #externIdxFunc(3) )  
+                #export (... name: #token("\"print_f64\""     , "WasmStringToken") , index: #externIdxFunc(4) )  
+                #export (... name: #token("\"print_i32_f32\"" , "WasmStringToken") , index: #externIdxFunc(5) )  
+                #export (... name: #token("\"print_f64_f64\"" , "WasmStringToken") , index: #externIdxFunc(6) )  
                 .EmptyStmts , 
             metadata: #meta (... id:  , funcIds: .Map , filename: .String ) 
         )

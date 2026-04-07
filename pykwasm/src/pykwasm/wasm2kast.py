@@ -10,7 +10,19 @@ import sys
 from typing import TYPE_CHECKING
 
 from wasm import instructions
-from wasm.datatypes import GlobalType, MemoryType, Mutability, TableType, TypeIdx, ValType, addresses
+from wasm.datatypes import (
+    FunctionIdx,
+    GlobalIdx,
+    GlobalType,
+    MemoryIdx,
+    MemoryType,
+    Mutability,
+    TableIdx,
+    TableType,
+    TypeIdx,
+    ValType,
+    addresses,
+)
 from wasm.datatypes.element_segment import ElemModeActive, ElemModeDeclarative, ElemModePassive
 from wasm.opcodes import BinaryOpcode
 from wasm.parsers import parse_module
@@ -162,7 +174,8 @@ def elem(e: ElementSegment):
 
 def data(d: DataSegment):
     offset = instrs(d.offset)
-    return a.data(d.memory_idx, offset, d.init)
+    mode = a.datamode_active(d.memory_idx, offset)
+    return a.data(d.init, mode)
 
 
 def start(s: StartFunction):
@@ -188,7 +201,16 @@ def imp(i: Import):
 
 def export(e: Export):
     name = a.wasm_string(e.name)
-    idx = e.desc
+    if isinstance(e.desc, FunctionIdx):
+        idx = a.externidx_func(e.desc)
+    elif isinstance(e.desc, GlobalIdx):
+        idx = a.externidx_global(e.desc)
+    elif isinstance(e.desc, MemoryIdx):
+        idx = a.externidx_memory(e.desc)
+    elif isinstance(e.desc, TableIdx):
+        idx = a.externidx_table(e.desc)
+    else:
+        raise ValueError(f'Invalid extern index: {e.desc}')
     return a.export(name, idx)
 
 
@@ -227,7 +249,7 @@ def instr(i):
     if i.opcode == B.CALL:
         return a.CALL(i.function_idx)
     if i.opcode == B.CALL_INDIRECT:
-        return a.CALL_INDIRECT(i.type_idx)
+        return a.CALL_INDIRECT(i.table_idx, i.type_idx)
     if i.opcode == B.ELSE:
         raise (ValueError('ELSE opcode: should have been filtered out.'))
     if i.opcode == B.END:
@@ -321,9 +343,9 @@ def instr(i):
         return a.REF_FUNC(i.funcidx)
     if isinstance(i, instructions.RefNull):
         if i.reftype is addresses.FunctionAddress:
-            return a.REF_NULL('func')
+            return a.REF_NULL(a.HEAPTYPE_FUNC)
         if i.reftype is addresses.ExternAddress:
-            return a.REF_NULL('extern')
+            return a.REF_NULL(a.HEAPTYPE_EXTERN)
         raise ValueError(f'Unknown heap type: {i}, {i.reftype}')
     if isinstance(i, instructions.TableGet):
         return a.TABLE_GET(i.tableidx)

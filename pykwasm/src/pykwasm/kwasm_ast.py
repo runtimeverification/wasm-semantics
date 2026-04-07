@@ -53,6 +53,8 @@ GLOBAL_TYPE = 'aGlobalType'
 ELEM = 'aElemDefn'
 
 DATA = 'aDataDefn'
+DATAMODE_ACTIVE = 'aDataModeActive'
+DATAMODE_PASSIVE = 'aDataModePassive'
 
 START = 'aStartDefn'
 
@@ -164,6 +166,9 @@ externref = KApply('externref', [])
 MUT_CONST = KApply('mutConst', [])
 MUT_VAR = KApply('mutVar', [])
 
+HEAPTYPE_FUNC = KApply('func', [])
+HEAPTYPE_EXTERN = KApply('extern', [])
+
 
 def vec_type(valtypes: KInner) -> KInner:
     return KApply(VEC_TYPE, [valtypes])
@@ -173,7 +178,7 @@ def func_type(params: KInner, results: KInner) -> KInner:
     return KApply(FUNC_TYPE, [params, results])
 
 
-def limits(tup: tuple[int, int]) -> KInner:
+def limits(tup: tuple[int, int | None]) -> KInner:
     i = tup[0]
     j = tup[1]
     if j is None:
@@ -228,9 +233,9 @@ def CALL(function_idx: int) -> KInner:
     return KApply('aCall', [KInt(function_idx)])
 
 
-def CALL_INDIRECT(type_idx: int) -> KInner:
+def CALL_INDIRECT(table_idx: int, type_idx: int) -> KInner:
     type_use = KApply('aTypeUseIndex', [KInt(type_idx)])
-    return KApply('aCall_indirect', [KInt(0), type_use])
+    return KApply('aCall_indirect', [KInt(table_idx), type_use])
 
 
 ##########################
@@ -245,8 +250,8 @@ def REF_FUNC(func_idx: int) -> KInner:
 REF_IS_NULL: KInner = KApply('aRef.is_null', [])
 
 
-def REF_NULL(t: str) -> KInner:
-    return KApply('aRef.null', [KApply(t, [])])
+def REF_NULL(heaptype: KInner) -> KInner:
+    return KApply('aRef.null', [heaptype])
 
 
 ##########################
@@ -626,11 +631,11 @@ def global_desc(global_type: KInner, id: KInner = EMPTY_ID) -> KInner:
     return KApply(GLOBAL_DESC, [id, global_type])
 
 
-def table_desc(lim: tuple[int, int], id: KInner = EMPTY_ID) -> KInner:
+def table_desc(lim: tuple[int, int | None], id: KInner = EMPTY_ID) -> KInner:
     return KApply(TABLE_DESC, [id, limits(lim)])
 
 
-def memory_desc(lim: tuple[int, int], id: KInner = EMPTY_ID) -> KInner:
+def memory_desc(lim: tuple[int, int | None], id: KInner = EMPTY_ID) -> KInner:
     return KApply(MEMORY_DESC, [id, limits(lim)])
 
 
@@ -647,11 +652,11 @@ def func(type: KInner, locals: KInner, body: KInner, metadata: KInner = EMPTY_FU
     return KApply(FUNC, [type, locals, body, metadata])
 
 
-def table(lim: tuple[int, int], typ: KInner, metadata: KInner = EMPTY_ID) -> KInner:
+def table(lim: tuple[int, int | None], typ: KInner, metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(TABLE, [limits(lim), typ, metadata])
 
 
-def memory(lim: tuple[int, int], metadata: KInner = EMPTY_ID) -> KInner:
+def memory(lim: tuple[int, int | None], metadata: KInner = EMPTY_ID) -> KInner:
     return KApply(MEMORY, [limits(lim), metadata])
 
 
@@ -675,8 +680,16 @@ def elem(typ: KInner, elem_mode: KInner, init: Iterable[int | None], metadata: K
     return KApply(ELEM, [typ, refs(init), elem_mode, metadata])
 
 
-def data(memory_idx: int, offset: KInner, data: bytes) -> KInner:
-    return KApply(DATA, [KInt(memory_idx), offset, KBytes(data)])
+def data(bs: bytes, mode: KInner) -> KInner:
+    return KApply(DATA, [KBytes(bs), mode])
+
+
+def datamode_active(memidx: int, offset: KInner) -> KInner:
+    return KApply(DATAMODE_ACTIVE, [KInt(memidx), offset])
+
+
+def datamode_passive() -> KInner:
+    return KApply(DATAMODE_PASSIVE, [])
 
 
 def start(start_idx: int) -> KInner:
@@ -687,8 +700,28 @@ def imp(mod_name: KInner, name: KInner, import_desc: KInner) -> KInner:
     return KApply(IMPORT, [mod_name, name, import_desc])
 
 
-def export(name: KInner, index: int) -> KInner:
-    return KApply(EXPORT, [name, KInt(index)])
+def export(name: KInner, index: KInner) -> KInner:
+    return KApply(EXPORT, [name, index])
+
+
+def externidx_func(i: int) -> KInner:
+    return KApply('aExternIdxFunc', [KInt(i)])
+
+
+def externidx_table(i: int) -> KInner:
+    return KApply('aExternIdxTable', [KInt(i)])
+
+
+def externidx_memory(i: int) -> KInner:
+    return KApply('aExternIdxMemory', [KInt(i)])
+
+
+def externidx_global(i: int) -> KInner:
+    return KApply('aExternIdxGlobal', [KInt(i)])
+
+
+def externidx_tag(i: int) -> KInner:
+    return KApply('aExternIdxTag', [KInt(i)])
 
 
 def module_metadata(mid: None = None, fids: None = None, filename: str | None = None) -> KInner:

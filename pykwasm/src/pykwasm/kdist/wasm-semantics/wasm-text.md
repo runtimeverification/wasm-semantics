@@ -998,19 +998,19 @@ Wasm currently supports only one table, so we do not need to resolve any identif
 Wasm currently supports only one memory, so we do not need to resolve any identifiers.
 
 ```k
-    rule #t2aDefn<C>(( data _:Index (offset IS) DS )) => #data(0, #t2aInstrs<C>(IS), #DS2Bytes(DS))
+    rule #t2aDefn<C>(( data _:Index (offset IS) DS )) => #data(#DS2Bytes(DS), #active(0, #t2aInstrs<C>(IS)))
 ```
 
 #### Exports
 
 ```k
-    rule #t2aDefn<ctx(...   funcIds: IDS)>(( export ENAME ( func   IDENT:Identifier ) )) => #export(ENAME, {IDS[IDENT]}:>Int) requires IDENT in_keys(IDS)
-    rule #t2aDefn<ctx(... globalIds: IDS)>(( export ENAME ( global IDENT:Identifier ) )) => #export(ENAME, {IDS[IDENT]}:>Int) requires IDENT in_keys(IDS)
-    rule #t2aDefn<_>(( export ENAME ( func   I:Int ) )) => #export(ENAME, I)
-    rule #t2aDefn<_>(( export ENAME ( global I:Int ) )) => #export(ENAME, I)
+    rule #t2aDefn<ctx(...   funcIds: IDS)>(( export ENAME ( func   IDENT:Identifier ) )) => #export(ENAME, #externIdxFunc({IDS[IDENT]}:>Int)) requires IDENT in_keys(IDS)
+    rule #t2aDefn<ctx(... globalIds: IDS)>(( export ENAME ( global IDENT:Identifier ) )) => #export(ENAME, #externIdxGlobal({IDS[IDENT]}:>Int)) requires IDENT in_keys(IDS)
+    rule #t2aDefn<_>(( export ENAME ( func   I:Int ) )) => #export(ENAME, #externIdxFunc(I))
+    rule #t2aDefn<_>(( export ENAME ( global I:Int ) )) => #export(ENAME, #externIdxGlobal(I))
 
-    rule #t2aDefn<_>(( export ENAME ( table   _ ) )) => #export(ENAME, 0)
-    rule #t2aDefn<_>(( export ENAME ( memory  _ ) )) => #export(ENAME, 0)
+    rule #t2aDefn<_>(( export ENAME ( table   _ ) )) => #export(ENAME, #externIdxTable(0))
+    rule #t2aDefn<_>(( export ENAME ( memory  _ ) )) => #export(ENAME, #externIdxMemory(0))
 ```
 
 #### Other Definitions
