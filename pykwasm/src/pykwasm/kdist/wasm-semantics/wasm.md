@@ -213,7 +213,7 @@ module WASM
         <moduleInstances>
           <moduleInst multiplicity="*" type="Map">
             <modIdx>      0            </modIdx>
-            <exports>     .Map         </exports>
+            <exports>     .Map         </exports> // WasmString -> ExternIdx
             <types>       .Map         </types>
             <nextTypeIdx> 0            </nextTypeIdx>
             <funcAddrs>   .ListInt     </funcAddrs>
@@ -1872,7 +1872,7 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <funcAddrs> FS2 </funcAddrs>
-           <exports>   ... NAME |-> IDX ... </exports>
+           <exports>   ... NAME |-> #externIdxFunc( IDX ) ... </exports>
            ...
          </moduleInst>
       requires isListIndex(IDX, FS2)
@@ -1911,7 +1911,7 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <tabIds> IDS' </tabIds>
            <tabAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </tabAddrs>
-           <exports>  ... NAME |-> TFIDX                        ... </exports>
+           <exports>  ... NAME |-> #externIdxTable( TFIDX )     ... </exports>
            ...
          </moduleInst>
          <tabInst>
@@ -1935,7 +1935,7 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
            <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
-           <exports>  ... NAME |-> TFIDX                        ... </exports>
+           <exports>  ... NAME |-> #externIdxMemory( TFIDX )    ... </exports>
            ...
          </moduleInst>
          <memInst>
@@ -1960,7 +1960,7 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <globIds> IDS' </globIds>
            <globalAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalAddrs>
-           <exports>     ... NAME |-> TFIDX                        ... </exports>
+           <exports>     ... NAME |-> #externIdxGlobal( TFIDX )    ... </exports>
            ...
          </moduleInst>
          <globalInst>

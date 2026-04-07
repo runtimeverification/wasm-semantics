@@ -217,7 +217,7 @@ We allow 2 kinds of actions:
     rule <instrs> invoke MODIDX:Int ENAME:WasmString => ( invoke FUNCADDRS {{ IDX }} orDefault -1 ):Instr ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <exports> ... ENAME |-> IDX ... </exports>
+           <exports> ... ENAME |-> #externIdxFunc( IDX ) ... </exports>
            <funcAddrs> FUNCADDRS </funcAddrs>
            ...
          </moduleInst>
@@ -232,7 +232,7 @@ We allow 2 kinds of actions:
     rule <instrs> get MODIDX:Int NAME:WasmString => VAL ... </instrs>
          <moduleInst>
            <modIdx> MODIDX </modIdx>
-           <exports> ... NAME |-> TFIDX ... </exports>
+           <exports> ... NAME |-> #externIdxGlobal( TFIDX ) ... </exports>
            <globIds> IDS </globIds>
            <globalAddrs> ... #ContextLookup(IDS, TFIDX) |-> ADDR ... </globalAddrs>
            ...
