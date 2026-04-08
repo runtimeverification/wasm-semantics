@@ -1008,8 +1008,8 @@ wheels = [
 
 [[package]]
 name = "py-wasm"
-version = "0.2.0"
-source = { git = "https://github.com/runtimeverification/py-wasm.git?rev=bytecode-location#694d3af05a39beae5edd837a431e64fd9f69d5f0" }
+version = "0.3.0"
+source = { git = "https://github.com/runtimeverification/py-wasm.git?rev=0.3.0#07677b120f40b86d5b7839e2dde42889967dcfce" }
 dependencies = [
     { name = "cytoolz", marker = "implementation_name == 'cpython'" },
     { name = "mypy-extensions" },
@@ -1084,7 +1084,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "kframework", specifier = ">=7.1.313" },
-    { name = "py-wasm", git = "https://github.com/runtimeverification/py-wasm.git?rev=bytecode-location" },
+    { name = "py-wasm", git = "https://github.com/runtimeverification/py-wasm.git?rev=0.3.0" },
 ]
 
 [package.metadata.requires-dev]

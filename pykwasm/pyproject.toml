@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = "~=3.10"
 dependencies = [
     "kframework>=7.1.313",
-    "py-wasm@git+https://github.com/runtimeverification/py-wasm.git@bytecode-location"
+    "py-wasm@git+https://github.com/runtimeverification/py-wasm.git@0.3.0"
 ]
 
 [[project.authors]]
