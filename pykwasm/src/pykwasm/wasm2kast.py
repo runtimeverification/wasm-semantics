@@ -218,7 +218,7 @@ def instr(i):
     # TODO rewrite 'i.opcode == _' conditions as isinstance for better type-checking
     if isinstance(i, InstructionWithPos):
         inner = instr(i.instruction)
-        return a.INSTR_WITH_POS(inner, i.pos[0], i.pos[1])
+        return a.INSTR_WITH_POS(inner, i.offset, i.length)
     if i.opcode == B.BLOCK:
         cur_block_id = block_id
         block_id += 1
