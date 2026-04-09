@@ -332,6 +332,21 @@ Instructions
     rule sequenceInstrs(I IS   ) => I ~> sequenceInstrs(IS)
 ```
 
+### Position-annotated instruction
+
+Helper wrapper to attach source position metadata to instructions for tracing/debugging.
+`offset` is **0-based** and indicates the starting byte position of the instruction in the original Wasm bytecode.
+`length` is the number of bytes the instruction spans.
+
+This constructor has no semantic effect and its execution simply unwraps the annotated instruction.
+The wrapper exists only for tracing and must not interfere with semantics.
+
+```k
+    syntax Instr ::= #instrWithPos(inner: Instr, offset: Int, length: Int)     [symbol(aInstrWithPos)]
+ // ---------------------------------------------------------------------------
+    rule <instrs> #instrWithPos(I, _, _) => I ... </instrs>
+```
+
 ### Traps
 
 `trap` is the error mechanism of Wasm.
