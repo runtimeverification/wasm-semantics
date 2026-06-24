@@ -28,6 +28,13 @@ def instr_seq(terminator: int, s: InputStream) -> list[KInner]:
 
 
 def instr(s: InputStream) -> KInner:
+    offset = s.tell()
+    i = _instr(s)
+    length = s.tell() - offset
+    return wast.INSTR_WITH_POS(i, offset, length)
+
+
+def _instr(s: InputStream) -> KInner:
     def blocktype(s: InputStream) -> KInner:
         if peek_byte(s) == 0x40:
             skip(1, s)

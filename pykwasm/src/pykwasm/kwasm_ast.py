@@ -195,8 +195,8 @@ def global_type(mut: KInner, valtype: KInner) -> KInner:
 ##########
 
 
-def INSTR_WITH_POS(instruction: KInner, start: int, end: int) -> KInner:
-    return KApply('aInstrWithPos', [instruction, KInt(start), KInt(end)])
+def INSTR_WITH_POS(instruction: KInner, offset: int, length: int) -> KInner:
+    return KApply('aInstrWithPos', [instruction, KInt(offset), KInt(length)])
 
 
 ########################
