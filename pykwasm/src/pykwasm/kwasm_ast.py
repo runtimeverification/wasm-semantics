@@ -207,16 +207,16 @@ NOP = KApply('aNop', [])
 UNREACHABLE = KApply('aUnreachable', [])
 
 
-def BLOCK(vec_type: KInner, instrs: KInner, block_info: KInner) -> KInner:
-    return KApply('aBlock', [vec_type, instrs, block_info])
+def BLOCK(vec_type: KInner, instrs: KInner) -> KInner:
+    return KApply('aBlock', [vec_type, instrs])
 
 
-def IF(vec_type: KInner, then_instrs: KInner, else_instrs: KInner, block_info: KInner) -> KInner:
-    return KApply('aIf', [vec_type, then_instrs, else_instrs, block_info])
+def IF(vec_type: KInner, then_instrs: KInner, else_instrs: KInner) -> KInner:
+    return KApply('aIf', [vec_type, then_instrs, else_instrs])
 
 
-def LOOP(vec_type: KInner, instrs: KInner, block_info: KInner) -> KInner:
-    return KApply('aLoop', [vec_type, instrs, block_info])
+def LOOP(vec_type: KInner, instrs: KInner) -> KInner:
+    return KApply('aLoop', [vec_type, instrs])
 
 
 RETURN = KApply('aReturn', [])

@@ -89,18 +89,16 @@ def _instr(s: InputStream) -> KInner:
         case 0x02:
             bt = blocktype(s)
             ins = instr_seq(0x0B, s)
-            return wast.BLOCK(bt, wast.instrs(ins), wast.KInt(0))  # TODO either track block ids or deprecate them
+            return wast.BLOCK(bt, wast.instrs(ins))
         case 0x03:
             bt = blocktype(s)
             ins = instr_seq(0x0B, s)
-            return wast.LOOP(bt, wast.instrs(ins), wast.KInt(0))  # TODO either track block ids or deprecate them
+            return wast.LOOP(bt, wast.instrs(ins))
         case 0x04:
             bt = blocktype(s)
             in1 = instr_seq(0x05, s)
             in2 = instr_seq(0x0B, s)
-            return wast.IF(
-                bt, wast.instrs(in1), wast.instrs(in2), wast.KInt(0)
-            )  # TODO either track block ids or deprecate them
+            return wast.IF(bt, wast.instrs(in1), wast.instrs(in2))
         case 0x0C:
             l = labelidx(s)
             return wast.BR(l)

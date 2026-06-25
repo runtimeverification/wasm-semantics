@@ -507,12 +507,9 @@ It simply executes the block then records a label with an empty continuation.
     rule <instrs> label [ TYPES ] { _ } VALSTACK' => .K ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax BlockMetaData ::= OptionalInt
- // ------------------------------------
-
-    syntax Instr ::= #block(VecType, Instrs, BlockMetaData) [symbol(aBlock)]
- // ------------------------------------------------------------------------
-    rule <instrs> #block(VECTYP, IS, _) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
+    syntax Instr ::= #block(VecType, Instrs) [symbol(aBlock)]
+ // ---------------------------------------------------------
+    rule <instrs> #block(VECTYP, IS) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -554,19 +551,19 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs, blockInfo: BlockMetaData) [symbol(aIf)]
- // ----------------------------------------------------------------------------------------------------
-    rule <instrs> #if(VECTYP, IS, _, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
+    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs) [symbol(aIf)]
+ // --------------------------------------------------------------------------
+    rule <instrs> #if(VECTYP, IS, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
 
-    rule <instrs> #if(VECTYP, _, IS, _) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
+    rule <instrs> #if(VECTYP, _, IS) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL ==Int 0
 
-    syntax Instr ::= #loop(VecType, Instrs, BlockMetaData) [symbol(aLoop)]
- // ----------------------------------------------------------------------
-    rule <instrs> #loop(VECTYP, IS, BLOCKMETA) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS, BLOCKMETA) } VALSTACK ... </instrs>
+    syntax Instr ::= #loop(VecType, Instrs) [symbol(aLoop)]
+ // --------------------------------------------------------
+    rule <instrs> #loop(VECTYP, IS) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS) } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -1223,7 +1220,7 @@ The `#take` function will return the parameter stack in the reversed order, then
  // -------------------------------------
     rule <instrs> ( invoke FADDR )
                => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
-               ~> #block([TRANGE], INSTRS, .Int)
+               ~> #block([TRANGE], INSTRS)
                ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL
                ...
          </instrs>
