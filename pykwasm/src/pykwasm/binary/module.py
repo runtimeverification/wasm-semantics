@@ -167,13 +167,18 @@ def elemsec(s: InputStream) -> KInner:
     def elem_init(init: list[list[KInner]]) -> list[int | None]:
         def expr_to_int(expr: list[KInner]) -> int | None:
             # 'expr' must be a constant expression consisting of a reference instruction
-            match expr:
-                case [KApply(KLabel('aRef.func'), (KToken(sfuncidx, KSort('Int')),))]:
+            if len(expr) != 1:
+                raise WasmParseError(f'Expected a constant reference instruction as elem initializer, got {expr}')
+            instr = expr[0]
+            if isinstance(instr, KApply) and instr.label == KLabel('aInstrWithPos'):
+                instr = instr.args[0]
+            match instr:
+                case KApply(KLabel('aRef.func'), (KToken(sfuncidx, KSort('Int')),)):
                     return int(sfuncidx)
-                case [KApply(KLabel('aRef.null'), _)]:
+                case KApply(KLabel('aRef.null'), _):
                     return None
                 case _:
-                    raise WasmParseError(f'Expected a constant reference instruction as elem initializer, got {expr}')
+                    raise WasmParseError(f'Expected a constant reference instruction as elem initializer, got {instr}')
 
         return [expr_to_int(e) for e in init]
 
