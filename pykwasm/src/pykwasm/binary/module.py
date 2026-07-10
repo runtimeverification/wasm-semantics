@@ -328,6 +328,13 @@ def parse_module(s: InputStream) -> KInner:
 
     customs()
 
+    try:
+        peek_byte(s)
+    except WasmEOFError:
+        pass
+    else:
+        raise WasmParseError('Unexpected data after end of module')
+
     functions = [
         wast.func(
             wast.KInt(typ_idx),

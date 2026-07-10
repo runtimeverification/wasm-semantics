@@ -192,6 +192,22 @@ class TestCustomSections:
         assert defns_len(exports) == 1
 
 
+class TestTrailingData:
+    def test_empty_module_parses(self) -> None:
+        parse_module(stream(MAGIC + VERSION))
+
+    def test_trailing_garbage_rejected(self) -> None:
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + b'\xff\xff\xff'))
+
+    def test_trailing_garbage_after_sections_rejected(self) -> None:
+        # trailing byte doesn't match any expected section id, and isn't a custom section (id 0) either,
+        # so it must be caught by the final EOF check rather than any individual `section()` call.
+        type_section = section(1, uleb128(1) + bytes([0x60]) + uleb128(0) + uleb128(0))
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + type_section + b'\xff'))
+
+
 def unwrap_instr(k: KApply) -> KApply:
     """Helper: strip the `aInstrWithPos` position wrapper added by `instr()`."""
     assert k.label.name == 'aInstrWithPos'
