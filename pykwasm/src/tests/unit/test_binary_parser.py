@@ -9,6 +9,7 @@ from pyk.kast.inner import KApply
 
 from pykwasm import kwasm_ast as wast
 from pykwasm.binary import floats, integers
+from pykwasm.binary.instructions import instr
 from pykwasm.binary.module import MAGIC, VERSION, parse_module
 from pykwasm.binary.types import limits
 from pykwasm.binary.utils import WasmEOFError, WasmParseError
@@ -189,3 +190,34 @@ class TestCustomSections:
         assert defns_len(types) == 1
         assert defns_len(funcs) == 1
         assert defns_len(exports) == 1
+
+
+def unwrap_instr(k: KApply) -> KApply:
+    """Helper: strip the `aInstrWithPos` position wrapper added by `instr()`."""
+    assert k.label.name == 'aInstrWithPos'
+    inner = k.args[0]
+    assert isinstance(inner, KApply)
+    return inner
+
+
+class TestInstructions:
+    # non-zero, multi-byte memidx values plus a trailing sentinel byte prove the parser
+    # consumes exactly the memidx operands, not just a fixed number of bytes that
+    # happens to work for the single-byte/zero case
+    @pytest.mark.parametrize('dst_memidx, src_memidx', [(0, 0), (300, 65536)], ids=['zero', 'multi_byte'])
+    def test_memory_copy(self, dst_memidx: int, src_memidx: int) -> None:
+        # 0xFC 10 dst_memidx src_memidx
+        s = stream(bytes([0xFC]) + uleb128(10) + uleb128(dst_memidx) + uleb128(src_memidx) + b'\x01')
+        i = instr(s)
+        assert isinstance(i, KApply)
+        assert unwrap_instr(i) == wast.MEMORY_COPY
+        assert s.read(1) == b'\x01'
+
+    @pytest.mark.parametrize('memidx', [0, 300], ids=['zero', 'multi_byte'])
+    def test_memory_fill(self, memidx: int) -> None:
+        # 0xFC 11 memidx
+        s = stream(bytes([0xFC]) + uleb128(11) + uleb128(memidx) + b'\x01')
+        i = instr(s)
+        assert isinstance(i, KApply)
+        assert unwrap_instr(i) == wast.MEMORY_FILL
+        assert s.read(1) == b'\x01'

@@ -243,6 +243,15 @@ def _instr(s: InputStream) -> KInner:
             # TODO use memory index
             _x = memidx(s)  # noqa 841
             return wast.MEMORY_GROW
+        case 0xFC if additional_value == 10:
+            # TODO use memory index
+            _x1 = memidx(s)  # noqa 841
+            _x2 = memidx(s)  # noqa 841
+            return wast.MEMORY_COPY
+        case 0xFC if additional_value == 11:
+            # TODO use memory index
+            _x = memidx(s)  # noqa 841
+            return wast.MEMORY_FILL
 
         # Reference instructions
         case 0xD0:
