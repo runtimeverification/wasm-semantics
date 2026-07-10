@@ -3,13 +3,29 @@ import struct
 
 import pytest
 
+from pykwasm import kwasm_ast as wast
 from pykwasm.binary import floats, integers
-from pykwasm.binary.utils import WasmEOFError
+from pykwasm.binary.types import limits
+from pykwasm.binary.utils import WasmEOFError, WasmParseError
 
 
 def stream(data: bytes) -> io.BytesIO:
     """Helper: wrap bytes in a seekable stream."""
     return io.BytesIO(data)
+
+
+def uleb128(value: int) -> bytes:
+    """Helper: encode an unsigned integer as ULEB128."""
+    buf = []
+    while True:
+        b = value & 0x7F
+        value >>= 7
+        if value:
+            buf.append(b | 0x80)
+        else:
+            buf.append(b)
+            break
+    return bytes(buf)
 
 
 class TestFloats:
@@ -86,3 +102,30 @@ class TestIntegers:
         expected = integers.to_uninterpreted(64, value)
         encoded = self.encode_sleb128(value)
         assert integers.i64(stream(encoded)) == expected
+
+
+class TestLimits:
+    def test_i32_no_max(self) -> None:
+        at, lim = limits(stream(b'\x00' + uleb128(1)))
+        assert at == wast.i32
+        assert lim == (1, None)
+
+    def test_i32_with_max(self) -> None:
+        at, lim = limits(stream(b'\x01' + uleb128(1) + uleb128(2)))
+        assert at == wast.i32
+        assert lim == (1, 2)
+
+    def test_i64_no_max(self) -> None:
+        at, lim = limits(stream(b'\x04' + uleb128(1)))
+        assert at == wast.i64
+        assert lim == (1, None)
+
+    def test_i64_with_max(self) -> None:
+        at, lim = limits(stream(b'\x05' + uleb128(1) + uleb128(2)))
+        assert at == wast.i64
+        assert lim == (1, 2)
+
+    @pytest.mark.parametrize('flag', [0x02, 0x03])
+    def test_shared_memory_flags_rejected(self, flag: int) -> None:
+        with pytest.raises(WasmParseError):
+            limits(stream(bytes([flag]) + uleb128(1)))

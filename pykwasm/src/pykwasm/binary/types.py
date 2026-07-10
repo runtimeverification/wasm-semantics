@@ -124,10 +124,10 @@ def limits(s: InputStream) -> tuple[KInner, Limits]:
             n = u64(s)
             m = u64(s)
             return wast.i32, (n, m)
-        case 0x02:
+        case 0x04:
             n = u64(s)
             return wast.i64, (n, None)
-        case 0x03:
+        case 0x05:
             n = u64(s)
             m = u64(s)
             return wast.i64, (n, m)
