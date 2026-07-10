@@ -27,9 +27,9 @@ def read_byte(s: InputStream) -> int:
 def peek_bytes(n: int, s: InputStream) -> bytes:
     pos = s.tell()
     b = s.read(n)
+    reset(pos, s)
     if len(b) != n:
         raise WasmEOFError(f'Unexpected EOF. Expected {n} bytes, got {len(b)}')
-    reset(pos, s)
     return b
 
 

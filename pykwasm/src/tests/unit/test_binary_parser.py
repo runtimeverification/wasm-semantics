@@ -12,7 +12,7 @@ from pykwasm.binary import floats, integers
 from pykwasm.binary.instructions import instr
 from pykwasm.binary.module import MAGIC, VERSION, parse_module
 from pykwasm.binary.types import limits
-from pykwasm.binary.utils import WasmEOFError, WasmParseError
+from pykwasm.binary.utils import WasmEOFError, WasmParseError, peek_bytes
 
 if TYPE_CHECKING:
     from pyk.kast.inner import KInner
@@ -159,6 +159,27 @@ class TestLimits:
     def test_shared_memory_flags_rejected(self, flag: int) -> None:
         with pytest.raises(WasmParseError):
             limits(stream(bytes([flag]) + uleb128(1)))
+
+
+class TestPeekBytes:
+    def test_successful_peek_does_not_advance_stream(self) -> None:
+        s = stream(b'\x01\x02\x03')
+        assert peek_bytes(2, s) == b'\x01\x02'
+        assert s.tell() == 0
+
+    def test_partial_eof_restores_stream_position(self) -> None:
+        # only 1 byte available, but 2 are requested: the short read must not leave the
+        # stream advanced past the byte it couldn't help but consume while trying.
+        s = stream(b'\x40')
+        with pytest.raises(WasmEOFError):
+            peek_bytes(2, s)
+        assert s.tell() == 0
+
+    def test_true_eof_restores_stream_position(self) -> None:
+        s = stream(b'')
+        with pytest.raises(WasmEOFError):
+            peek_bytes(1, s)
+        assert s.tell() == 0
 
 
 class TestCustomSections:
