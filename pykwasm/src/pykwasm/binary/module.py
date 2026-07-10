@@ -41,23 +41,24 @@ def parse_version(s: InputStream) -> None:
         raise WasmParseError('Could not read version') from e
 
 
-def parse_custom_section(s: InputStream) -> bytes:
+def parse_custom_section(s: InputStream) -> bytes | None:
     try:
         n = peek_byte(s)
     except WasmEOFError:
-        return b''
+        return None
 
     if n != 0:
-        return b''
+        return None
     skip(1, s)
-    return read_bytes(n, s)
+    size = u32(s)
+    return read_bytes(size, s)
 
 
 def parse_custom_sections(s: InputStream) -> list[bytes]:
     sects = []
     while True:
         sect = parse_custom_section(s)
-        if not sect:
+        if sect is None:
             break
         sects.append(sect)
     return sects

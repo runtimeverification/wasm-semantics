@@ -1,12 +1,20 @@
+from __future__ import annotations
+
 import io
 import struct
+from typing import TYPE_CHECKING
 
 import pytest
+from pyk.kast.inner import KApply
 
 from pykwasm import kwasm_ast as wast
 from pykwasm.binary import floats, integers
+from pykwasm.binary.module import MAGIC, VERSION, parse_module
 from pykwasm.binary.types import limits
 from pykwasm.binary.utils import WasmEOFError, WasmParseError
+
+if TYPE_CHECKING:
+    from pyk.kast.inner import KInner
 
 
 def stream(data: bytes) -> io.BytesIO:
@@ -26,6 +34,27 @@ def uleb128(value: int) -> bytes:
             buf.append(b)
             break
     return bytes(buf)
+
+
+def section(sec_id: int, content: bytes) -> bytes:
+    """Helper: wrap section content with its id and ULEB128-encoded size."""
+    return bytes([sec_id]) + uleb128(len(content)) + content
+
+
+def custom_section(name: str, payload: bytes = b'') -> bytes:
+    """Helper: build a custom section (id 0) with the given name and raw payload."""
+    name_bytes = name.encode('utf-8')
+    content = uleb128(len(name_bytes)) + name_bytes + payload
+    return section(0, content)
+
+
+def defns_len(k: KInner) -> int:
+    """Count the number of items in a `Defns` cons-list KAST node."""
+    n = 0
+    while isinstance(k, KApply) and k.args:
+        n += 1
+        k = k.args[1]
+    return n
 
 
 class TestFloats:
@@ -129,3 +158,34 @@ class TestLimits:
     def test_shared_memory_flags_rejected(self, flag: int) -> None:
         with pytest.raises(WasmParseError):
             limits(stream(bytes([flag]) + uleb128(1)))
+
+
+class TestCustomSections:
+    def _wrap(self, *sections: bytes) -> bytes:
+        return MAGIC + VERSION + b''.join(sections)
+
+    def test_custom_sections_do_not_break_stream_alignment(self) -> None:
+        type_section = section(1, uleb128(1) + bytes([0x60]) + uleb128(1) + bytes([0x7F]) + uleb128(1) + bytes([0x7F]))
+        func_section = section(3, uleb128(1) + uleb128(0))
+        export_section = section(7, uleb128(1) + (uleb128(len(b'f')) + b'f' + bytes([0x00]) + uleb128(0)))
+        code_section = section(10, uleb128(1) + (uleb128(4) + bytes([0x00, 0x20, 0x00, 0x0B])))
+
+        data = self._wrap(
+            custom_section('a', b'hello'),
+            type_section,
+            custom_section('b'),
+            func_section,
+            custom_section('c', b'world'),
+            export_section,
+            custom_section('d'),
+            code_section,
+            custom_section('e'),
+        )
+
+        module = parse_module(stream(data))
+
+        assert isinstance(module, KApply)
+        types, funcs, _, _, _, _, _, _, _, exports, _ = module.args
+        assert defns_len(types) == 1
+        assert defns_len(funcs) == 1
+        assert defns_len(exports) == 1
