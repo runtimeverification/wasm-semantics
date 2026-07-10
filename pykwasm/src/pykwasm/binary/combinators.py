@@ -9,16 +9,6 @@ if TYPE_CHECKING:
     from .utils import A, InputStream, Parser
 
 
-def iterate(f: Parser[A], s: InputStream) -> list[A]:
-    results = []
-    while True:
-        try:
-            results.append(f(s))
-        except (WasmParseError, IndexError, ValueError):
-            break
-    return results
-
-
 def sized(p: Parser[A], s: InputStream) -> A:
     size = u32(s)
     start_pos = s.tell()
