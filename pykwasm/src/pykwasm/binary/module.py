@@ -335,6 +335,11 @@ def parse_module(s: InputStream) -> KInner:
     else:
         raise WasmParseError('Unexpected data after end of module')
 
+    if len(function_section) != len(code_section):
+        raise WasmParseError(
+            f'Function and code section length mismatch: {len(function_section)} != {len(code_section)}'
+        )
+
     functions = [
         wast.func(
             wast.KInt(typ_idx),

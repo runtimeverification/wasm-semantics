@@ -208,6 +208,20 @@ class TestTrailingData:
             parse_module(stream(MAGIC + VERSION + type_section + b'\xff'))
 
 
+class TestFuncCodeLengthMismatch:
+    def test_more_funcs_than_code_entries_rejected(self) -> None:
+        func_section = section(3, uleb128(1) + uleb128(0))
+        code_section = section(10, uleb128(0))
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + func_section + code_section))
+
+    def test_more_code_entries_than_funcs_rejected(self) -> None:
+        func_section = section(3, uleb128(0))
+        code_section = section(10, uleb128(1) + (uleb128(2) + bytes([0x00, 0x0B])))
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + func_section + code_section))
+
+
 def unwrap_instr(k: KApply) -> KApply:
     """Helper: strip the `aInstrWithPos` position wrapper added by `instr()`."""
     assert k.label.name == 'aInstrWithPos'
