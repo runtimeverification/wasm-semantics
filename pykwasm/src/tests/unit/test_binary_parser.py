@@ -81,6 +81,9 @@ class TestFloats:
 
 
 class TestIntegers:
+    # Values chosen to cover the LEB128 encoding-length boundary (127/128 is the largest
+    # 1-byte/smallest 2-byte unsigned value), a 3-byte encoding (624485), and the
+    # extremes of each type's range.
     U32_VALUES = [0, 1, 127, 128, 300, 624485, 2**32 - 1]
     U64_VALUES = [0, 1, 2**32, 2**35 + 1, 2**64 - 1]
     I32_VALUES = [0, 1, -1, 127, -128, 2**31 - 1, -(2**31)]
@@ -155,6 +158,9 @@ class TestLimits:
         assert at == wast.i64
         assert lim == (1, 2)
 
+    # 0x02/0x03 sit between the accepted flags (0x00/0x01 i32, 0x04/0x05 i64) but are the
+    # threads proposal's shared-memory flags; the K semantics has no shared memory, so they
+    # must be rejected rather than misread as an address type.
     @pytest.mark.parametrize('flag', [0x02, 0x03])
     def test_shared_memory_flags_rejected(self, flag: int) -> None:
         with pytest.raises(WasmParseError):
@@ -168,8 +174,8 @@ class TestPeekBytes:
         assert s.tell() == 0
 
     def test_partial_eof_restores_stream_position(self) -> None:
-        # only 1 byte available, but 2 are requested: the short read must not leave the
-        # stream advanced past the byte it couldn't help but consume while trying.
+        # 2 bytes requested but only 1 available: the failed peek must restore the
+        # position instead of leaving the stream advanced by the partial read.
         s = stream(b'\x40')
         with pytest.raises(WasmEOFError):
             peek_bytes(2, s)
@@ -187,9 +193,13 @@ class TestCustomSections:
         return MAGIC + VERSION + b''.join(sections)
 
     def test_custom_sections_do_not_break_stream_alignment(self) -> None:
+        # 1 functype (0x60): params [i32 (0x7F)], results [i32 (0x7F)]
         type_section = section(1, uleb128(1) + bytes([0x60]) + uleb128(1) + bytes([0x7F]) + uleb128(1) + bytes([0x7F]))
+        # 1 function with typeidx 0
         func_section = section(3, uleb128(1) + uleb128(0))
+        # 1 export: name "f", kind func (0x00), funcidx 0
         export_section = section(7, uleb128(1) + (uleb128(len(b'f')) + b'f' + bytes([0x00]) + uleb128(0)))
+        # 1 code entry of size 4: 0 local decls, body 'local.get 0 (0x20 0x00); end (0x0B)'
         code_section = section(10, uleb128(1) + (uleb128(4) + bytes([0x00, 0x20, 0x00, 0x0B])))
 
         data = self._wrap(
@@ -231,12 +241,15 @@ class TestTrailingData:
 
 class TestFuncCodeLengthMismatch:
     def test_more_funcs_than_code_entries_rejected(self) -> None:
+        # func section declares 1 function (typeidx 0), code section has 0 entries
         func_section = section(3, uleb128(1) + uleb128(0))
         code_section = section(10, uleb128(0))
         with pytest.raises(WasmParseError):
             parse_module(stream(MAGIC + VERSION + func_section + code_section))
 
     def test_more_code_entries_than_funcs_rejected(self) -> None:
+        # func section declares 0 functions, code section has 1 entry of size 2:
+        # 0 local decls, body 'end (0x0B)'
         func_section = section(3, uleb128(0))
         code_section = section(10, uleb128(1) + (uleb128(2) + bytes([0x00, 0x0B])))
         with pytest.raises(WasmParseError):
@@ -255,8 +268,9 @@ def unwrap_instr(k: KApply) -> KApply:
 
 
 class TestInstructions:
-    # the trailing sentinel byte proves the parser consumes exactly the memidx
-    # operands; see the if tests below for details
+    # Each success-case encoding ends with a 0x01 sentinel byte that is not part of the
+    # instruction; asserting `s.read(1) == b'\x01'` after parsing proves the parser
+    # consumed exactly the instruction's bytes (no under- or over-read).
     def test_memory_copy(self) -> None:
         # 0xFC 10 dst_memidx=0 src_memidx=0
         s = stream(bytes([0xFC]) + uleb128(10) + uleb128(0) + uleb128(0) + b'\x01')
@@ -308,8 +322,7 @@ class TestInstructions:
         # 0x40  blocktype: empty (no result type)
         # 0x01  nop (the then-branch) — no 0x05 else opcode follows
         # 0x0B  end: terminates the if directly
-        # 0x01  sentinel: not part of the instruction; read back after parsing to
-        #       prove the parser consumed exactly the instruction's bytes
+        # 0x01  sentinel
         s = stream(bytes([0x04, 0x40, 0x01, 0x0B]) + b'\x01')
         i = instr(s)
         expected = wast.INSTR_WITH_POS(
@@ -331,8 +344,7 @@ class TestInstructions:
         # 0x05  else opcode
         # 0x00  unreachable (the else-branch)
         # 0x0B  end: terminates the if
-        # 0x01  sentinel: not part of the instruction; read back after parsing to
-        #       prove the parser consumed exactly the instruction's bytes
+        # 0x01  sentinel
         s = stream(bytes([0x04, 0x40, 0x01, 0x05, 0x00, 0x0B]) + b'\x01')
         i = instr(s)
         expected = wast.INSTR_WITH_POS(
@@ -355,8 +367,7 @@ class TestInstructions:
         # 0x00  unreachable (the then-branch)
         # 0x0B  end: terminates the inner if (no else branch)
         # 0x0B  end: terminates the enclosing block
-        # 0x01  sentinel: not part of the instruction; read back after parsing to
-        #       prove the parser consumed exactly the instruction's bytes
+        # 0x01  sentinel
         s = stream(bytes([0x02, 0x40, 0x04, 0x40, 0x00, 0x0B, 0x0B]) + b'\x01')
         i = instr(s)
         expected = wast.INSTR_WITH_POS(
