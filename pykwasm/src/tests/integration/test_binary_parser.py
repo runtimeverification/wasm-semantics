@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 BINARY_DIR = Path(__file__).parent / 'binary'
 BINARY_WAT_FILES = list(BINARY_DIR.glob('*.wat'))
 
-sys.setrecursionlimit(1500000000)
-
 
 @pytest.mark.parametrize('wat_path', BINARY_WAT_FILES, ids=str)
 def test_wasm2kast(krun_llvm: KRun, wat_path: Path) -> None:
@@ -30,8 +28,6 @@ def test_wasm2kast(krun_llvm: KRun, wat_path: Path) -> None:
     wat2wasm_cmd = ['wat2wasm', str(wat_path), '--output=/dev/stdout']
     proc_res = run(wat2wasm_cmd, check=True, capture_output=True)
     wasm_file = BytesIO(proc_res.stdout)
-
-    assert not proc_res.returncode
 
     # When
     module = wasm2kast(wasm_file)
@@ -41,20 +37,21 @@ def test_wasm2kast(krun_llvm: KRun, wat_path: Path) -> None:
 
 
 def run_module(krun: KRun, parsed_module: KInner) -> Pattern:
-    try:
-        # Create an initial config
-        config_kast = krun.definition.init_config(KSort('GeneratedTopCell'))
+    # pyk serializes kore terms recursively (pyk.kore.syntax.Pattern.write) and the term
+    # nesting depth grows with module size, so the default limit of 1000 is not enough:
+    # basic-features.wat needs about 4000. Set 20000 for headroom.
+    sys.setrecursionlimit(max(sys.getrecursionlimit(), 20_000))
 
-        # Embed parsed_module to <k>
-        symbolic_config, init_subst = split_config_from(config_kast)
-        init_subst['K_CELL'] = KSequence(parsed_module)
-        config_with_module = Subst(init_subst)(symbolic_config)
+    # Create an initial config
+    config_kast = krun.definition.init_config(KSort('GeneratedTopCell'))
 
-        # Convert the config to kore
-        config_kore = krun.kast_to_kore(config_with_module, KSort('GeneratedTopCell'))
+    # Embed parsed_module into the <k> cell
+    symbolic_config, init_subst = split_config_from(config_kast)
+    init_subst['K_CELL'] = KSequence(parsed_module)
+    config_with_module = Subst(init_subst)(symbolic_config)
 
-        # Run the config
-        return krun.run_pattern(config_kore)
+    # Convert the config to kore
+    config_kore = krun.kast_to_kore(config_with_module, KSort('GeneratedTopCell'))
 
-    except Exception as e:
-        raise Exception('Received error while running') from e
+    # Run the config
+    return krun.run_pattern(config_kore)
