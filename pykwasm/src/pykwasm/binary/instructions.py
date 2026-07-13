@@ -8,7 +8,7 @@ from pykwasm.binary.floats import f32, f64
 from pykwasm.binary.indices import elemidx, funcidx, globalidx, labelidx, localidx, memidx, tableidx, typeidx
 from pykwasm.binary.integers import i32, i64, u32, u64
 from pykwasm.binary.types import heaptype, valtype
-from pykwasm.binary.utils import WasmParseError, expect_bytes, peek_byte, read_byte, skip
+from pykwasm.binary.utils import WasmParseError, peek_byte, read_byte, skip
 
 if TYPE_CHECKING:
     from pyk.kast.inner import KInner
@@ -17,14 +17,26 @@ if TYPE_CHECKING:
 
 
 def instr_seq(terminator: int, s: InputStream) -> list[KInner]:
+    res, _ = instr_seq_until((terminator,), s)
+    return res
+
+
+def instr_seq_until(terminators: tuple[int, ...], s: InputStream) -> tuple[list[KInner], int]:
+    """Parse instructions up to and including one of the terminator opcodes.
+
+    Returns the instructions and the terminator that was consumed.
+    """
     res: list[KInner] = []
 
-    while peek_byte(s) != terminator:
+    while True:
+        t = peek_byte(s)
+        if t in terminators:
+            break
         i = instr(s)
         res.append(i)
 
-    expect_bytes(bytes([terminator]), s)
-    return res
+    skip(1, s)
+    return res, t
 
 
 def instr(s: InputStream) -> KInner:
@@ -95,9 +107,11 @@ def _instr(s: InputStream) -> KInner:
             ins = instr_seq(0x0B, s)
             return wast.LOOP(bt, wast.instrs(ins))
         case 0x04:
+            # 'if bt in1* end' and 'if bt in1* else in2* end' are both valid encodings;
+            # the else opcode (0x05) is omitted when the else branch is empty
             bt = blocktype(s)
-            in1 = instr_seq(0x05, s)
-            in2 = instr_seq(0x0B, s)
+            in1, terminator = instr_seq_until((0x05, 0x0B), s)
+            in2 = instr_seq(0x0B, s) if terminator == 0x05 else []
             return wast.IF(bt, wast.instrs(in1), wast.instrs(in2))
         case 0x0C:
             l = labelidx(s)

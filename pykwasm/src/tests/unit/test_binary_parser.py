@@ -243,6 +243,9 @@ class TestFuncCodeLengthMismatch:
             parse_module(stream(MAGIC + VERSION + func_section + code_section))
 
 
+EMPTY_BLOCKTYPE = wast.vec_type(wast.val_types([]))
+
+
 def unwrap_instr(k: KApply) -> KApply:
     """Helper: strip the `aInstrWithPos` position wrapper added by `instr()`."""
     assert k.label.name == 'aInstrWithPos'
@@ -271,4 +274,83 @@ class TestInstructions:
         i = instr(s)
         assert isinstance(i, KApply)
         assert unwrap_instr(i) == wast.MEMORY_FILL
+        assert s.read(1) == b'\x01'
+
+    def test_if_without_else(self) -> None:
+        # 0x04  if opcode
+        # 0x40  blocktype: empty (no result type)
+        # 0x01  nop (the then-branch) — no 0x05 else opcode follows
+        # 0x0B  end: terminates the if directly
+        # 0x01  sentinel: not part of the instruction; read back after parsing to
+        #       prove the parser consumed exactly the instruction's bytes
+        s = stream(bytes([0x04, 0x40, 0x01, 0x0B]) + b'\x01')
+        i = instr(s)
+        expected = wast.INSTR_WITH_POS(
+            wast.IF(
+                EMPTY_BLOCKTYPE,
+                wast.instrs([wast.INSTR_WITH_POS(wast.NOP, 2, 1)]),
+                wast.instrs([]),
+            ),
+            0,
+            4,
+        )
+        assert i == expected
+        assert s.read(1) == b'\x01'
+
+    def test_if_with_else(self) -> None:
+        # 0x04  if opcode
+        # 0x40  blocktype: empty (no result type)
+        # 0x01  nop (the then-branch)
+        # 0x05  else opcode
+        # 0x00  unreachable (the else-branch)
+        # 0x0B  end: terminates the if
+        # 0x01  sentinel: not part of the instruction; read back after parsing to
+        #       prove the parser consumed exactly the instruction's bytes
+        s = stream(bytes([0x04, 0x40, 0x01, 0x05, 0x00, 0x0B]) + b'\x01')
+        i = instr(s)
+        expected = wast.INSTR_WITH_POS(
+            wast.IF(
+                EMPTY_BLOCKTYPE,
+                wast.instrs([wast.INSTR_WITH_POS(wast.NOP, 2, 1)]),
+                wast.instrs([wast.INSTR_WITH_POS(wast.UNREACHABLE, 4, 1)]),
+            ),
+            0,
+            6,
+        )
+        assert i == expected
+        assert s.read(1) == b'\x01'
+
+    def test_if_without_else_nested_in_block(self) -> None:
+        # 0x02  block opcode
+        # 0x40  blocktype: empty (no result type)
+        # 0x04  if opcode (inside the block)
+        # 0x40  blocktype: empty (no result type)
+        # 0x00  unreachable (the then-branch)
+        # 0x0B  end: terminates the inner if (no else branch)
+        # 0x0B  end: terminates the enclosing block
+        # 0x01  sentinel: not part of the instruction; read back after parsing to
+        #       prove the parser consumed exactly the instruction's bytes
+        s = stream(bytes([0x02, 0x40, 0x04, 0x40, 0x00, 0x0B, 0x0B]) + b'\x01')
+        i = instr(s)
+        expected = wast.INSTR_WITH_POS(
+            wast.BLOCK(
+                EMPTY_BLOCKTYPE,
+                wast.instrs(
+                    [
+                        wast.INSTR_WITH_POS(
+                            wast.IF(
+                                EMPTY_BLOCKTYPE,
+                                wast.instrs([wast.INSTR_WITH_POS(wast.UNREACHABLE, 4, 1)]),
+                                wast.instrs([]),
+                            ),
+                            2,
+                            4,
+                        )
+                    ]
+                ),
+            ),
+            0,
+            7,
+        )
+        assert i == expected
         assert s.read(1) == b'\x01'
