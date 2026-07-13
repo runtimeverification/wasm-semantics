@@ -255,25 +255,52 @@ def unwrap_instr(k: KApply) -> KApply:
 
 
 class TestInstructions:
-    # non-zero, multi-byte memidx values plus a trailing sentinel byte prove the parser
-    # consumes exactly the memidx operands, not just a fixed number of bytes that
-    # happens to work for the single-byte/zero case
-    @pytest.mark.parametrize('dst_memidx, src_memidx', [(0, 0), (300, 65536)], ids=['zero', 'multi_byte'])
-    def test_memory_copy(self, dst_memidx: int, src_memidx: int) -> None:
-        # 0xFC 10 dst_memidx src_memidx
-        s = stream(bytes([0xFC]) + uleb128(10) + uleb128(dst_memidx) + uleb128(src_memidx) + b'\x01')
+    # the trailing sentinel byte proves the parser consumes exactly the memidx
+    # operands; see the if tests below for details
+    def test_memory_copy(self) -> None:
+        # 0xFC 10 dst_memidx=0 src_memidx=0
+        s = stream(bytes([0xFC]) + uleb128(10) + uleb128(0) + uleb128(0) + b'\x01')
         i = instr(s)
         assert isinstance(i, KApply)
         assert unwrap_instr(i) == wast.MEMORY_COPY
         assert s.read(1) == b'\x01'
 
-    @pytest.mark.parametrize('memidx', [0, 300], ids=['zero', 'multi_byte'])
-    def test_memory_fill(self, memidx: int) -> None:
-        # 0xFC 11 memidx
-        s = stream(bytes([0xFC]) + uleb128(11) + uleb128(memidx) + b'\x01')
+    def test_memory_fill(self) -> None:
+        # 0xFC 11 memidx=0
+        s = stream(bytes([0xFC]) + uleb128(11) + uleb128(0) + b'\x01')
         i = instr(s)
         assert isinstance(i, KApply)
         assert unwrap_instr(i) == wast.MEMORY_FILL
+        assert s.read(1) == b'\x01'
+
+    # multi-memory is not supported: any non-zero memory index must be rejected,
+    # not silently treated as memory 0
+    @pytest.mark.parametrize(
+        'encoding',
+        [
+            bytes([0xFC]) + uleb128(10) + uleb128(1) + uleb128(0),  # memory.copy dst=1 src=0
+            bytes([0xFC]) + uleb128(10) + uleb128(0) + uleb128(300),  # memory.copy dst=0 src=300
+            bytes([0xFC]) + uleb128(11) + uleb128(1),  # memory.fill memidx=1
+            bytes([0x3F]) + uleb128(1),  # memory.size memidx=1
+            bytes([0x40]) + uleb128(300),  # memory.grow memidx=300
+            bytes([0x28, 0x40]) + uleb128(1) + uleb128(0),  # i32.load, memarg flag bit 6 set, memidx=1 offset=0
+        ],
+        ids=['copy_dst', 'copy_src', 'fill', 'size', 'grow', 'load_memarg'],
+    )
+    def test_nonzero_memidx_rejected(self, encoding: bytes) -> None:
+        with pytest.raises(WasmParseError, match='Multi-memory'):
+            instr(stream(encoding))
+
+    def test_load_with_explicit_memidx_zero(self) -> None:
+        # 0x28  i32.load opcode
+        # 0x40  memarg flag: bit 6 set (explicit memory index follows), alignment 0
+        # 0x00  memory index 0
+        # 0x05  offset 5
+        # 0x01  sentinel
+        s = stream(bytes([0x28, 0x40, 0x00, 0x05]) + b'\x01')
+        i = instr(s)
+        assert isinstance(i, KApply)
+        assert unwrap_instr(i) == wast.I32_LOAD(5)
         assert s.read(1) == b'\x01'
 
     def test_if_without_else(self) -> None:

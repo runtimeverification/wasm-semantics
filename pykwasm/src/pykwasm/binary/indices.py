@@ -25,8 +25,13 @@ def tableidx(s: InputStream) -> int:
     return u32(s)
 
 
+# TODO multi-memory support is future work; the K semantics models a single memory,
+# so any reference to a memory other than 0 is rejected instead of mis-executing.
 def memidx(s: InputStream) -> int:
-    return u32(s)
+    x = u32(s)
+    if x != 0:
+        raise WasmParseError(f'Multi-memory is not supported. Expected memory index 0, got: {x}')
+    return x
 
 
 def globalidx(s: InputStream) -> int:
