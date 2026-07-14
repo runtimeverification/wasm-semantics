@@ -57,7 +57,9 @@ def _instr(s: InputStream) -> KInner:
             return wast.vec_type(wast.val_types([t]))
         except WasmParseError as e:
             # TODO handle the `blocktype ::= i:i33` case
-            raise WasmParseError('Could not parse blocktype') from e
+            raise WasmParseError(
+                'Could not parse blocktype. Note: the type-index (i33) blocktype form is not supported'
+            ) from e
 
     # returns memory index, alignment, offset
     def memarg(s: InputStream) -> tuple[int, int, int]:
@@ -79,7 +81,7 @@ def _instr(s: InputStream) -> KInner:
     if opcode == 0xFC:
         try:
             additional_value = u32(s)
-        except Exception as e:
+        except WasmParseError as e:
             raise WasmParseError('Cannot parse opcode, expected u32 after 0xFC') from e
 
     match opcode:

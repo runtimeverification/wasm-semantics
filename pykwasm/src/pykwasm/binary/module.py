@@ -26,19 +26,15 @@ EMPTY_SECTION: KInner = wast.EMPTY_DEFNS
 
 
 def parse_magic(s: InputStream) -> None:
-    try:
-        val = s.read(4)
-        assert val == MAGIC
-    except Exception as e:
-        raise WasmParseError('Could not read magic value') from e
+    val = s.read(4)
+    if val != MAGIC:
+        raise WasmParseError(f'Invalid magic number. Expected {MAGIC!r}, got {val!r}')
 
 
 def parse_version(s: InputStream) -> None:
-    try:
-        val = s.read(4)
-        assert val == VERSION
-    except Exception as e:
-        raise WasmParseError('Could not read version') from e
+    val = s.read(4)
+    if val != VERSION:
+        raise WasmParseError(f'Unsupported version. Expected {VERSION!r}, got {val!r}')
 
 
 def parse_custom_section(s: InputStream) -> bytes | None:
@@ -97,7 +93,10 @@ def byte_list(s: InputStream) -> bytes:
 
 def name(s: InputStream) -> str:
     bs = byte_list(s)
-    return bs.decode('utf-8')
+    try:
+        return bs.decode('utf-8')
+    except UnicodeDecodeError as e:
+        raise WasmParseError(f'Invalid UTF-8 in name: {e}') from e
 
 
 def importsec(s: InputStream) -> KInner:
