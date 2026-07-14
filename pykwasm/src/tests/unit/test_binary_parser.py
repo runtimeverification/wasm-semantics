@@ -148,19 +148,16 @@ class TestLimits:
         assert at == wast.i32
         assert lim == (1, 2)
 
-    def test_i64_no_max(self) -> None:
-        at, lim = limits(stream(b'\x04' + uleb128(1)))
-        assert at == wast.i64
-        assert lim == (1, None)
+    # 0x04/0x05 are the memory64/table64 flags for 64-bit addressing, which the K
+    # semantics cannot represent, so they must be rejected rather than silently
+    # treated as 32-bit.
+    @pytest.mark.parametrize('flag', [0x04, 0x05])
+    def test_64_bit_address_flags_rejected(self, flag: int) -> None:
+        with pytest.raises(WasmParseError, match='64-bit'):
+            limits(stream(bytes([flag]) + uleb128(1) + uleb128(2)))
 
-    def test_i64_with_max(self) -> None:
-        at, lim = limits(stream(b'\x05' + uleb128(1) + uleb128(2)))
-        assert at == wast.i64
-        assert lim == (1, 2)
-
-    # 0x02/0x03 sit between the accepted flags (0x00/0x01 i32, 0x04/0x05 i64) but are the
-    # threads proposal's shared-memory flags; the K semantics has no shared memory, so they
-    # must be rejected rather than misread as an address type.
+    # 0x02/0x03 are the threads proposal's shared-memory flags; the K semantics has no
+    # shared memory, so they must be rejected rather than misread as an address type.
     @pytest.mark.parametrize('flag', [0x02, 0x03])
     def test_shared_memory_flags_rejected(self, flag: int) -> None:
         with pytest.raises(WasmParseError):
@@ -254,6 +251,24 @@ class TestFuncCodeLengthMismatch:
         code_section = section(10, uleb128(1) + (uleb128(2) + bytes([0x00, 0x0B])))
         with pytest.raises(WasmParseError):
             parse_module(stream(MAGIC + VERSION + func_section + code_section))
+
+
+class TestTableImportReftype:
+    @staticmethod
+    def table_import(reftype: int) -> bytes:
+        # import section: 1 import 'm'.'n', kind table (0x01), given reftype, limits min=1
+        return section(
+            2, uleb128(1) + uleb128(1) + b'm' + uleb128(1) + b'n' + bytes([0x01, reftype, 0x00]) + uleb128(1)
+        )
+
+    def test_funcref_table_import_accepted(self) -> None:
+        parse_module(stream(MAGIC + VERSION + self.table_import(0x70)))
+
+    def test_externref_table_import_rejected(self) -> None:
+        # the K ImportDefn has no reftype slot, so an externref (0x6F) table import must
+        # be rejected rather than silently becoming a funcref table
+        with pytest.raises(WasmParseError, match='funcref'):
+            parse_module(stream(MAGIC + VERSION + self.table_import(0x6F)))
 
 
 EMPTY_BLOCKTYPE = wast.vec_type(wast.val_types([]))

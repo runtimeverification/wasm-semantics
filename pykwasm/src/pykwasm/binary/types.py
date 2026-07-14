@@ -124,13 +124,18 @@ def limits(s: InputStream) -> tuple[KInner, Limits]:
             n = u64(s)
             m = u64(s)
             return wast.i32, (n, m)
-        case 0x04:
-            n = u64(s)
-            return wast.i64, (n, None)
-        case 0x05:
-            n = u64(s)
-            m = u64(s)
-            return wast.i64, (n, m)
+        # TODO 64-bit addressing (memory64/table64) is not supported by the K semantics;
+        # uncomment when it is, and make the callers use the address type instead of
+        # discarding it.
+        # case 0x04:
+        #     n = u64(s)
+        #     return wast.i64, (n, None)
+        # case 0x05:
+        #     n = u64(s)
+        #     m = u64(s)
+        #     return wast.i64, (n, m)
+        case 0x04 | 0x05 as d:
+            raise WasmParseError(f'64-bit addressing (memory64/table64, limit descriptor {d}) is not supported')
         case d:
             raise WasmParseError(f'Invalid limit descriptor: {d}')
 
@@ -179,7 +184,12 @@ def externtype_as_import_desc(s: InputStream) -> KInner:
             x = typeidx(s)
             return wast.func_desc(x)
         case 0x01:
-            _at, lim, _rt = tabletype(s)
+            _at, lim, rt = tabletype(s)
+            # TODO the K ImportDefn sort predates reference types and has no reftype
+            # slot; when it gains one, pass rt through instead of rejecting.
+            # return wast.table_desc(lim, rt)
+            if rt != wast.funcref:
+                raise WasmParseError('Importing a table with a reference type other than funcref is not supported')
             return wast.table_desc(lim)
         case 0x02:
             _at, lim = memtype(s)
