@@ -68,6 +68,7 @@ EXPORT = 'aExportDefn'
 
 DEFNS = '___WASM-COMMON-SYNTAX_Defns_Defn_Defns'
 INSTRS = '___WASM-COMMON-SYNTAX_Instrs_Instr_Instrs'
+STMTS = '___WASM-COMMON-SYNTAX_Stmts_Stmt_Stmts'
 
 ###################
 # Basic Datatypes #
@@ -118,6 +119,10 @@ def defns(items: list[KInner]) -> KInner:
 
 def instrs(items: list[KInner]) -> KInner:
     return KNamedList(INSTRS, EMPTY_STMTS, items)
+
+
+def stmts(items: list[KInner]) -> KInner:
+    return KNamedList(STMTS, EMPTY_STMTS, items)
 
 
 def val_types(items: list[KInner]) -> KInner:
@@ -729,10 +734,11 @@ def externidx_tag(i: int) -> KInner:
     return KApply('aExternIdxTag', [KInt(i)])
 
 
-def module_metadata(mid: None = None, fids: None = None, filename: str | None = None) -> KInner:
-    # TODO: Implement module id and function ids metadata transformation.
+def module_metadata(mid: KInner | None = None, fids: None = None, filename: str | None = None) -> KInner:
+    # TODO: Implement function ids metadata transformation.
     kfilename = EMPTY_OPT_STRING if filename is None else KString(filename)
-    return KApply(MODULE_METADATA, [EMPTY_ID, EMPTY_MAP, kfilename])
+    kmid = EMPTY_ID if mid is None else mid
+    return KApply(MODULE_METADATA, [kmid, EMPTY_MAP, kfilename])
 
 
 EMPTY_MODULE_METADATA = module_metadata()
@@ -753,3 +759,72 @@ def module(
 ) -> KInner:
     """Construct a Kast of a module."""
     return KApply(MODULE, [types, funcs, tables, mems, globs, elem, data, start, imports, exports, metadata])
+
+
+############################################
+# Embedder / test-harness terms (test.md)  #
+############################################
+
+# These mirror the productions in `test.md`. Unlike the core semantics, those productions are
+# reachable only from the LLVM (`wasm-semantics.llvm`) target, which is the one the conformance
+# driver runs against.
+
+INIT_SPECTEST_MODULE = KApply('aInitSpectestModule', [])
+
+INVOKE_ACTION = 'aInvokeAction'
+GET_ACTION = 'aGetAction'
+REGISTER = 'aRegister'
+REGISTER_AS = 'aRegisterAs'
+ASSERT_RETURN = 'aAssertReturn'
+ASSERT_TRAP_ACTION = 'aAssertTrapAction'
+REF_FUNC_ADDR = 'aRefFuncAddr'
+REF_EXTERN = 'aRefExtern'
+
+
+def identifier(name: str) -> KToken:
+    """Build a Wasm text-format identifier token, e.g. `$m`.
+
+    `name` is expected to already carry the leading `$`, as wast2json emits it.
+    """
+    return KToken(name, 'IdentifierToken')
+
+
+def opt_id(name: str | None) -> KInner:
+    return EMPTY_ID if name is None else identifier(name)
+
+
+def invoke_action(field: str, args: list[KInner], module: str | None = None) -> KInner:
+    """`( invoke <module>? "<field>" <args> )`"""
+    return KApply(INVOKE_ACTION, [opt_id(module), wasm_string(field), instrs(args)])
+
+
+def get_action(field: str, module: str | None = None) -> KInner:
+    """`( get <module>? "<field>" )`"""
+    return KApply(GET_ACTION, [opt_id(module), wasm_string(field)])
+
+
+def register(as_name: str, module: str | None = None) -> KInner:
+    """`( register "<as_name>" <module>? )`"""
+    if module is None:
+        return KApply(REGISTER, [wasm_string(as_name)])
+    return KApply(REGISTER_AS, [wasm_string(as_name), identifier(module)])
+
+
+def assert_return(action: KInner, expected: list[KInner]) -> KInner:
+    """`( assert_return <action> <expected> )`"""
+    return KApply(ASSERT_RETURN, [action, instrs(expected)])
+
+
+def assert_trap(action: KInner, text: str) -> KInner:
+    """`( assert_trap <action> "<text>" )`"""
+    return KApply(ASSERT_TRAP_ACTION, [action, wasm_string(text)])
+
+
+def REF_EXTERN_CONST(addr: int) -> KInner:
+    """`ref.extern <addr>` — pushes an `externref`."""
+    return KApply(REF_EXTERN, [KInt(addr)])
+
+
+def REF_FUNC_ADDR_CONST(addr: int) -> KInner:
+    """`ref <addr>` — pushes a `funcref` holding a raw function address."""
+    return KApply(REF_FUNC_ADDR, [KInt(addr)])

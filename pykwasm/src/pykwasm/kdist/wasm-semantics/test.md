@@ -46,17 +46,16 @@ module WASM-REFERENCE-INTERPRETER-SYNTAX
     imports WASM-COMMON-SYNTAX
 
     syntax Auxil  ::= Action
-    syntax Action ::= "(" "invoke" OptionalId WasmString Instrs ")"
+    syntax Action ::= "(" "invoke" OptionalId WasmString Instrs ")"     [symbol(aInvokeAction)]
                     |     "invoke" Int        WasmString
-                    | "(" "get"    OptionalId WasmString        ")"
+                    | "(" "get"    OptionalId WasmString        ")"     [symbol(aGetAction)]
                     |     "get"    Int        WasmString
- // ----------------------------------------------------
-    syntax PlainInstr ::= "ref" Int
-                        | "ref.extern" Int
 
-    syntax Auxil ::= "(" "register" WasmString       ")"
-                   | "(" "register" WasmString Index ")"
- // ----------------------------------------------------
+    syntax PlainInstr ::= "ref" Int                                     [symbol(aRefFuncAddr)]
+                        | "ref.extern" Int                              [symbol(aRefExtern)]
+
+    syntax Auxil ::= "(" "register" WasmString       ")"                [symbol(aRegister)]
+                   | "(" "register" WasmString Index ")"                [symbol(aRegisterAs)]
 
     syntax DefnStrings ::= List{WasmString, ""}
     syntax ModuleDecl ::= "(" "module" OptionalId "binary" DataString  ")" [macro]
@@ -91,10 +90,10 @@ Here we inplement the conformance assertions specified in [spec interpreter] inc
 ```
 
 ```k
-    syntax Assertion ::= "(" "assert_return"                Action     Instrs ")"
+    syntax Assertion ::= "(" "assert_return"                Action     Instrs ")"       [symbol(aAssertReturn)]
                        | "(" "assert_return_canonical_nan"  Action            ")"
                        | "(" "assert_return_arithmetic_nan" Action            ")"
-                       | "(" "assert_trap"                  Action     WasmString ")"
+                       | "(" "assert_trap"                  Action     WasmString ")"   [symbol(aAssertTrapAction)]
                        | "(" "assert_exhaustion"            Action     WasmString ")"
                        | "(" "assert_malformed"             ModuleDecl WasmString ")"
                        | "(" "assert_invalid"               ModuleDecl WasmString ")"
@@ -337,8 +336,8 @@ The conformance tests contain imports of the `"spectest"` module.
                 .EmptyStmts , 
             metadata: #meta (... id:  , funcIds: .Map , filename: .String ) 
         )
-    syntax Stmt ::= "#initSpectestModule"
- // --------------------------------------------------------------------
+    syntax Stmt ::= "#initSpectestModule"     [symbol(aInitSpectestModule)]
+ // -----------------------------------------------------------------------
     rule [initSpectestModule]:
         <instrs> #initSpectestModule 
               => #spectestModule
