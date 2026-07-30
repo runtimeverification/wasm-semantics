@@ -1,0 +1,409 @@
+from __future__ import annotations
+
+import io
+import struct
+from typing import TYPE_CHECKING
+
+import pytest
+from pyk.kast.inner import KApply
+
+from pykwasm import kwasm_ast as wast
+from pykwasm.binary import floats, integers
+from pykwasm.binary.instructions import instr
+from pykwasm.binary.module import MAGIC, VERSION, parse_module
+from pykwasm.binary.types import limits
+from pykwasm.binary.utils import WasmEOFError, WasmParseError, peek_bytes
+
+if TYPE_CHECKING:
+    from pyk.kast.inner import KInner
+
+
+def stream(data: bytes) -> io.BytesIO:
+    """Helper: wrap bytes in a seekable stream."""
+    return io.BytesIO(data)
+
+
+def uleb128(value: int) -> bytes:
+    """Helper: encode an unsigned integer as ULEB128."""
+    buf = []
+    while True:
+        b = value & 0x7F
+        value >>= 7
+        if value:
+            buf.append(b | 0x80)
+        else:
+            buf.append(b)
+            break
+    return bytes(buf)
+
+
+def section(sec_id: int, content: bytes) -> bytes:
+    """Helper: wrap section content with its id and ULEB128-encoded size."""
+    return bytes([sec_id]) + uleb128(len(content)) + content
+
+
+def custom_section(name: str, payload: bytes = b'') -> bytes:
+    """Helper: build a custom section (id 0) with the given name and raw payload."""
+    name_bytes = name.encode('utf-8')
+    content = uleb128(len(name_bytes)) + name_bytes + payload
+    return section(0, content)
+
+
+def defns_len(k: KInner) -> int:
+    """Count the number of items in a `Defns` cons-list KAST node."""
+    n = 0
+    while isinstance(k, KApply) and k.args:
+        n += 1
+        k = k.args[1]
+    return n
+
+
+class TestFloats:
+    VALUES = [0.0, 3.14, -1.5, 1.23456789, -9.99, float('inf'), float('-inf')]
+
+    @pytest.mark.parametrize('value', VALUES)
+    def test_f32(self, value: float) -> None:
+        encoded = struct.pack('<f', value)
+        assert floats.f32(stream(encoded)) == pytest.approx(value)
+
+    @pytest.mark.parametrize('value', VALUES)
+    def test_f64(self, value: float) -> None:
+        encoded = struct.pack('<d', value)
+        assert floats.f64(stream(encoded)) == pytest.approx(value)
+
+    def test_f32_eof_raises(self) -> None:
+        with pytest.raises(WasmEOFError):
+            floats.f32(stream(b'\x00\x01'))  # only 2 bytes, needs 4
+
+    def test_f64_eof_raises(self) -> None:
+        with pytest.raises(WasmEOFError):
+            floats.f64(stream(b'\x00\x01\x02\x03\x04'))  # only 5 bytes, needs 8
+
+
+class TestIntegers:
+    # Values chosen to cover the LEB128 encoding-length boundary (127/128 is the largest
+    # 1-byte/smallest 2-byte unsigned value), a 3-byte encoding (624485), and the
+    # extremes of each type's range.
+    U32_VALUES = [0, 1, 127, 128, 300, 624485, 2**32 - 1]
+    U64_VALUES = [0, 1, 2**32, 2**35 + 1, 2**64 - 1]
+    I32_VALUES = [0, 1, -1, 127, -128, 2**31 - 1, -(2**31)]
+    I64_VALUES = [0, 1, -1, 2**63 - 1, -(2**63)]
+
+    @staticmethod
+    def encode_uleb128(value: int) -> bytes:
+        buf = []
+        while True:
+            b = value & 0x7F
+            value >>= 7
+            if value:
+                buf.append(b | 0x80)
+            else:
+                buf.append(b)
+                break
+        return bytes(buf)
+
+    @staticmethod
+    def encode_sleb128(value: int) -> bytes:
+        buf = []
+        while True:
+            b = value & 0x7F
+            value >>= 7
+            if (value == 0 and b & 0x40 == 0) or (value == -1 and b & 0x40 != 0):
+                buf.append(b)
+                break
+            buf.append(b | 0x80)
+        return bytes(buf)
+
+    @pytest.mark.parametrize('value', U32_VALUES)
+    def test_unsigned_32(self, value: int) -> None:
+        encoded = self.encode_uleb128(value)
+        assert integers.u32(stream(encoded)) == value
+
+    @pytest.mark.parametrize('value', U64_VALUES)
+    def test_unsigned_64(self, value: int) -> None:
+        encoded = self.encode_uleb128(value)
+        assert integers.u64(stream(encoded)) == value
+
+    @pytest.mark.parametrize('value', I32_VALUES)
+    def test_uninterpreted_32(self, value: int) -> None:
+        expected = integers.to_uninterpreted(32, value)
+        encoded = self.encode_sleb128(value)
+        assert integers.i32(stream(encoded)) == expected
+
+    @pytest.mark.parametrize('value', I64_VALUES)
+    def test_uninterpreted_64(self, value: int) -> None:
+        expected = integers.to_uninterpreted(64, value)
+        encoded = self.encode_sleb128(value)
+        assert integers.i64(stream(encoded)) == expected
+
+
+class TestLimits:
+    def test_i32_no_max(self) -> None:
+        at, lim = limits(stream(b'\x00' + uleb128(1)))
+        assert at == wast.i32
+        assert lim == (1, None)
+
+    def test_i32_with_max(self) -> None:
+        at, lim = limits(stream(b'\x01' + uleb128(1) + uleb128(2)))
+        assert at == wast.i32
+        assert lim == (1, 2)
+
+    # 0x04/0x05 are the memory64/table64 flags for 64-bit addressing, which the K
+    # semantics cannot represent, so they must be rejected rather than silently
+    # treated as 32-bit.
+    @pytest.mark.parametrize('flag', [0x04, 0x05])
+    def test_64_bit_address_flags_rejected(self, flag: int) -> None:
+        with pytest.raises(WasmParseError, match='64-bit'):
+            limits(stream(bytes([flag]) + uleb128(1) + uleb128(2)))
+
+    # 0x02/0x03 are the threads proposal's shared-memory flags; the K semantics has no
+    # shared memory, so they must be rejected rather than misread as an address type.
+    @pytest.mark.parametrize('flag', [0x02, 0x03])
+    def test_shared_memory_flags_rejected(self, flag: int) -> None:
+        with pytest.raises(WasmParseError):
+            limits(stream(bytes([flag]) + uleb128(1)))
+
+
+class TestPeekBytes:
+    def test_successful_peek_does_not_advance_stream(self) -> None:
+        s = stream(b'\x01\x02\x03')
+        assert peek_bytes(2, s) == b'\x01\x02'
+        assert s.tell() == 0
+
+    def test_partial_eof_restores_stream_position(self) -> None:
+        # 2 bytes requested but only 1 available: the failed peek must restore the
+        # position instead of leaving the stream advanced by the partial read.
+        s = stream(b'\x40')
+        with pytest.raises(WasmEOFError):
+            peek_bytes(2, s)
+        assert s.tell() == 0
+
+    def test_true_eof_restores_stream_position(self) -> None:
+        s = stream(b'')
+        with pytest.raises(WasmEOFError):
+            peek_bytes(1, s)
+        assert s.tell() == 0
+
+
+class TestCustomSections:
+    def _wrap(self, *sections: bytes) -> bytes:
+        return MAGIC + VERSION + b''.join(sections)
+
+    def test_custom_sections_do_not_break_stream_alignment(self) -> None:
+        # 1 functype (0x60): params [i32 (0x7F)], results [i32 (0x7F)]
+        type_section = section(1, uleb128(1) + bytes([0x60]) + uleb128(1) + bytes([0x7F]) + uleb128(1) + bytes([0x7F]))
+        # 1 function with typeidx 0
+        func_section = section(3, uleb128(1) + uleb128(0))
+        # 1 export: name "f", kind func (0x00), funcidx 0
+        export_section = section(7, uleb128(1) + (uleb128(len(b'f')) + b'f' + bytes([0x00]) + uleb128(0)))
+        # 1 code entry of size 4: 0 local decls, body 'local.get 0 (0x20 0x00); end (0x0B)'
+        code_section = section(10, uleb128(1) + (uleb128(4) + bytes([0x00, 0x20, 0x00, 0x0B])))
+
+        data = self._wrap(
+            custom_section('a', b'hello'),
+            type_section,
+            custom_section('b'),
+            func_section,
+            custom_section('c', b'world'),
+            export_section,
+            custom_section('d'),
+            code_section,
+            custom_section('e'),
+        )
+
+        module = parse_module(stream(data))
+
+        assert isinstance(module, KApply)
+        types, funcs, _, _, _, _, _, _, _, exports, _ = module.args
+        assert defns_len(types) == 1
+        assert defns_len(funcs) == 1
+        assert defns_len(exports) == 1
+
+
+class TestTrailingData:
+    def test_empty_module_parses(self) -> None:
+        parse_module(stream(MAGIC + VERSION))
+
+    def test_trailing_garbage_rejected(self) -> None:
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + b'\xff\xff\xff'))
+
+    def test_trailing_garbage_after_sections_rejected(self) -> None:
+        # trailing byte doesn't match any expected section id, and isn't a custom section (id 0) either,
+        # so it must be caught by the final EOF check rather than any individual `section()` call.
+        type_section = section(1, uleb128(1) + bytes([0x60]) + uleb128(0) + uleb128(0))
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + type_section + b'\xff'))
+
+
+class TestFuncCodeLengthMismatch:
+    def test_more_funcs_than_code_entries_rejected(self) -> None:
+        # func section declares 1 function (typeidx 0), code section has 0 entries
+        func_section = section(3, uleb128(1) + uleb128(0))
+        code_section = section(10, uleb128(0))
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + func_section + code_section))
+
+    def test_more_code_entries_than_funcs_rejected(self) -> None:
+        # func section declares 0 functions, code section has 1 entry of size 2:
+        # 0 local decls, body 'end (0x0B)'
+        func_section = section(3, uleb128(0))
+        code_section = section(10, uleb128(1) + (uleb128(2) + bytes([0x00, 0x0B])))
+        with pytest.raises(WasmParseError):
+            parse_module(stream(MAGIC + VERSION + func_section + code_section))
+
+
+class TestTableImportReftype:
+    @staticmethod
+    def table_import(reftype: int) -> bytes:
+        # import section: 1 import 'm'.'n', kind table (0x01), given reftype, limits min=1
+        return section(
+            2, uleb128(1) + uleb128(1) + b'm' + uleb128(1) + b'n' + bytes([0x01, reftype, 0x00]) + uleb128(1)
+        )
+
+    def test_funcref_table_import_accepted(self) -> None:
+        parse_module(stream(MAGIC + VERSION + self.table_import(0x70)))
+
+    def test_externref_table_import_rejected(self) -> None:
+        # the K ImportDefn has no reftype slot, so an externref (0x6F) table import must
+        # be rejected rather than silently becoming a funcref table
+        with pytest.raises(WasmParseError, match='funcref'):
+            parse_module(stream(MAGIC + VERSION + self.table_import(0x6F)))
+
+
+EMPTY_BLOCKTYPE = wast.vec_type(wast.val_types([]))
+
+
+def unwrap_instr(k: KApply) -> KApply:
+    """Helper: strip the `aInstrWithPos` position wrapper added by `instr()`."""
+    assert k.label.name == 'aInstrWithPos'
+    inner = k.args[0]
+    assert isinstance(inner, KApply)
+    return inner
+
+
+class TestInstructions:
+    # Each success-case encoding ends with a 0x01 sentinel byte that is not part of the
+    # instruction; asserting `s.read(1) == b'\x01'` after parsing proves the parser
+    # consumed exactly the instruction's bytes (no under- or over-read).
+    def test_memory_copy(self) -> None:
+        # 0xFC 10 dst_memidx=0 src_memidx=0
+        s = stream(bytes([0xFC]) + uleb128(10) + uleb128(0) + uleb128(0) + b'\x01')
+        i = instr(s)
+        assert isinstance(i, KApply)
+        assert unwrap_instr(i) == wast.MEMORY_COPY
+        assert s.read(1) == b'\x01'
+
+    def test_memory_fill(self) -> None:
+        # 0xFC 11 memidx=0
+        s = stream(bytes([0xFC]) + uleb128(11) + uleb128(0) + b'\x01')
+        i = instr(s)
+        assert isinstance(i, KApply)
+        assert unwrap_instr(i) == wast.MEMORY_FILL
+        assert s.read(1) == b'\x01'
+
+    # multi-memory is not supported: any non-zero memory index must be rejected,
+    # not silently treated as memory 0
+    @pytest.mark.parametrize(
+        'encoding',
+        [
+            bytes([0xFC]) + uleb128(10) + uleb128(1) + uleb128(0),  # memory.copy dst=1 src=0
+            bytes([0xFC]) + uleb128(10) + uleb128(0) + uleb128(300),  # memory.copy dst=0 src=300
+            bytes([0xFC]) + uleb128(11) + uleb128(1),  # memory.fill memidx=1
+            bytes([0x3F]) + uleb128(1),  # memory.size memidx=1
+            bytes([0x40]) + uleb128(300),  # memory.grow memidx=300
+            bytes([0x28, 0x40]) + uleb128(1) + uleb128(0),  # i32.load, memarg flag bit 6 set, memidx=1 offset=0
+        ],
+        ids=['copy_dst', 'copy_src', 'fill', 'size', 'grow', 'load_memarg'],
+    )
+    def test_nonzero_memidx_rejected(self, encoding: bytes) -> None:
+        with pytest.raises(WasmParseError, match='Multi-memory'):
+            instr(stream(encoding))
+
+    def test_load_with_explicit_memidx_zero(self) -> None:
+        # 0x28  i32.load opcode
+        # 0x40  memarg flag: bit 6 set (explicit memory index follows), alignment 0
+        # 0x00  memory index 0
+        # 0x05  offset 5
+        # 0x01  sentinel
+        s = stream(bytes([0x28, 0x40, 0x00, 0x05]) + b'\x01')
+        i = instr(s)
+        assert isinstance(i, KApply)
+        assert unwrap_instr(i) == wast.I32_LOAD(5)
+        assert s.read(1) == b'\x01'
+
+    def test_if_without_else(self) -> None:
+        # 0x04  if opcode
+        # 0x40  blocktype: empty (no result type)
+        # 0x01  nop (the then-branch) — no 0x05 else opcode follows
+        # 0x0B  end: terminates the if directly
+        # 0x01  sentinel
+        s = stream(bytes([0x04, 0x40, 0x01, 0x0B]) + b'\x01')
+        i = instr(s)
+        expected = wast.INSTR_WITH_POS(
+            wast.IF(
+                EMPTY_BLOCKTYPE,
+                wast.instrs([wast.INSTR_WITH_POS(wast.NOP, 2, 1)]),
+                wast.instrs([]),
+            ),
+            0,
+            4,
+        )
+        assert i == expected
+        assert s.read(1) == b'\x01'
+
+    def test_if_with_else(self) -> None:
+        # 0x04  if opcode
+        # 0x40  blocktype: empty (no result type)
+        # 0x01  nop (the then-branch)
+        # 0x05  else opcode
+        # 0x00  unreachable (the else-branch)
+        # 0x0B  end: terminates the if
+        # 0x01  sentinel
+        s = stream(bytes([0x04, 0x40, 0x01, 0x05, 0x00, 0x0B]) + b'\x01')
+        i = instr(s)
+        expected = wast.INSTR_WITH_POS(
+            wast.IF(
+                EMPTY_BLOCKTYPE,
+                wast.instrs([wast.INSTR_WITH_POS(wast.NOP, 2, 1)]),
+                wast.instrs([wast.INSTR_WITH_POS(wast.UNREACHABLE, 4, 1)]),
+            ),
+            0,
+            6,
+        )
+        assert i == expected
+        assert s.read(1) == b'\x01'
+
+    def test_if_without_else_nested_in_block(self) -> None:
+        # 0x02  block opcode
+        # 0x40  blocktype: empty (no result type)
+        # 0x04  if opcode (inside the block)
+        # 0x40  blocktype: empty (no result type)
+        # 0x00  unreachable (the then-branch)
+        # 0x0B  end: terminates the inner if (no else branch)
+        # 0x0B  end: terminates the enclosing block
+        # 0x01  sentinel
+        s = stream(bytes([0x02, 0x40, 0x04, 0x40, 0x00, 0x0B, 0x0B]) + b'\x01')
+        i = instr(s)
+        expected = wast.INSTR_WITH_POS(
+            wast.BLOCK(
+                EMPTY_BLOCKTYPE,
+                wast.instrs(
+                    [
+                        wast.INSTR_WITH_POS(
+                            wast.IF(
+                                EMPTY_BLOCKTYPE,
+                                wast.instrs([wast.INSTR_WITH_POS(wast.UNREACHABLE, 4, 1)]),
+                                wast.instrs([]),
+                            ),
+                            2,
+                            4,
+                        )
+                    ]
+                ),
+            ),
+            0,
+            7,
+        )
+        assert i == expected
+        assert s.read(1) == b'\x01'

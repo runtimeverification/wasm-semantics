@@ -213,7 +213,7 @@ module WASM
         <moduleInstances>
           <moduleInst multiplicity="*" type="Map">
             <modIdx>      0            </modIdx>
-            <exports>     .Map         </exports>
+            <exports>     .Map         </exports> // WasmString -> ExternIdx
             <types>       .Map         </types>
             <nextTypeIdx> 0            </nextTypeIdx>
             <funcAddrs>   .ListInt     </funcAddrs>
@@ -507,12 +507,9 @@ It simply executes the block then records a label with an empty continuation.
     rule <instrs> label [ TYPES ] { _ } VALSTACK' => .K ... </instrs>
          <valstack> VALSTACK => #take(lengthValTypes(TYPES), VALSTACK) ++ VALSTACK' </valstack>
 
-    syntax BlockMetaData ::= OptionalInt
- // ------------------------------------
-
-    syntax Instr ::= #block(VecType, Instrs, BlockMetaData) [symbol(aBlock)]
- // ------------------------------------------------------------------------
-    rule <instrs> #block(VECTYP, IS, _) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
+    syntax Instr ::= #block(VecType, Instrs) [symbol(aBlock)]
+ // ---------------------------------------------------------
+    rule <instrs> #block(VECTYP, IS) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -554,19 +551,19 @@ Note that, unlike in the WebAssembly specification document, we do not need the 
 Finally, we have the conditional and loop instructions.
 
 ```k
-    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs, blockInfo: BlockMetaData) [symbol(aIf)]
- // ----------------------------------------------------------------------------------------------------
-    rule <instrs> #if(VECTYP, IS, _, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
+    syntax Instr ::= #if( VecType, then : Instrs, else : Instrs) [symbol(aIf)]
+ // --------------------------------------------------------------------------
+    rule <instrs> #if(VECTYP, IS, _)  => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL =/=Int 0
 
-    rule <instrs> #if(VECTYP, _, IS, _) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
+    rule <instrs> #if(VECTYP, _, IS) => sequenceInstrs(IS) ~> label VECTYP { .Instrs } VALSTACK ... </instrs>
          <valstack> < i32 > VAL : VALSTACK => VALSTACK </valstack>
       requires VAL ==Int 0
 
-    syntax Instr ::= #loop(VecType, Instrs, BlockMetaData) [symbol(aLoop)]
- // ----------------------------------------------------------------------
-    rule <instrs> #loop(VECTYP, IS, BLOCKMETA) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS, BLOCKMETA) } VALSTACK ... </instrs>
+    syntax Instr ::= #loop(VecType, Instrs) [symbol(aLoop)]
+ // --------------------------------------------------------
+    rule <instrs> #loop(VECTYP, IS) => sequenceInstrs(IS) ~> label VECTYP { #loop(VECTYP, IS) } VALSTACK ... </instrs>
          <valstack> VALSTACK => .ValStack </valstack>
 ```
 
@@ -1223,7 +1220,7 @@ The `#take` function will return the parameter stack in the reversed order, then
  // -------------------------------------
     rule <instrs> ( invoke FADDR )
                => init_locals #revs(#take(lengthValTypes(TDOMAIN), VALSTACK)) ++ #zero(TLOCALS)
-               ~> #block([TRANGE], INSTRS, .Int)
+               ~> #block([TRANGE], INSTRS)
                ~> frame MODIDX TRANGE #drop(lengthValTypes(TDOMAIN), VALSTACK) LOCAL
                ...
          </instrs>
@@ -1781,11 +1778,14 @@ Memories can be initialized with data, specified as a list of bytes together wit
 The `data` initializer simply puts these bytes into the specified memory, starting at the offset.
 
 ```k
-    syntax DataDefn ::= #data(index : Int, offset : Instrs, data : Bytes) [symbol(aDataDefn)]
-                      | "data" "{" Int Bytes "}"
+    syntax DataDefn ::= #data(data: Bytes, mode: DataMode)              [symbol(aDataDefn)]
+    syntax DataMode ::= #active(memidx: Int, offset: Instrs)            [symbol(aDataModeActive)]
+                      | "#passive"                                      [symbol(aDataModePassive)]
  // --------------------------------------------
-    // Default to memory 0.
-    rule <instrs> #data(IDX, IS, DATA) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
+    syntax KItem ::= "data" "{" Int Bytes "}"
+
+    rule <instrs> #data(DATA, #active(IDX, IS)) => sequenceInstrs(IS) ~> data { IDX DATA } ... </instrs>
+    rule <instrs> #data(_DATA, #passive)        => .K ... </instrs>
 
     rule <instrs> data { MEMIDX DSBYTES } => trap ... </instrs>
          <valstack> < i32 > OFFSET : _STACK </valstack>
@@ -1802,7 +1802,6 @@ The `data` initializer simply puts these bytes into the specified memory, starti
          </memInst>
       requires OFFSET +Int lengthBytes(DSBYTES) >Int SIZE *Int #pageSize()
 
-    // For now, deal only with memory 0.
     rule <instrs> data { MEMIDX DSBYTES } => .K ... </instrs>
          <valstack> < i32 > OFFSET : STACK => STACK </valstack>
          <curModIdx> CUR </curModIdx>
@@ -1847,7 +1846,12 @@ Export
 Exports make functions, tables, memories and globals available for importing into other modules.
 
 ```k
-    syntax ExportDefn ::= #export(name : WasmString, index : Int) [symbol(aExportDefn)]
+    syntax ExportDefn ::= #export(name : WasmString, index : ExternIdx) [symbol(aExportDefn)]
+    syntax ExternIdx  ::= #externIdxFunc(Int)                           [symbol(aExternIdxFunc)]
+                        | #externIdxTable(Int)                          [symbol(aExternIdxTable)]
+                        | #externIdxMemory(Int)                         [symbol(aExternIdxMemory)]
+                        | #externIdxGlobal(Int)                         [symbol(aExternIdxGlobal)]
+                        | #externIdxTag(Int)                            [symbol(aExternIdxTag)]
     syntax Alloc ::= ExportDefn
  // ---------------------------
     rule <instrs> #export(ENAME, IDX) => .K ... </instrs>
@@ -1880,7 +1884,7 @@ The value of a global gets copied when it is imported.
          <moduleInst>
            <modIdx> MODIDX </modIdx>
            <funcAddrs> FS2 </funcAddrs>
-           <exports>   ... NAME |-> IDX ... </exports>
+           <exports>   ... NAME |-> #externIdxFunc( IDX ) ... </exports>
            ...
          </moduleInst>
       requires isListIndex(IDX, FS2)
@@ -1919,7 +1923,7 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <tabIds> IDS' </tabIds>
            <tabAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </tabAddrs>
-           <exports>  ... NAME |-> TFIDX                        ... </exports>
+           <exports>  ... NAME |-> #externIdxTable( TFIDX )     ... </exports>
            ...
          </moduleInst>
          <tabInst>
@@ -1943,7 +1947,7 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <memIds> IDS' </memIds>
            <memAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </memAddrs>
-           <exports>  ... NAME |-> TFIDX                        ... </exports>
+           <exports>  ... NAME |-> #externIdxMemory( TFIDX )    ... </exports>
            ...
          </moduleInst>
          <memInst>
@@ -1968,7 +1972,7 @@ The value of a global gets copied when it is imported.
            <modIdx> MODIDX </modIdx>
            <globIds> IDS' </globIds>
            <globalAddrs> ... #ContextLookup(IDS' , TFIDX) |-> ADDR ... </globalAddrs>
-           <exports>     ... NAME |-> TFIDX                        ... </exports>
+           <exports>     ... NAME |-> #externIdxGlobal( TFIDX )    ... </exports>
            ...
          </moduleInst>
          <globalInst>
