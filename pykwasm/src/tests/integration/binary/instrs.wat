@@ -155,6 +155,8 @@
         i64.store32 offset=10        drop
         memory.size
         memory.grow
+        memory.fill
+        memory.copy
         ;; --
         unreachable
 
@@ -166,6 +168,16 @@
         block (result i32) unreachable nop end
         block end
         if    (result f32) unreachable else unreachable end
+        drop
+        ;; if without an else branch: encoded without the 0x05 else opcode,
+        ;; the then-branch is terminated directly by 0x0B (end)
+        i32.const 1
+        if                 unreachable end
+
+        i32.const 0
+        if                 nop end
+        ;; else-less if nested inside a block
+        block              i32.const 1 if unreachable end end
         loop               unreachable end
         br 0
         br_if 0
