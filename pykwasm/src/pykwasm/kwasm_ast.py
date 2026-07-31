@@ -33,7 +33,7 @@ VEC_TYPE = 'aVecType'
 VAL_TYPES = 'listValTypes'
 VAL_TYPES_NIL = '.List{\"listValTypes\"}'
 I32 = 'i32'
-I64 = 'i32'
+I64 = 'i64'
 INTS = 'listInt'
 INTS_NIL = '.List{\"listInt\"}'
 
@@ -334,9 +334,9 @@ I64_CTZ = KApply('aIUnOp', [i64, KApply('aCtz', [])])
 I64_POPCNT = KApply('aIUnOp', [i64, KApply('aPopcnt', [])])
 I32_EXTEND8_s = KApply('aExtendS', [i32, KApply('aExtend8_s', [])])
 I32_EXTEND16_s = KApply('aExtendS', [i32, KApply('aExtend16_s', [])])
-I64_EXTEND8_s = KApply('aExtendS', [i32, KApply('aExtend8_s', [])])
-I64_EXTEND16_s = KApply('aExtendS', [i32, KApply('aExtend16_s', [])])
-I64_EXTEND32_s = KApply('aExtendS', [i32, KApply('aExtend32_s', [])])
+I64_EXTEND8_s = KApply('aExtendS', [i64, KApply('aExtend8_s', [])])
+I64_EXTEND16_s = KApply('aExtendS', [i64, KApply('aExtend16_s', [])])
+I64_EXTEND32_s = KApply('aExtendS', [i64, KApply('aExtend32_s', [])])
 
 ###############
 # Float BinOp #
