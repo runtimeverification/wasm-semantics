@@ -32,6 +32,12 @@ test-unit:
 test-integration:
 	$(UV_RUN) pytest src/tests/integration --maxfail=1 --verbose --durations=0 --numprocesses=4 --dist=worksteal $(TEST_ARGS)
 
+# The official spec suite, driven through the binary front end (wast2json -> .wasm -> KAST).
+# `-rs` lists the skipped files and why, which is the point: that list is the to-do list.
+.PHONY: test-conformance-binary
+test-conformance-binary:
+	$(UV_RUN) pytest src/tests/integration/test_conformance.py --verbose --durations=0 --numprocesses=4 --dist=worksteal -rs $(TEST_ARGS)
+
 
 # Coverage
 

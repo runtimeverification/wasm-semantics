@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pykwasm"
-version = "0.1.157"
+version = "0.1.158"
 description = ""
 readme = "README.md"
 requires-python = "~=3.10"
@@ -21,6 +21,7 @@ wasm2kast = "pykwasm.wasm2kast:main"
 kwasm = "pykwasm.scripts.kwasm:main"
 kwasm-convert = "pykwasm.scripts.convert:main"
 kwasm-preprocess = "pykwasm.scripts.preprocessor:main"
+kwasm-run-wast = "pykwasm.scripts.run_wast:main"
 kwasm-kdist = "pyk.kdist.__main__:main"
 
 [project.entry-points.kdist]
